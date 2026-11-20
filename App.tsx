@@ -11,6 +11,7 @@ import { FeedScreen } from './src/screens/FeedScreen';
 import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ThreadScreen } from './src/screens/ThreadScreen';
+import { ComposeScreen } from './src/screens/ComposeScreen';
 import { restore, setOnLoggedOut } from './src/lib/agent';
 import { palettes, usePalette } from './src/theme';
 
@@ -85,6 +86,7 @@ export default function App() {
         <Stack.Navigator>
           <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
           <Stack.Screen name="Thread" component={ThreadScreen} />
+          <Stack.Screen name="Compose" component={ComposeScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>
