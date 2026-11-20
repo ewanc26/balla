@@ -43,15 +43,16 @@ became a job title. The name keeps the good half of that history.
 
 ## Status
 
-Scaffold stage. Expo SDK 58, React Native 0.88.1, TypeScript. What exists
-today: app-password login, the Following feed as cards with pull-to-refresh and
-endless scroll, notifications, a profile screen, dark mode, and a generated icon
-set. ATProto OAuth, threads, a full-screen image viewer, DMs and a web build
-are on the roadmap.
+Scaffold stage, growing fast. Expo SDK 58, React Native 0.88.1, TypeScript.
+What exists today: app-password login; the chronological Following feed as
+cards with pull-to-refresh and endless scroll; threads — tap a card's comment
+button to read the conversation and reply from a composer at the bottom;
+notifications; a profile screen; dark mode; and a generated icon set.
+ATProto OAuth, a full-screen image viewer, DMs and a web build are on the
+roadmap.
 
-The scaffold has not yet been through a clean install on a machine. CI runs the
-typecheck, dependency audit and icon sync, so the pull request is also the
-first verification: if a check is green, that is the claim, not aspiration.
+CI runs the typecheck, dependency audit and icon sync on every push, so a green
+check is a real claim about the commit it ran on.
 
 ## Getting started
 
