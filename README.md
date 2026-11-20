@@ -47,9 +47,10 @@ Scaffold stage, growing fast. Expo SDK 58, React Native 0.88.1, TypeScript.
 What exists today: app-password login; the chronological Following feed as
 cards with pull-to-refresh and endless scroll; threads — tap a card's comment
 button to read the conversation and reply from a composer at the bottom;
-notifications; a profile screen; dark mode; and a generated icon set.
-ATProto OAuth, a full-screen image viewer, DMs and a web build are on the
-roadmap.
+a full-screen image viewer — tap any post image for the
+fullsize render with visible close and step buttons, and the alt text printed
+under it; notifications; a profile screen; dark mode; and a generated icon
+set. ATProto OAuth, DMs and a web build are on the roadmap.
 
 CI runs the typecheck, dependency audit and icon sync on every push, so a green
 check is a real claim about the commit it ran on.
