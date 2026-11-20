@@ -52,7 +52,7 @@ export function NotificationsScreen() {
       contentContainerStyle={{ paddingBottom: 24 }}
       ListHeaderComponent={Header}
       ListEmptyComponent={
-        refreshing ? null : (
+        refreshing ? undefined : (
           <Text style={{ color: p.secondary, textAlign: 'center', marginTop: 48 }}>
             Nothing yet.
           </Text>
