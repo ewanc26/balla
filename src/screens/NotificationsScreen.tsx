@@ -36,17 +36,21 @@ export function NotificationsScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  function Header() {
+    return (
+      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10 }}>
+        <Text style={{ color: p.text, fontSize: 28, fontWeight: '800' }}>Notifications</Text>
+      </View>
+    );
+  }
+
   return (
     <FlatList
       data={items}
       keyExtractor={(item: any, index: number) => item.uri || String(index)}
       style={{ flex: 1, backgroundColor: p.bg }}
       contentContainerStyle={{ paddingBottom: 24 }}
-      ListHeaderComponent={
-        <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10 }}>
-          <Text style={{ color: p.text, fontSize: 28, fontWeight: '800' }}>Notifications</Text>
-        </View>
-      }
+      ListHeaderComponent={Header}
       ListEmptyComponent={
         refreshing ? null : (
           <Text style={{ color: p.secondary, textAlign: 'center', marginTop: 48 }}>

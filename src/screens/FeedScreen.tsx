@@ -1,12 +1,14 @@
 import React, { useCallback, useState } from 'react';
 import { ActivityIndicator, RefreshControl, Text, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { useNavigation } from '@react-navigation/native';
 import { agent } from '../lib/agent';
 import { PostCard } from '../components/PostCard';
 import { usePalette } from '../theme';
 
 export function FeedScreen() {
   const p = usePalette();
+  const navigation = useNavigation<any>();
   const [posts, setPosts] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
@@ -43,24 +45,30 @@ export function FeedScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const listHeader = (
-    <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10 }}>
-      <Text style={{ color: p.text, fontSize: 28, fontWeight: '800' }}>Balla</Text>
-      <Text style={{ color: p.secondary, fontSize: 13, marginTop: 2 }}>
-        Following, newest first. No algorithm.
-      </Text>
-    </View>
-  );
+  function openThread(uri: string) {
+    navigation.navigate('Thread', { uri });
+  }
+
+  function Header() {
+    return (
+      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10 }}>
+        <Text style={{ color: p.text, fontSize: 28, fontWeight: '800' }}>Balla</Text>
+        <Text style={{ color: p.secondary, fontSize: 13, marginTop: 2 }}>
+          Following, newest first. No algorithm.
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ flex: 1, backgroundColor: p.bg }}>
       <FlashList
         data={posts}
         keyExtractor={(item: any) => item.post.uri}
-        renderItem={({ item }) => <PostCard post={item.post} />}
+        renderItem={({ item }) => <PostCard post={item.post} onOpenThread={openThread} />}
         estimatedItemSize={420}
         contentContainerStyle={{ paddingBottom: 24 }}
-        ListHeaderComponent={listHeader}
+        ListHeaderComponent={Header}
         ListEmptyComponent={
           loading ? null : (
             <Text style={{ color: p.secondary, textAlign: 'center', marginTop: 48, paddingHorizontal: 24 }}>

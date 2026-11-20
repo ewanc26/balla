@@ -12,7 +12,13 @@ function formatCount(n: number): string {
   return Math.round(n / 100000) / 10 + 'M';
 }
 
-export function PostCard({ post }: { post: any }) {
+interface PostCardProps {
+  post: any;
+  onOpenThread?: (uri: string) => void;
+  highlight?: boolean;
+}
+
+export function PostCard({ post, onOpenThread, highlight }: PostCardProps) {
   const p = usePalette();
   const author = post && post.author ? post.author : {};
   const record = post && post.record ? post.record : {};
@@ -27,11 +33,11 @@ export function PostCard({ post }: { post: any }) {
     try {
       if (liked) {
         setLiked(false);
-        setLikes((n) => Math.max(0, n - 1));
+        setLikes((n: number) => Math.max(0, n - 1));
         await agent.deleteLike(post.viewer.like);
       } else {
         setLiked(true);
-        setLikes((n) => n + 1);
+        setLikes((n: number) => n + 1);
         const res = await agent.like(post.uri, post.cid);
         post.viewer = Object.assign({}, post.viewer || {}, { like: res.uri });
       }
@@ -44,11 +50,11 @@ export function PostCard({ post }: { post: any }) {
     try {
       if (reposted) {
         setReposted(false);
-        setReposts((n) => Math.max(0, n - 1));
+        setReposts((n: number) => Math.max(0, n - 1));
         await agent.deleteRepost(post.viewer.repost);
       } else {
         setReposted(true);
-        setReposts((n) => n + 1);
+        setReposts((n: number) => n + 1);
         const res = await agent.repost(post.uri, post.cid);
         post.viewer = Object.assign({}, post.viewer || {}, { repost: res.uri });
       }
@@ -57,8 +63,12 @@ export function PostCard({ post }: { post: any }) {
     }
   }
 
+  function openThread() {
+    if (onOpenThread && post && post.uri) onOpenThread(post.uri);
+  }
+
   return (
-    <View style={[styles.card, { backgroundColor: p.card }]}>
+    <View style={[styles.card, highlight && { borderColor: p.accent, borderWidth: 2 }]}>
       <View style={styles.header}>
         <Avatar avatar={author.avatar} displayName={author.displayName || author.handle} size={40} />
         <View style={{ marginLeft: 10, flex: 1 }}>
@@ -94,9 +104,7 @@ export function PostCard({ post }: { post: any }) {
           icon="chatbubble-outline"
           color={p.secondary}
           label={formatCount(replies)}
-          onPress={() => {
-            // Threads land in a later release.
-          }}
+          onPress={openThread}
         />
       </View>
     </View>
@@ -107,7 +115,7 @@ function extractImages(post: any): any[] {
   const embed = post && post.embed;
   if (!embed) return [];
   const type = String(embed.$type || '');
-  if (type.endsWith('app.bsky.embed.images#view')) return embed.images || [];
+  if (type.endsWith('app.bsky.feed.images#view')) return embed.images || [];
   if (type.endsWith('app.bsky.embed.recordWithMedia#view')) {
     const media = embed.media;
     if (media && String(media.$type || '').endsWith('app.bsky.embed.images#view')) {

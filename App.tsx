@@ -2,16 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { NavigationContainer, DarkTheme, DefaultTheme, useTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { FeedScreen } from './src/screens/FeedScreen';
 import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { ThreadScreen } from './src/screens/ThreadScreen';
 import { restore, setOnLoggedOut } from './src/lib/agent';
 import { palettes, usePalette } from './src/theme';
 
 const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
 
 function Tabs() {
   const p = usePalette();
@@ -77,7 +80,10 @@ export default function App() {
   return (
     <NavigationContainer theme={customNavTheme as any}>
       <StatusBar style="auto" />
-      <Tabs />
+      <Stack.Navigator>
+        <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
+        <Stack.Screen name="Thread" component={ThreadScreen} />
+      </Stack.Navigator>
     </NavigationContainer>
   );
 }

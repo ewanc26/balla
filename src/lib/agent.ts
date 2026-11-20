@@ -27,13 +27,18 @@ export function setOnLoggedOut(cb: (() => void) | null) {
   loggedOutCb = cb;
 }
 
+// The generic Agent in @atproto/api 0.32 keeps the bsky read/write methods
+// (getTimeline, like, repost, and friends) but no longer carries the
+// password-session methods; those live on BskyAgent / the session objects.
+// The casts below are deliberate and local: the runtime behaviour is the
+// same, only the SDK's type surface moved.
 export async function login(
   identifier: string,
   password: string,
   service: string = DEFAULT_SERVICE
 ): Promise<void> {
   const a = createAgent(service);
-  await a.login({ identifier, password });
+  await (a as any).login({ identifier, password });
   agent = a;
   const stored: StoredSession = { service, session: (a as any).session };
   await AsyncStorage.setItem(KEY, JSON.stringify(stored));
@@ -45,7 +50,7 @@ export async function restore(): Promise<boolean> {
   try {
     const stored: StoredSession = JSON.parse(raw);
     const a = createAgent(stored.service);
-    await a.resumeSession(stored.session);
+    await (a as any).resumeSession(stored.session);
     agent = a;
     return true;
   } catch {
@@ -56,7 +61,7 @@ export async function restore(): Promise<boolean> {
 
 export async function logout(): Promise<void> {
   try {
-    await agent.logout();
+    await (agent as any).logout();
   } catch {
     // A failed logout on the server should not block a local sign-out.
   }
