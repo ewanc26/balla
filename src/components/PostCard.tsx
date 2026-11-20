@@ -5,6 +5,7 @@ import { agent } from '../lib/agent';
 import { timeAgo } from '../lib/time';
 import { usePalette } from '../theme';
 import { Avatar } from './Avatar';
+import { ImageViewer } from './ImageViewer';
 
 function formatCount(n: number): string {
   if (n < 1000) return String(n);
@@ -26,6 +27,7 @@ export function PostCard({ post, onOpenThread, highlight }: PostCardProps) {
   const [likes, setLikes] = useState(post ? post.likeCount || 0 : 0);
   const [reposted, setReposted] = useState(!!(post && post.viewer && post.viewer.repost));
   const [reposts, setReposts] = useState(post ? post.repostCount || 0 : 0);
+  const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const replies = post ? post.replyCount || 0 : 0;
   const imgs = extractImages(post);
 
@@ -68,46 +70,53 @@ export function PostCard({ post, onOpenThread, highlight }: PostCardProps) {
   }
 
   return (
-    <View style={[styles.card, highlight && { borderColor: p.accent, borderWidth: 2 }]}>
-      <View style={styles.header}>
-        <Avatar avatar={author.avatar} displayName={author.displayName || author.handle} size={40} />
-        <View style={{ marginLeft: 10, flex: 1 }}>
-          <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
-            {author.displayName || author.handle}
+    <>
+      <View style={[styles.card, highlight && { borderColor: p.accent, borderWidth: 2 }]}>
+        <View style={styles.header}>
+          <Avatar avatar={author.avatar} displayName={author.displayName || author.handle} size={40} />
+          <View style={{ marginLeft: 10, flex: 1 }}>
+            <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+              {author.displayName || author.handle}
+            </Text>
+            <Text style={{ color: p.secondary, fontSize: 12 }}>
+              {timeAgo(post.indexedAt)} · @{author.handle}
+            </Text>
+          </View>
+        </View>
+        {!!record.text && (
+          <Text style={{ color: p.text, fontSize: 15, lineHeight: 21, marginTop: 10 }}>
+            {record.text}
           </Text>
-          <Text style={{ color: p.secondary, fontSize: 12 }}>
-            {timeAgo(post.indexedAt)} · @{author.handle}
-          </Text>
+        )}
+        {imgs.length > 0 && <Images images={imgs} onOpen={setViewerIndex} />}
+        <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: p.divider, marginVertical: 10 }} />
+        <View style={styles.actions}>
+          <ActionButton
+            icon={liked ? 'heart' : 'heart-outline'}
+            color={liked ? p.accent : p.secondary}
+            label={formatCount(likes)}
+            onPress={toggleLike}
+          />
+          <ActionButton
+            icon={reposted ? 'repeat' : 'repeat-outline'}
+            color={reposted ? p.green : p.secondary}
+            label={formatCount(reposts)}
+            onPress={toggleRepost}
+          />
+          <ActionButton
+            icon="chatbubble-outline"
+            color={p.secondary}
+            label={formatCount(replies)}
+            onPress={openThread}
+          />
         </View>
       </View>
-      {!!record.text && (
-        <Text style={{ color: p.text, fontSize: 15, lineHeight: 21, marginTop: 10 }}>
-          {record.text}
-        </Text>
-      )}
-      {imgs.length > 0 && <Images images={imgs} />}
-      <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: p.divider, marginVertical: 10 }} />
-      <View style={styles.actions}>
-        <ActionButton
-          icon={liked ? 'heart' : 'heart-outline'}
-          color={liked ? p.accent : p.secondary}
-          label={formatCount(likes)}
-          onPress={toggleLike}
-        />
-        <ActionButton
-          icon={reposted ? 'repeat' : 'repeat-outline'}
-          color={reposted ? p.green : p.secondary}
-          label={formatCount(reposts)}
-          onPress={toggleRepost}
-        />
-        <ActionButton
-          icon="chatbubble-outline"
-          color={p.secondary}
-          label={formatCount(replies)}
-          onPress={openThread}
-        />
-      </View>
-    </View>
+      <ImageViewer
+        images={imgs}
+        index={viewerIndex}
+        onClose={() => setViewerIndex(null)}
+      />
+    </>
   );
 }
 
@@ -125,27 +134,31 @@ function extractImages(post: any): any[] {
   return [];
 }
 
-function Images({ images }: { images: any[] }) {
+function Images({ images, onOpen }: { images: any[]; onOpen: (index: number) => void }) {
   const p = usePalette();
-  const uris = images.slice(0, 4).map((i: any) => i.thumb || i.fullsize);
-  if (uris.length === 1) {
+  const shown = images.slice(0, 4);
+  if (shown.length === 1) {
+    const i = shown[0];
     return (
-      <Image
-        source={{ uri: uris[0] }}
-        style={{ width: '100%', height: 280, borderRadius: 10, marginTop: 10, backgroundColor: p.divider }}
-        resizeMode="cover"
-      />
+      <Pressable onPress={() => onOpen(0)} style={{ marginTop: 10 }}>
+        <Image
+          source={{ uri: i.thumb || i.fullsize }}
+          style={{ width: '100%', height: 280, borderRadius: 10, backgroundColor: p.divider }}
+          resizeMode="cover"
+        />
+      </Pressable>
     );
   }
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 2, marginTop: 10, borderRadius: 10, overflow: 'hidden' }}>
-      {uris.map((u: string) => (
-        <Image
-          key={u}
-          source={{ uri: u }}
-          style={{ width: '49.5%', aspectRatio: 1, backgroundColor: p.divider }}
-          resizeMode="cover"
-        />
+      {shown.map((i: any, idx: number) => (
+        <Pressable key={i.thumb || i.fullsize || String(idx)} onPress={() => onOpen(idx)} style={{ width: '49.5%' }}>
+          <Image
+            source={{ uri: i.thumb || i.fullsize }}
+            style={{ width: '100%', aspectRatio: 1, backgroundColor: p.divider }}
+            resizeMode="cover"
+          />
+        </Pressable>
       ))}
     </View>
   );

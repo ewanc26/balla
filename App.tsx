@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { NavigationContainer, DarkTheme, DefaultTheme, useTheme } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { LoginScreen } from './src/screens/LoginScreen';
@@ -78,12 +79,14 @@ export default function App() {
     return <LoginScreen onLoggedIn={() => setLoggedIn(true)} />;
   }
   return (
-    <NavigationContainer theme={customNavTheme as any}>
-      <StatusBar style="auto" />
-      <Stack.Navigator>
-        <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
-        <Stack.Screen name="Thread" component={ThreadScreen} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <SafeAreaProvider>
+      <NavigationContainer theme={customNavTheme as any}>
+        <StatusBar style="auto" />
+        <Stack.Navigator>
+          <Stack.Screen name="Tabs" component={Tabs} options={{ headerShown: false }} />
+          <Stack.Screen name="Thread" component={ThreadScreen} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </SafeAreaProvider>
   );
 }
