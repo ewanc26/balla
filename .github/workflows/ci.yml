@@ -19,9 +19,41 @@ jobs:
       - name: Install
         run: npm install --no-audit --no-fund
       - name: Types
-        run: npx tsc --noEmit
+        run: |
+          npx tsc --noEmit 2>&1 | tee /tmp/types.txt
+          test ${PIPESTATUS[0]} -eq 0
       - name: Dependency drift
-        run: npx expo install --check
+        run: |
+          npx expo install --check 2>&1 | tee /tmp/drift.txt
+          test ${PIPESTATUS[0]} -eq 0
+      # A failing step posts its captured output back to the PR, so the error
+      # is reviewable from the conversation and not only the run page.
+      - name: Report output on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const read = (p) => {
+              try {
+                return fs.readFileSync(p, 'utf8').trim();
+              } catch {
+                return '';
+              }
+            };
+            const types = read('/tmp/types.txt');
+            const drift = read('/tmp/drift.txt');
+            const body = [
+              `Checks failed on ${context.sha.slice(0, 7)}.`,
+              types ? `### npx tsc --noEmit\n\n\`\`\`\n${types.slice(-6000)}\n\`\`\`` : '',
+              drift ? `### npx expo install --check\n\n\`\`\`\n${drift.slice(-6000)}\n\`\`\`` : '',
+            ].filter(Boolean).join('\n\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: body || 'The typecheck job failed without captured output.',
+            });
 
   icons:
     name: Generated icons are current
