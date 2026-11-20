@@ -101,7 +101,7 @@ export function ProfileScreen() {
       data={posts}
       keyExtractor={(item: any) => item.uri}
       renderItem={({ item }) => <PostCard post={item} onOpenThread={openThread} />}
-      estimatedItemSize={420}
+      // FlashList v2 measures items itself; estimatedItemSize is gone.
       style={{ flex: 1, backgroundColor: p.bg }}
       contentContainerStyle={{ paddingBottom: 24 }}
       ListHeaderComponent={Header}

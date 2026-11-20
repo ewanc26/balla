@@ -66,7 +66,7 @@ export function FeedScreen() {
         data={posts}
         keyExtractor={(item: any) => item.post.uri}
         renderItem={({ item }) => <PostCard post={item.post} onOpenThread={openThread} />}
-        estimatedItemSize={420}
+        // FlashList v2 measures items itself; estimatedItemSize is gone.
         contentContainerStyle={{ paddingBottom: 24 }}
         ListHeaderComponent={Header}
         ListEmptyComponent={
