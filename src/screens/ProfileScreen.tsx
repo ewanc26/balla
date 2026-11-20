@@ -15,7 +15,8 @@ export function ProfileScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const did = (agent as any).session && agent.session ? agent.session.did : undefined;
+        const session = (agent as any).session;
+        const did = session ? session.did : undefined;
         if (!did) {
           setFailed(true);
           return;

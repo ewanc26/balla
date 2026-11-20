@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  # Balla's own checks; see CONTRIBUTING.md.
+  typecheck:
+    name: Typecheck and dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Types
+        run: npx tsc --noEmit
+      - name: Dependency drift
+        run: npx expo install --check
+
+  icons:
+    name: Generated icons are current
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Icons
+        run: |
+          python3 scripts/gen-icons.py
+          if [ -z "$(git ls-files assets)" ]; then
+            echo "::notice title=assets not committed::assets/ are not committed yet, so this is only a generation smoke test. Run scripts/gen-icons.py locally and commit; this step then enforces the sync."
+          else
+            python3 scripts/gen-icons.py --check
+          fi
+
+  # The one status branch protection should require. It fails if any job it
+  # waits on failed or was cancelled, so adding a job to needs is how a new
+  # check becomes mandatory without touching repository settings.
+  gate:
+    name: CI gate
+    if: always()
+    needs: [typecheck, icons]
+    runs-on: ubuntu-latest
+    steps:
+      - env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          echo "needs: $RESULTS"
+          case " $RESULTS " in *" failure "*|*" cancelled "*|*" skipped "*) exit 1;; esac
