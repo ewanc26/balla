@@ -45,11 +45,13 @@ became a job title. The name keeps the good half of that history.
 
 Scaffold stage, growing fast. Expo SDK 58, React Native 0.88.1, TypeScript.
 What exists today: app-password login; the chronological Following feed as
-cards with pull-to-refresh and endless scroll; threads — tap a card's comment
+cards with pull-to-refresh and endless scroll, with a What's-on-your-mind
+composer sitting above it; threads — tap a card's comment
 button to read the conversation and reply from a composer at the bottom;
 a full-screen image viewer — tap any post image for the
 fullsize render with visible close and step buttons, and the alt text printed
-under it; notifications; a profile screen; dark mode; and a generated icon
+under it; notifications that open the conversation they belong to when tapped;
+a profile screen; dark mode; and a generated icon
 set. ATProto OAuth, DMs and a web build are on the roadmap.
 
 CI runs the typecheck, dependency audit and icon sync on every push, so a green
