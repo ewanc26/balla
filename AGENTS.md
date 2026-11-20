@@ -59,9 +59,10 @@ dark patterns — the chronological Following feed, rendered as cards.
 - Sessions live in `AsyncStorage` so Expo Go works from day one; moving to
   `expo-secure-store` in a dev-client build is a deliberate follow-up. If you
   move them, migrate — never silently drop everyone's session.
-- The scaffold had not been through a clean install as of writing. CI
-  (typecheck, dependency audit, icon sync) is the first authority on drift;
-  state exactly what you ran and where. Never claim checks you did not run.
+- CI performs the clean install, typecheck, dependency audit and icon sync
+  on every push, so it is the first authority on drift. What CI cannot cover is
+  runtime: the scaffold has not been launched in a device or simulator yet.
+  State exactly what you ran and where. Never claim checks you did not run.
 
 ## Conventions
 
