@@ -119,8 +119,14 @@ const styles = StyleSheet.create({
   closeButton: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   counter: { color: '#FFFFFF', fontSize: 14, fontWeight: '600' },
   stage: { flex: 1 },
+  // Written out rather than StyleSheet.absoluteFillObject, which RN 0.88's
+  // generated StyleSheet types no longer export.
   spinner: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     alignItems: 'center',
     justifyContent: 'center',
   },
