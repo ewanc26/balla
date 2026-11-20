@@ -1,0 +1,12 @@
+node_modules/
+.expo/
+.expo-shared/
+dist/
+web-build/
+android/
+ios/
+*.log*
+*.tsbuildinfo
+.nyc_output/
+.DS_Store
+*.orig.*
