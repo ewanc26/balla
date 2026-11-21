@@ -46,6 +46,7 @@ import { ListsScreen } from './src/screens/ListsScreen';
 import { ListDetailScreen } from './src/screens/ListDetailScreen';
 import { ListEditScreen } from './src/screens/ListEditScreen';
 import { ListMembersScreen } from './src/screens/ListMembersScreen';
+import { InteractionSettingsScreen } from './src/screens/InteractionSettingsScreen';
 import { AppHeader, type TabName } from './src/components/AppHeader';
 import { LeftRail, RightRail } from './src/components/AppRail';
 import { ViewerProvider } from './src/lib/viewer';
@@ -315,6 +316,10 @@ export default function App() {
                           options={{ headerShown: false }}
                         />
                         <Stack.Screen name="Thread" component={ThreadScreen} />
+                        <Stack.Screen
+                          name="InteractionSettings"
+                          component={InteractionSettingsScreen}
+                        />
                         <Stack.Screen name="Compose" component={ComposeScreen} />
                         <Stack.Screen name="UserProfile" component={ProfileScreen} />
                         <Stack.Screen name="Settings" component={SettingsScreen} />

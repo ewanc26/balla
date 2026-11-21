@@ -27,13 +27,13 @@ shipped. This document records the bar and the order in which to close the rest.
 | OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo and AppView scopes | Existing broad sessions must re-authorise; chat audience is intentionally absent until DMs exist |
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
 | Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
-| Threads | Ancestor chain, nested replies, reply composer | Missing thread/post gates and some moderation states |
+| Threads | Ancestor chain, nested replies, reply composer, and reply/quote gates read from real threadgate and postgate records | Some moderation states remain |
 | Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, authored lists/feeds/starter packs, label warnings, verification and trusted-verifier badges with their AppView records, pinned post, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner | Verification is display-only — Balla never issues verifications |
 | Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history, in-app feed/starter-pack destinations, and account-scoped post search from a profile | Scoped search uses the same `searchPostsV2.authors` filter as structured `from` |
 | Notifications | Tabs, grouped activity, unread count, mark-all-read and a real per-category settings route with in-app/push switches and audience filters | No device push registration yet (#36) |
 | Saved | Private Bluesky bookmarks, remove in place | Uses AppView bookmark stash; good privacy model |
 | Media | Profile photo/banner upload; post photos with up to 10 images, alt text, previews, compression, retries, full-screen viewer, record-with-media quotes and label warnings | Video/GIF upload and video captions remain (#14) |
-| Composer | Multi-post threads, link cards, quotes, per-photo alt text, self-applied content warnings from the Bluesky vocabulary and up to three post languages | Drafts, reply gates, threadgates and video/GIF remain (#14, #16) |
+| Composer | Multi-post threads, link cards, quotes, per-photo alt text, self-applied content warnings from the Bluesky vocabulary, up to three post languages, local draft recovery, and reply/quote gate records written after publishing | List-based gate rules and video/GIF remain (#14, #16) |
 | Moderation | Post/profile report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox for reports, decisions, notices, account standing, action history and appeals | Missing list/feed reports and device push for inbox outcomes (#36) |
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
 | Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; the AppView has no global list-search endpoint |
@@ -137,9 +137,15 @@ To match Bluesky’s composer, Balla eventually needs:
 - **Done:** multi-post thread composition with per-post text, photos, quotes or
   link cards, one publish action, and `reply.root`/`reply.parent` chained to the
   first post and its predecessor;
-- post/thread gates and reply controls;
-- drafts;
-- honest character counting and posting errors.
+- **Done:** thread and post gates using `app.bsky.feed.threadgate` (mention,
+  following, follower and empty-allow rules) and `app.bsky.feed.postgate`
+  (`disableRule`), with an editor for your own posts and no invented list URIs;
+- **Done:** local drafts saved on the device with an accessible Restore or
+  Discard prompt; photos and quotes are not persisted and the prompt says so;
+- **Done:** honest grapheme counting and posting errors.
+
+List-based gate rules are deliberately absent: a published list URI needs a
+real picker, and a made-up one would be a protocol lie.
 
 ### Feeds, lists and discovery
 

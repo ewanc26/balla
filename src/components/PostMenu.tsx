@@ -497,6 +497,18 @@ export function PostMenu({
         />
         {isOwn ? (
           <MenuRow
+            icon="options-outline"
+            label="Interaction settings"
+            detail="Choose who can reply and whether this post can be quoted."
+            onPress={() => {
+              onClose();
+              navigation.navigate('InteractionSettings', { uri: post.uri });
+            }}
+            disabled={busy}
+          />
+        ) : null}
+        {isOwn ? (
+          <MenuRow
             icon="trash-outline"
             label="Delete post"
             detail="Remove this post from Bluesky permanently."

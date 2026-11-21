@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.9.0
+
+- Add reply and quote controls built strictly from `app.bsky.feed.threadgate` and `app.bsky.feed.postgate`. The composer writes the gate records after publishing; the same rkey is reused, and open access means no record at all rather than an invented rule. List-based rules are left out until there is a real list picker.
+- Add an Interaction settings screen to any post you authored. It reads both gate records through `com.atproto.repo.getRecord`, lets you change who can reply and whether quoting is allowed, and writes or deletes the records accordingly. A failed save leaves the previous settings unchanged.
+- Persist the unfinished post on the device and offer Restore or Discard when the composer opens again. Only text, content warnings, languages and interaction settings are restored; the prompt says that photos and quoted posts need adding again. Successful publishing clears the saved draft, and a gate-write failure never republishes a post.
+- Add framework-free tests for the gate record shapes, record reading and draft parsing, with accessible controls and no overflow at 320px and 390px.
+
 ## 0.8.0
 
 - Complete the public profile: verification badges only for `valid` statuses, with an accessible sheet listing the verifiers and records Bluesky reports; a labeler chip from `associated.labeler`; and profile labels that keep Warn states visible behind a labelled warning.
