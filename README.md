@@ -52,7 +52,7 @@ became a job title. The name keeps the good half of that history.
 
 ## Status
 
-Scaffold stage, growing fast. Expo SDK 58, React Native 0.88.1, TypeScript.
+Web, iOS and Android. Expo SDK 58, React Native 0.88.1, TypeScript.
 What exists today: AT Protocol OAuth login; the chronological Following feed as
 cards with pull-to-refresh and endless scroll, with a What's-on-your-mind
 composer sitting above it; threads — tap a card's comment
@@ -67,7 +67,7 @@ reposted-by and quote lists; photo posts with up to ten images, per-photo alt
 text, an optional requirement to describe every image, cancellable uploads and
 retries; profile editing for name, bio, pronouns, links,
 avatar and banner; a Search tab with Top, Latest, People, Feeds and Starter
-Packs, structured filters and local history; a Feeds screen for saved and pinned custom feeds, with discovery, search, pin/unpin, reorder and removal; lists with create/edit, membership, list feeds, subscribe/block states and profile links; appearance settings with four researched Facebook-era chrome presets and nine solid accent colours, including dependent light/dark contrast labels; a Saved tab for private bookmarks; per-post copy link, copy text, share sheet and
+Packs, structured filters and local history; a Feeds screen for saved and pinned custom feeds, with discovery, search, pin/unpin, reorder and removal; lists with create/edit, membership, list feeds, subscribe/block states and profile links; appearance settings with four researched Facebook-era chrome presets and nine solid accent colours, each with light and dark variants chosen for contrast; a Saved tab for private bookmarks; per-post copy link, copy text, share sheet and
 translation with a show-original toggle; labeler subscriptions with per-label
 filters, an adult-content gate and muted words; per-category notification
 preferences; dark mode; a generated icon set;

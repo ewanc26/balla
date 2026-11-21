@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePalette } from '../theme';
 import { HEADER_SEARCH_MIN_WIDTH } from '../lib/layout';
+import { BrandMark } from './BrandMark';
 
 export type TabName = 'Home' | 'Search' | 'Notifications' | 'Saved' | 'Profile';
 
@@ -50,17 +51,12 @@ export function AppHeader({
             accessibilityLabel="Balla home"
             style={({ pressed }) => [styles.brand, { opacity: pressed ? 0.7 : 1 }]}
           >
-            <View
-              style={[
-                styles.mark,
-                {
-                  backgroundColor: markBackground,
-                  borderRadius: retroChrome ? 2 : 18,
-                },
-              ]}
-            >
-              <Text style={[styles.markLetter, { color: markForeground }]}>b</Text>
-            </View>
+            <BrandMark
+              size={36}
+              background={markBackground}
+              foreground={markForeground}
+              square={retroChrome}
+            />
             <Text style={[styles.wordmark, { color: brandColour }]}>balla</Text>
           </Pressable>
 
@@ -153,19 +149,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: 44,
-  },
-  mark: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markLetter: {
-    fontSize: 27,
-    fontWeight: '800',
-    lineHeight: 32,
-    marginTop: -2,
   },
   wordmark: {
     fontSize: 24,

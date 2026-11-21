@@ -18,6 +18,7 @@ import {
   type Palette,
 } from '../lib/themeModel';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
+import { BrandMark } from '../components/BrandMark';
 
 export function AppearanceScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
@@ -232,25 +233,12 @@ function EraPreview({ palette }: { palette: Palette }) {
           },
         ]}
       >
-        <View
-          style={[
-            styles.previewMark,
-            {
-              backgroundColor: newFacebook ? palette.accent : palette.chromeText,
-              borderRadius: newFacebook ? 7 : 2,
-            },
-          ]}
-        >
-          <Text
-            style={{
-              color: newFacebook ? palette.onAccent : palette.chrome,
-              fontSize: 9,
-              fontWeight: '800',
-            }}
-          >
-            b
-          </Text>
-        </View>
+        <BrandMark
+          size={16}
+          background={newFacebook ? palette.accent : palette.chromeText}
+          foreground={newFacebook ? palette.onAccent : palette.chrome}
+          square={!newFacebook}
+        />
         <Text
           style={{
             color: newFacebook ? palette.accent : palette.chromeText,
@@ -396,12 +384,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 7,
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  previewMark: {
-    width: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   previewDot: {
     width: 8,

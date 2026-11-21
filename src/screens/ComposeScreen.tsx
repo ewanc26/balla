@@ -1254,9 +1254,7 @@ function PhotoTile({
         style={({ pressed }) => [
           styles.altButton,
           {
-            backgroundColor: shownAlt
-              ? 'rgba(24, 119, 242, 0.94)'
-              : 'rgba(0, 0, 0, 0.76)',
+            backgroundColor: shownAlt ? p.accent : 'rgba(0, 0, 0, 0.76)',
             opacity: disabled ? 0.55 : pressed ? 0.75 : 1,
           },
         ]}

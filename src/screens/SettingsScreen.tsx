@@ -17,8 +17,7 @@ import { useFeeds } from '../lib/feedsContext';
 import { accentFor, eraFor } from '../lib/themeModel';
 import { Avatar } from '../components/Avatar';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
-
-const VERSION = '0.1.0';
+import { APP_VERSION } from '../lib/version';
 const GITHUB = 'https://github.com/ewanc26/balla';
 const ISSUES = 'https://github.com/ewanc26/balla/issues';
 const ADVISORY = 'https://github.com/ewanc26/balla/security/advisories/new';
@@ -308,7 +307,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
       </Section>
 
       <Section title="About">
-        <Row icon="information-circle-outline" label="About Balla" value={`Version ${VERSION}`} />
+        <Row icon="information-circle-outline" label="About Balla" value={`Version ${APP_VERSION}`} />
         <Row
           icon="code-slash-outline"
           label="Source code"

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
+import { APP_VERSION } from '../lib/version';
 
 const GITHUB = 'https://github.com/ewanc26/balla';
 const ISSUES = 'https://github.com/ewanc26/balla/issues';
@@ -158,7 +159,7 @@ const TOPICS: Record<string, Topic> = {
     paragraphs: [
       'Balla is a chronological, Facebook-inspired client for Bluesky and the AT Protocol. Facebook-era styling is a visual reference, not a claim of affiliation. Balla is independent software, not an official Bluesky client or a Meta product.',
       'References to Bluesky identify the open network and protocol Balla uses. They do not make Balla official or endorsed. All product names and marks belong to their owners.',
-      'Version 0.1.0. The client is built with Expo and React Native, with OAuth and DPoP handled by @atproto/oauth-client-expo.',
+      `Version ${APP_VERSION}. The client is built with Expo and React Native, with OAuth and DPoP handled by @atproto/oauth-client-expo.`,
       'No ranking, ads, suggested posts or injected content. The Following timeline stays newest-first.',
       'Balla is independent software supported by readers. One-off and recurring support is handled at ewancroft.uk/support.',
     ],

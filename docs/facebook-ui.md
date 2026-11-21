@@ -57,7 +57,7 @@ product, not a claim that every account looks identical.
 
 | Facebook pattern | Balla implementation |
 | --- | --- |
-| White top bar, blue wordmark, centre tabs | `src/components/AppHeader.tsx` |
+| White top bar, Balla mark and wordmark, search and direct actions | `src/components/AppHeader.tsx` |
 | Left shortcuts and right contextual rail | `src/components/AppRail.tsx` |
 | Grey canvas, white 8px cards, hairline borders | `src/theme.ts`, `src/components/PostCard.tsx` |
 | Composer card with avatar and rounded prompt | `src/screens/FeedScreen.tsx` |
@@ -72,6 +72,11 @@ product, not a claim that every account looks identical.
 | Reason badges on notification avatars | `src/screens/NotificationsScreen.tsx` |
 | Centred sign-in card | `src/screens/LoginScreen.tsx` |
 | Three-column desktop, bottom tabs on mobile | `App.tsx`, `src/lib/layout.ts` |
+
+Balla's own mark is the wall drawn in `site/mark.svg`, `scripts/gen-icons.py`
+and `src/components/BrandMark.tsx` — not a Facebook asset. The same `#0866FF`
+brand blue is used by the site, the icons, the app configuration and the
+default accent. The other eight accents are user choices, not a second brand.
 
 The desktop rails appear at 1000px and the right rail at 1300px. The centre
 column is capped at 680px at every width so line length stays readable on
@@ -116,8 +121,9 @@ never mistaken for a real session.
   it does not pretend to have Love, Haha, Wow, Sad or Angry.
 - **Ranking, suggested posts and “people you may know”.** The Following feed is
   chronological, and the app has no injection points.
-- **The blue top bar.** Facebook itself retired it; Balla follows the current
-  white chrome.
+- **The blue top bar as the default.** Facebook itself retired it; Balla's
+  default New Facebook era uses white chrome. The three researched retro
+  presets restore period blue chrome deliberately, as a visual reference only.
 - **Facebook Sans.** It is proprietary. Balla uses the platform system font.
 - **Invented counts or unread state.** Every number and badge comes from the
   Bluesky API. Notifications have no “seen” state, so they are not painted as
