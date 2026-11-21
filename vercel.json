@@ -16,7 +16,7 @@
   "rewrites": [
     {
       "source": "/app/(.*)",
-      "destination": "/app/index.html"
+      "destination": "/app"
     }
   ],
   "headers": [

@@ -65,7 +65,12 @@ test('the address bar follows navigation on web only', () => {
 test('the host serves the SPA for nested /app paths', () => {
   const rewrites = vercel.rewrites || [];
   assert.ok(
-    rewrites.some((rule) => rule.source === '/app/(.*)' && rule.destination === '/app/index.html'),
+    rewrites.some((rule) => rule.source === '/app/(.*)' && rule.destination === '/app'),
     'nested web routes must fall back to the app shell'
   );
+  if (vercel.cleanUrls) {
+    for (const rule of rewrites) {
+      assert.doesNotMatch(rule.destination, /\.html$/, 'cleanUrls rewrites must not name an .html file');
+    }
+  }
 });
