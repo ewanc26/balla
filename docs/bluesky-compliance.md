@@ -15,16 +15,15 @@ three separate things that can each be tested:
    account/content deletion, store policies and accessibility.
 
 Balla is not yet fully compliant. The gap is not primarily visual: the remaining
-pieces are list/feed reporting and label handling on feed surfaces, video and GIF
-composition, DMs and the remaining settings. Post-level reporting, muting,
-blocking, deletion, quoting, image posts, lists and the moderation inbox are now
-shipped. This document records the bar and the order in which to close the rest.
+pieces are list/feed reporting and label handling on feed surfaces, DMs and the
+remaining settings. Post-level reporting, muting, blocking, deletion, quoting,
+image, video and GIF posts, lists and the moderation inbox are now shipped. This document records the bar and the order in which to close the rest.
 
 ## Current Balla coverage
 
 | Surface | Current state | Compliance note |
 | --- | --- | --- |
-| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo and AppView scopes | Existing broad sessions must re-authorise; chat audience is intentionally absent until DMs exist |
+| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo, AppView, video-service and caption-blob scopes | Sessions predating the video scopes must re-authorise; chat audience is intentionally absent until DMs exist |
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
 | Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
 | Threads | Ancestor chain, nested replies, reply composer, and reply/quote gates read from real threadgate and postgate records | Some moderation states remain |
@@ -32,8 +31,8 @@ shipped. This document records the bar and the order in which to close the rest.
 | Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history, in-app feed/starter-pack destinations, and account-scoped post search from a profile | Scoped search uses the same `searchPostsV2.authors` filter as structured `from` |
 | Notifications | Tabs, grouped activity, unread count, mark-all-read and a real per-category settings route with in-app/push switches and audience filters | No device push registration yet (#36) |
 | Saved | Private Bluesky bookmarks, remove in place | Uses AppView bookmark stash; good privacy model |
-| Media | Profile photo/banner upload; post photos with up to 10 images, alt text, previews, compression, retries, full-screen viewer, record-with-media quotes and label warnings | Video/GIF upload and video captions remain (#14) |
-| Composer | Multi-post threads, link cards, quotes, per-photo alt text, self-applied content warnings from the Bluesky vocabulary, up to three post languages, local draft recovery, and reply/quote gate records written after publishing | List-based gate rules and video/GIF remain (#14, #16) |
+| Media | Profile photo/banner upload; post photos with up to 10 images, alt text, previews, compression, retries, full-screen viewer, record-with-media quotes and label warnings; MP4/GIF video posts through `video.bsky.app`, published video views and WebVTT captions | Balla's 100 MB / 10-minute local limits are shown before upload; Bluesky's service limits still apply |
+| Composer | Multi-post threads, link cards, quotes, per-photo and per-video alt text, self-applied content warnings from the Bluesky vocabulary, up to three post languages, local draft recovery, and reply/quote gate records written after publishing | List-based gate rules remain (#16) |
 | Moderation | Post/profile report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox for reports, decisions, notices, account standing, action history and appeals | Missing list/feed reports and device push for inbox outcomes (#36) |
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
 | Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; the AppView has no global list-search endpoint |
@@ -127,7 +126,8 @@ To match Bluesky’s composer, Balla eventually needs:
 
 - **Done:** image upload through `com.atproto.repo.uploadBlob`, one-to-ten
   images, alt text, media dimensions, compression and failure/retry UI;
-- video upload and processing states, including failure and retry UI;
+- **Done:** MP4 and animated GIF upload through `app.bsky.video.uploadVideo`, with a service auth token for the upload and honest polling of `app.bsky.video.getJobStatus`. The post is not publishable until the job reports `JOB_STATE_COMPLETED` with a blob; failures, cancellation and the optional 409 `already_exists` blob are named rather than treated as success;
+- **Done:** `app.bsky.embed.video` embeds with alt text, aspect ratio, the published `presentation: 'gif'` hint and up to 20 `app.bsky.embed.video#caption` tracks from WebVTT blobs. Published views render the AppView's HLS playlist with native controls and an alt-text caption;
 - rich-text facets for mentions, links and hashtags;
 - **Done:** quote posts using `app.bsky.embed.record`, including the view in
   cards and threads with the quoted post's own labels and honest unavailable
@@ -209,7 +209,7 @@ privacy, block/mute, report and leave/delete flows.
 
 ### P1 — parity with the main Bluesky surfaces
 
-1. Image/video composer with alt text.
+1. ~~Image/video composer with alt text.~~ Done: photo posts and MP4/GIF video posts both carry alt text, with captions for video.
 2. Link cards and quote embeds are shipped, including multi-post composition.
 3. Verification and pinned post. Profile editing, followers, following, known
    followers and per-post engagement lists are shipped.
@@ -227,7 +227,7 @@ privacy, block/mute, report and leave/delete flows.
 
 1. Starter packs, labeler subscriptions and custom labeler preferences.
 2. Drafts, scheduling-adjacent workflows and multi-account support where safe.
-3. Rich media (video, GIF, captions, aspect ratios).
+3. ~~Rich media (video, GIF, captions, aspect ratios).~~ Done: video-service upload, published video views, GIF presentation, WebVTT captions and real aspect ratios.
 4. ~~Web client with the web OAuth callback, or removal of the web redirect.~~
    Done: the Expo app is exported at `/app` and signs in with popup OAuth back
    to that URL.

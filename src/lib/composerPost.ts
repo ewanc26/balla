@@ -56,13 +56,17 @@ export function canPublishPost({
   imageCount,
   hasQuote,
   hasLink = false,
+  hasVideo = false,
 }: {
   text: string;
   imageCount: number;
   hasQuote: boolean;
   hasLink?: boolean;
+  hasVideo?: boolean;
 }): boolean {
-  return text.trim().length > 0 || imageCount > 0 || hasQuote || hasLink;
+  return (
+    text.trim().length > 0 || imageCount > 0 || hasQuote || hasLink || hasVideo
+  );
 }
 
 export function buildImageEmbed(images: ComposerAttachment[]): any {
@@ -113,11 +117,13 @@ function buildExternalEmbed(card: ExternalView | null): any {
 export function buildPostEmbed(
   images: ComposerAttachment[],
   quote: QuoteRef | null,
-  external: ExternalView | null = null
+  external: ExternalView | null = null,
+  video?: Record<string, unknown>
 ): any {
-  // One media embed per post. Photos win when both are present; the composer
-  // clears a link card when photos are added so this is never a silent choice.
-  const media = buildImageEmbed(images) || buildExternalEmbed(external);
+  // One media embed per post. The composer clears the other media when a video
+  // is added, so this preference is never a silent choice.
+  const media =
+    buildImageEmbed(images) || video || buildExternalEmbed(external);
   const record =
     quote && quote.uri && quote.cid
       ? {

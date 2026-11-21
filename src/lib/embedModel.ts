@@ -32,6 +32,15 @@ export type ExternalView = {
   host: string;
 };
 
+/** The AppView's published video view, not a guessed record shape. */
+export type VideoViewData = {
+  playlist: string;
+  alt: string;
+  thumbnail?: string;
+  presentation?: 'gif' | 'default';
+  aspectRatio?: { width: number; height: number };
+};
+
 function typeOf(value: any): string {
   return typeof value?.$type === 'string' ? value.$type : '';
 }
@@ -116,6 +125,41 @@ export function externalFromEmbed(embed: any): ExternalView | null {
       ? { thumb: external.thumb }
       : {}),
     host: externalHost(external.uri),
+  };
+}
+
+/** The video half of an embed, including recordWithMedia. */
+export function videoFromEmbed(embed: any): VideoViewData | null {
+  if (!embed) return null;
+  let candidate = embed;
+  if (endsWith(typeOf(embed), 'app.bsky.embed.recordWithMedia#view')) {
+    candidate = embed.media;
+  }
+  if (!endsWith(typeOf(candidate), 'app.bsky.embed.video#view')) return null;
+  const playlist = candidate.playlist;
+  if (typeof playlist !== 'string' || !/^https:\/\//i.test(playlist)) {
+    return null;
+  }
+  const ratio = candidate.aspectRatio;
+  return {
+    playlist,
+    alt: typeof candidate.alt === 'string' ? candidate.alt : '',
+    ...(typeof candidate.thumbnail === 'string' && candidate.thumbnail
+      ? { thumbnail: candidate.thumbnail }
+      : {}),
+    ...(candidate.presentation === 'gif' ? { presentation: 'gif' as const } : {}),
+    ...(ratio &&
+    Number.isFinite(ratio.width) &&
+    Number.isFinite(ratio.height) &&
+    ratio.width > 0 &&
+    ratio.height > 0
+      ? {
+          aspectRatio: {
+            width: Math.round(ratio.width),
+            height: Math.round(ratio.height),
+          },
+        }
+      : {}),
   };
 }
 

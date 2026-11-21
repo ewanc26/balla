@@ -119,7 +119,8 @@ the device and keep Following chronological. Tapping any post image opens a full
 viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
 keep the text rather than eating it. The composer supports threads, photos with
-alt text, link cards, quotes, self-applied content warnings, up to three post
+alt text, MP4/GIF video with optional WebVTT captions and honest processing
+states, link cards, quotes, self-applied content warnings, up to three post
 languages per post, and reply and quote controls written to real threadgate and
 postgate records. An unfinished post is kept locally with a Restore/Discard
 prompt, and posts you authored have an Interaction settings screen. Tapping a notification opens the thread

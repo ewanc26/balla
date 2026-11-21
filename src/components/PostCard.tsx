@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { agent } from '../lib/agent';
 import { describeFailure, withOptimisticRollback } from '../lib/reliability';
 import { timeAgo } from '../lib/time';
@@ -27,8 +28,10 @@ import {
   QUOTE_UNAVAILABLE_COPY,
   externalFromEmbed,
   quoteFromEmbed,
+  videoFromEmbed,
   type ExternalView,
   type QuoteView,
+  type VideoViewData,
 } from '../lib/embedModel';
 
 function formatCount(n: number): string {
@@ -91,6 +94,7 @@ export function PostCard({
   const imgs = extractImages(post);
   const quote = quoteFromEmbed(post?.embed);
   const linkCard = externalFromEmbed(post?.embed);
+  const video = videoFromEmbed(post?.embed);
   // Roughly eight lines of the body at this width. Measuring the rendered
   // text avoids showing "See more" when the whole post already fits.
   const longPost =
@@ -489,6 +493,18 @@ export function PostCard({
                 <Images images={imgs} onOpen={setViewerIndex} />
               ))}
 
+              {video &&
+                (mediaUi?.blur && !mediaRevealed ? (
+                  <ContentWarning
+                    compact
+                    causes={moderation?.labelCauses || []}
+                    noOverride={mediaUi.noOverride}
+                    onReveal={() => setMediaRevealed(true)}
+                  />
+                ) : (
+                  <VideoEmbed video={video} />
+                ))}
+
               {quote ? (
                 <QuoteCard
                   quote={quote}
@@ -812,6 +828,60 @@ function LinkCard({ card }: { card: ExternalView }) {
         </Text>
       ) : null}
     </Pressable>
+  );
+}
+
+/** Plays the AppView's HLS playlist with visible controls and its own alt text. */
+function VideoEmbed({ video }: { video: VideoViewData }) {
+  const p = usePalette();
+  const player = useVideoPlayer(
+    { uri: video.playlist, contentType: 'hls' },
+    (instance) => {
+      // Bluesky's GIF presentation is a muted, looping video with no sound.
+      instance.loop = video.presentation === 'gif';
+      instance.muted = video.presentation === 'gif';
+    }
+  );
+  const ratio = video.aspectRatio
+    ? Math.max(0.75, Math.min(1.91, video.aspectRatio.width / video.aspectRatio.height))
+    : 16 / 9;
+
+  return (
+    <View style={{ marginTop: 12 }}>
+      <View
+        style={{
+          width: '100%',
+          aspectRatio: ratio,
+          maxHeight: 420,
+          borderRadius: CARD_RADIUS,
+          overflow: 'hidden',
+          backgroundColor: p.divider,
+        }}
+      >
+        <VideoView
+          player={player}
+          style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+          nativeControls
+          contentFit="contain"
+          accessibilityLabel={
+            video.alt || (video.presentation === 'gif' ? 'Animated GIF' : 'Video')
+          }
+        />
+      </View>
+      {video.alt ? (
+        <Text
+          accessibilityLabel={`Video description: ${video.alt}`}
+          style={{
+            color: p.secondary,
+            fontSize: 12,
+            lineHeight: 17,
+            marginTop: 5,
+          }}
+        >
+          {video.alt}
+        </Text>
+      ) : null}
+    </View>
   );
 }
 

@@ -16,6 +16,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
+import { File } from 'expo-file-system';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { agent } from '../lib/agent';
 import {
@@ -26,6 +28,19 @@ import {
   webCheckedProps,
 } from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
+import {
+  buildCaptionTracks,
+  buildVideoEmbed,
+  captionSelectionError,
+  describeVideoJob,
+  isGifMime,
+  MAX_CAPTIONS,
+  videoSelectionError,
+  type CaptionAttachment,
+  type ComposerVideo,
+  type VideoJobStatus,
+} from '../lib/videoModel.ts';
+import { uploadComposerVideo, VideoUploadError } from '../lib/videoUpload';
 import {
   clearStoredDraft,
   loadStoredDraft,
@@ -92,6 +107,7 @@ const QUOTE_OPTIONS: Array<{ value: QuoteAccess; label: string; detail: string }
 type ComposerImage = {
   key: string;
   uri: string;
+  mimeType?: string;
   width: number;
   height: number;
   bytes: Uint8Array;
@@ -104,6 +120,9 @@ type PendingPost = {
   key: string;
   text: string;
   images: ComposerImage[];
+  video: ComposerVideo | null;
+  videoBlob: unknown;
+  captions: CaptionAttachment[];
   quote: any;
   linkCard: ExternalView | null;
   selfLabels: string[];
@@ -112,6 +131,8 @@ type PendingPost = {
 };
 
 let imageSequence = 0;
+let videoSequence = 0;
+let captionSequence = 0;
 let draftSequence = 0;
 
 function newDraftKey(): string {
@@ -122,6 +143,80 @@ function newDraftKey(): string {
 function newImageKey(): string {
   imageSequence += 1;
   return `compose-image-${imageSequence}-${Date.now()}`;
+}
+
+function newVideoKey(): string {
+  videoSequence += 1;
+  return `compose-video-${videoSequence}-${Date.now()}`;
+}
+
+function newCaptionKey(): string {
+  captionSequence += 1;
+  return `compose-caption-${captionSequence}-${Date.now()}`;
+}
+
+/** Picker URIs are local files on device and blob URLs in the browser. */
+async function readVideoBytes(uri: string): Promise<Uint8Array> {
+  if (Platform.OS === 'web') {
+    const response = await fetch(uri);
+    if (!response.ok) throw new Error('The selected file could not be read.');
+    return new Uint8Array(await response.arrayBuffer());
+  }
+  const file = new File(uri);
+  return new Uint8Array(await file.arrayBuffer());
+}
+
+type PickedCaption = { name: string; bytes: Uint8Array };
+
+/**
+ * File.pickFileAsync is native-only. On web, the same visible Captions button
+ * opens a real file input so the feature is not silently missing from the web
+ * client.
+ */
+function pickCaptionFile(): Promise<PickedCaption | null> {
+  if (Platform.OS !== 'web') {
+    return File.pickFileAsync({ mimeTypes: ['text/vtt', '.vtt'] }).then(
+      async (picked) =>
+        picked.canceled
+          ? null
+          : {
+              name: picked.result.name,
+              bytes: new Uint8Array(await picked.result.arrayBuffer()),
+            }
+    );
+  }
+
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.vtt,text/vtt';
+    input.setAttribute('aria-label', 'Choose a WebVTT caption file');
+    input.style.position = 'fixed';
+    input.style.left = '-9999px';
+    let settled = false;
+    const finish = (value: PickedCaption | null) => {
+      if (settled) return;
+      settled = true;
+      window.clearTimeout(timer);
+      input.remove();
+      resolve(value);
+    };
+    const timer = window.setTimeout(() => finish(null), 60_000);
+    input.addEventListener('change', () => {
+      const file = input.files?.[0];
+      if (!file) {
+        finish(null);
+        return;
+      }
+      file
+        .arrayBuffer()
+        .then((buffer) => finish({ name: file.name, bytes: new Uint8Array(buffer) }))
+        .catch(() => finish(null));
+    });
+    input.addEventListener('cancel', () => finish(null));
+    document.body.appendChild(input);
+    input.click();
+  });
 }
 
 function abortError(): Error {
@@ -199,13 +294,20 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
   const [text, setText] = useState('');
   const [images, setImages] = useState<ComposerImage[]>([]);
+  const [video, setVideo] = useState<ComposerVideo | null>(null);
+  const [videoStatus, setVideoStatus] = useState<VideoJobStatus | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  const [captions, setCaptions] = useState<CaptionAttachment[]>([]);
+  const [preparingVideo, setPreparingVideo] = useState(false);
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [altDraft, setAltDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<UploadProgress | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [mediaBusy, setMediaBusy] = useState<'library' | 'camera' | null>(null);
+  const [mediaBusy, setMediaBusy] = useState<
+    'library' | 'camera' | 'video' | 'caption' | null
+  >(null);
   const [confirmWithoutAlt, setConfirmWithoutAlt] = useState(false);
   const [linkCard, setLinkCard] = useState<ExternalView | null>(null);
   const [selfLabels, setSelfLabels] = useState<string[]>([]);
@@ -227,6 +329,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
   const uploadedRef = useRef<Map<string, unknown>>(new Map());
   const uploadAbortRef = useRef<AbortController | null>(null);
+  const videoBlobRef = useRef<unknown>(null);
+  const videoAbortRef = useRef<AbortController | null>(null);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Create post' });
@@ -267,7 +371,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       event.preventDefault();
       setError(
         uploadProgress
-          ? 'Cancel the photo upload before leaving. Your text and photos will stay here.'
+          ? 'Cancel the photo upload before leaving. Your text and media will stay here.'
           : 'This post is being published. Wait for it to finish before leaving.'
       );
     });
@@ -276,17 +380,28 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const trimmed = text.trim();
   const count = countGraphemes(trimmed);
   const over = count > LIMIT;
-  const missingAlt = missingAltTextCount(images);
-  const tooLongAlt = altTextTooLongCount(images);
-  const canPost = canPublishPost({
-    text: trimmed,
-    imageCount: images.length,
-    hasQuote: !!quote,
-    hasLink: !!linkCard,
-  });
+  const missingAlt =
+    missingAltTextCount(images) + (video && !video.alt.trim() ? 1 : 0);
+  const tooLongAlt =
+    altTextTooLongCount(images) +
+    (video && countGraphemes(video.alt.trim()) > MAX_ALT_TEXT ? 1 : 0);
+  // A selected file is not a publishable post until its job has produced a
+  // blob. The status tile and the Post button both reflect that same state.
+  const videoReady = !video || (!preparingVideo && !!videoBlobRef.current);
+  const canPost =
+    videoReady &&
+    canPublishPost({
+      text: trimmed,
+      imageCount: images.length,
+      hasQuote: !!quote,
+      hasLink: !!linkCard,
+      hasVideo: !!video,
+    });
   const blocked = sending || !canPost || over;
-  const editingImage = editingKey
-    ? images.find((image) => image.key === editingKey) || null
+  const editingMedia = editingKey
+    ? video && video.key === editingKey
+      ? video
+      : images.find((image) => image.key === editingKey) || null
     : null;
 
   async function addAssets(
@@ -308,8 +423,16 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
     if (prepared.length) {
       setImages((prev) => [...prev, ...prepared].slice(0, MAX_COMPOSER_IMAGES));
-      // A post may carry one media embed. Photos win, so drop the link card
-      // visibly rather than silently deciding which one to keep.
+      // A post may carry one media embed. Removing the other media is visible
+      // rather than a silent decision about what to attach.
+      if (video) {
+        videoAbortRef.current?.abort();
+        videoBlobRef.current = null;
+        setVideo(null);
+        setVideoStatus(null);
+        setVideoError(null);
+        setCaptions([]);
+      }
       if (linkCard) setLinkCard(null);
     }
 
@@ -325,6 +448,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       setNotice(
         `You can attach up to ${MAX_COMPOSER_IMAGES} photos. Only the first ${remaining} selected here were added.`
       );
+    } else if (prepared.length && video) {
+      setNotice('Photos and videos cannot share a post. The video was removed.');
     } else if (prepared.length && linkCard) {
       setNotice('Photos and link cards cannot share a post. The link card was removed.');
     } else if (prepared.length) {
@@ -343,7 +468,17 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setResolvingLink(true);
     try {
       setLinkCard(await resolveExternalLink(candidate));
-      setNotice(null);
+      if (video) {
+        videoAbortRef.current?.abort();
+        videoBlobRef.current = null;
+        setVideo(null);
+        setVideoStatus(null);
+        setVideoError(null);
+        setCaptions([]);
+        setNotice('Videos and link cards cannot share a post. The video was removed.');
+      } else {
+        setNotice(null);
+      }
     } catch (err) {
       setLinkCard(null);
       setError(describeFailure(err, 'Could not build a link card for that URL.'));
@@ -427,6 +562,177 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     }
   }
 
+  async function pickVideo() {
+    if (mediaBusy || sending || video) return;
+    setError(null);
+    setNotice(null);
+    setVideoError(null);
+    setMediaBusy('video');
+    const controller = new AbortController();
+    videoAbortRef.current = controller;
+
+    try {
+      if (Platform.OS !== 'web') {
+        const permission =
+          await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (!permission.granted) {
+          setError(
+            'Photo access is needed to choose a video. You can allow it in your device settings.'
+          );
+          return;
+        }
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        // GIFs arrive through the image picker but are posted as video embeds.
+        mediaTypes: ['videos', 'images'],
+        allowsMultipleSelection: false,
+        quality: 1,
+      });
+      if (result.canceled || !result.assets?.length) return;
+      const asset = result.assets[0];
+      const fileName = asset.fileName?.toLowerCase() || '';
+      // Never guess video/mp4 from an unknown still image: say what the picker
+      // reported and let the shared validator reject unsupported formats.
+      const mimeType =
+        asset.mimeType ||
+        (fileName.endsWith('.gif')
+          ? 'image/gif'
+          : asset.type === 'video' || /\.(mp4|m4v)$/.test(fileName)
+            ? 'video/mp4'
+            : 'application/octet-stream');
+
+      const bytes = await readVideoBytes(asset.uri);
+      const selected: ComposerVideo = {
+        key: newVideoKey(),
+        uri: asset.uri,
+        mimeType,
+        bytes,
+        byteSize: bytes.byteLength,
+        width: Math.max(1, Math.round(asset.width || 0)),
+        height: Math.max(1, Math.round(asset.height || 0)),
+        durationMs: Math.max(0, Math.round(asset.duration || 0)),
+        alt: '',
+      };
+      const problem = videoSelectionError(selected);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+
+      // Bluesky accepts one media embed per post. Removing the other media is
+      // explicit: the status line below names what is attached.
+      setVideo(selected);
+      setCaptions([]);
+      setImages([]);
+      setLinkCard(null);
+      setPreparingVideo(true);
+      const { blob } = await uploadComposerVideo({
+        video: selected,
+        signal: controller.signal,
+        onStatus: setVideoStatus,
+      });
+      videoBlobRef.current = blob;
+      setNotice(
+        isGifMime(selected.mimeType)
+          ? 'GIF ready to post. Add a description so people know what it shows.'
+          : 'Video ready to post. Add a description so people know what it shows.'
+      );
+    } catch (err) {
+      if (controller.signal.aborted) {
+        setVideo(null);
+        setVideoStatus(null);
+        setVideoError(null);
+        videoBlobRef.current = null;
+        setError('Video upload cancelled. Choose the file again to retry.');
+      } else {
+        const reason =
+          err instanceof VideoUploadError
+            ? err.message
+            : describeFailure(err, 'Could not prepare this video for posting.');
+        setVideoStatus(null);
+        // Keep the preview, but never call a failed file "attached and ready".
+        setVideoError('Upload did not finish');
+        videoBlobRef.current = null;
+        setError(reason);
+      }
+    } finally {
+      videoAbortRef.current = null;
+      setPreparingVideo(false);
+      setMediaBusy(null);
+    }
+  }
+
+  function cancelVideoUpload() {
+    videoAbortRef.current?.abort();
+  }
+
+  function removeVideo() {
+    if (sending) return;
+    videoAbortRef.current?.abort();
+    videoBlobRef.current = null;
+    setVideo(null);
+    setVideoStatus(null);
+    setVideoError(null);
+    setCaptions([]);
+    setConfirmWithoutAlt(false);
+    setError(null);
+  }
+
+  function captionLanguage(): string {
+    return languages[0] || 'en';
+  }
+
+  async function pickCaption() {
+    if (
+      sending ||
+      !video ||
+      !videoReady ||
+      mediaBusy ||
+      captions.length >= MAX_CAPTIONS
+    ) {
+      return;
+    }
+    setError(null);
+    setMediaBusy('caption');
+    try {
+      const picked = await pickCaptionFile();
+      if (!picked) return;
+      const lang = captionLanguage();
+      const problem = captionSelectionError(picked.bytes, lang);
+      if (problem) {
+        setError(problem);
+        return;
+      }
+      const uploaded = await agent.uploadBlob(picked.bytes, {
+        encoding: 'text/vtt',
+      });
+      setCaptions((prev) => [
+        ...prev,
+        {
+          key: newCaptionKey(),
+          name: picked.name,
+          lang,
+          bytes: picked.bytes,
+          byteSize: picked.bytes.byteLength,
+          blob: uploaded.data.blob,
+        },
+      ]);
+      setNotice(`Captions added in ${lang}.`);
+    } catch {
+      setError(
+        'Could not add that caption file. Choose a WebVTT (.vtt) file and try again.'
+      );
+    } finally {
+      setMediaBusy(null);
+    }
+  }
+
+  function removeCaption(key: string) {
+    if (sending) return;
+    setCaptions((prev) => prev.filter((caption) => caption.key !== key));
+  }
+
   function removeImage(key: string) {
     if (sending) return;
     uploadedRef.current.delete(key);
@@ -439,12 +745,17 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   function openAltText(key: string) {
     if (sending) return;
     const image = images.find((item) => item.key === key);
-    if (!image) return;
-    setAltDraft(image.alt);
+    if (!image && (!video || video.key !== key)) return;
+    setAltDraft((image || video)?.alt || '');
     setEditingKey(key);
   }
 
   function openFirstMissingAlt() {
+    if (video && !video.alt.trim()) {
+      setConfirmWithoutAlt(false);
+      openAltText(video.key);
+      return;
+    }
     const image = images.find((item) => !item.alt.trim());
     if (!image) return;
     setConfirmWithoutAlt(false);
@@ -455,18 +766,23 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     if (!editingKey) return;
     if (countGraphemes(altDraft.trim()) > MAX_ALT_TEXT) return;
     const value = altDraft.trim();
-    setImages((prev) =>
-      prev.map((image) =>
-        image.key === editingKey ? { ...image, alt: value } : image
-      )
-    );
+    if (video && editingKey === video.key) {
+      setVideo({ ...video, alt: value });
+    } else {
+      setImages((prev) =>
+        prev.map((image) =>
+          image.key === editingKey ? { ...image, alt: value } : image
+        )
+      );
+    }
     setEditingKey(null);
     setError(null);
     setNotice(null);
-    const everyImageDescribed = images.every(
-      (image) => image.key === editingKey || !!image.alt.trim()
-    );
-    if (everyImageDescribed) setConfirmWithoutAlt(false);
+    const everythingDescribed =
+      images.every(
+        (image) => image.key === editingKey || !!image.alt.trim()
+      ) && (!video || video.key === editingKey || !!video.alt.trim());
+    if (everythingDescribed) setConfirmWithoutAlt(false);
   }
 
   function cancelUpload() {
@@ -478,6 +794,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       key,
       text: trimmed,
       images,
+      video,
+      videoBlob: videoBlobRef.current,
+      captions,
       quote,
       linkCard,
       selfLabels: normaliseSelfLabels(selfLabels),
@@ -489,6 +808,11 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   function resetEditor() {
     setText('');
     setImages([]);
+    setVideo(null);
+    setVideoStatus(null);
+    setVideoError(null);
+    setCaptions([]);
+    videoBlobRef.current = null;
     setQuote(null);
     setLinkCard(null);
     setSelfLabels([]);
@@ -508,7 +832,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setLanguages(normaliseLanguages(recoverDraft.languages));
     setGates(normaliseGates(recoverDraft.gates));
     setRecoverDraft(null);
-    setNotice('Draft restored. Photos and quoted posts need adding again.');
+    setNotice(
+      'Draft restored. Photos, videos and quoted posts need adding again.'
+    );
     editorRef.current?.focus();
   }
 
@@ -520,6 +846,15 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   function loadDraft(draft: PendingPost) {
     setText(draft.text);
     setImages(draft.images);
+    setVideo(draft.video || null);
+    setCaptions(draft.captions || []);
+    videoBlobRef.current = draft.videoBlob || null;
+    setVideoError(draft.video && !draft.videoBlob ? 'Upload did not finish' : null);
+    setVideoStatus(
+      draft.videoBlob
+        ? { state: 'JOB_STATE_COMPLETED', blob: draft.videoBlob }
+        : null
+    );
     setQuote(draft.quote);
     setLinkCard(draft.linkCard);
     setSelfLabels(normaliseSelfLabels(draft.selfLabels || []));
@@ -534,18 +869,21 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     if (sending || over || !canPost) return false;
     if (tooLongAlt > 0) {
       setError(
-        `Alt text is limited to ${MAX_ALT_TEXT} characters. Shorten the highlighted photo description.`
+        `Alt text is limited to ${MAX_ALT_TEXT} characters. Shorten the highlighted description.`
       );
       const image = images.find(
         (item) => countGraphemes(item.alt.trim()) > MAX_ALT_TEXT
       );
       if (image) openAltText(image.key);
+      else if (video && countGraphemes(video.alt.trim()) > MAX_ALT_TEXT) {
+        openAltText(video.key);
+      }
       return false;
     }
     if (missingAlt > 0) {
       if (preferences.requireAltText) {
         setError(
-          `Add alt text to ${missingAlt === 1 ? 'the photo' : `all ${missingAlt} photos`} before ${pending.length ? 'adding another post' : 'posting'}. You can turn off “Require alt text” in Settings.`
+          `Add alt text to ${missingAlt === 1 ? 'the attached media' : `all ${missingAlt} items`} before ${pending.length ? 'adding another post' : 'posting'}. You can turn off “Require alt text” in Settings.`
         );
         openFirstMissingAlt();
         return false;
@@ -660,9 +998,33 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           });
         }
 
+        let videoEmbed: Record<string, unknown> | undefined;
+        if (draft.video) {
+          if (!draft.videoBlob) {
+            throw new Error(
+              'This video is not ready yet. Remove it and add it again.'
+            );
+          }
+          const tracks = buildCaptionTracks(
+            (draft.captions || []).map((caption) => ({
+              lang: caption.lang,
+              blob: caption.blob,
+            }))
+          );
+          videoEmbed = buildVideoEmbed(draft.video, draft.videoBlob, tracks);
+          if (!videoEmbed) {
+            throw new Error('This video is not ready yet. Add it again.');
+          }
+        }
+
         if (controller.signal.aborted) throw abortError();
         setUploadProgress(null);
-        const embed = buildPostEmbed(attachments, draft.quote, draft.linkCard);
+        const embed = buildPostEmbed(
+          attachments,
+          draft.quote,
+          draft.linkCard,
+          videoEmbed
+        );
         const labels = buildSelfLabels(draft.selfLabels);
         const langs = normaliseLanguages(draft.languages);
         const created = await agent.post({
@@ -722,8 +1084,12 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       return;
     } catch (err) {
       const failure = controller.signal.aborted
-        ? 'Upload cancelled. Your text and photos are still here; tap Post to try again.'
-        : `${describeFailure(err, 'Could not publish this post.')} Your text and photos are safe here; tap Post to retry.`;
+        ? 'Upload cancelled. Your text and media are still here; tap Post to try again.'
+        : `${
+            err instanceof VideoUploadError
+              ? err.message
+              : describeFailure(err, 'Could not publish this post.')
+          } Your text and media are safe here; tap Post to retry.`;
       if (published > 0) {
         const remaining = drafts.slice(published);
         setThreadRoot(root);
@@ -957,7 +1323,78 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
             </View>
           ) : null}
 
-          {images.length > 0 && missingAlt > 0 ? (
+          {video ? (
+            <View style={styles.gallery}>
+              <VideoTile
+                video={video}
+                status={videoStatus}
+                error={videoError}
+                busy={preparingVideo}
+                disabled={sending}
+                onEditAlt={() => openAltText(video.key)}
+                onRemove={removeVideo}
+                onCancel={cancelVideoUpload}
+              />
+            </View>
+          ) : null}
+
+          {video && captions.length > 0 ? (
+            <View style={styles.gallery}>
+              {captions.map((caption) => (
+                <View
+                  key={caption.key}
+                  style={[
+                    styles.captionRow,
+                    { backgroundColor: p.soft, borderColor: p.divider },
+                  ]}
+                >
+                  <Text
+                    style={{ color: p.text, fontSize: 13, flex: 1 }}
+                    numberOfLines={1}
+                  >
+                    {`Captions · ${
+                      LANGUAGE_OPTIONS.find(
+                        (option) => option.code === caption.lang
+                      )?.label || caption.lang
+                    }`}
+                  </Text>
+                  <Pressable
+                    onPress={() => removeCaption(caption.key)}
+                    disabled={sending}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove ${caption.lang} captions`}
+                    style={({ pressed }) => [
+                      styles.captionRemove,
+                      { opacity: sending ? 0.5 : pressed ? 0.7 : 1 },
+                    ]}
+                  >
+                    <Text style={{ color: p.text, fontSize: 13, fontWeight: '600' }}>
+                      Remove
+                    </Text>
+                  </Pressable>
+                </View>
+              ))}
+            </View>
+          ) : null}
+
+          {video ? (
+            <View style={styles.gallery}>
+              <MediaButton
+                icon="closed-caption-outline"
+                label="Captions"
+                accessibilityLabel="Add a WebVTT caption file to this video"
+                onPress={() => void pickCaption()}
+                disabled={
+                  sending ||
+                  !videoReady ||
+                  !!mediaBusy ||
+                  captions.length >= MAX_CAPTIONS
+                }
+              />
+            </View>
+          ) : null}
+
+          {missingAlt > 0 && (images.length > 0 || video) ? (
             <View
               style={[
                 styles.infoNote,
@@ -978,10 +1415,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                   marginLeft: 8,
                 }}
               >
-                Alt text describes photos for blind and low-vision people.{' '}
+                Alt text describes media for blind and low-vision people.{' '}
                 {missingAlt === 1
-                  ? 'One photo is missing a description.'
-                  : `${missingAlt} photos are missing descriptions.`}
+                  ? 'One item is missing a description.'
+                  : `${missingAlt} items are missing descriptions.`}
               </Text>
             </View>
           ) : null}
@@ -994,9 +1431,19 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           >
             <View style={styles.mediaBarTop}>
               <Text style={{ color: p.secondary, fontSize: 12, flexShrink: 1 }}>
-                {mediaBusy
-                  ? 'Preparing photos…'
-                  : `${images.length}/${MAX_COMPOSER_IMAGES} photos`}
+                {mediaBusy === 'caption'
+                  ? 'Adding captions…'
+                  : mediaBusy === 'video'
+                    ? videoStatus
+                      ? describeVideoJob(videoStatus)
+                      : 'Preparing video…'
+                    : mediaBusy
+                      ? 'Preparing photos…'
+                      : videoError
+                        ? 'Video not ready'
+                        : video
+                          ? 'Video attached'
+                          : `${images.length}/${MAX_COMPOSER_IMAGES} photos`}
               </Text>
               {mediaBusy ? (
                 <ActivityIndicator size="small" color={p.accent} />
@@ -1018,17 +1465,26 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                 disabled={!!mediaBusy || sending || images.length >= MAX_COMPOSER_IMAGES}
               />
               <MediaButton
+                icon="videocam-outline"
+                label="Video"
+                accessibilityLabel="Add an MP4 video or animated GIF to this post"
+                onPress={() => void pickVideo()}
+                disabled={
+                  !!mediaBusy || sending || !!video || images.length > 0
+                }
+              />
+              <MediaButton
                 icon="link-outline"
-                label="Link card"
+                label="Link"
                 accessibilityLabel="Build a link card from the first web link in your post"
                 onPress={() => void addLinkCard()}
-                disabled={resolvingLink || sending || images.length > 0}
+                disabled={resolvingLink || sending || images.length > 0 || !!video}
               />
             </View>
           </View>
-          {images.length > 0 ? (
+          {images.length > 0 || video ? (
             <Text style={{ color: p.secondary, fontSize: 11, marginTop: 4 }}>
-              Link cards are unavailable while photos are attached.
+              A post carries one media type. Adding another removes the first.
             </Text>
           ) : null}
 
@@ -1388,6 +1844,13 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                   {count - LIMIT} grapheme{count - LIMIT === 1 ? '' : 's'} over the
                   limit.
                 </Text>
+              ) : preparingVideo ? (
+                <Text
+                  style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}
+                  numberOfLines={1}
+                >
+                  {videoStatus ? describeVideoJob(videoStatus) : 'Preparing video…'}
+                </Text>
               ) : sending ? (
                 <Text
                   style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}
@@ -1457,9 +1920,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         </View>
       </ScrollView>
 
-      {editingImage ? (
+      {editingMedia ? (
         <AltTextSheet
-          image={editingImage}
+          media={editingMedia}
+          isVideo={!!video && editingMedia.key === video.key}
           altText={altDraft}
           onChangeAltText={setAltDraft}
           onClose={() => setEditingKey(null)}
@@ -1708,6 +2172,141 @@ function PhotoTile({
   );
 }
 
+function LocalVideoPreview({ uri }: { uri: string }) {
+  const player = useVideoPlayer({ uri }, (instance) => {
+    instance.loop = true;
+  });
+  return (
+    <VideoView
+      player={player}
+      style={[StyleSheet.absoluteFill, { width: '100%', height: '100%' }]}
+      nativeControls
+      contentFit="contain"
+    />
+  );
+}
+
+function VideoTile({
+  video,
+  status,
+  error,
+  busy,
+  disabled,
+  onEditAlt,
+  onRemove,
+  onCancel,
+}: {
+  video: ComposerVideo;
+  status: VideoJobStatus | null;
+  error: string | null;
+  busy: boolean;
+  disabled: boolean;
+  onEditAlt: () => void;
+  onRemove: () => void;
+  onCancel: () => void;
+}) {
+  const p = usePalette();
+  const shownAlt = video.alt.trim();
+  const ratio = Math.max(
+    0.75,
+    Math.min(1.91, (video.width || 16) / (video.height || 9))
+  );
+
+  return (
+    <View
+      style={[
+        styles.photoTile,
+        {
+          width: '100%',
+          aspectRatio: ratio,
+          backgroundColor: p.soft,
+        },
+      ]}
+    >
+      {isGifMime(video.mimeType) ? (
+        <Image
+          source={{ uri: video.uri }}
+          style={styles.photo}
+          resizeMode="contain"
+          accessible
+          accessibilityLabel={shownAlt || 'Selected animated GIF'}
+        />
+      ) : (
+        <LocalVideoPreview uri={video.uri} />
+      )}
+
+      <View
+        accessibilityRole="status"
+        style={[
+          styles.videoStatus,
+          { backgroundColor: 'rgba(0, 0, 0, 0.76)' },
+        ]}
+      >
+        <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '600' }}>
+          {isGifMime(video.mimeType) ? 'GIF' : 'Video'} ·{' '}
+          {error || describeVideoJob(status)}
+        </Text>
+      </View>
+
+      <Pressable
+        onPress={onEditAlt}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel={
+          shownAlt
+            ? 'Edit alt text for video. Description added.'
+            : 'Add alt text for video. No description yet.'
+        }
+        style={({ pressed }) => [
+          styles.altButton,
+          {
+            backgroundColor: shownAlt ? p.accent : 'rgba(0, 0, 0, 0.76)',
+            opacity: disabled ? 0.55 : pressed ? 0.75 : 1,
+          },
+        ]}
+      >
+        <Ionicons
+          name={shownAlt ? 'checkmark' : 'add'}
+          size={13}
+          color="#FFFFFF"
+        />
+        <Text style={styles.altButtonText}>ALT</Text>
+      </Pressable>
+
+      {busy ? (
+        <Pressable
+          onPress={onCancel}
+          accessibilityRole="button"
+          accessibilityLabel="Cancel video upload"
+          style={({ pressed }) => [
+            styles.videoCancel,
+            { opacity: pressed ? 0.7 : 1 },
+          ]}
+        >
+          <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+            Cancel
+          </Text>
+        </Pressable>
+      ) : null}
+
+      <Pressable
+        onPress={onRemove}
+        disabled={disabled}
+        accessibilityRole="button"
+        accessibilityLabel="Remove video"
+        style={({ pressed }) => [
+          styles.removeHit,
+          { opacity: disabled ? 0.55 : pressed ? 0.65 : 1 },
+        ]}
+      >
+        <View style={styles.removeCircle}>
+          <Ionicons name="close" size={18} color="#FFFFFF" />
+        </View>
+      </Pressable>
+    </View>
+  );
+}
+
 function MediaButton({
   icon,
   label,
@@ -1753,13 +2352,15 @@ function MediaButton({
 }
 
 function AltTextSheet({
-  image,
+  media,
+  isVideo,
   altText,
   onChangeAltText,
   onClose,
   onSave,
 }: {
-  image: ComposerImage;
+  media: ComposerImage | ComposerVideo;
+  isVideo: boolean;
   altText: string;
   onChangeAltText: (value: string) => void;
   onClose: () => void;
@@ -1833,15 +2434,31 @@ function AltTextSheet({
             keyboardShouldPersistTaps="handled"
             contentContainerStyle={{ paddingBottom: 4 }}
           >
-            <Image
-              source={{ uri: image.uri }}
-              style={[styles.altPreview, { backgroundColor: p.bg }]}
-              resizeMode="contain"
-              accessible
-              accessibilityLabel={altText || 'Photo being described'}
-            />
+            {isVideo && !isGifMime(media.mimeType || '') ? (
+              <View
+                style={[
+                  styles.altPreview,
+                  { backgroundColor: p.bg, overflow: 'hidden' },
+                ]}
+              >
+                <LocalVideoPreview uri={media.uri} />
+              </View>
+            ) : (
+              <Image
+                source={{ uri: media.uri }}
+                style={[styles.altPreview, { backgroundColor: p.bg }]}
+                resizeMode="contain"
+                accessible
+                accessibilityLabel={altText || 'Media being described'}
+              />
+            )}
             <Text style={{ color: p.secondary, fontSize: 11, marginTop: 5 }}>
-              {image.width} × {image.height} · {formatBytes(image.byteSize)} · JPEG
+              {media.width} × {media.height} · {formatBytes(media.byteSize)} ·{' '}
+              {!isVideo
+                ? 'JPEG'
+                : isGifMime(media.mimeType || '')
+                  ? 'GIF'
+                  : 'Video'}
             </Text>
 
             <Text
@@ -1852,7 +2469,7 @@ function AltTextSheet({
                 marginTop: 12,
               }}
             >
-              Describe this photo
+              {isVideo ? 'Describe this video' : 'Describe this photo'}
             </Text>
             <Text
               style={{
@@ -1863,15 +2480,20 @@ function AltTextSheet({
                 marginBottom: 6,
               }}
             >
-              Say what matters in the image, not just that it is a photo. Leave it
-              blank if the image is purely decorative.
+              Say what matters in the {isVideo ? 'video' : 'image'}, not just
+              that it is {isVideo ? 'a clip' : 'a photo'}. Leave it blank if it
+              is purely decorative.
             </Text>
             <TextInput
               autoFocus
               multiline
               value={altText}
               onChangeText={onChangeAltText}
-              placeholder="e.g. A black cat asleep on a blue armchair"
+              placeholder={
+                isVideo
+                  ? 'e.g. A wave breaking on a rocky shore'
+                  : 'e.g. A black cat asleep on a blue armchair'
+              }
               placeholderTextColor={p.secondary}
               accessibilityLabel="Descriptive alt text"
               textAlignVertical="top"
@@ -1904,7 +2526,7 @@ function AltTextSheet({
                   ? `Shorten this by ${altCount - MAX_ALT_TEXT} character${
                       altCount - MAX_ALT_TEXT === 1 ? '' : 's'
                     }.`
-                  : 'Descriptions are public and shown with the photo.'}
+                  : 'Descriptions are public and shown with the media.'}
               </Text>
               <Text
                 style={{ color: over ? p.danger : p.secondary, fontSize: 12 }}
@@ -2375,6 +2997,42 @@ const styles = StyleSheet.create({
     letterSpacing: 0.7,
     marginLeft: 3,
   },
+  videoStatus: {
+    position: 'absolute',
+    top: 4,
+    left: 4,
+    minHeight: 30,
+    justifyContent: 'center',
+    borderRadius: 6,
+    paddingHorizontal: 8,
+  },
+  captionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+    width: '100%',
+    borderWidth: 1,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  captionRemove: {
+    minHeight: 44,
+    minWidth: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  videoCancel: {
+    position: 'absolute',
+    right: 4,
+    bottom: 4,
+    minHeight: 44,
+    justifyContent: 'center',
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.76)',
+  },
   removeHit: {
     position: 'absolute',
     top: 0,
@@ -2418,9 +3076,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   mediaButton: {
+    flex: 1,
     minHeight: 44,
     minWidth: 44,
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
     borderRadius: 6,
     flexDirection: 'row',
     alignItems: 'center',
