@@ -15,11 +15,10 @@ three separate things that can each be tested:
    account/content deletion, store policies and accessibility.
 
 Balla is not yet fully compliant. The gap is not primarily visual: the remaining
-pieces are label handling on future list/feed surfaces, video and GIF
-composition, lists, DMs and the remaining settings. Post-level reporting,
-muting, blocking, deletion, quoting, image posts and the moderation inbox are
-now shipped. This document records the bar and the order in which to close the
-rest.
+pieces are list/feed reporting and label handling on feed surfaces, video and GIF
+composition, DMs and the remaining settings. Post-level reporting, muting,
+blocking, deletion, quoting, image posts, lists and the moderation inbox are now
+shipped. This document records the bar and the order in which to close the rest.
 
 ## Current Balla coverage
 
@@ -29,14 +28,14 @@ rest.
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
 | Home feed | Chronological Following first, opt-in pinned custom-feed tabs, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
 | Threads | Ancestor chain, nested replies, reply composer | Missing thread/post gates and some moderation states |
-| Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner | No verification state or pinned post |
+| Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, authored lists, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner | No verification state or pinned post |
 | Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history and in-app feed/starter-pack destinations | Profile-scoped search remains (#25) |
 | Notifications | Tabs, grouped activity, unread count, mark-all-read and a real per-category settings route with in-app/push switches and audience filters | No device push registration yet (#36) |
 | Saved | Private Bluesky bookmarks, remove in place | Uses AppView bookmark stash; good privacy model |
 | Media | Profile photo/banner upload; post photos with up to 10 images, alt text, previews, compression, retries, full-screen viewer, record-with-media quotes and label warnings | Video/GIF upload and video captions remain (#14) |
 | Moderation | Post/profile report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox for reports, decisions, notices, account standing, action history and appeals | Missing list/feed reports and device push for inbox outcomes (#36) |
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
-| Lists/feeds | Saved and pinned custom feeds, discovery/search, feed pages and pin/reorder/remove controls | Missing lists, list feeds and list/feed reports |
+| Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; the AppView has no global list-search endpoint |
 | DMs | None | Missing `chat.bsky.convo`, group chat and chat moderation |
 | Settings | Settings shell with account, privacy, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes | Account/security controls, other preference editors and delivery preferences remain |
 | Support/legal | In-app Help, privacy, terms, community guidelines, copyright, contact and about pages; matching public site pages | Monitored public contact is the GitHub issue tracker and private advisory form |
@@ -189,8 +188,9 @@ privacy, block/mute, report and leave/delete flows.
 3. Verification and pinned post. Profile editing, followers, following, known
    followers and per-post engagement lists are shipped.
 4. Notification preferences route (tabs, grouping and seen state are shipped).
-5. Lists, list feeds and list management. Saved/custom feeds and discovery are
-   shipped.
+5. Lists, list feeds and list management. Curation and moderation lists,
+   membership, list feeds, subscribe/block states and profile links are shipped;
+   list/feed reports remain. Saved/custom feeds and discovery are shipped.
 6. Settings preference editors for content, language, appearance, privacy and
    account. Content filtering, labelers, adult content and muted words are
    shipped; the other editors remain.

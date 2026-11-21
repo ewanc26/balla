@@ -485,7 +485,7 @@ export function SearchScreen({ route }: { route?: any }) {
             Search
           </Text>
           <Text style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}>
-            Posts, people, feeds and starter packs
+            Posts, people, feeds, starter packs and lists
           </Text>
           <View
             style={[
@@ -580,6 +580,33 @@ export function SearchScreen({ route }: { route?: any }) {
               </Text>
             ) : null}
           </View>
+
+          <Pressable
+            onPress={() => navigation.navigate('Lists')}
+            accessibilityRole="button"
+            accessibilityLabel="Open lists"
+            accessibilityHint="Your lists, subscribed lists and blocked lists"
+            style={({ pressed }) => [
+              styles.listsRow,
+              {
+                backgroundColor: p.bg,
+                borderColor: p.divider,
+                opacity: pressed ? 0.65 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="list-outline" size={17} color={p.accent} />
+            <Text style={{ color: p.text, fontSize: 13, fontWeight: '600' }}>
+              Lists
+            </Text>
+            <Text
+              style={{ color: p.secondary, fontSize: 11, flex: 1 }}
+              numberOfLines={1}
+            >
+              Your lists and subscriptions
+            </Text>
+            <Ionicons name="chevron-forward" size={15} color={p.secondary} />
+          </Pressable>
         </View>
 
         {submitted ? (
@@ -1014,6 +1041,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 10,
+  },
+  listsRow: {
+    minHeight: 40,
+    marginTop: 8,
+    marginBottom: 4,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   filterRow: {
     flexDirection: 'row',

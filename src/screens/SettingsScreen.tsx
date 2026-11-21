@@ -211,6 +211,12 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           value={`${pinnedFeeds.length} pinned`}
           onPress={() => navigation.navigate('Feeds')}
         />
+        <Row
+          icon="list-outline"
+          label="Lists"
+          detail="Curate people, read list feeds and manage moderation lists"
+          onPress={() => navigation.navigate('Lists')}
+        />
       </Section>
 
       <Section title="Appearance and accessibility">
