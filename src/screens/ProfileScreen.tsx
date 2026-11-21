@@ -19,7 +19,11 @@ import { ContentWarning } from '../components/ContentWarning';
 import { useModeration } from '../lib/moderationContext';
 import { useViewer } from '../lib/viewer';
 import { profileLinkHost, profileLinkLabel } from '../lib/profileLinks';
-import { listMemberCount, listPurposeMeta } from '../lib/listModel';
+import {
+  listMemberCount,
+  listPurposeMeta,
+  listViewerState,
+} from '../lib/listModel';
 import { subscribeActorHidden } from '../lib/moderation';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
@@ -539,7 +543,9 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
               )}
             </View>
 
-            {lists.length > 0 ? (
+            {lists.some(
+              (list: any) => isSelf || !listViewerState(list).hidden
+            ) ? (
               <View style={[styles.listsBlock, { borderTopColor: p.divider }]}>
                 <View style={styles.listsHeading}>
                   <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', flex: 1 }}>
@@ -565,7 +571,10 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                     <Ionicons name="chevron-forward" size={14} color={p.accent} />
                   </Pressable>
                 </View>
-                {lists.slice(0, 3).map((list: any) => {
+                {lists
+                  .filter((list: any) => isSelf || !listViewerState(list).hidden)
+                  .slice(0, 3)
+                  .map((list: any) => {
                   const purpose = listPurposeMeta(list.purpose);
                   return (
                     <Pressable

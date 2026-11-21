@@ -60,6 +60,7 @@ export function ListDetailScreen({
   const [actionError, setActionError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [confirmBlock, setConfirmBlock] = useState(false);
   const moreInFlight = useRef(false);
 
   const load = useCallback(
@@ -142,15 +143,15 @@ export function ListDetailScreen({
     });
   }, []);
 
-  useLayoutEffect(() => {
-    navigation.setOptions({ title: list?.name || 'List' });
-  }, [navigation, list?.name]);
-
   const purpose = listPurposeMeta(list?.purpose);
   const viewer = listViewerState(list);
   const isCurate = purpose.shortLabel === 'Curation';
   const isOwner = !!list?.creator?.did && list.creator.did === agent.did;
   const hiddenForMe = viewer.hidden && !isOwner;
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: hiddenForMe ? 'Hidden list' : list?.name || 'List' });
+  }, [navigation, hiddenForMe, list?.name]);
   const memberCount = listMemberCount(list, members.length);
   const contentHidden = hiddenForMe;
 
@@ -184,6 +185,7 @@ export function ListDetailScreen({
   async function toggleBlock() {
     if (!list || busy) return;
     const next = !viewer.blocked;
+    setConfirmBlock(false);
     setBusy('block');
     setActionError(null);
     try {
@@ -396,34 +398,40 @@ export function ListDetailScreen({
               styles.purposeBadge,
               {
                 backgroundColor:
-                  purpose.shortLabel === 'Moderation' ? p.soft : p.accentSoft,
+                  hiddenForMe || purpose.shortLabel === 'Moderation'
+                    ? p.soft
+                    : p.accentSoft,
               },
             ]}
           >
             <Text
               style={{
                 color:
-                  purpose.shortLabel === 'Moderation' ? p.secondary : p.accent,
+                  hiddenForMe || purpose.shortLabel === 'Moderation'
+                    ? p.secondary
+                    : p.accent,
                 fontSize: 10,
                 fontWeight: '700',
               }}
             >
-              {purpose.shortLabel}
+              {hiddenForMe ? 'Hidden' : purpose.shortLabel}
             </Text>
           </View>
         </View>
 
         <Text style={{ color: p.text, fontSize: 25, fontWeight: '800', marginTop: 14 }}>
-          {list.name}
+          {hiddenForMe ? 'Hidden list' : list.name}
         </Text>
-        <Text style={{ color: p.secondary, fontSize: 13, marginTop: 3 }}>
-          {memberCount} {memberCount === 1 ? 'person' : 'people'}
-          {purpose.shortLabel === 'Curation'
-            ? ' · list feed'
-            : ' · mute or block list'}
-        </Text>
+        {hiddenForMe ? null : (
+          <Text style={{ color: p.secondary, fontSize: 13, marginTop: 3 }}>
+            {memberCount} {memberCount === 1 ? 'person' : 'people'}
+            {purpose.shortLabel === 'Curation'
+              ? ' · list feed'
+              : ' · mute or block list'}
+          </Text>
+        )}
 
-        {list.description ? (
+        {!hiddenForMe && list.description ? (
           <Text style={{ color: p.text, fontSize: 14, lineHeight: 21, marginTop: 10 }}>
             {list.description}
           </Text>
@@ -468,6 +476,7 @@ export function ListDetailScreen({
           </View>
         ) : null}
 
+        {hiddenForMe ? null : (
         <View style={styles.actions}>
           {isOwner ? (
             <>
@@ -511,13 +520,59 @@ export function ListDetailScreen({
                 danger={!viewer.blocked}
                 busy={busy === 'block'}
                 disabled={!!busy}
-                onPress={() => void toggleBlock()}
+                onPress={() => {
+                  if (viewer.blocked) void toggleBlock();
+                  else setConfirmBlock(true);
+                }}
               />
             </>
           )}
         </View>
+        )}
 
-        {!isOwner ? (
+        {confirmBlock ? (
+          <View style={[styles.deleteBox, { backgroundColor: p.bg, borderColor: p.danger }]}>
+            <Text style={{ color: p.text, fontSize: 14, fontWeight: '700' }}>
+              Block this list?
+            </Text>
+            <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, marginTop: 3 }}>
+              This is public and blocks the accounts on this list. Balla will write
+              a list-block record to your PDS. You can undo it from this screen.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+              <Pressable
+                onPress={() => setConfirmBlock(false)}
+                disabled={busy === 'block'}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel blocking list"
+                style={({ pressed }) => [
+                  styles.confirmButton,
+                  { backgroundColor: p.card, borderColor: p.divider, opacity: pressed ? 0.65 : 1 },
+                ]}
+              >
+                <Text style={{ color: p.text, fontWeight: '700' }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void toggleBlock()}
+                disabled={busy === 'block'}
+                accessibilityRole="button"
+                accessibilityLabel="Block every account on this list"
+                style={({ pressed }) => [
+                  styles.confirmButton,
+                  { backgroundColor: p.danger, borderColor: p.danger, opacity: pressed ? 0.65 : 1 },
+                ]}
+              >
+                {busy === 'block' ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Block list</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        ) : null}
+
+        {!isOwner && !hiddenForMe ? (
           <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 16, marginTop: 8 }}>
             Subscribing applies this list’s mute moderation. Blocking a list is
             public and blocks every account currently on it.
@@ -567,6 +622,7 @@ export function ListDetailScreen({
         ) : null}
       </View>
 
+      {hiddenForMe ? null : (
       <View
         style={[
           styles.tabs,
@@ -608,6 +664,7 @@ export function ListDetailScreen({
           </Pressable>
         ) : null}
       </View>
+      )}
     </View>
   );
 
