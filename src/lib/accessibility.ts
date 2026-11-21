@@ -29,6 +29,16 @@ export {
  * those props cannot describe.
  */
 
+/**
+ * RN Web forwards `aria-*` attributes but does not translate the cross-platform
+ * `accessibilityState.checked` into `aria-checked`. Spread this alongside that
+ * state so a checkbox announces whether it is selected in a browser as well as
+ * through its native accessibility state.
+ */
+export function webCheckedProps(checked: boolean): any {
+  return { 'aria-checked': checked };
+}
+
 /** Idempotent: safe to call on every palette change. */
 export function installWebAccessibility(accent: string): void {
   if (Platform.OS !== 'web' || typeof document === 'undefined') return;

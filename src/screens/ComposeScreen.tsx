@@ -23,6 +23,7 @@ import {
   sheetAnimation,
   useDialogFocus,
   useReducedMotion,
+  webCheckedProps,
 } from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
 import { firstWebUrl, type ExternalView } from '../lib/embedModel';
@@ -42,6 +43,15 @@ import {
   threadReply,
   type StrongRef,
 } from '../lib/composerPost';
+import {
+  LANGUAGE_OPTIONS,
+  MAX_POST_LANGUAGES,
+  SELF_LABEL_OPTIONS,
+  buildSelfLabels,
+  languageSummary,
+  normaliseLanguages,
+  normaliseSelfLabels,
+} from '../lib/postOptions';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 
 // Bluesky caps posts at 300 graphemes; the counter is honest and always
@@ -66,6 +76,8 @@ type PendingPost = {
   images: ComposerImage[];
   quote: any;
   linkCard: ExternalView | null;
+  selfLabels: string[];
+  languages: string[];
 };
 
 let imageSequence = 0;
@@ -165,6 +177,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [mediaBusy, setMediaBusy] = useState<'library' | 'camera' | null>(null);
   const [confirmWithoutAlt, setConfirmWithoutAlt] = useState(false);
   const [linkCard, setLinkCard] = useState<ExternalView | null>(null);
+  const [selfLabels, setSelfLabels] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<string[]>([]);
+  const [optionsOpen, setOptionsOpen] = useState(false);
   const [resolvingLink, setResolvingLink] = useState(false);
   const [pending, setPending] = useState<PendingPost[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
@@ -395,7 +410,15 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   }
 
   function snapshot(key = newDraftKey()): PendingPost {
-    return { key, text: trimmed, images, quote, linkCard };
+    return {
+      key,
+      text: trimmed,
+      images,
+      quote,
+      linkCard,
+      selfLabels: normaliseSelfLabels(selfLabels),
+      languages: normaliseLanguages(languages),
+    };
   }
 
   function resetEditor() {
@@ -403,6 +426,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setImages([]);
     setQuote(null);
     setLinkCard(null);
+    setSelfLabels([]);
+    setLanguages([]);
     setEditingKey(null);
     setConfirmWithoutAlt(false);
     setNotice(null);
@@ -413,6 +438,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setImages(draft.images);
     setQuote(draft.quote);
     setLinkCard(draft.linkCard);
+    setSelfLabels(normaliseSelfLabels(draft.selfLabels || []));
+    setLanguages(normaliseLanguages(draft.languages || []));
     setEditingKey(null);
     editorRef.current?.focus();
   }
@@ -551,9 +578,13 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         if (controller.signal.aborted) throw abortError();
         setUploadProgress(null);
         const embed = buildPostEmbed(attachments, draft.quote, draft.linkCard);
+        const labels = buildSelfLabels(draft.selfLabels);
+        const langs = normaliseLanguages(draft.languages);
         const created = await agent.post({
           text: draft.text.trim(),
           ...(embed ? { embed } : {}),
+          ...(labels ? { labels } : {}),
+          ...(langs.length ? { langs } : {}),
           ...threadReply(root, parent),
         });
         // The first post is the root; every later post replies to the one
@@ -669,6 +700,20 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                             ? 'Quoted post'
                             : 'Text only'}
                     </Text>
+                    {draft.selfLabels?.length || draft.languages?.length ? (
+                      <Text style={{ color: p.accent, fontSize: 11, marginTop: 2 }}>
+                        {[
+                          draft.selfLabels?.length
+                            ? `${draft.selfLabels.length} content warning${draft.selfLabels.length === 1 ? '' : 's'}`
+                            : null,
+                          draft.languages?.length
+                            ? languageSummary(draft.languages)
+                            : null,
+                        ]
+                          .filter(Boolean)
+                          .join(' · ')}
+                      </Text>
+                    ) : null}
                   </View>
                   <Pressable
                     onPress={() => editPending(index)}
@@ -825,45 +870,128 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
               { borderTopColor: p.divider, borderBottomColor: p.divider },
             ]}
           >
-            <Text style={{ color: p.secondary, fontSize: 12, flex: 1 }}>
-              {mediaBusy
-                ? 'Preparing photos…'
-                : `${images.length}/${MAX_COMPOSER_IMAGES} photos`}
-            </Text>
-            {mediaBusy ? (
-              <ActivityIndicator
-                size="small"
-                color={p.accent}
-                style={{ marginRight: 10 }}
+            <View style={styles.mediaBarTop}>
+              <Text style={{ color: p.secondary, fontSize: 12, flexShrink: 1 }}>
+                {mediaBusy
+                  ? 'Preparing photos…'
+                  : `${images.length}/${MAX_COMPOSER_IMAGES} photos`}
+              </Text>
+              {mediaBusy ? (
+                <ActivityIndicator size="small" color={p.accent} />
+              ) : null}
+            </View>
+            <View style={styles.mediaButtons}>
+              <MediaButton
+                icon="images-outline"
+                label="Photo"
+                accessibilityLabel="Add photos to this post"
+                onPress={() => void pickFromLibrary()}
+                disabled={!!mediaBusy || sending || images.length >= MAX_COMPOSER_IMAGES}
               />
-            ) : null}
-            <MediaButton
-              icon="images-outline"
-              label="Photo"
-              accessibilityLabel="Add photos to this post"
-              onPress={() => void pickFromLibrary()}
-              disabled={!!mediaBusy || sending || images.length >= MAX_COMPOSER_IMAGES}
-            />
-            <MediaButton
-              icon="camera-outline"
-              label="Camera"
-              accessibilityLabel="Take a photo for this post"
-              onPress={() => void takePhoto()}
-              disabled={!!mediaBusy || sending || images.length >= MAX_COMPOSER_IMAGES}
-            />
-            <MediaButton
-              icon="link-outline"
-              label="Link card"
-              accessibilityLabel="Build a link card from the first web link in your post"
-              onPress={() => void addLinkCard()}
-              disabled={resolvingLink || sending || images.length > 0}
-            />
+              <MediaButton
+                icon="camera-outline"
+                label="Camera"
+                accessibilityLabel="Take a photo for this post"
+                onPress={() => void takePhoto()}
+                disabled={!!mediaBusy || sending || images.length >= MAX_COMPOSER_IMAGES}
+              />
+              <MediaButton
+                icon="link-outline"
+                label="Link card"
+                accessibilityLabel="Build a link card from the first web link in your post"
+                onPress={() => void addLinkCard()}
+                disabled={resolvingLink || sending || images.length > 0}
+              />
+            </View>
           </View>
           {images.length > 0 ? (
             <Text style={{ color: p.secondary, fontSize: 11, marginTop: 4 }}>
               Link cards are unavailable while photos are attached.
             </Text>
           ) : null}
+
+          <View
+            style={[
+              styles.optionsRow,
+              { borderTopColor: p.divider, borderBottomColor: p.divider },
+            ]}
+          >
+            <Pressable
+              onPress={() => setOptionsOpen(true)}
+              disabled={sending}
+              accessibilityRole="button"
+              accessibilityLabel="Content warning and language options"
+              accessibilityHint="Opens options to label this post and choose its language"
+              accessibilityState={{ disabled: sending }}
+              style={({ pressed }) => [
+                styles.optionsButton,
+                { opacity: sending ? 0.5 : pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons
+                name={selfLabels.length ? 'shield' : 'shield-outline'}
+                size={18}
+                color={selfLabels.length ? p.accent : p.secondary}
+              />
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: selfLabels.length ? p.accent : p.secondary,
+                  fontSize: 13,
+                  fontWeight: selfLabels.length ? '700' : '500',
+                  marginLeft: 6,
+                  flexShrink: 1,
+                }}
+              >
+                {selfLabels.length
+                  ? `${selfLabels.length} warning${selfLabels.length === 1 ? '' : 's'}`
+                  : 'Content warning'}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={15}
+                color={p.secondary}
+                style={{ marginLeft: 2 }}
+              />
+            </Pressable>
+            <View style={[styles.optionsDivider, { backgroundColor: p.divider }]} />
+            <Pressable
+              onPress={() => setOptionsOpen(true)}
+              disabled={sending}
+              accessibilityRole="button"
+              accessibilityLabel="Post language options"
+              accessibilityHint="Opens options to choose the languages used in this post"
+              accessibilityState={{ disabled: sending }}
+              style={({ pressed }) => [
+                styles.optionsButton,
+                { opacity: sending ? 0.5 : pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons
+                name="language-outline"
+                size={18}
+                color={languages.length ? p.accent : p.secondary}
+              />
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: languages.length ? p.accent : p.secondary,
+                  fontSize: 13,
+                  fontWeight: languages.length ? '700' : '500',
+                  marginLeft: 6,
+                  flexShrink: 1,
+                }}
+              >
+                {languageSummary(languages)}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={15}
+                color={p.secondary}
+                style={{ marginLeft: 2 }}
+              />
+            </Pressable>
+          </View>
 
           {linkCard ? (
             <View
@@ -1193,6 +1321,16 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           onChangeAltText={setAltDraft}
           onClose={() => setEditingKey(null)}
           onSave={saveAltText}
+        />
+      ) : null}
+
+      {optionsOpen ? (
+        <PostOptionsSheet
+          selfLabels={selfLabels}
+          languages={languages}
+          onChangeSelfLabels={setSelfLabels}
+          onChangeLanguages={setLanguages}
+          onClose={() => setOptionsOpen(false)}
         />
       ) : null}
     </KeyboardAvoidingView>
@@ -1536,6 +1674,274 @@ function AltTextSheet({
   );
 }
 
+function PostOptionsSheet({
+  selfLabels,
+  languages,
+  onChangeSelfLabels,
+  onChangeLanguages,
+  onClose,
+}: {
+  selfLabels: string[];
+  languages: string[];
+  onChangeSelfLabels: (values: string[]) => void;
+  onChangeLanguages: (codes: string[]) => void;
+  onClose: () => void;
+}) {
+  const p = usePalette();
+  const insets = useSafeAreaInsets();
+  const containerRef = useRef<any>(null);
+  const closeButtonRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible: true,
+    onClose,
+    containerRef,
+    initialFocusRef: closeButtonRef,
+  });
+
+  function toggleLabel(value: string) {
+    onChangeSelfLabels(
+      selfLabels.includes(value)
+        ? selfLabels.filter((item) => item !== value)
+        : [...selfLabels, value]
+    );
+  }
+
+  function toggleLanguage(code: string) {
+    if (languages.includes(code)) {
+      onChangeLanguages(languages.filter((item) => item !== code));
+    } else if (languages.length < MAX_POST_LANGUAGES) {
+      onChangeLanguages([...languages, code]);
+    }
+  }
+
+  const atLanguageCap = languages.length >= MAX_POST_LANGUAGES;
+
+  return (
+    <Modal
+      transparent
+      visible
+      animationType={sheetAnimation(reducedMotion)}
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onClose}
+      accessibilityViewIsModal
+    >
+      <KeyboardAvoidingView
+        style={styles.modalRoot}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <Pressable
+          onPress={onClose}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.backdrop}
+        />
+        <View
+          ref={containerRef}
+          {...dialogAccessibilityProps('Post options')}
+          accessibilityViewIsModal
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: p.card,
+              paddingBottom: Math.max(insets.bottom, 16),
+            },
+          ]}
+        >
+          <View style={styles.sheetHeader}>
+            <Text style={{ color: p.text, fontSize: 18, fontWeight: '700' }}>
+              Post options
+            </Text>
+            <Pressable
+              ref={closeButtonRef}
+              onPress={onClose}
+              accessibilityRole="button"
+              accessibilityLabel="Close post options"
+              style={({ pressed }) => [
+                styles.closeButton,
+                { backgroundColor: pressed ? p.bg : 'transparent' },
+              ]}
+            >
+              <Ionicons name="close" size={24} color={p.secondary} />
+            </Pressable>
+          </View>
+
+          <ScrollView keyboardShouldPersistTaps="handled">
+            <Text
+              accessibilityRole="header"
+              style={{ color: p.text, fontSize: 15, fontWeight: '700', marginTop: 6 }}
+            >
+              Content warnings
+            </Text>
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 17,
+                marginTop: 2,
+                marginBottom: 8,
+              }}
+            >
+              Label what your post shows. These warnings publish with the post
+              and are visible to everyone who sees it.
+            </Text>
+            {SELF_LABEL_OPTIONS.map((option) => {
+              const selected = selfLabels.includes(option.value);
+              return (
+                <Pressable
+                  key={option.value}
+                  onPress={() => toggleLabel(option.value)}
+                  accessibilityRole="checkbox"
+                  accessibilityLabel={option.label}
+                  accessibilityHint={option.detail}
+                  {...webCheckedProps(selected)}
+                  accessibilityState={{ checked: selected }}
+                  style={({ pressed }) => [
+                    styles.optionRow,
+                    {
+                      borderBottomColor: p.divider,
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <View
+                    style={[
+                      styles.checkbox,
+                      {
+                        borderColor: selected ? p.accent : p.secondary,
+                        backgroundColor: selected ? p.accent : 'transparent',
+                      },
+                    ]}
+                  >
+                    {selected ? (
+                      <Ionicons name="checkmark" size={15} color={p.onAccent} />
+                    ) : null}
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0, marginLeft: 10 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      <Text style={{ color: p.text, fontSize: 14, fontWeight: '600' }}>
+                        {option.label}
+                      </Text>
+                      {option.adult ? (
+                        <View
+                          style={[
+                            styles.adultTag,
+                            { backgroundColor: p.accentSoft },
+                          ]}
+                        >
+                          <Text style={{ color: p.accent, fontSize: 10, fontWeight: '700' }}>
+                            ADULT
+                          </Text>
+                        </View>
+                      ) : null}
+                    </View>
+                    <Text style={{ color: p.secondary, fontSize: 12, marginTop: 1 }}>
+                      {option.detail}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+
+            <View
+              style={[
+                styles.optionsDivider,
+                { backgroundColor: p.divider, marginVertical: 14 },
+              ]}
+            />
+
+            <Text
+              accessibilityRole="header"
+              style={{ color: p.text, fontSize: 15, fontWeight: '700' }}
+            >
+              Post language
+            </Text>
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 17,
+                marginTop: 2,
+                marginBottom: 8,
+              }}
+            >
+              Choose up to {MAX_POST_LANGUAGES} languages used in this post. Leave
+              none selected to let Bluesky detect the language.
+            </Text>
+            <View style={styles.languageGrid}>
+              {LANGUAGE_OPTIONS.map((option) => {
+                const selected = languages.includes(option.code);
+                const disabled = !selected && atLanguageCap;
+                return (
+                  <Pressable
+                    key={option.code}
+                    onPress={() => toggleLanguage(option.code)}
+                    disabled={disabled}
+                    accessibilityRole="checkbox"
+                    accessibilityLabel={option.label}
+                    {...webCheckedProps(selected)}
+                    accessibilityState={{ checked: selected, disabled }}
+                    style={({ pressed }) => [
+                      styles.languageChip,
+                      {
+                        borderColor: selected ? p.accent : p.divider,
+                        backgroundColor: selected
+                          ? p.accent
+                          : pressed
+                            ? p.soft
+                            : p.bg,
+                        opacity: disabled ? 0.45 : 1,
+                      },
+                    ]}
+                  >
+                    {selected ? (
+                      <Ionicons
+                        name="checkmark"
+                        size={14}
+                        color={p.onAccent}
+                        style={{ marginRight: 4 }}
+                      />
+                    ) : null}
+                    <Text
+                      style={{
+                        color: selected ? p.onAccent : p.text,
+                        fontSize: 13,
+                        fontWeight: selected ? '700' : '500',
+                      }}
+                    >
+                      {option.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+
+          <Pressable
+            onPress={onClose}
+            accessibilityRole="button"
+            accessibilityLabel="Done with post options"
+            style={({ pressed }) => [
+              styles.sheetButton,
+              {
+                backgroundColor: p.accent,
+                borderColor: p.accent,
+                marginTop: 12,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Text style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}>
+              Done
+            </Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
 const styles = StyleSheet.create({
   card: {
     borderRadius: CARD_RADIUS,
@@ -1598,12 +2004,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   mediaBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     borderBottomWidth: StyleSheet.hairlineWidth,
     paddingVertical: 4,
     marginTop: 2,
+  },
+  mediaBarTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    minHeight: 24,
+  },
+  mediaButtons: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   mediaButton: {
     minHeight: 44,
@@ -1613,6 +2028,58 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  optionsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginTop: 6,
+  },
+  optionsButton: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+  },
+  optionsDivider: {
+    width: StyleSheet.hairlineWidth,
+    minHeight: 26,
+  },
+  optionRow: {
+    minHeight: 58,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 5,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adultTag: {
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    marginLeft: 8,
+  },
+  languageGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  languageChip: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 12,
   },
   quote: {
     borderWidth: 1,
