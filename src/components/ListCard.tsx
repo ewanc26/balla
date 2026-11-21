@@ -46,7 +46,7 @@ export function ListCard({
             Hidden list
           </Text>
           <Text style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}>
-            Hidden by a Bluesky moderation label
+            Hidden in your list settings
           </Text>
         </View>
         <Ionicons name="chevron-forward" size={18} color={p.secondary} />
@@ -107,7 +107,7 @@ export function ListCard({
 
         {viewer.hidden || viewer.blocked || viewer.subscribed ? (
           <View style={styles.statusRow}>
-            {viewer.hidden ? <Status icon="eye-off-outline" text="Hidden by label" /> : null}
+            {viewer.hidden ? <Status icon="eye-off-outline" text="Hidden for you" /> : null}
             {viewer.subscribed ? <Status icon="checkmark-circle-outline" text="Subscribed" /> : null}
             {viewer.blocked ? <Status icon="ban-outline" text="Blocked" /> : null}
           </View>

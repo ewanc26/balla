@@ -18,6 +18,7 @@ import { Avatar } from './Avatar';
 import { ImageViewer } from './ImageViewer';
 import { PostMenu } from './PostMenu';
 import { usePostModeration } from '../lib/moderationContext';
+import { accountLabelCauses, warnedByLabel } from '../lib/labelVisibility';
 import { ContentWarning } from './ContentWarning';
 import { translateText } from '../lib/translate';
 import { richTextSegments, type RichTextSegment } from '../lib/richtext';
@@ -77,6 +78,7 @@ export function PostCard({
   const [menuOpen, setMenuOpen] = useState(false);
   const [hidden, setHidden] = useState(false);
   const [revealed, setRevealed] = useState(false);
+  const [identityRevealed, setIdentityRevealed] = useState(false);
   const [mediaRevealed, setMediaRevealed] = useState(false);
   const [translation, setTranslation] = useState<string | null>(null);
   const [translationVisible, setTranslationVisible] = useState(false);
@@ -267,14 +269,19 @@ export function PostCard({
   const avatarUi = moderation?.ui('avatar');
   const displayNameUi = moderation?.ui('displayName');
   if (hidden || listUi?.filter) return null;
-  const hideAuthor = !!(profileUi?.blur || avatarUi?.blur || displayNameUi?.blur);
+  // A `warn` label blurs parts of an identity but must not hide the account.
+  // Only an account with a `hide` preference is filtered out above.
+  const identityWarning =
+    !identityRevealed && warnedByLabel(profileUi, avatarUi, displayNameUi)
+      ? accountLabelCauses(moderation?.labelCauses)
+      : [];
   const hideBody = !!contentUi?.blur && !revealed;
 
   const header = (
     <>
       <Avatar
-        avatar={hideAuthor ? undefined : author.avatar}
-        displayName={hideAuthor ? 'Hidden account' : author.displayName || author.handle}
+        avatar={author.avatar}
+        displayName={author.displayName || author.handle}
         size={40}
       />
       <View style={{ marginLeft: 10, flex: 1, minWidth: 0 }}>
@@ -282,29 +289,23 @@ export function PostCard({
           style={{ color: p.text, fontSize: 15, fontWeight: '700' }}
           numberOfLines={1}
         >
-          {hideAuthor ? 'Hidden account' : author.displayName || author.handle}
+          {author.displayName || author.handle}
         </Text>
-        {hideAuthor ? (
-          <Text style={{ color: p.secondary, fontSize: 13 }} numberOfLines={1}>
-            Account hidden by a label
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
+          <Text style={{ color: p.secondary, fontSize: 13 }}>
+            {timeAgo(post.indexedAt)}
           </Text>
-        ) : (
-          <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
-            <Text style={{ color: p.secondary, fontSize: 13 }}>
-              {timeAgo(post.indexedAt)}
-            </Text>
-            <Ionicons
-              name="globe-outline"
-              size={12}
-              color={p.secondary}
-              style={{ marginLeft: 4 }}
-            />
-            <Text style={{ color: p.secondary, fontSize: 13 }} numberOfLines={1}>
-              {' · @'}
-              {author.handle}
-            </Text>
-          </View>
-        )}
+          <Ionicons
+            name="globe-outline"
+            size={12}
+            color={p.secondary}
+            style={{ marginLeft: 4 }}
+          />
+          <Text style={{ color: p.secondary, fontSize: 13 }} numberOfLines={1}>
+            {' · @'}
+            {author.handle}
+          </Text>
+        </View>
       </View>
     </>
   );
@@ -352,6 +353,20 @@ export function PostCard({
             <Ionicons name="ellipsis-horizontal" size={20} color={p.secondary} />
           </Pressable>
         </View>
+
+        {identityWarning.length ? (
+          <ContentWarning
+            compact
+            compactTitle="Account labelled"
+            causes={identityWarning}
+            noOverride={
+              profileUi?.noOverride ||
+              avatarUi?.noOverride ||
+              displayNameUi?.noOverride
+            }
+            onReveal={() => setIdentityRevealed(true)}
+          />
+        ) : null}
 
         {hideBody ? (
           <ContentWarning
