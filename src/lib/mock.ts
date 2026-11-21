@@ -15,7 +15,7 @@ const viewer = {
   handle: 'ewan.balla.test',
   displayName: 'Ewan Croft',
   description:
-    'Building Balla: a chronological, Facebook-shaped Bluesky client. Gàidhlig for wall.',
+    'Building Balla: a chronological, Facebook-inspired Bluesky client. Gàidhlig for wall.',
   postsCount: 42,
   followsCount: 128,
   followersCount: 96,

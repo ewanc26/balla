@@ -7,6 +7,11 @@ familiar shape — white chrome, a grey canvas, a centred feed of cards, a compo
 at the top and a blue action language — while the account, graph and content
 stay on Bluesky and the AT Protocol.
 
+These are visual references only, not a claim of affiliation, endorsement,
+partnership or official status with Meta or Facebook. Balla ships no Facebook
+logos, wordmarks or other brand assets. Bluesky references identify the network
+Balla connects to; Balla is not an official Bluesky client.
+
 Facebook rolls its interface out gradually, so different accounts see different
 variants. The patterns below are the stable parts of the current web and mobile
 product, not a claim that every account looks identical.

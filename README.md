@@ -6,10 +6,14 @@
 
 # Balla
 
-> a Facebook-like Bluesky client
+> a Facebook-inspired Bluesky client
 
 Balla renders Bluesky the way Facebook reads: your friends' posts as cards on a
 home feed, newest first, with no algorithm deciding what you see.
+
+Balla is independent software, not an official Bluesky client, and is not
+affiliated with, endorsed by or sponsored by Bluesky Social PBC or Meta
+Platforms, Inc. Facebook-era styling is a visual reference only.
 
 ## Why
 
@@ -135,9 +139,14 @@ CI fails the build if the committed files and the script disagree
 
 AT Protocol, atproto, Bluesky, and the Bluesky butterfly logo are trademarks of
 Bluesky Social PBC. Facebook and the Facebook logo are trademarks of Meta
-Platforms, Inc. Balla is an independent project, not affiliated with or endorsed
-by either; it interoperates with the AT Protocol and uses no one's trademarks
-as branding.
+Platforms, Inc. Balla is an independent project, not affiliated with, endorsed by
+or sponsored by either; it interoperates with the AT Protocol and uses no one
+else's marks as its branding.
+
+References to Facebook-era design are visual references only, not claims of
+affiliation. References to Bluesky identify the network and AT Protocol that Balla
+connects to; they do not make Balla an official client or partner. All trademarks
+remain the property of their owners.
 
 ## Contributing
 

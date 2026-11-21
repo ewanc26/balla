@@ -1,8 +1,8 @@
 # Contributing to Balla
 
-Balla is a Facebook-like Bluesky client for phones: the chronological Following
-feed rendered the way Facebook reads — cards on a warm grey canvas — with none
-of the dark patterns. Thanks for wanting to help!
+Balla is a Facebook-inspired Bluesky client for phones: the chronological
+Following feed rendered the way Facebook reads — cards on a warm grey canvas —
+with noneof the dark patterns. Thanks for wanting to help!
 
 ## Getting started
 

@@ -213,6 +213,7 @@ h2 { font-size: clamp(2.1rem, 4vw, 3.5rem); line-height: 1.05; letter-spacing: -
 .protocol-copy p { color: var(--muted); line-height: 1.75; }
 .protocol-links { display: flex; flex-wrap: wrap; gap: 1rem 1.5rem; margin-top: 1.5rem; }
 .protocol-links a { color: var(--blue); font-weight: 650; text-underline-offset: 4px; }
+.references { border-top: 1px solid var(--line); }
 
 .site-footer {
   display: grid;

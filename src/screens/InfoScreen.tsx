@@ -149,14 +149,15 @@ const TOPICS: Record<string, Topic> = {
     paragraphs: [
       'The public contact route is the Balla issue tracker. It is also the place for bugs, feature requests and general project questions.',
       'For a security or privacy report that should not be public, use GitHub’s private security advisory form.',
-      'Balla is independent software and is not affiliated with Bluesky Social PBC or Meta Platforms, Inc.',
+      'Balla is independent software. References to Bluesky identify the network Balla connects to; they do not imply affiliation, endorsement, official status or partnership. Facebook-era styling is a visual reference only. Balla is not affiliated with Bluesky Social PBC or Meta Platforms, Inc.',
     ],
     link: { label: 'Open the issue tracker', url: ISSUES },
   },
   about: {
     title: 'About Balla',
     paragraphs: [
-      'Balla is a chronological, Facebook-shaped client for Bluesky and the AT Protocol. It is independent software, not an official Bluesky client.',
+      'Balla is a chronological, Facebook-inspired client for Bluesky and the AT Protocol. Facebook-era styling is a visual reference, not a claim of affiliation. Balla is independent software, not an official Bluesky client or a Meta product.',
+      'References to Bluesky identify the open network and protocol Balla uses. They do not make Balla official or endorsed. All product names and marks belong to their owners.',
       'Version 0.1.0. The client is built with Expo and React Native, with OAuth and DPoP handled by @atproto/oauth-client-expo.',
       'No ranking, ads, suggested posts or injected content. The Following timeline stays newest-first.',
       'Balla is independent software supported by readers. One-off and recurring support is handled at ewancroft.uk/support.',

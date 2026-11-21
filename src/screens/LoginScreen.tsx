@@ -188,7 +188,8 @@ export function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
           }}
         >
           Balla uses AT Protocol OAuth. The approval page belongs to your server,
-          not to Balla.
+          not to Balla. Balla is independent software; references to Bluesky
+          identify the network, not an affiliation or official status.
         </Text>
       </View>
     </ScrollView>

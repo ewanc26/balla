@@ -4,9 +4,12 @@ Guidance for AI coding agents working in **balla**.
 
 ## Project overview
 
-A Facebook-like Bluesky client for iOS, Android and the web. Expo SDK 58, React
-Native 0.88.1, TypeScript. The premise: Facebook's reading experience without its
-dark patterns — the chronological Following feed, rendered as cards.
+A Facebook-inspired Bluesky client for iOS, Android and the web. Expo SDK 58,
+React Native 0.88.1, TypeScript. The premise: Facebook's reading experience,
+used as a visual reference, without its dark patterns — the chronological
+Following feed, rendered as cards. Balla is independent software, not an official
+Bluesky client, and is not affiliated with or endorsed by Meta or Bluesky Social
+PBC.
 
 - Language: TypeScript
 - Default branch: main, rebase merges only
@@ -34,6 +37,11 @@ dark patterns — the chronological Following feed, rendered as cards.
    formatting once in `src/components/PostCard.tsx`, colours only through
    `usePalette()`. If a second implementation of a rule is about to be
    written, stop and use the first.
+7. **Reference, not affiliation.** Facebook-era styling is a visual reference to
+   public design history, not a claim of affiliation, endorsement or partnership
+   with Meta. Bluesky references identify the network and protocol Balla uses;
+   they do not make Balla official or endorsed. Keep that distinction in code,
+   copy and documentation, and ship no Facebook logos or brand assets.
 
 ## Source boundaries
 
