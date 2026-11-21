@@ -26,10 +26,11 @@ import {
   loadLists,
   loadSubscribedLists,
 } from '../lib/lists';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 
 function errorCopy(cause: unknown, fallback: string) {
-  return listActionError(cause, fallback);
+  return describeFailure(cause, listActionError(cause, fallback));
 }
 
 export function ListsScreen({ route, navigation }: { route?: any; navigation: any }) {
@@ -67,7 +68,7 @@ export function ListsScreen({ route, navigation }: { route?: any; navigation: an
       }
 
       try {
-        const ownResult = await loadLists(target);
+        const ownResult = await readWithRetry(() => loadLists(target));
         setOwn(ownResult);
         if (isOwn) {
           const [muted, blockedResult] = await Promise.allSettled([

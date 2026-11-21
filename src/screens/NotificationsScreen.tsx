@@ -13,6 +13,7 @@ import { moderateNotification } from '@atproto/api';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useModeration } from '../lib/moderationContext';
 import { timeAgo } from '../lib/time';
@@ -143,6 +144,7 @@ export function NotificationsScreen() {
   const [filter, setFilter] = useState<Filter>('all');
   const [refreshing, setRefreshing] = useState(false);
   const [marking, setMarking] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
     const did = agent.did;
@@ -151,10 +153,11 @@ export function NotificationsScreen() {
       return;
     }
     setRefreshing(true);
+    setError(null);
     try {
       const [res, follows] = await Promise.all([
-        agent.listNotifications({ limit: 50 }),
-        agent.getFollows({ actor: did, limit: 100 }).catch(() => null),
+        readWithRetry(() => agent.listNotifications({ limit: 50 })),
+        readWithRetry(() => agent.getFollows({ actor: did, limit: 100 })).catch(() => null),
       ]);
       setItems(res.data.notifications || []);
       if (follows?.data?.follows) {
@@ -162,8 +165,10 @@ export function NotificationsScreen() {
           new Set(follows.data.follows.map((item: any) => item.did))
         );
       }
-    } catch {
-      // keep old items; next pull can retry
+    } catch (err) {
+      // Keep old items, but say that the refresh failed rather than quietly
+      // showing a stale list as if it were current.
+      setError(describeFailure(err, 'Could not refresh notifications.'));
     }
     setRefreshing(false);
   }
@@ -182,11 +187,13 @@ export function NotificationsScreen() {
   async function markAllRead() {
     if (marking) return;
     setMarking(true);
+    setError(null);
     try {
       await agent.updateSeenNotifications();
       setItems((prev) => prev.map((item) => ({ ...item, isRead: true })));
-    } catch {
+    } catch (err) {
       // Do not pretend they were read if the API refused.
+      setError(describeFailure(err, 'Could not mark notifications as read. They are still unread.'));
     }
     setMarking(false);
   }
@@ -247,6 +254,26 @@ export function NotificationsScreen() {
               </Pressable>
             ) : null}
           </View>
+
+          {error ? (
+            <View style={{ paddingTop: 8, gap: 4 }}>
+              <Text style={{ color: p.danger, fontSize: 13 }}>{error}</Text>
+              <Pressable
+                onPress={() => void load()}
+                accessibilityRole="button"
+                accessibilityLabel="Retry loading notifications"
+                style={({ pressed }) => ({
+                  minHeight: 44,
+                  justifyContent: 'center',
+                  alignSelf: 'flex-start',
+                  paddingHorizontal: 8,
+                  opacity: pressed ? 0.65 : 1,
+                })}
+              >
+                <Text style={{ color: p.accent, fontWeight: '700' }}>Retry</Text>
+              </Pressable>
+            </View>
+          ) : null}
 
           <ScrollView
             horizontal

@@ -16,11 +16,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { subscribeActorHidden } from '../lib/moderation';
 import {
-  listActionError,
   listMemberCount,
   listPurposeMeta,
   listViewerState,
@@ -36,6 +36,10 @@ import {
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 type Tab = 'posts' | 'people';
+
+function errorCopy(cause: unknown, fallback: string): string {
+  return describeFailure(cause, fallback);
+}
 
 export function ListDetailScreen({
   route,
@@ -75,7 +79,7 @@ export function ListDetailScreen({
       setError(null);
       setFeedError(null);
       try {
-        const page = await loadListPage(uri);
+        const page = await readWithRetry(() => loadListPage(uri));
         setList(page.list);
         setMembers(page.items || []);
         setMemberCursor(page.cursor);
@@ -87,7 +91,7 @@ export function ListDetailScreen({
 
         if (listPurposeMeta(page.list?.purpose).shortLabel === 'Curation') {
           try {
-            const feed = await loadListFeedPage(uri);
+            const feed = await readWithRetry(() => loadListFeedPage(uri));
             setPosts(
               (feed.feed || [])
                 .map((item: any) => item.post)
@@ -99,7 +103,7 @@ export function ListDetailScreen({
             setPosts([]);
             setFeedCursor(undefined);
             setFeedError(
-              listActionError(
+              errorCopy(
                 cause,
                 'Could not load this list’s feed. Pull to refresh and try again.'
               )
@@ -111,7 +115,7 @@ export function ListDetailScreen({
         }
       } catch (cause) {
         setError(
-          listActionError(
+          errorCopy(
             cause,
             'Could not load this list. It may have been deleted or made private.'
           )
@@ -172,7 +176,7 @@ export function ListDetailScreen({
       );
     } catch (cause) {
       setActionError(
-        listActionError(
+        errorCopy(
           cause,
           `Could not ${next ? 'subscribe to' : 'unsubscribe from'} this list. Try again.`
         )
@@ -207,7 +211,7 @@ export function ListDetailScreen({
       );
     } catch (cause) {
       setActionError(
-        listActionError(
+        errorCopy(
           cause,
           `Could not ${next ? 'block' : 'unblock'} this list. Try again.`
         )
@@ -226,7 +230,7 @@ export function ListDetailScreen({
       navigation.goBack();
     } catch (cause) {
       setActionError(
-        listActionError(
+        errorCopy(
           cause,
           'Could not delete this list. Check your connection and try again.'
         )
@@ -252,7 +256,7 @@ export function ListDetailScreen({
       );
     } catch (cause) {
       setActionError(
-        listActionError(
+        errorCopy(
           cause,
           'Could not remove this person from the list. Try again.'
         )
@@ -270,7 +274,7 @@ export function ListDetailScreen({
     setMoreLoading(true);
     try {
       if (tab === 'posts') {
-        const feed = await loadListFeedPage(uri, nextCursor);
+        const feed = await readWithRetry(() => loadListFeedPage(uri, nextCursor));
         setPosts((prev) => {
           const seen = new Set(prev.map((post: any) => post.uri));
           return prev.concat(
@@ -281,7 +285,7 @@ export function ListDetailScreen({
         });
         setFeedCursor(feed.cursor);
       } else {
-        const page = await loadListPage(uri, nextCursor);
+        const page = await readWithRetry(() => loadListPage(uri, nextCursor));
         setMembers((prev) => {
           const seen = new Set(prev.map((item: any) => item.uri));
           return prev.concat(
@@ -292,7 +296,7 @@ export function ListDetailScreen({
       }
     } catch (cause) {
       setActionError(
-        listActionError(
+        errorCopy(
           cause,
           tab === 'posts'
             ? 'Could not load more posts from this list.'

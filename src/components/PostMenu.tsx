@@ -19,6 +19,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 import { agent } from '../lib/agent';
+import { describeFailure } from '../lib/reliability';
 import {
   blockActor,
   deletePost,
@@ -185,11 +186,14 @@ export function PostMenu({
         onHidden?.(post, 'author');
         close();
       }
-    } catch {
+    } catch (err) {
       setError(
-        `Could not ${isMuted ? 'unmute' : 'mute'} @${
-          author.handle || 'this account'
-        }. Try again.`
+        describeFailure(
+          err,
+          `Could not ${isMuted ? 'unmute' : 'mute'} @${
+            author.handle || 'this account'
+          }. Try again.`
+        )
       );
     } finally {
       setBusy(false);
@@ -210,11 +214,14 @@ export function PostMenu({
         onHidden?.(post, 'author');
         close();
       }
-    } catch {
+    } catch (err) {
       setError(
-        `Could not ${blockingUri ? 'unblock' : 'block'} @${
-          author.handle || 'this account'
-        }. Try again.`
+        describeFailure(
+          err,
+          `Could not ${blockingUri ? 'unblock' : 'block'} @${
+            author.handle || 'this account'
+          }. Try again.`
+        )
       );
     } finally {
       setBusy(false);
@@ -229,8 +236,9 @@ export function PostMenu({
       await deletePost(post.uri);
       onHidden?.(post, 'post');
       close();
-    } catch {
-      setError('Could not delete this post. Check your connection and try again.');
+    } catch (err) {
+      // The post is still there: say so, and leave Delete available to retry.
+      setError(describeFailure(err, 'Could not delete this post. It is still there; try again.'));
     } finally {
       setBusy(false);
     }
@@ -244,14 +252,9 @@ export function PostMenu({
       await reportPost(post, reason, details);
       setReportSent(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const permissionIssue = /scope|permission|unauthor|forbidden|auth/i.test(
-        message
-      );
+      // Never imply a report was sent when the API refused it.
       setError(
-        permissionIssue
-          ? 'Your session needs renewing before it can send reports. Sign out, sign in again, and retry.'
-          : 'Could not send the report. Check your connection and try again.'
+        describeFailure(err, 'Could not send the report. Your reason is still here; try again.')
       );
     } finally {
       setBusy(false);

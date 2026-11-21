@@ -177,7 +177,11 @@ privacy, block/mute, report and leave/delete flows.
    the issue tracker and private advisory form.
 6. Reduce OAuth scopes to the exact collections and RPC methods used. Done:
    see `docs/oauth-scopes.md`; existing sessions need one fresh sign-in.
-7. Add rate-limit handling, retry/backoff and clear offline errors.
+7. Add rate-limit handling, retry/backoff and clear offline errors. Done:
+   `src/lib/reliability.ts` classifies 429, offline, auth-expired and server
+   failures, reads retry idempotently with bounded backoff and `Retry-After`,
+   optimistic like/repost/bookmark changes roll back, and failed posts,
+   replies, deletes and reports stay visible with a retry.
 8. Complete an accessibility pass: screen reader labels, focus order, Dynamic
    Type and reduced-motion behaviour.
 

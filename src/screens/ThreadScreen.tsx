@@ -11,6 +11,7 @@ import {
   View,
 } from 'react-native';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
@@ -120,6 +121,8 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   const uri = route.params && route.params.uri;
   const [thread, setThread] = useState<any>(null);
   const [failed, setFailed] = useState(false);
+  const [failureMessage, setFailureMessage] = useState<string | null>(null);
+  const [replyError, setReplyError] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
   const replyInput = React.useRef<React.ComponentRef<typeof TextInput>>(null);
@@ -151,16 +154,21 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
 
   async function load() {
     setFailed(false);
+    setFailureMessage(null);
     try {
-      const res = await agent.getPostThread({ uri, depth: 10 });
+      const res = await readWithRetry(() =>
+        agent.getPostThread({ uri, depth: 10 })
+      );
       const t = res.data.thread;
       if (isThreadViewPost(t)) {
         setThread(flattenThread(t));
       } else {
         setFailed(true);
+        setFailureMessage('This post is no longer available.');
       }
-    } catch {
+    } catch (err) {
       setFailed(true);
+      setFailureMessage(describeFailure(err, 'Could not load this post.'));
     }
   }
 
@@ -194,6 +202,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   async function sendReply() {
     if (sending || replyText.trim().length === 0) return;
     setSending(true);
+    setReplyError(null);
     try {
       const post = thread.post;
       // A reply addresses the post itself; if the post is itself a reply,
@@ -212,16 +221,37 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
       });
       setReplyText('');
       await load();
-    } catch {
-      // keep the text; a failed send should never eat the reply
+    } catch (err) {
+      // Keep the text: a failed send should never eat the reply.
+      setReplyError(describeFailure(err, 'Could not publish this reply. Your text is still here; tap Reply to retry.'));
     }
     setSending(false);
   }
 
   if (failed) {
     return (
-      <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: p.secondary }}>Could not load this post. Pull down to retry.</Text>
+      <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+        <Text style={{ color: p.secondary, textAlign: 'center' }}>
+          {failureMessage || 'Could not load this post.'}
+        </Text>
+        <Pressable
+          onPress={load}
+          accessibilityRole="button"
+          accessibilityLabel="Retry loading the post"
+          style={({ pressed }) => ({
+            minHeight: 44,
+            minWidth: 120,
+            paddingHorizontal: 18,
+            borderRadius: 22,
+            borderWidth: 1,
+            borderColor: p.accent,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.65 : 1,
+          })}
+        >
+          <Text style={{ color: p.accent, fontWeight: '700' }}>Retry</Text>
+        </Pressable>
       </View>
     );
   }
@@ -282,6 +312,11 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
         ))}
       </ScrollView>
 
+      {replyError ? (
+        <Text style={{ color: p.danger, paddingHorizontal: 16, paddingBottom: 6 }}>
+          {replyError}
+        </Text>
+      ) : null}
       <View style={[styles.composer, { backgroundColor: p.card, borderTopColor: p.divider }]}>
         <Avatar
           avatar={me && me.avatar}

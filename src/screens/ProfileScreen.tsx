@@ -12,6 +12,7 @@ import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { moderateProfile } from '@atproto/api';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { ProfileMenu } from '../components/ProfileMenu';
@@ -35,6 +36,8 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [failed, setFailed] = useState(false);
+  const [failureMessage, setFailureMessage] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [followingUri, setFollowingUri] = useState<string | undefined>(undefined);
   const [followBusy, setFollowBusy] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
@@ -48,6 +51,8 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
     setProfile(null);
     setPosts([]);
     setFailed(false);
+    setFailureMessage(null);
+    setActionError(null);
     setFollowingUri(undefined);
     setProfileRevealed(false);
     setKnownFollowers([]);
@@ -55,6 +60,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
     if (!actor) {
       setFailed(true);
+      setFailureMessage('This profile has no address.');
       return () => {
         active = false;
       };
@@ -62,13 +68,15 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
     (async () => {
       try {
-        const [prof, feed, listResult] = await Promise.all([
-          agent.getProfile({ actor }),
-          agent.getAuthorFeed({ actor, limit: 30 }),
-          agent.app.bsky.graph
-            .getLists({ actor, limit: 20 })
-            .catch(() => null),
-        ]);
+        const [prof, feed, listResult] = await readWithRetry(() =>
+          Promise.all([
+            agent.getProfile({ actor }),
+            agent.getAuthorFeed({ actor, limit: 30 }),
+            agent.app.bsky.graph
+              .getLists({ actor, limit: 20 })
+              .catch(() => null),
+          ])
+        );
         if (!active) return;
         setProfile(prof.data);
         setFollowingUri(prof.data.viewer && prof.data.viewer.following);
@@ -83,8 +91,11 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             })
             .catch(() => {});
         }
-      } catch {
-        if (active) setFailed(true);
+      } catch (err) {
+        if (active) {
+          setFailed(true);
+          setFailureMessage(describeFailure(err, 'Could not load this profile.'));
+        }
       }
     })();
 
@@ -116,6 +127,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
     if (!profile || followBusy) return;
     if (profile.viewer?.blocking || profile.viewer?.blockedBy) return;
     setFollowBusy(true);
+    setActionError(null);
     try {
       if (followingUri) {
         await agent.deleteFollow(followingUri);
@@ -132,8 +144,11 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
           prev ? { ...prev, followersCount: (prev.followersCount || 0) + 1 } : prev
         );
       }
-    } catch {
-      // Keep the previous state; the button can be tried again.
+    } catch (err) {
+      // Keep the previous state and say so; the button can be tried again.
+      setActionError(
+        describeFailure(err, `Could not ${followingUri ? 'unfollow' : 'follow'} @${profile.handle}. Try again.`)
+      );
     }
     setFollowBusy(false);
   }
@@ -179,8 +194,28 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
   if (failed) {
     return (
-      <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}>
-        <Text style={{ color: p.secondary }}>Could not load this profile.</Text>
+      <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
+        <Text style={{ color: p.secondary, textAlign: 'center' }}>
+          {failureMessage || 'Could not load this profile.'}
+        </Text>
+        <Pressable
+          onPress={reloadProfile}
+          accessibilityRole="button"
+          accessibilityLabel="Retry loading the profile"
+          style={({ pressed }) => ({
+            minHeight: 44,
+            minWidth: 120,
+            paddingHorizontal: 18,
+            borderRadius: 22,
+            borderWidth: 1,
+            borderColor: p.accent,
+            alignItems: 'center',
+            justifyContent: 'center',
+            opacity: pressed ? 0.65 : 1,
+          })}
+        >
+          <Text style={{ color: p.accent, fontWeight: '700' }}>Retry</Text>
+        </Pressable>
       </View>
     );
   }
@@ -208,6 +243,19 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   function Header() {
     return (
       <View>
+        {actionError ? (
+          <View style={{ paddingHorizontal: 16, paddingTop: 8, gap: 4 }}>
+            <Text style={{ color: p.danger, fontSize: 13 }}>{actionError}</Text>
+            <Pressable
+              onPress={() => setActionError(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss follow error"
+              style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', paddingHorizontal: 8 }}
+            >
+              <Text style={{ color: p.accent, fontWeight: '700' }}>Dismiss</Text>
+            </Pressable>
+          </View>
+        ) : null}
         <View
           style={[
             styles.profileCard,

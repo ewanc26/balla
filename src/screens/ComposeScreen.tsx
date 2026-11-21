@@ -18,6 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { agent } from '../lib/agent';
+import { describeFailure } from '../lib/reliability';
 import { Avatar } from '../components/Avatar';
 import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
@@ -412,14 +413,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           'Upload cancelled. Your text and photos are still here; tap Post to try again.'
         );
       } else {
-        const message = err instanceof Error ? err.message : String(err);
-        const permissionIssue = /scope|permission|unauthor|forbidden|auth/i.test(
-          message
-        );
         setError(
-          permissionIssue
-            ? 'Your session needs renewing before it can upload photos. Sign out, sign in again, then retry. Your draft is still here.'
-            : 'Could not publish this post. Your text and photos are safe here; tap Post to retry.'
+          `${describeFailure(err, 'Could not publish this post.')} Your text and photos are safe here; tap Post to retry.`
         );
       }
     } finally {
