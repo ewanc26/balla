@@ -19,11 +19,13 @@ export function LeftRail({
   onNavigate,
   onOpenSettings,
   onOpenLists,
+  onOpenFeeds,
 }: {
   activeTab: TabName;
   onNavigate: (tab: TabName) => void;
   onOpenSettings: () => void;
   onOpenLists: () => void;
+  onOpenFeeds: () => void;
 }) {
   const p = usePalette();
   const { profile } = useViewer();
@@ -95,6 +97,30 @@ export function LeftRail({
           </Pressable>
         );
       })}
+
+      <Pressable
+        onPress={onOpenFeeds}
+        accessibilityRole="button"
+        accessibilityLabel="Feeds"
+        style={({ pressed }) => [
+          styles.navRow,
+          { backgroundColor: pressed ? p.bg : 'transparent' },
+        ]}
+      >
+        <View style={[styles.iconBubble, { backgroundColor: p.soft }]}>
+          <Ionicons name="albums-outline" size={20} color={p.text} />
+        </View>
+        <Text
+          style={{
+            color: p.text,
+            fontSize: 15,
+            fontWeight: '600',
+            marginLeft: 12,
+          }}
+        >
+          Feeds
+        </Text>
+      </Pressable>
 
       <Pressable
         onPress={onOpenLists}
