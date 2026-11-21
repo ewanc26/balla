@@ -26,8 +26,8 @@
       </a>
       <nav aria-label="Main">
         <a href="#why">Why</a>
-        <a href="#features">What’s inside</a>
-        <a href="#references">References</a>
+        <a href="/features">Features</a>
+        <a href="#roadmap">Roadmap</a>
         <a href="/privacy">Privacy</a>
         <a class="nav-cta" href="/app">Open Balla <span aria-hidden="true">→</span></a>
       </nav>
@@ -36,21 +36,17 @@
     <main id="main">
       <section class="hero wrap">
         <div class="hero-copy">
-          <p class="eyebrow"><span class="dot"></span> Balla for Bluesky</p>
+          <p class="eyebrow"><span class="dot" aria-hidden="true"></span> Independent AT Protocol client</p>
           <h1>Your people.<br /><em>In order.</em></h1>
           <p class="lede">
             Balla gives Bluesky the familiar shape of a wall as a design reference: your
             friends’ posts as cards, newest first, with no algorithm deciding what you see.
           </p>
           <div class="actions">
-            <a class="button" href="/app">
-              Open Balla <span aria-hidden="true">→</span>
-            </a>
-            <a class="quiet-link" href="https://github.com/ewanc26/balla">
-              Follow development <span aria-hidden="true">↗</span>
-            </a>
+            <a class="button" href="/app">Open Balla <span aria-hidden="true">→</span></a>
+            <a class="button button--ghost" href="/features">See what’s inside</a>
           </div>
-          <p class="status"><span class="dot"></span> On the web now · iOS and Android in development</p>
+          <p class="status"><span class="dot" aria-hidden="true"></span> On the web now · iOS and Android in development</p>
         </div>
 
         <div class="wall-preview" aria-hidden="true">
@@ -61,6 +57,7 @@
               <span><strong>Mum</strong><small>just now · your wall</small></span>
             </div>
             <p>This is what a feed looks like when it is just the people you chose.</p>
+            <span class="preview-tag">⌁ Chronological</span>
             <div class="preview-line"></div>
             <div class="preview-actions"><span>♡ 12</span><span>↻ 2</span><span>◌ 4</span><span>▮ Save</span></div>
           </div>
@@ -74,10 +71,19 @@
         </div>
       </section>
 
+      <section class="principles wrap" aria-label="Balla in four points">
+        <div class="principle"><span class="principle__mark" aria-hidden="true">01</span><span><strong>Newest first</strong><span>The Following feed is chronological. Always.</span></span></div>
+        <div class="principle"><span class="principle__mark" aria-hidden="true">02</span><span><strong>Visible buttons</strong><span>Every action is a real, reachable control.</span></span></div>
+        <div class="principle"><span class="principle__mark" aria-hidden="true">03</span><span><strong>Honest labels</strong><span>Real counts, real timestamps, no theatre.</span></span></div>
+        <div class="principle"><span class="principle__mark" aria-hidden="true">04</span><span><strong>Your account</strong><span>Your PDS and OAuth session stay yours.</span></span></div>
+      </section>
+
       <section class="manifesto wrap" id="why">
-        <p class="section-kicker">Why Balla exists</p>
         <div class="manifesto-grid">
-          <h2>Facebook’s <em>reading</em> experience was never the problem.</h2>
+          <div>
+            <p class="section-kicker">Why Balla exists</p>
+            <h2>Facebook’s <em>reading</em> experience was never the problem.</h2>
+          </div>
           <div>
             <p>
               Balla exists because of my mum. She was comfortable with Facebook and found
@@ -104,35 +110,60 @@
         </div>
         <div class="feature-grid">
           <article class="feature-card">
-            <span class="feature-number">01</span>
+            <span class="feature-number" aria-hidden="true">01</span>
             <h3>Newest first. Always.</h3>
-            <p>The Following feed is chronological by design. There is no ranking, no injected content and no engagement experiment.</p>
+            <p>The Following feed is chronological by design. No ranking, no injected content and no engagement experiment.</p>
           </article>
           <article class="feature-card">
-            <span class="feature-number">02</span>
-            <h3>People and lists, not a marketplace</h3>
-            <p>Public profiles, follow and unfollow, curated lists with their own feeds, threads and replies. The social graph is yours, not an ad targeting product.</p>
+            <span class="feature-number" aria-hidden="true">02</span>
+            <h3>People and lists</h3>
+            <p>Public profiles, follow and unfollow, curated lists with their own feeds, threads and replies. The social graph is yours.</p>
           </article>
           <article class="feature-card">
-            <span class="feature-number">03</span>
+            <span class="feature-number" aria-hidden="true">03</span>
             <h3>Search when you ask</h3>
-            <p>Find people and posts across Bluesky explicitly. No suggested accounts on every surface, no attention hijacking.</p>
+            <p>Five result tabs, structured filters and local history. Find people and posts explicitly, never as a suggestion on every surface.</p>
           </article>
           <article class="feature-card">
-            <span class="feature-number">04</span>
-            <h3>Lists and quiet saves</h3>
-            <p>Curate people into lists with their own feed, save and pin custom feeds, and keep Bluesky bookmarks private. Moderation lists can be subscribed to or blocked.</p>
+            <span class="feature-number" aria-hidden="true">04</span>
+            <h3>Quiet saves and feeds</h3>
+            <p>Private Bluesky bookmarks, saved and pinned custom feeds, and moderation lists you can subscribe to or block.</p>
           </article>
           <article class="feature-card">
-            <span class="feature-number">05</span>
+            <span class="feature-number" aria-hidden="true">05</span>
+            <h3>Safety in the open</h3>
+            <p>Report, block and mute controls, label warnings before content, and a moderation inbox for your own reports and appeals.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number" aria-hidden="true">06</span>
             <h3>Readable by design</h3>
-            <p>Four researched Facebook-era presets and nine solid accent colours, with light and dark palettes. Era styling is a visual reference only.</p>
+            <p>Four researched Facebook-era presets, nine accent colours, light and dark palettes, image alt text and large touch targets.</p>
           </article>
-          <article class="feature-card">
-            <span class="feature-number">06</span>
-            <h3>AT Protocol all the way down</h3>
-            <p>Your account stays on Bluesky or whatever PDS you use. Balla is an ordinary client, not a new silo.</p>
-          </article>
+        </div>
+      </section>
+
+      <section class="roadmap-teaser wrap" id="roadmap">
+        <div>
+          <p class="section-kicker">Where it’s going</p>
+          <h2>Honest about<br /><em>what’s next.</em></h2>
+          <p class="status">No half-finished toggles. Roadmap items ship when they work, and the full matrix lives in the repository.</p>
+          <div class="actions">
+            <a class="button button--ghost" href="/features">Full features and roadmap</a>
+          </div>
+        </div>
+        <div class="roadmap-columns">
+          <div class="roadmap-column">
+            <h3>Here today</h3>
+            <ul><li>OAuth sign-in</li><li>Threads and replies</li><li>Lists and feeds</li><li>Moderation inbox</li></ul>
+          </div>
+          <div class="roadmap-column">
+            <h3>In progress</h3>
+            <ul><li>Quote posts and link cards</li><li>Video and GIF media</li><li>Accessibility pass</li><li>Reliability and retry</li></ul>
+          </div>
+          <div class="roadmap-column">
+            <h3>Planned</h3>
+            <ul><li>Direct messages</li><li>Starter packs</li><li>Push notifications</li><li>Multi-account</li></ul>
+          </div>
         </div>
       </section>
 
@@ -164,6 +195,7 @@
           </p>
           <div class="protocol-links">
             <a href="https://github.com/ewanc26/balla">Source and issues <span aria-hidden="true">↗</span></a>
+            <a href="/features">Features and roadmap</a>
             <a href="/oauth-client-metadata.json">OAuth client metadata</a>
             <a href="/privacy">Privacy note</a>
           </div>
@@ -192,21 +224,30 @@
             to. They do not make Balla official, endorsed or sponsored by Bluesky. All product
             names and marks belong to their respective owners.
           </p>
+          <p class="reference-note">Facebook and Bluesky branding is not used as Balla’s own mark. The wall icon is Balla’s.</p>
         </div>
       </section>
     </main>
 
     <footer class="site-footer wrap">
-      <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
-      <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta. Facebook-era styling is a design reference, not a claim.</p>
+      <div>
+        <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
+        <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta. Facebook-era styling is a design reference, not a claim.</p>
+        <span class="footer-status"><span class="dot" aria-hidden="true"></span> Web client live</span>
+      </div>
       <div class="footer-links">
+        <a href="/features">Features</a>
         <a href="/privacy">Privacy</a>
         <a href="/terms">Terms</a>
         <a href="/guidelines">Guidelines</a>
         <a href="/copyright">Copyright</a>
-        <a href="https://github.com/ewanc26/balla/issues">Report an issue</a>
-        <a href="https://ewancroft.uk/support">Support Balla</a>
-        <a href="https://github.com/ewanc26/balla">GitHub</a>
+        <a href="/app">Open Balla</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/ewanc26/balla/issues">Report an issue ↗</a>
+        <a href="https://github.com/ewanc26/balla/security/advisories/new">Private security report ↗</a>
+        <a href="https://ewancroft.uk/support">Support Balla ↗</a>
+        <a href="https://github.com/ewanc26/balla">GitHub ↗</a>
       </div>
     </footer>
   </body>

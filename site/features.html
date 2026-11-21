@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Features and roadmap — Balla</title>
+    <meta name="description" content="What Balla does today, what is being built next, and the principles that decide what ships." />
+    <meta name="theme-color" content="#1877F2" />
+    <meta property="og:title" content="Features and roadmap — Balla" />
+    <meta property="og:description" content="An honest, issue-linked view of Balla's shipped features and open work." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://balla.croft.click/features" />
+    <link rel="canonical" href="https://balla.croft.click/features" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Balla home">
+        <img src="/mark.svg" width="30" height="30" alt="" />
+        <span>balla</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="/">Home</a>
+        <a href="/features" aria-current="page">Features</a>
+        <a href="/privacy">Privacy</a>
+        <a href="https://github.com/ewanc26/balla">Source <span aria-hidden="true">↗</span></a>
+        <a class="nav-cta" href="/app">Open Balla <span aria-hidden="true">→</span></a>
+      </nav>
+    </header>
+
+    <main id="main" class="wrap">
+      <section class="page-hero">
+        <p class="section-kicker">Features and roadmap</p>
+        <h1>What works.<br /><em>What’s next.</em></h1>
+        <p>
+          Balla is in development. This page describes the code that exists today and the work
+          still open in the issue tracker. Nothing here is a promise of a date: a feature moves
+          out of “in progress” when it is implemented, tested and merged.
+        </p>
+        <div class="actions">
+          <a class="button" href="/app">Open the web client <span aria-hidden="true">→</span></a>
+          <a class="button button--ghost" href="https://github.com/ewanc26/balla/blob/main/docs/bluesky-compliance.md">Read the compliance note ↗</a>
+        </div>
+      </section>
+
+      <section class="feature-group" id="today">
+        <div class="feature-group__head">
+          <div>
+            <p class="section-kicker"><span class="pill pill--green"><span class="pill__dot" aria-hidden="true"></span> Shipped</span></p>
+            <h2>Here today</h2>
+          </div>
+          <p>Read, write, search and moderate on any AT Protocol service host. The Following feed stays chronological; everything else is an explicit destination.</p>
+        </div>
+        <ul class="check-list">
+          <li><span><strong>AT Protocol OAuth</strong><small>Sign in with a handle, DID or PDS URL. No password field, DPoP-bound tokens.</small></span></li>
+          <li><span><strong>Chronological Following</strong><small>Newest first, paginated, pull-to-refresh. No ranking or injected posts.</small></span></li>
+          <li><span><strong>Threads and replies</strong><small>Ancestor chains, capped nested branches and a reply composer with correct roots.</small></span></li>
+          <li><span><strong>Profiles</strong><small>Posts, followers, following, known followers and per-post engagement lists.</small></span></li>
+          <li><span><strong>Profile editing</strong><small>Name, bio, pronouns, links, avatar and banner.</small></span></li>
+          <li><span><strong>Search</strong><small>Top, Latest, People, Feeds and Starter Packs, with filters and local history.</small></span></li>
+          <li><span><strong>Notifications</strong><small>Tabs, grouped activity, seen state, unread count and per-category preferences.</small></span></li>
+          <li><span><strong>Private bookmarks</strong><small>Bluesky saved posts, removable in place from the Saved tab.</small></span></li>
+          <li><span><strong>Photo posts</strong><small>Up to ten images, per-image alt text, compression, retries and a full-screen viewer.</small></span></li>
+          <li><span><strong>Custom feeds</strong><small>Discover, save, pin, reorder and read generator feeds in their own tabs.</small></span></li>
+          <li><span><strong>Lists</strong><small>Create and edit curation and moderation lists, manage members, read list feeds, subscribe or block.</small></span></li>
+          <li><span><strong>Moderation</strong><small>Report, block and mute; label warnings before content; labeler filters, muted words and an inbox for reports and appeals.</small></span></li>
+          <li><span><strong>Post actions</strong><small>Copy link, copy text, share sheet, translate with a show-original toggle, and delete your own posts.</small></span></li>
+          <li><span><strong>Appearance</strong><small>Four researched Facebook-era presets, nine accents, system light and dark.</small></span></li>
+          <li><span><strong>Account guidance</strong><small>Export, deactivation and deletion routes that link to your PDS controls.</small></span></li>
+          <li><span><strong>Web client</strong><small>Available at /app with popup OAuth that returns to the same tab.</small></span></li>
+        </ul>
+      </section>
+
+      <section class="feature-group" id="next">
+        <div class="feature-group__head">
+          <div>
+            <p class="section-kicker"><span class="pill pill--amber"><span class="pill__dot" aria-hidden="true"></span> Open work</span></p>
+            <h2>On the way</h2>
+          </div>
+          <p>Each row links to the public issue where the work is tracked. Priority follows user safety and reliability before depth.</p>
+        </div>
+        <div class="roadmap-table">
+          <div class="roadmap-row">
+            <span class="pill pill--amber">P0</span>
+            <div><strong>Reliability and truthful failures</strong><p>Rate limits, bounded retries on reads, optimistic rollback, and clear offline, auth and server errors.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/34">Issue #34 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--amber">P0</span>
+            <div><strong>Accessibility pass</strong><p>Screen-reader roles, focus order and trapping, text scaling, reduced motion and 44pt controls.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/35">Issue #35 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--blue">P1</span>
+            <div><strong>Video, GIF and captions</strong><p>Validation, processing states, honest success reporting and alt text.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/14">Issue #14 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--blue">P1</span>
+            <div><strong>Quote posts, link cards and threads</strong><p>Rich quote embeds, external link cards and multi-post composition. Text-only quotes exist today.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/15">Issue #15 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--blue">P1</span>
+            <div><strong>Drafts, languages and reply gates</strong><p>Recoverable drafts, language metadata, self-labels and interaction settings.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/16">Issue #16 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--blue">P1</span>
+            <div><strong>Complete profile header</strong><p>Verification, profile labels, pinned post and authored lists and feeds.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/25">Issue #25 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--blue">P1</span>
+            <div><strong>Direct messages</strong><p>Conversations, chat requests, unread state and chat-service authentication.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/26">Issue #26 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--blue">P1</span>
+            <div><strong>Account and preference settings</strong><p>Security and app-password guidance, languages, accessibility and feed filters.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/28">Issue #28 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill">P2</span>
+            <div><strong>Starter packs and discovery</strong><p>Discover, open and share starter packs; opt-in hashtag, topic and video surfaces.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/20">Issue #20 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill">P2</span>
+            <div><strong>Group chat and push</strong><p>Group settings and moderation, plus consent-based push with deep links.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/27">Issue #27 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill">P2</span>
+            <div><strong>Multi-account</strong><p>Separate OAuth sessions, safe switching and account removal.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/37">Issue #37 ↗</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="feature-group" id="principles">
+        <div class="feature-group__head">
+          <div>
+            <p class="section-kicker">How we decide</p>
+            <h2>What never ships</h2>
+          </div>
+          <p>These are product rules, not preferences. They are why some popular features will not appear in Balla.</p>
+        </div>
+        <div class="decision-grid">
+          <div class="decision"><h3>Chronological or nothing</h3><p>Ranking, suggestions and inserted content belong in another app. Following stays newest first.</p></div>
+          <div class="decision"><h3>Visible buttons only</h3><p>No swipe-only or long-press-only actions. Every control is tappable, labelled and at least 44pt.</p></div>
+          <div class="decision"><h3>Protocol truth</h3><p>Shapes follow the app.bsky lexicons, not one convenient response. Claims describe the code.</p></div>
+        </div>
+      </section>
+
+      <section class="refusals wrap" style="margin-inline: 0;">
+        <div class="refusal-copy">
+          <p class="section-kicker">The line we hold</p>
+          <h2>A wall, not a <em>feed machine.</em></h2>
+        </div>
+        <ul class="refusal-list">
+          <li><span aria-hidden="true">×</span> No engagement ranking or A/B tests on your feed</li>
+          <li><span aria-hidden="true">×</span> No ads, analytics or tracking SDKs</li>
+          <li><span aria-hidden="true">×</span> No “people you may know” or reaction palette</li>
+          <li><span aria-hidden="true">✓</span> Open source, AGPL-3.0, with public issues</li>
+        </ul>
+      </section>
+    </main>
+
+    <footer class="site-footer wrap">
+      <div>
+        <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
+        <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta. Facebook-era styling is a design reference, not a claim.</p>
+        <span class="footer-status"><span class="dot" aria-hidden="true"></span> Web client live</span>
+      </div>
+      <div class="footer-links">
+        <a href="/">Home</a>
+        <a href="/features">Features</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/guidelines">Guidelines</a>
+        <a href="/copyright">Copyright</a>
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/ewanc26/balla/issues">Report an issue ↗</a>
+        <a href="https://github.com/ewanc26/balla/security/advisories/new">Private security report ↗</a>
+        <a href="https://ewancroft.uk/support">Support Balla ↗</a>
+        <a href="https://github.com/ewanc26/balla">GitHub ↗</a>
+      </div>
+    </footer>
+  </body>
+</html>
