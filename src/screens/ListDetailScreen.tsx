@@ -19,6 +19,7 @@ import { agent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
+import { ReportListSheet } from '../components/ReportListSheet';
 import { subscribeActorHidden } from '../lib/moderation';
 import {
   listMemberCount,
@@ -65,6 +66,7 @@ export function ListDetailScreen({
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [confirmBlock, setConfirmBlock] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const moreInFlight = useRef(false);
 
   const load = useCallback(
@@ -529,6 +531,12 @@ export function ListDetailScreen({
                   else setConfirmBlock(true);
                 }}
               />
+              <Action
+                icon="flag-outline"
+                label="Report"
+                disabled={!!busy}
+                onPress={() => setReporting(true)}
+              />
             </>
           )}
         </View>
@@ -683,6 +691,7 @@ export function ListDetailScreen({
       : members;
 
   return (
+    <View style={{ flex: 1, backgroundColor: p.bg }}>
     <FlatList
       key={tab}
       style={{ flex: 1, backgroundColor: p.bg }}
@@ -754,6 +763,10 @@ export function ListDetailScreen({
       }}
       onEndReachedThreshold={0.6}
     />
+    {reporting && list ? (
+      <ReportListSheet list={list} onClose={() => setReporting(false)} />
+    ) : null}
+    </View>
   );
 }
 

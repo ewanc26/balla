@@ -167,6 +167,12 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           onPress={() => openInfo('moderation', 'Moderation tools')}
         />
         <Row
+          icon="receipt-outline"
+          label="Your report receipts"
+          detail="Local reminders of reports sent from this device"
+          onPress={() => navigation.navigate('ReportReceipts')}
+        />
+        <Row
           icon="ban-outline"
           label="Blocked and muted accounts"
           detail="Manage accounts from their profile menus"

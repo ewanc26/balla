@@ -36,6 +36,7 @@ import { EditProfileScreen } from './src/screens/EditProfileScreen';
 import { ModerationInboxScreen } from './src/screens/ModerationInboxScreen';
 import { ModerationReportScreen } from './src/screens/ModerationReportScreen';
 import { ModerationNoticeScreen } from './src/screens/ModerationNoticeScreen';
+import { ReportReceiptsScreen } from './src/screens/ReportReceiptsScreen';
 import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
 import { FeedsScreen } from './src/screens/FeedsScreen';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
@@ -304,6 +305,7 @@ export default function App() {
                   <Stack.Screen name="ModerationInbox" component={ModerationInboxScreen} />
                   <Stack.Screen name="ModerationReport" component={ModerationReportScreen} />
                   <Stack.Screen name="ModerationNotice" component={ModerationNoticeScreen} />
+                  <Stack.Screen name="ReportReceipts" component={ReportReceiptsScreen} />
                   <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
                   <Stack.Screen name="Feeds" component={FeedsScreen} />
                   <Stack.Screen name="StarterPack" component={StarterPackScreen} />
