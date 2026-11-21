@@ -13,6 +13,12 @@
       "permanent": true
     }
   ],
+  "rewrites": [
+    {
+      "source": "/app/(.*)",
+      "destination": "/app/index.html"
+    }
+  ],
   "headers": [
     {
       "source": "/oauth-client-metadata.json",

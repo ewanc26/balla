@@ -106,7 +106,10 @@ the landing page and OAuth metadata into `dist-site`, and is what Vercel runs.
 deployment serves the landing page at `/`, the privacy note at `/privacy`, the
 web client at `/app`, and `oauth-client-metadata.json` at the root. `/app` is
 also the web OAuth redirect; the old `/oauth-callback` URL redirects there. The
-production project is `balla`; deploy with:
+web client uses React Navigation linking on the web only, so each screen has an
+address under `/app` (for example `/app/post/…` or `/app/profile/…`); a rewrite
+serves the app shell for those nested paths while native navigation is
+untouched. The production project is `balla`; deploy with:
 
     vercel --prod --project balla
 

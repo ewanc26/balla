@@ -134,6 +134,9 @@ are not committed yet — the first local run of `scripts/gen-icons.py` with a
 commit flips CI's icon job from smoke-test to enforcement. The same app is
 exported to the web at `https://balla.croft.click/app`; browser sign-in uses a
 popup that returns to `/app` and hands the session to the tab that opened it.
+On the web only, React Navigation linking gives every screen an address under
+`/app` so posts, profiles and lists can be shared and browser history works.
+Native navigation is unchanged.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
 mapping and the deliberate omissions (Stories, reactions, ranking) live in
