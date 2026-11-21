@@ -11,6 +11,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { describeFailure, withOptimisticRollback } from '../lib/reliability';
 import { timeAgo } from '../lib/time';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { Avatar } from './Avatar';
@@ -58,7 +59,11 @@ export function PostCard({
   const [reposted, setReposted] = useState(!!(post && post.viewer && post.viewer.repost));
   const [reposts, setReposts] = useState(post ? post.repostCount || 0 : 0);
   const [bookmarked, setBookmarked] = useState(!!(post && post.viewer && post.viewer.bookmarked));
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [repostBusy, setRepostBusy] = useState(false);
   const [bookmarkBusy, setBookmarkBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [failedAction, setFailedAction] = useState<'like' | 'repost' | 'bookmark' | null>(null);
   const [viewerIndex, setViewerIndex] = useState<number | null>(null);
   const [expanded, setExpanded] = useState(false);
   const [textWidth, setTextWidth] = useState(0);
@@ -80,58 +85,121 @@ export function PostCard({
     !!record.text && textWidth > 0 && record.text.length > textWidth * 1.1;
 
   async function toggleLike() {
+    if (likeBusy) return;
+    setLikeBusy(true);
+    setActionError(null);
+    const wasLiked = liked;
+    const previousCount = likes;
+    const previousViewer = post.viewer ? { ...post.viewer } : undefined;
     try {
-      if (liked) {
-        setLiked(false);
-        setLikes((n: number) => Math.max(0, n - 1));
-        await agent.deleteLike(post.viewer.like);
-      } else {
-        setLiked(true);
-        setLikes((n: number) => n + 1);
-        const res = await agent.like(post.uri, post.cid);
-        post.viewer = Object.assign({}, post.viewer || {}, { like: res.uri });
-      }
-    } catch {
-      // Leave the UI as-is; a tap on a flaky connection should not wedge the card.
+      await withOptimisticRollback(
+        () => {
+          setLiked(!wasLiked);
+          setLikes(wasLiked ? Math.max(0, previousCount - 1) : previousCount + 1);
+        },
+        async () => {
+          if (wasLiked) {
+            const uri = previousViewer?.like;
+            if (!uri) throw new Error('This like has no address.');
+            await agent.deleteLike(uri);
+            post.viewer = { ...(previousViewer || {}), like: undefined };
+          } else {
+            const res = await agent.like(post.uri, post.cid);
+            post.viewer = { ...(post.viewer || {}), like: res.uri };
+          }
+        },
+        () => {
+          setLiked(wasLiked);
+          setLikes(previousCount);
+          post.viewer = previousViewer;
+        }
+      );
+      setFailedAction(null);
+    } catch (err) {
+      setFailedAction('like');
+      setActionError(describeFailure(err, 'Could not update this like.'));
+    } finally {
+      setLikeBusy(false);
     }
   }
 
   async function toggleRepost() {
+    if (repostBusy) return;
+    setRepostBusy(true);
+    setActionError(null);
+    const wasReposted = reposted;
+    const previousCount = reposts;
+    const previousViewer = post.viewer ? { ...post.viewer } : undefined;
     try {
-      if (reposted) {
-        setReposted(false);
-        setReposts((n: number) => Math.max(0, n - 1));
-        await agent.deleteRepost(post.viewer.repost);
-      } else {
-        setReposted(true);
-        setReposts((n: number) => n + 1);
-        const res = await agent.repost(post.uri, post.cid);
-        post.viewer = Object.assign({}, post.viewer || {}, { repost: res.uri });
-      }
-    } catch {
-      // ignored, as above
+      await withOptimisticRollback(
+        () => {
+          setReposted(!wasReposted);
+          setReposts(wasReposted ? Math.max(0, previousCount - 1) : previousCount + 1);
+        },
+        async () => {
+          if (wasReposted) {
+            const uri = previousViewer?.repost;
+            if (!uri) throw new Error('This repost has no address.');
+            await agent.deleteRepost(uri);
+            post.viewer = { ...(previousViewer || {}), repost: undefined };
+          } else {
+            const res = await agent.repost(post.uri, post.cid);
+            post.viewer = { ...(post.viewer || {}), repost: res.uri };
+          }
+        },
+        () => {
+          setReposted(wasReposted);
+          setReposts(previousCount);
+          post.viewer = previousViewer;
+        }
+      );
+      setFailedAction(null);
+    } catch (err) {
+      setFailedAction('repost');
+      setActionError(describeFailure(err, 'Could not update this repost.'));
+    } finally {
+      setRepostBusy(false);
     }
   }
 
   async function toggleBookmark() {
     if (bookmarkBusy) return;
-    const wasBookmarked = bookmarked;
     setBookmarkBusy(true);
+    setActionError(null);
+    const wasBookmarked = bookmarked;
+    const previousViewer = post.viewer ? { ...post.viewer } : undefined;
     try {
-      if (wasBookmarked) {
-        await agent.app.bsky.bookmark.deleteBookmark({ uri: post.uri });
-        setBookmarked(false);
-        post.viewer = Object.assign({}, post.viewer || {}, { bookmarked: false });
-      } else {
-        await agent.app.bsky.bookmark.createBookmark({ uri: post.uri, cid: post.cid });
-        setBookmarked(true);
-        post.viewer = Object.assign({}, post.viewer || {}, { bookmarked: true });
-      }
+      await withOptimisticRollback(
+        () => {
+          setBookmarked(!wasBookmarked);
+          post.viewer = { ...(previousViewer || {}), bookmarked: !wasBookmarked };
+        },
+        async () => {
+          if (wasBookmarked) {
+            await agent.app.bsky.bookmark.deleteBookmark({ uri: post.uri });
+          } else {
+            await agent.app.bsky.bookmark.createBookmark({ uri: post.uri, cid: post.cid });
+          }
+        },
+        () => {
+          setBookmarked(wasBookmarked);
+          post.viewer = previousViewer;
+        }
+      );
+      setFailedAction(null);
       if (onBookmarkChange) onBookmarkChange(!wasBookmarked, post);
-    } catch {
-      // Leave the bookmark state unchanged; the user can try again.
+    } catch (err) {
+      setFailedAction('bookmark');
+      setActionError(describeFailure(err, 'Could not update this save.'));
+    } finally {
+      setBookmarkBusy(false);
     }
-    setBookmarkBusy(false);
+  }
+
+  function retryFailedAction() {
+    if (failedAction === 'like') void toggleLike();
+    else if (failedAction === 'repost') void toggleRepost();
+    else if (failedAction === 'bookmark') void toggleBookmark();
   }
 
   async function translatePost() {
@@ -471,6 +539,36 @@ export function PostCard({
             />
           </Pressable>
         </View>
+        {actionError ? (
+          <View style={styles.actionError}>
+            <Text style={{ color: p.danger, flex: 1, fontSize: 12 }}>{actionError}</Text>
+            <Pressable
+              onPress={retryFailedAction}
+              accessibilityRole="button"
+              accessibilityLabel="Retry the failed post action"
+              style={({ pressed }) => [
+                styles.actionRetry,
+                { opacity: pressed ? 0.65 : 1 },
+              ]}
+            >
+              <Text style={{ color: p.accent, fontWeight: '700', fontSize: 13 }}>Retry</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => {
+                setActionError(null);
+                setFailedAction(null);
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Dismiss the post action error"
+              style={({ pressed }) => [
+                styles.actionRetry,
+                { opacity: pressed ? 0.65 : 1 },
+              ]}
+            >
+              <Text style={{ color: p.secondary, fontWeight: '600', fontSize: 13 }}>Dismiss</Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
       <ImageViewer
         images={imgs}
@@ -702,6 +800,18 @@ const styles = StyleSheet.create({
   actions: {
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  actionError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
+    paddingBottom: 8,
+  },
+  actionRetry: {
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: 8,
   },
   engagement: {
     flexDirection: 'row',

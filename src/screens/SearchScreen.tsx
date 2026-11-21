@@ -14,6 +14,7 @@ import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
 import { PersonRow } from '../components/PersonRow';
@@ -288,7 +289,9 @@ export function SearchScreen({ route }: { route?: any }) {
     }
 
     try {
-      const page = await fetchSearchPage(safeTab, term, nextFilters);
+      const page = await readWithRetry(() =>
+        fetchSearchPage(safeTab, term, nextFilters)
+      );
       if (id !== requestId.current) return;
       setItems(page.items);
       setCursor(page.cursor);
@@ -296,7 +299,7 @@ export function SearchScreen({ route }: { route?: any }) {
       setLoaded(true);
     } catch (cause) {
       if (id !== requestId.current) return;
-      setError(searchError(safeTab, cause));
+      setError(describeFailure(cause, searchError(safeTab, cause)));
       setLoaded(true);
     } finally {
       if (id === requestId.current) {
@@ -323,18 +326,22 @@ export function SearchScreen({ route }: { route?: any }) {
     setMoreLoading(true);
     setError(null);
     try {
-      const page = await fetchSearchPage(
-        activeTab,
-        submitted.query,
-        submitted.filters,
-        activeCursor
+      const page = await readWithRetry(() =>
+        fetchSearchPage(
+          activeTab,
+          submitted.query,
+          submitted.filters,
+          activeCursor
+        )
       );
       if (id !== requestId.current) return;
       setItems((prev) => appendUnique(prev, page.items, activeTab));
       setCursor(page.cursor);
       if (typeof page.hitsTotal === 'number') setHitsTotal(page.hitsTotal);
     } catch (cause) {
-      if (id === requestId.current) setError(searchError(activeTab, cause));
+      if (id === requestId.current) {
+        setError(describeFailure(cause, searchError(activeTab, cause)));
+      }
     } finally {
       moreInFlight.current = false;
       if (id === requestId.current) setMoreLoading(false);

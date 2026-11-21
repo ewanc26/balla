@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { timeAgo } from '../lib/time';
 import { PersonRow } from '../components/PersonRow';
@@ -78,12 +79,12 @@ export function EngagementListScreen({
     setCursor(undefined);
     setDone(false);
     try {
-      const page = await fetchPage(undefined);
+      const page = await readWithRetry(() => fetchPage(undefined));
       setItems(page.items);
       setCursor(page.cursor);
       setDone(!page.cursor);
-    } catch {
-      setError('Could not load this list.');
+    } catch (err) {
+      setError(describeFailure(err, 'Could not load this list.'));
     } finally {
       inFlight.current = false;
       setLoading(false);
@@ -113,13 +114,13 @@ export function EngagementListScreen({
     inFlight.current = true;
     setLoadingMore(true);
     try {
-      const page = await fetchPage(cursor);
+      const page = await readWithRetry(() => fetchPage(cursor));
       setItems((prev) => [...prev, ...page.items]);
       setCursor(page.cursor);
       setDone(!page.cursor);
       setError(null);
-    } catch {
-      setError('Could not load more. Scroll to try again.');
+    } catch (err) {
+      setError(describeFailure(err, 'Could not load more. Scroll to try again.'));
     } finally {
       inFlight.current = false;
       setLoadingMore(false);

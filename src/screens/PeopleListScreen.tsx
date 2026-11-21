@@ -7,6 +7,7 @@ import {
   View,
 } from 'react-native';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { PersonRow } from '../components/PersonRow';
 import { usePalette } from '../theme';
@@ -60,12 +61,12 @@ export function PeopleListScreen({ route, navigation }: { route: any; navigation
     setCursor(undefined);
     setDone(false);
     try {
-      const page = await fetchPage(undefined);
+      const page = await readWithRetry(() => fetchPage(undefined));
       setPeople(page.items);
       setCursor(page.cursor);
       setDone(!page.cursor);
-    } catch {
-      setError('Could not load this list.');
+    } catch (err) {
+      setError(describeFailure(err, 'Could not load this list.'));
     } finally {
       inFlight.current = false;
       setLoading(false);
@@ -91,13 +92,13 @@ export function PeopleListScreen({ route, navigation }: { route: any; navigation
     inFlight.current = true;
     setLoadingMore(true);
     try {
-      const page = await fetchPage(cursor);
+      const page = await readWithRetry(() => fetchPage(cursor));
       setPeople((prev) => [...prev, ...page.items]);
       setCursor(page.cursor);
       setDone(!page.cursor);
       setError(null);
-    } catch {
-      setError('Could not load more. Scroll to try again.');
+    } catch (err) {
+      setError(describeFailure(err, 'Could not load more. Scroll to try again.'));
     } finally {
       inFlight.current = false;
       setLoadingMore(false);

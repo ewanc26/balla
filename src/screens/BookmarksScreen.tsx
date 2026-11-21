@@ -1,8 +1,9 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { ActivityIndicator, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
 import { usePalette } from '../theme';
@@ -29,10 +30,12 @@ export function BookmarksScreen() {
     setError(null);
 
     try {
-      const res = await agent.app.bsky.bookmark.getBookmarks({
-        limit: 50,
-        cursor: fresh ? undefined : cursor.current,
-      });
+      const res = await readWithRetry(() =>
+        agent.app.bsky.bookmark.getBookmarks({
+          limit: 50,
+          cursor: fresh ? undefined : cursor.current,
+        })
+      );
       if (id !== requestId.current) return;
 
       const next = (res.data.bookmarks || [])
@@ -50,9 +53,9 @@ export function BookmarksScreen() {
         return prev.concat(next.filter((post: any) => !seen.has(post.uri)));
       });
       cursor.current = res.data.cursor;
-    } catch {
+    } catch (err) {
       if (id === requestId.current) {
-        setError('Could not load saved posts. Pull to try again.');
+        setError(describeFailure(err, 'Could not load saved posts.'));
       }
     } finally {
       if (id === requestId.current) {
@@ -121,7 +124,23 @@ export function BookmarksScreen() {
           Private bookmarks from Bluesky. Only you can see them.
         </Text>
         {error ? (
-          <Text style={{ color: p.danger, fontSize: 13, marginTop: 8 }}>{error}</Text>
+          <View style={{ marginTop: 8, gap: 6 }}>
+            <Text style={{ color: p.danger, fontSize: 13 }}>{error}</Text>
+            <Pressable
+              onPress={() => load(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Retry loading saved posts"
+              style={({ pressed }) => ({
+                minHeight: 44,
+                justifyContent: 'center',
+                alignSelf: 'flex-start',
+                paddingHorizontal: 8,
+                opacity: pressed ? 0.65 : 1,
+              })}
+            >
+              <Text style={{ color: p.accent, fontWeight: '700' }}>Retry</Text>
+            </Pressable>
+          </View>
         ) : null}
       </View>
     );

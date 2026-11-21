@@ -12,6 +12,7 @@ import { FlashList } from '@shopify/flash-list';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
 import { PostCard } from '../components/PostCard';
@@ -41,23 +42,30 @@ export function FeedScreen() {
       setError(null);
       try {
         const target = fresh ? undefined : cursor;
-        const res = activeFeed
-          ? await agent.app.bsky.feed.getFeed({
-              feed: activeFeed,
-              limit: 25,
-              cursor: target,
-            })
-          : await agent.getTimeline({ limit: 25, cursor: target });
+        const readPage = activeFeed
+          ? () =>
+              agent.app.bsky.feed.getFeed({
+                feed: activeFeed,
+                limit: 25,
+                cursor: target,
+              })
+          : () => agent.getTimeline({ limit: 25, cursor: target });
+        // Both calls are reads, so bounded backoff is safe here. Writes are
+        // never replayed by this helper.
+        const res = await readWithRetry(readPage);
         if (id !== requestId.current) return;
         const feed = res.data.feed || [];
         setPosts((prev) => (fresh ? feed : prev.concat(feed)));
         setCursor(res.data.cursor);
-      } catch {
+      } catch (err) {
         if (id === requestId.current) {
           setError(
-            activeFeed
-              ? 'Could not load this feed. Pull to try again.'
-              : 'Could not load the timeline. Pull to try again.'
+            describeFailure(
+              err,
+              activeFeed
+                ? 'Could not load this feed. Tap Retry to try again.'
+                : 'Could not load the timeline. Tap Retry to try again.'
+            )
           );
         }
       } finally {
@@ -296,9 +304,25 @@ export function FeedScreen() {
         </View>
       )}
       {error && !loading && (
-        <Text style={{ color: p.danger, textAlign: 'center', margin: 12 }}>
-          {error}
-        </Text>
+        <View
+          style={[
+            styles.errorPanel,
+            { backgroundColor: p.card, borderColor: p.divider },
+          ]}
+        >
+          <Text style={{ color: p.danger, textAlign: 'center' }}>{error}</Text>
+          <Pressable
+            onPress={() => load(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Retry loading the feed"
+            style={({ pressed }) => [
+              styles.errorRetry,
+              { borderColor: p.accent, opacity: pressed ? 0.65 : 1 },
+            ]}
+          >
+            <Text style={{ color: p.accent, fontWeight: '700' }}>Retry</Text>
+          </Pressable>
+        </View>
       )}
     </View>
   );
@@ -345,6 +369,27 @@ function FeedTab({
 }
 
 const styles = StyleSheet.create({
+  errorPanel: {
+    position: 'absolute',
+    left: 16,
+    right: 16,
+    bottom: 16,
+    padding: 14,
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    gap: 10,
+    ...cardShadow,
+  },
+  errorRetry: {
+    minHeight: 44,
+    minWidth: 120,
+    paddingHorizontal: 18,
+    borderRadius: 22,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   feedTabs: {
     minHeight: 48,
     borderBottomWidth: StyleSheet.hairlineWidth,
