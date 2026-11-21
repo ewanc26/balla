@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { ActivityIndicator, Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Image,
+  Linking,
+  Pressable,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
@@ -11,6 +19,7 @@ import { PostMenu } from './PostMenu';
 import { ContentWarning } from './ContentWarning';
 import { usePostModeration } from '../lib/moderationContext';
 import { translateText } from '../lib/translate';
+import { richTextSegments, type RichTextSegment } from '../lib/richtext';
 
 function formatCount(n: number): string {
   if (n < 1000) return String(n);
@@ -40,6 +49,10 @@ export function PostCard({
   const moderation = usePostModeration(post);
   const author = post && post.author ? post.author : {};
   const record = post && post.record ? post.record : {};
+  const bodySegments = richTextSegments(
+    (record && record.text) || '',
+    record && record.facets
+  );
   const [liked, setLiked] = useState(!!(post && post.viewer && post.viewer.like));
   const [likes, setLikes] = useState(post ? post.likeCount || 0 : 0);
   const [reposted, setReposted] = useState(!!(post && post.viewer && post.viewer.repost));
@@ -144,6 +157,30 @@ export function PostCard({
 
   function openThread() {
     if (onOpenThread && post && post.uri) onOpenThread(post.uri);
+  }
+
+  function openFacet(segment: RichTextSegment) {
+    if (segment.kind === 'link') {
+      if (/^https?:\/\//i.test(segment.uri)) {
+        void Linking.openURL(segment.uri).catch(() => {});
+      }
+      return;
+    }
+    if (segment.kind === 'mention' && segment.actor) {
+      navigation.navigate('UserProfile', { actor: segment.actor });
+      return;
+    }
+    if (segment.kind === 'tag' && segment.tag) {
+      navigation.navigate('Tabs', {
+        screen: 'Search',
+        params: {
+          searchRequest: {
+            q: `#${segment.tag}`,
+            nonce: Date.now(),
+          },
+        },
+      });
+    }
   }
 
   const listUi = moderation?.ui('contentList');
@@ -254,7 +291,29 @@ export function PostCard({
                   onLayout={(event) => setTextWidth(event.nativeEvent.layout.width)}
                   style={{ color: p.text, fontSize: 15, lineHeight: 20, marginTop: 12 }}
                 >
-                  {translationVisible && translation ? translation : record.text}                </Text>
+                  {translationVisible && translation
+                    ? translation
+                    : bodySegments.map((segment, index) =>
+                        segment.kind === 'text' ? (
+                          <Text key={`segment-${index}`}>{segment.text}</Text>
+                        ) : (
+                          <Text
+                            key={`segment-${index}`}
+                            onPress={() => openFacet(segment)}
+                            accessibilityRole="link"
+                            accessibilityHint={
+                              segment.kind === 'tag'
+                                ? 'Searches for this hashtag'
+                                : segment.kind === 'mention'
+                                  ? 'Opens this account'
+                                  : 'Opens this link in your browser'
+                            }
+                            style={{ color: p.accent, fontWeight: '500' }}
+                          >
+                            {segment.text}
+                          </Text>
+                        )
+                      )}                </Text>
                 {longPost ? (
                   <Pressable
                     onPress={() => setExpanded((value) => !value)}

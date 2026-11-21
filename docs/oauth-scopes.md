@@ -49,22 +49,27 @@ All of these use:
 | `app.bsky.bookmark.deleteBookmark` | Removing a saved post |
 | `app.bsky.bookmark.getBookmarks` | Saved screen |
 | `app.bsky.feed.getAuthorFeed` | Profile posts |
+| `app.bsky.feed.getFeed` | Custom feed posts |
+| `app.bsky.feed.getFeedGenerator` | Custom feed metadata |
 | `app.bsky.feed.getLikes` | Liked-by list for a post |
 | `app.bsky.feed.getPostThread` | Thread screen |
 | `app.bsky.feed.getQuotes` | Quote-post list for a post |
 | `app.bsky.feed.getRepostedBy` | Reposted-by list for a post |
 | `app.bsky.feed.getTimeline` | Chronological Following feed |
-| `app.bsky.feed.searchPosts` | Post search |
+| `app.bsky.feed.searchPostsV2` | Structured post search, Top and Latest |
 | `app.bsky.graph.getFollowers` | Followers list |
 | `app.bsky.graph.getFollows` | Following list and “People I follow” notification filter |
 | `app.bsky.graph.getKnownFollowers` | “Followed by” list on a profile |
+| `app.bsky.graph.getStarterPack` | Starter-pack landing page |
 | `app.bsky.graph.muteActor` | Muting an account |
+| `app.bsky.graph.searchStarterPacksV2` | Starter-pack search |
 | `app.bsky.graph.unmuteActor` | Unmuting an account |
 | `app.bsky.labeler.getServices` | Custom label definitions |
 | `app.bsky.notification.getPreferences` | Per-category notification settings |
 | `app.bsky.notification.listNotifications` | Notifications |
 | `app.bsky.notification.putPreferencesV2` | Saving notification settings |
 | `app.bsky.notification.updateSeen` | Mark all read |
+| `app.bsky.unspecced.getPopularFeedGenerators` | Feed discovery in search |
 
 ## Labeler report audience
 

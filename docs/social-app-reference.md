@@ -197,7 +197,7 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 | Posts | Text, one-to-ten photo uploads with alt text and legacy/gallery embeds, record-with-media quotes, like, repost, bookmark, reply, delete, copy link/text, share sheet, translation with show-original and image viewing | No video, GIF, pin or edit interaction settings |
 | Threads | Ancestors, nested replies, reply composer | No threadgate, hidden replies, reply sorting or tree preference |
 | Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, report/block/mute, and editing of name, bio, pronouns, links, avatar and banner | No verification or pinned post |
-| Search | People and posts | No Top/Latest split, Feeds/Starter Packs tabs, advanced filters or history |
+| Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed and starter-pack destinations | Profile-scoped search (#25); list and saved-feed management (#18/#19) |
 | Notifications | Tabs, grouping, unread count, mark-all-read and per-category in-app/push preferences with audience filters | No device push registration (#36) |
 | Saved | Private bookmarks and remove-in-place | No saved feeds or feed management |
 | Feeds/lists | None | Feeds, lists, list feeds, moderation lists and starter packs all absent |
@@ -247,7 +247,7 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 
 ### Slice 3 — discovery and curation
 
-1. Search Top/Latest/People/Feeds/Starter Packs and advanced filters.
+1. Search Top/Latest/People/Feeds/Starter Packs and advanced filters are **done**.
 2. Saved/pinned feeds, feed discovery and feed management.
 3. Lists, list feeds, moderation lists and starter packs.
 4. Notification seen state, filter tabs and grouped activity.

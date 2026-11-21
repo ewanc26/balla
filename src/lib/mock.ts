@@ -270,6 +270,53 @@ export function installMockAgent() {
   mock.app.bsky.feed.searchPosts = async () => ({
     data: { posts, cursor: undefined },
   });
+  mock.app.bsky.feed.searchPostsV2 = async () => ({
+    data: { posts, cursor: undefined, hitsTotal: posts.length },
+  });
+  const mockFeed = {
+    uri: 'at://did:plc:mockballa/app.bsky.feed.generator/quiet',
+    cid: 'bafy-mock-feed',
+    did: balla.did,
+    creator: { ...balla, viewer: {} },
+    displayName: 'The Quiet Corner',
+    description: 'Longer reads and gentle posts from around the neighbourhood.',
+    likeCount: 12,
+    indexedAt: minutesAgo(1440),
+  };
+  const mockPack = {
+    uri: 'at://did:plc:mockballa/app.bsky.graph.starterpack/neighbours',
+    cid: 'bafy-mock-pack',
+    record: {
+      $type: 'app.bsky.graph.starterpack',
+      name: 'Balla neighbours',
+      description: 'The people and feeds in this little corner of Bluesky.',
+      createdAt: minutesAgo(2880),
+    },
+    creator: balla,
+    list: { listItemCount: 3 },
+    listItemsSample: profiles.slice(1).map((subject) => ({ subject })),
+    feeds: [mockFeed],
+    joinedWeekCount: 4,
+    indexedAt: minutesAgo(2880),
+  };
+  mock.app.bsky.unspecced.getPopularFeedGenerators = async () => ({
+    data: { feeds: [mockFeed], cursor: undefined },
+  });
+  mock.app.bsky.graph.searchStarterPacksV2 = async () => ({
+    data: { starterPacks: [mockPack], cursor: undefined, hitsTotal: 1 },
+  });
+  mock.app.bsky.feed.getFeedGenerator = async () => ({
+    data: { view: mockFeed, isOnline: true, isValid: true },
+  });
+  mock.app.bsky.feed.getFeed = async () => ({
+    data: {
+      feed: posts.map((post) => ({ post })),
+      cursor: undefined,
+    },
+  });
+  mock.app.bsky.graph.getStarterPack = async () => ({
+    data: { starterPack: mockPack },
+  });
   mock.app.bsky.bookmark.getBookmarks = async () => ({
     data: {
       bookmarks: posts.slice(0, 2).map((item) => ({ item })),

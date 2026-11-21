@@ -172,7 +172,7 @@ test('the moderation inbox scope is exact and contains no wildcards', () => {
     readFileSync(new URL('../oauth-client-metadata.json', import.meta.url), 'utf8')
   );
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 42);
+  assert.equal(tokens.length, 47);
   assert.equal(/repo:\*|rpc:\*|blob:\*/.test(metadata.scope), false);
   for (const method of [
     'listReports',

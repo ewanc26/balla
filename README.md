@@ -62,8 +62,8 @@ see their posts, followers and following, plus known followers and liked-by,
 reposted-by and quote lists; photo posts with up to ten images, per-photo alt
 text, an optional requirement to describe every image, cancellable uploads and
 retries; profile editing for name, bio, pronouns, links,
-avatar and banner; a Search tab for people and posts; a
-Saved tab for private bookmarks; per-post copy link, copy text, share sheet and
+avatar and banner; a Search tab with Top, Latest, People, Feeds and Starter
+Packs, structured filters and local history; a Saved tab for private bookmarks; per-post copy link, copy text, share sheet and
 translation with a show-original toggle; labeler subscriptions with per-label
 filters, an adult-content gate and muted words; per-category notification
 preferences; dark mode; a generated icon set;

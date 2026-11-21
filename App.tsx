@@ -36,6 +36,8 @@ import { EditProfileScreen } from './src/screens/EditProfileScreen';
 import { ModerationInboxScreen } from './src/screens/ModerationInboxScreen';
 import { ModerationReportScreen } from './src/screens/ModerationReportScreen';
 import { ModerationNoticeScreen } from './src/screens/ModerationNoticeScreen';
+import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
+import { StarterPackScreen } from './src/screens/StarterPackScreen';
 import { AppHeader, type TabName } from './src/components/AppHeader';
 import { LeftRail, RightRail } from './src/components/AppRail';
 import { ViewerProvider } from './src/lib/viewer';
@@ -281,6 +283,8 @@ export default function App() {
                   <Stack.Screen name="ModerationInbox" component={ModerationInboxScreen} />
                   <Stack.Screen name="ModerationReport" component={ModerationReportScreen} />
                   <Stack.Screen name="ModerationNotice" component={ModerationNoticeScreen} />
+                  <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
+                  <Stack.Screen name="StarterPack" component={StarterPackScreen} />
                 </Stack.Navigator>
               </View>
               {showChrome && showRight ? <RightRail onNavigate={navigateToTab} /> : null}

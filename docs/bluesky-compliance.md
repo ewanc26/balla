@@ -30,7 +30,7 @@ rest.
 | Home feed | Chronological Following timeline, pagination, pull-to-refresh | Correct: no ranking or injected suggestions |
 | Threads | Ancestor chain, nested replies, reply composer | Missing thread/post gates and some moderation states |
 | Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner | No verification state or pinned post |
-| Search | People and posts | No feeds/starter packs, advanced filters or Top/Latest modes |
+| Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history and in-app feed/starter-pack destinations | Profile-scoped search remains (#25) |
 | Notifications | Tabs, grouped activity, unread count, mark-all-read and a real per-category settings route with in-app/push switches and audience filters | No device push registration yet (#36) |
 | Saved | Private Bluesky bookmarks, remove in place | Uses AppView bookmark stash; good privacy model |
 | Media | Profile photo/banner upload; post photos with up to 10 images, alt text, previews, compression, retries, full-screen viewer, record-with-media quotes and label warnings | Video/GIF upload and video captions remain (#14) |
