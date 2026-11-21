@@ -18,10 +18,12 @@ export function LeftRail({
   activeTab,
   onNavigate,
   onOpenSettings,
+  onOpenLists,
 }: {
   activeTab: TabName;
   onNavigate: (tab: TabName) => void;
   onOpenSettings: () => void;
+  onOpenLists: () => void;
 }) {
   const p = usePalette();
   const { profile } = useViewer();
@@ -93,6 +95,30 @@ export function LeftRail({
           </Pressable>
         );
       })}
+
+      <Pressable
+        onPress={onOpenLists}
+        accessibilityRole="button"
+        accessibilityLabel="Lists"
+        style={({ pressed }) => [
+          styles.navRow,
+          { backgroundColor: pressed ? p.bg : 'transparent' },
+        ]}
+      >
+        <View style={[styles.iconBubble, { backgroundColor: p.soft }]}>
+          <Ionicons name="list-outline" size={20} color={p.text} />
+        </View>
+        <Text
+          style={{
+            color: p.text,
+            fontSize: 15,
+            fontWeight: '600',
+            marginLeft: 12,
+          }}
+        >
+          Lists
+        </Text>
+      </Pressable>
 
       <View style={[styles.rule, { backgroundColor: p.divider }]} />
       <Pressable

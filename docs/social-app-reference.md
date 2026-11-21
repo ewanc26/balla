@@ -196,11 +196,11 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 | Home | Chronological Following first, opt-in pinned custom-feed tabs, pagination and pull-to-refresh | No Discover, video, hashtag or topic surfaces |
 | Posts | Text, one-to-ten photo uploads with alt text and legacy/gallery embeds, record-with-media quotes, like, repost, bookmark, reply, delete, copy link/text, share sheet, translation with show-original and image viewing | No video, GIF, pin or edit interaction settings |
 | Threads | Ancestors, nested replies, reply composer | No threadgate, hidden replies, reply sorting or tree preference |
-| Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, report/block/mute, and editing of name, bio, pronouns, links, avatar and banner | No verification or pinned post |
-| Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed and starter-pack destinations | Profile-scoped search (#25); list management (#19) |
+| Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, authored lists, report/block/mute, and editing of name, bio, pronouns, links, avatar and banner | No verification or pinned post |
+| Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed, starter-pack and list destinations | Profile-scoped search (#25); no global list-search endpoint |
 | Notifications | Tabs, grouping, unread count, mark-all-read and per-category in-app/push preferences with audience filters | No device push registration (#36) |
 | Saved | Private bookmarks and remove-in-place | Custom feed management lives in Feeds |
-| Feeds/lists | Saved and pinned custom feeds, discovery/search, feed pages and pin/reorder/remove controls | Lists, list feeds and list/feed reports absent |
+| Feeds/lists | Saved and pinned custom feeds; lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; no global list-search endpoint |
 | Messages | None | Chat, requests, groups and chat moderation all absent |
 | Moderation | Post/profile report, block/mute, delete, labels with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox with reports, account standing, notices, actions and appeals | List/feed reports and inbox push delivery absent |
 | Settings | Settings shell with account, privacy, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes | Other preference editors and account lifecycle controls remain |

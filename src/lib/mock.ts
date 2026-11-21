@@ -379,6 +379,62 @@ export function installMockAgent() {
   mock.app.bsky.graph.getStarterPack = async () => ({
     data: { starterPack: mockPack },
   });
+  const mockList = {
+    uri: 'at://did:plc:mockballa/app.bsky.graph.list/neighbours',
+    cid: 'bafy-mock-list',
+    creator: balla,
+    name: 'Balla neighbours',
+    description: 'The people and feeds in this little corner of Bluesky.',
+    purpose: 'app.bsky.graph.defs#curatelist',
+    listItemCount: 3,
+    viewer: {},
+    indexedAt: minutesAgo(2880),
+  };
+  const mockModList = {
+    uri: 'at://did:plc:mockviewer/app.bsky.graph.list/quiet',
+    cid: 'bafy-mock-mod-list',
+    creator: viewerProfile,
+    name: 'Quiet list',
+    description: 'Accounts to mute together when a thread gets loud.',
+    purpose: 'app.bsky.graph.defs#modlist',
+    listItemCount: 2,
+    viewer: { muted: true },
+    indexedAt: minutesAgo(4320),
+  };
+  const mockListItems = profiles.slice(1).map((subject, index) => ({
+    uri: `at://did:plc:mockballa/app.bsky.graph.listitem/${index + 1}`,
+    subject,
+  }));
+  mock.app.bsky.graph.getLists = async ({ actor }: { actor?: string }) => ({
+    data: {
+      lists:
+        actor === viewer.did || actor === viewer.handle
+          ? [mockModList]
+          : [mockList],
+      cursor: undefined,
+    },
+  });
+  mock.app.bsky.graph.getList = async ({ list }: { list: string }) => ({
+    data: {
+      list: list === mockModList.uri ? mockModList : mockList,
+      items: list === mockModList.uri ? mockListItems.slice(0, 2) : mockListItems,
+      cursor: undefined,
+    },
+  });
+  mock.app.bsky.graph.getListMutes = async () => ({
+    data: { lists: [mockModList], cursor: undefined },
+  });
+  mock.app.bsky.graph.getListBlocks = async () => ({
+    data: { lists: [], cursor: undefined },
+  });
+  mock.app.bsky.feed.getListFeed = async () => ({
+    data: {
+      feed: posts.map((post) => ({ post })),
+      cursor: undefined,
+    },
+  });
+  mock.app.bsky.graph.muteActorList = async () => ({ data: {} });
+  mock.app.bsky.graph.unmuteActorList = async () => ({ data: {} });
   mock.app.bsky.bookmark.getBookmarks = async () => ({
     data: {
       bookmarks: posts.slice(0, 2).map((item) => ({ item })),

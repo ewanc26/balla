@@ -4,7 +4,7 @@ Last updated: **21 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **48 tokens**.
+the scope currently has **58 tokens**.
 
 ## Repository writes
 
@@ -17,9 +17,12 @@ the scope currently has **48 tokens**.
 | `repo:app.bsky.graph.block?action=create&action=delete` | Blocking and unblocking |
 | `repo:app.bsky.actor.profile?action=create&action=update` | Editing the profile record (name, bio, pronouns, avatar, banner and link refs) |
 | `repo:app.bsky.actor.link?action=create&action=update&action=delete` | Creating, reordering, editing and removing profile links |
+| `repo:app.bsky.graph.list?action=create&action=update&action=delete` | Creating, editing and deleting curation and moderation lists |
+| `repo:app.bsky.graph.listitem?action=create&action=delete` | Adding and removing list members |
+| `repo:app.bsky.graph.listblock?action=create&action=delete` | Blocking and unblocking a list |
 
-Balla adds `update` only for the profile and link records it can edit. It does
-not update posts or any other record type. There is no threadgate, list, feed
+Balla adds `update` only for the profile, link and list records it can edit. It
+does not update posts or any other record type. There is no threadgate, feed
 generator, starter-pack or chat scope.
 
 ## Blob uploads
@@ -53,6 +56,7 @@ All of these use:
 | `app.bsky.feed.getFeedGenerator` | Custom feed metadata |
 | `app.bsky.feed.getFeedGenerators` | Batched metadata for saved feeds |
 | `app.bsky.feed.getLikes` | Liked-by list for a post |
+| `app.bsky.feed.getListFeed` | Posts from a curation list’s members |
 | `app.bsky.feed.getPostThread` | Thread screen |
 | `app.bsky.feed.getQuotes` | Quote-post list for a post |
 | `app.bsky.feed.getRepostedBy` | Reposted-by list for a post |
@@ -61,10 +65,16 @@ All of these use:
 | `app.bsky.graph.getFollowers` | Followers list |
 | `app.bsky.graph.getFollows` | Following list and “People I follow” notification filter |
 | `app.bsky.graph.getKnownFollowers` | “Followed by” list on a profile |
+| `app.bsky.graph.getList` | List metadata and member pages |
+| `app.bsky.graph.getListBlocks` | Blocked lists |
+| `app.bsky.graph.getListMutes` | Subscribed lists |
+| `app.bsky.graph.getLists` | Authored lists on profiles and the Lists screen |
 | `app.bsky.graph.getStarterPack` | Starter-pack landing page |
 | `app.bsky.graph.muteActor` | Muting an account |
+| `app.bsky.graph.muteActorList` | Subscribing to a list’s mute moderation |
 | `app.bsky.graph.searchStarterPacksV2` | Starter-pack search |
 | `app.bsky.graph.unmuteActor` | Unmuting an account |
+| `app.bsky.graph.unmuteActorList` | Unsubscribing from a list |
 | `app.bsky.labeler.getServices` | Custom label definitions |
 | `app.bsky.notification.getPreferences` | Per-category notification settings |
 | `app.bsky.notification.listNotifications` | Notifications |
@@ -107,9 +117,9 @@ database.
   are converted to JPEG. Video and GIF uploads are not implemented.
 - Account and app-password scopes — account lifecycle is a PDS operation and
   Balla links to the server controls instead.
-- Feed-generator, list, starter-pack and threadgate repo scopes — Balla reads
-  custom feeds and writes saved-feed preferences through the AppView; it does
-  not create generators, lists, starter packs or threadgates.
+- Feed-generator, starter-pack and threadgate repo scopes — Balla reads custom
+  feeds and writes saved-feed preferences through the AppView; it does not
+  create generators, starter packs or threadgates.
 - `chat.bsky.*` — DMs are not implemented. A chat audience must be added before
   shipping them.
 - `transition:*` and broad wildcards.
@@ -119,7 +129,7 @@ database.
 The client metadata has widened over time for profile editing, saved feeds and
 the moderation inbox while staying granular. Sessions authorised before any of
 those changes keep their old grant and must re-authorise before the new
-profile/link/blob, saved-feed or inbox scopes are available. Signing out and back
+profile/link/blob, list, saved-feed or inbox scopes are available. Signing out and back
 in requests the current scope. The consent screen should show the collection and
 RPC list above, not “access to nearly everything”.
 

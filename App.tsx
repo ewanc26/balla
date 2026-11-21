@@ -40,6 +40,10 @@ import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
 import { FeedsScreen } from './src/screens/FeedsScreen';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { StarterPackScreen } from './src/screens/StarterPackScreen';
+import { ListsScreen } from './src/screens/ListsScreen';
+import { ListDetailScreen } from './src/screens/ListDetailScreen';
+import { ListEditScreen } from './src/screens/ListEditScreen';
+import { ListMembersScreen } from './src/screens/ListMembersScreen';
 import { AppHeader, type TabName } from './src/components/AppHeader';
 import { LeftRail, RightRail } from './src/components/AppRail';
 import { ViewerProvider } from './src/lib/viewer';
@@ -159,6 +163,10 @@ export default function App() {
     if (navigationRef.isReady()) navigationRef.navigate('Settings');
   }, []);
 
+  const openLists = useCallback(() => {
+    if (navigationRef.isReady()) navigationRef.navigate('Lists');
+  }, []);
+
   const syncActiveTab = useCallback(() => {
     const name = navigationRef.getCurrentRoute()?.name || 'Home';
     setRouteName(name);
@@ -251,6 +259,7 @@ export default function App() {
                   activeTab={activeTab}
                   onNavigate={navigateToTab}
                   onOpenSettings={openSettings}
+                  onOpenLists={openLists}
                 />
               ) : null}
               <View style={{ flex: 1, maxWidth: width >= DESKTOP_MIN_WIDTH ? 680 : undefined }}>
@@ -291,6 +300,10 @@ export default function App() {
                   <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
                   <Stack.Screen name="Feeds" component={FeedsScreen} />
                   <Stack.Screen name="StarterPack" component={StarterPackScreen} />
+                  <Stack.Screen name="Lists" component={ListsScreen} />
+                  <Stack.Screen name="ListDetail" component={ListDetailScreen} />
+                  <Stack.Screen name="ListEdit" component={ListEditScreen} />
+                  <Stack.Screen name="ListMembers" component={ListMembersScreen} />
                 </Stack.Navigator>
               </View>
               {showChrome && showRight ? <RightRail onNavigate={navigateToTab} /> : null}

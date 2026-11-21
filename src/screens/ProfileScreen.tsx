@@ -19,6 +19,7 @@ import { ContentWarning } from '../components/ContentWarning';
 import { useModeration } from '../lib/moderationContext';
 import { useViewer } from '../lib/viewer';
 import { profileLinkHost, profileLinkLabel } from '../lib/profileLinks';
+import { listMemberCount, listPurposeMeta } from '../lib/listModel';
 import { subscribeActorHidden } from '../lib/moderation';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
@@ -36,6 +37,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const [menuOpen, setMenuOpen] = useState(false);
   const [profileRevealed, setProfileRevealed] = useState(false);
   const [knownFollowers, setKnownFollowers] = useState<any[]>([]);
+  const [lists, setLists] = useState<any[]>([]);
 
   useEffect(() => {
     let active = true;
@@ -45,6 +47,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
     setFollowingUri(undefined);
     setProfileRevealed(false);
     setKnownFollowers([]);
+    setLists([]);
 
     if (!actor) {
       setFailed(true);
@@ -55,14 +58,18 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
     (async () => {
       try {
-        const [prof, feed] = await Promise.all([
+        const [prof, feed, listResult] = await Promise.all([
           agent.getProfile({ actor }),
           agent.getAuthorFeed({ actor, limit: 30 }),
+          agent.app.bsky.graph
+            .getLists({ actor, limit: 20 })
+            .catch(() => null),
         ]);
         if (!active) return;
         setProfile(prof.data);
         setFollowingUri(prof.data.viewer && prof.data.viewer.following);
         setPosts((feed.data.feed || []).map((item: any) => item.post));
+        setLists(listResult?.data.lists || []);
         if (prof.data.did !== agent.did) {
           // Social proof is optional: a failed lookup must not block the profile.
           agent.app.bsky.graph
@@ -531,6 +538,64 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 </Pressable>
               )}
             </View>
+
+            {lists.length > 0 ? (
+              <View style={[styles.listsBlock, { borderTopColor: p.divider }]}>
+                <View style={styles.listsHeading}>
+                  <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', flex: 1 }}>
+                    Lists
+                  </Text>
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate('Lists', {
+                        actor: profile.did,
+                        handle: profile.handle,
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`${isSelf ? 'Manage' : 'See all'} @${profile.handle}’s lists`}
+                    style={({ pressed }) => [
+                      styles.seeAll,
+                      { opacity: pressed ? 0.6 : 1 },
+                    ]}
+                  >
+                    <Text style={{ color: p.accent, fontSize: 12, fontWeight: '700' }}>
+                      {isSelf ? 'Manage' : 'See all'}
+                    </Text>
+                    <Ionicons name="chevron-forward" size={14} color={p.accent} />
+                  </Pressable>
+                </View>
+                {lists.slice(0, 3).map((list: any) => {
+                  const purpose = listPurposeMeta(list.purpose);
+                  return (
+                    <Pressable
+                      key={list.uri}
+                      onPress={() => navigation.navigate('ListDetail', { uri: list.uri })}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open ${list.name} list`}
+                      style={({ pressed }) => [
+                        styles.listLink,
+                        { backgroundColor: pressed ? p.bg : 'transparent' },
+                      ]}
+                    >
+                      <View style={[styles.listIcon, { backgroundColor: p.accentSoft }]}>
+                        <Ionicons name="list-outline" size={16} color={p.accent} />
+                      </View>
+                      <View style={{ flex: 1, minWidth: 0 }}>
+                        <Text style={{ color: p.text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
+                          {list.name}
+                        </Text>
+                        <Text style={{ color: p.secondary, fontSize: 11 }} numberOfLines={1}>
+                          {purpose.shortLabel} · {listMemberCount(list)}{' '}
+                          {listMemberCount(list) === 1 ? 'person' : 'people'}
+                        </Text>
+                      </View>
+                      <Ionicons name="chevron-forward" size={15} color={p.secondary} />
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -648,6 +713,37 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 4,
     marginRight: -8,
+  },
+  listsBlock: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: 14,
+    paddingTop: 10,
+  },
+  listsHeading: {
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  seeAll: {
+    minHeight: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  listLink: {
+    minHeight: 48,
+    borderRadius: 8,
+    paddingHorizontal: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+  },
+  listIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   profileLinks: {
     flexDirection: 'row',
