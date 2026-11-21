@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import {
+  Platform,
   StyleSheet,
   Text,
   useColorScheme,
@@ -53,6 +54,7 @@ import { FeedsProvider } from './src/lib/feedsContext';
 import { PreferencesProvider } from './src/lib/preferences';
 import { restore, setOnLoggedOut } from './src/lib/agent';
 import { installWebAccessibility } from './src/lib/accessibility';
+import { webLinking } from './src/lib/webLinking';
 import { palettes, usePalette } from './src/theme';
 import { DESKTOP_MIN_WIDTH, navigationLayout } from './src/lib/layout';
 import {
@@ -239,6 +241,7 @@ export default function App() {
           <FeedsProvider>
         <NavigationContainer
           ref={navigationRef}
+          linking={Platform.OS === 'web' ? webLinking : undefined}
           theme={customNavTheme as any}
           onReady={handleReady}
           onStateChange={syncActiveTab}

@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.5.0
+
+- The web client now reflects the current screen in the address bar. Threads, profiles, lists, feeds and settings have shareable URLs under `/app`, and browser back/forward follows in-app navigation.
+- The host serves the app shell for nested `/app` paths. Native navigation is unchanged; no tracking or analytics was added.
+
 ## 0.4.0
 
 - Only a label whose preference is Hide conceals a post or account. A Warn
