@@ -50,9 +50,60 @@ const viewerProfile = {
 
 const profiles = [
   viewerProfile,
-  { ...mum, postsCount: 18, followsCount: 64, followersCount: 132, viewer: {} },
+  {
+    ...mum,
+    postsCount: 18,
+    followsCount: 64,
+    followersCount: 132,
+    viewer: {},
+    // Mock verification from a trusted verifier and a pinned post: both are
+    // real lexicon fields, so the profile can be checked without a live account.
+    verification: {
+      $type: 'app.bsky.actor.defs#verificationState',
+      verifiedStatus: 'valid',
+      trustedVerifierStatus: 'none',
+      verifications: [
+        {
+          $type: 'app.bsky.actor.defs#verificationView',
+          issuer: balla.did,
+          issuerDisplayName: balla.displayName,
+          issuerHandle: balla.handle,
+          uri: `at://${balla.did}/app.bsky.graph.verification/1`,
+          isValid: true,
+          createdAt: minutesAgo(2880),
+        },
+      ],
+    },
+    pinnedPost: {
+      uri: 'at://did:plc:mockmum/app.bsky.feed.post/1',
+      cid: 'bafy-mock-pinned',
+    },
+  },
   { ...ailsa, postsCount: 27, followsCount: 91, followersCount: 74, viewer: {} },
-  { ...balla, postsCount: 12, followsCount: 8, followersCount: 204, viewer: {} },
+  {
+    ...balla,
+    postsCount: 12,
+    followsCount: 8,
+    followersCount: 204,
+    viewer: {},
+    associated: { lists: 1, feedgens: 1, starterPacks: 1, labeler: true },
+    verification: {
+      $type: 'app.bsky.actor.defs#verificationState',
+      verifiedStatus: 'valid',
+      trustedVerifierStatus: 'valid',
+      verifications: [
+        {
+          $type: 'app.bsky.actor.defs#verificationView',
+          issuer: ailsa.did,
+          issuerDisplayName: ailsa.displayName,
+          issuerHandle: ailsa.handle,
+          uri: `at://${ailsa.did}/app.bsky.graph.verification/2`,
+          isValid: true,
+          createdAt: minutesAgo(4320),
+        },
+      ],
+    },
+  },
 ];
 
 function makePost({
@@ -297,6 +348,13 @@ export function installMockAgent() {
   });
   mock.getLabelDefinitions = async () => ({});
   mock.getPostThread = async () => ({ data: { thread } });
+  mock.getPosts = async ({ uris }: { uris?: string[] }) => ({
+    data: {
+      posts: (uris || [])
+        .map((uri) => posts.find((post) => post.uri === uri))
+        .filter(Boolean),
+    },
+  });
   mock.searchActors = async () => ({
     data: {
       actors: [profiles[1], profiles[2], profiles[3]],
@@ -413,6 +471,21 @@ export function installMockAgent() {
   });
   mock.app.bsky.graph.getStarterPack = async () => ({
     data: { starterPack: mockPack },
+  });
+  const authoredByBalla = (actor?: string) =>
+    actor === balla.did || actor === balla.handle;
+  mock.app.bsky.feed.getActorFeeds = async ({ actor }: { actor?: string }) => ({
+    data: { feeds: authoredByBalla(actor) ? [mockFeed] : [], cursor: undefined },
+  });
+  mock.app.bsky.graph.getActorStarterPacks = async ({
+    actor,
+  }: {
+    actor?: string;
+  }) => ({
+    data: {
+      starterPacks: authoredByBalla(actor) ? [mockPack] : [],
+      cursor: undefined,
+    },
   });
   const mockList = {
     uri: 'at://did:plc:mockballa/app.bsky.graph.list/neighbours',
