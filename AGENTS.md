@@ -116,7 +116,9 @@ Facebook-era chrome presets and nine solid accent colours; they are stored on
 the device and keep Following chronological. Tapping any post image opens a full-screen
 viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
-keep the text rather than eating it. Tapping a notification opens the thread
+keep the text rather than eating it. The composer supports threads, photos with
+alt text, link cards, quotes, self-applied content warnings and up to three post
+languages per post. Tapping a notification opens the thread
 it belongs to (follows stay inert). Lists support creation and editing,
 membership, list feeds, subscribe/block states and profile links; list reports
 are not implemented yet. There are no DMs. Saved and pinned custom feeds have

@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.7.0
+
+- Add per-post content warnings and post languages to the composer. Warnings use the four self-label values Bluesky publishes; languages use real BCP-47 codes, capped at three, and both are written to the post record only when chosen. Each post in a thread keeps its own choices.
+- Put both options in one accessible sheet with 44pt controls, visible selection state and a keyboard-managed focus order, and show the chosen options on the queued-post preview.
+- Split the composer's photo-count and media buttons into two rows so the 320px layout no longer overflows, and expose checkbox state to browser screen readers with `aria-checked`.
+
 ## 0.6.0
 
 - Make the marketing site's mobile header a single compact row with a visible, keyboard-reachable menu button, 44pt menu targets and no horizontal overflow. The desktop navigation is unchanged.
