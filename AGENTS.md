@@ -43,6 +43,23 @@ PBC.
    they do not make Balla official or endorsed. Keep that distinction in code,
    copy and documentation, and ship no Facebook logos or brand assets.
 
+## Design constraints
+
+The site and app follow the wall, not the current AI-landing-page default.
+These are hard constraints, not preferences:
+
+- No purple or blue gradients, glassmorphism, glow, emoji or generic icon
+  badges. Flat colour, spacing and real UI previews carry the hierarchy.
+- No centred hero plus three identical rounded cards. Use a vertical list for
+  features and roadmap, with left-aligned copy and one clear point of emphasis.
+- No eyebrow label above every heading, numbered `01 / 02 / 03` markers,
+  pulsing status dots, fake metrics, invented counts or testimonials.
+- Copy names the actual feature and its limit. Avoid “seamless”, “unlock”,
+  “empower”, “elevate”, “revolutionise”, “game-changing” and “curated” unless
+  the word is a quoted protocol term.
+- Cards use the shared 8px radius; only avatars, pills and conventional chips
+  are round. Shadows stay at 1–2px and are never used as a glow.
+
 ## Source boundaries
 
 - `src/theme.ts` — the one palette (light and dark) and `usePalette()`.

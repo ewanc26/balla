@@ -41,7 +41,8 @@ became a job title. The name keeps the good half of that history.
 - The chronological Following feed as the home feed. Always.
 - Facebook's reading ergonomics — cards, generous touch targets, honest
   timestamps — on iOS, Android and the web.
-- Works with any service host, so accounts on other providers are first-class.
+- Works with AT Protocol services that expose the relevant lexicons, so accounts
+  on other providers are not tied to one appview.
 
 ## Non-goals
 
@@ -74,7 +75,7 @@ vocabulary and up to three post languages per post; local draft recovery with a 
 reply and quote controls written to Bluesky's real threadgate and postgate
 records, editable from any post you authored; profile editing for name, bio, pronouns, links,
 avatar and banner; a Search tab with Top, Latest, People, Feeds and Starter
-Packs, structured filters and local history; a Feeds screen for saved and pinned custom feeds, with discovery, search, pin/unpin, reorder and removal; lists with create/edit, membership, list feeds, subscribe/block states and profile links; appearance settings with four researched Facebook-era chrome presets and nine solid accent colours, each with light and dark variants chosen for contrast; a Saved tab for private bookmarks; per-post copy link, copy text, share sheet and
+Packs, structured filters and local history; a Feeds screen for saved and pinned custom feeds, with discovery, search, pin/unpin, reorder and removal; lists with create/edit, membership, list feeds, subscribe/block states and profile links; appearance settings with four Facebook-era chrome presets and nine solid accent colours, each with light and dark variants chosen for contrast; a Saved tab for private bookmarks; per-post copy link, copy text, share sheet and
 translation with a show-original toggle; labeler subscriptions with per-label
 filters, an adult-content gate and muted words; per-category notification
 preferences; dark mode; a generated icon set;

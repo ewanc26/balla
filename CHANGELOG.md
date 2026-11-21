@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.10.1
+
+- Remove the remaining template patterns from the marketing site: eyebrow labels above every heading, symmetric feature-card grids, decorative window dots in the hero preview and a static “live” footer badge. Features and roadmap now read as vertical lists, matching the wall rather than a SaaS landing page.
+- Replace the overbroad “any AT Protocol service host” claim with “services that expose the relevant lexicons”, and drop the marketing word “researched” from the preset descriptions.
+- Document the anti-slop design constraints in `AGENTS.md` so later work does not reintroduce the same defaults.
+
 ## 0.10.0
 
 - Add MP4 video and animated GIF posts. Files are selected with visible controls, checked locally against Balla's stated 100 MB and 10-minute limits, and sent to Bluesky's video service; the post is only publishable once the job reports `JOB_STATE_COMPLETED` with a blob. Processing states, failures and cancellation are named plainly, and converting a GIF is left to Bluesky rather than claiming a local transcode.
