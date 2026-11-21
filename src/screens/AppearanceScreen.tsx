@@ -4,7 +4,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  useColorScheme,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -12,18 +11,25 @@ import { usePreferences } from '../lib/preferences';
 import {
   ACCENT_COLOURS,
   FACEBOOK_ERAS,
+  FONT_SCALES,
   buildPalette,
   eraFor,
   type ColorScheme,
+  type FontScaleId,
   type Palette,
 } from '../lib/themeModel';
-import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
+import { CARD_RADIUS, cardShadow, usePalette, useResolvedScheme } from '../theme';
 import { BrandMark } from '../components/BrandMark';
+import {
+  SettingChoice,
+  SettingSection,
+} from '../components/SettingControls';
 
 export function AppearanceScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
-  const { preferences, setAccent, setEra } = usePreferences();
-  const scheme: ColorScheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  const { preferences, setAccent, setEra, setColourMode, setFontScale } =
+    usePreferences();
+  const scheme: ColorScheme = useResolvedScheme();
   const selectedEra = eraFor(preferences.era);
 
   useLayoutEffect(() => {
@@ -55,6 +61,32 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
         </View>
       </View>
 
+      <SettingSection title="Colour mode">
+        <SettingChoice
+          label="Appearance"
+          options={[
+            { value: 'system', label: 'Follow system', detail: 'Use your device setting.' },
+            { value: 'light', label: 'Light', detail: 'Always use the light palette.' },
+            { value: 'dark', label: 'Dark', detail: 'Always use the dark palette.' },
+          ]}
+          value={preferences.colourMode}
+          onChange={setColourMode}
+        />
+      </SettingSection>
+
+      <SettingSection title="Text size" detail="Post and composer text">
+        <SettingChoice
+          label="Reading size"
+          options={FONT_SCALES.map((scale) => ({
+            value: scale,
+            label:
+              scale === 'small' ? 'Small' : scale === 'large' ? 'Large' : 'Default',
+          }))}
+          value={preferences.fontScale}
+          onChange={(value: FontScaleId) => setFontScale(value)}
+        />
+      </SettingSection>
+
       <Section title="Accent colour" detail="9 solid colours">
         <View
           style={[
@@ -67,8 +99,8 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
             {ACCENT_COLOURS.map((colour) => {
               const selected = preferences.accent === colour.id;
               const swatch = buildPalette(scheme, {
+                ...preferences,
                 accent: colour.id,
-                era: preferences.era,
               });
               return (
                 <Pressable
@@ -117,7 +149,7 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
         {FACEBOOK_ERAS.map((era) => {
           const selected = preferences.era === era.id;
           const preview = buildPalette(scheme, {
-            accent: preferences.accent,
+            ...preferences,
             era: era.id,
           });
           return (

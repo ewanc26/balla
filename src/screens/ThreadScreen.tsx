@@ -20,6 +20,8 @@ import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { useViewer } from '../lib/viewer';
 import { replyIndent } from '../lib/layout';
+import { useViewPreferences } from '../lib/viewPreferences';
+import { sortReplies, type ThreadSort } from '../lib/viewPreferencesModel';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 // Navigation over the threadViewPost tree: the ancestor chain, the highlighted
@@ -110,17 +112,22 @@ function ReplyBranch({
   onOpenThread,
   onOpenProfile,
   onPostHidden,
+  sort,
 }: {
   node: any;
   depth: number;
   onOpenThread?: (uri: string) => void;
   onOpenProfile: (did: string) => void;
   onPostHidden?: (post: any, scope: 'post' | 'author') => void;
+  sort: ThreadSort;
 }) {
   const p = usePalette();
   const { width } = useWindowDimensions();
   const indent = replyIndent(width);
-  const replies = (node.replies || []).filter(isThreadViewPost);
+  const replies = sortReplies(
+    (node.replies || []).filter(isThreadViewPost),
+    sort
+  );
   // Every reply carries a connector, including top-level ones, so the chain
   // back to the focused post is visible rather than a stack of loose cards.
   const indented = depth <= indent.maxDepth;
@@ -159,6 +166,7 @@ function ReplyBranch({
           onOpenThread={onOpenThread}
           onOpenProfile={onOpenProfile}
           onPostHidden={onPostHidden}
+          sort={sort}
         />
       ))}
     </View>
@@ -169,6 +177,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { profile: me } = useViewer();
+  const { threadSort } = useViewPreferences();
   const uri = route.params && route.params.uri;
   const [thread, setThread] = useState<any>(null);
   const [failed, setFailed] = useState(false);
@@ -378,7 +387,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             {replyCount === 1 ? '1 reply' : replyCount + ' replies'}
           </Text>
         )}
-        {thread.replies.map((r: any) => (
+        {sortReplies(thread.replies, threadSort).map((r: any) => (
           <ReplyBranch
             key={r.post.uri}
             node={r}
@@ -386,6 +395,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             onOpenThread={(replyUri: string) => navigation.push('Thread', { uri: replyUri })}
             onOpenProfile={openProfile}
             onPostHidden={hidePost}
+            sort={threadSort}
           />
         ))}
       </ScrollView>

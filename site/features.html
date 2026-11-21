@@ -73,7 +73,8 @@
           <div class="fact-row"><dt>Lists</dt><dd>Create and edit curation and moderation lists, manage members, read list feeds, subscribe or block.</dd></div>
           <div class="fact-row"><dt>Moderation</dt><dd>Report posts, accounts and lists; block and mute; label warnings before content; labeler filters, muted words and an inbox for reports and appeals. Sent reports leave a local-only receipt on your device (<a href="https://github.com/ewanc26/balla/issues/51">issue #51 ↗</a>).</dd></div>
           <div class="fact-row"><dt>Post actions</dt><dd>Copy link, copy text, share sheet, translate with a show-original toggle, and delete your own posts.</dd></div>
-          <div class="fact-row"><dt>Appearance</dt><dd>Four Facebook-era presets, nine accents, system light and dark.</dd></div>
+          <div class="fact-row"><dt>Appearance</dt><dd>System/Light/Dark, post text size, four Facebook-era presets and nine accents.</dd></div>
+          <div class="fact-row"><dt>Preference editors</dt><dd>Alt-text requirement and larger description badges, primary and content languages, Following filters for replies/reposts/quotes, and thread reply order. Feed and thread values are saved through Bluesky's app.bsky.actor preferences; the rest stay on your device.</dd></div>
           <div class="fact-row"><dt>Account guidance</dt><dd>Export, deactivation and deletion routes that link to your PDS controls.</dd></div>
           <div class="fact-row"><dt>Web client</dt><dd>Available at /app with popup OAuth that returns to the same tab. Every screen has its own address under /app, so threads and profiles can be linked and browser back works.</dd></div>
           <div class="fact-row"><dt>Reliability and truthful failures</dt><dd>Bounded retries on reads, Retry-After waits, rollback on failed likes, reposts and saves, and visible errors for posts, replies, deletes and reports (<a href="https://github.com/ewanc26/balla/issues/34">issue #34 ↗</a>).</dd></div>
@@ -117,7 +118,12 @@
           </div>
           <div class="roadmap-row">
             <span class="pill pill--blue">P1</span>
-            <div><strong>Account and preference settings</strong><p>Security and app-password guidance, languages, accessibility and feed filters.</p></div>
+            <div><strong>Settings preference editors</strong><p>Shipped: System/Light/Dark, post text size, alt-text and badge settings, primary/content languages, Following filters and thread order. The interface is English only and Balla emits no haptics, so neither gets an inert toggle. Tracked here for the original scope.</p></div>
+            <a href="https://github.com/ewanc26/balla/issues/29">Issue #29 ↗</a>
+          </div>
+          <div class="roadmap-row">
+            <span class="pill pill--blue">P1</span>
+            <div><strong>Account settings</strong><p>Security and app-password guidance. Balla signs in with OAuth, so password and 2FA controls stay on the account provider.</p></div>
             <a href="https://github.com/ewanc26/balla/issues/28">Issue #28 ↗</a>
           </div>
           <div class="roadmap-row">

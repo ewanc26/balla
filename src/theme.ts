@@ -1,9 +1,13 @@
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 import { useColorScheme } from 'react-native';
 import {
   buildPalette,
   DEFAULT_THEME_CHOICE,
   normaliseThemeChoice,
+  resolveScheme,
+  scaleFontSize,
+  type ColorScheme,
+  type FontScaleId,
   type Palette as ThemePalette,
   type ThemeChoice,
 } from './lib/themeModel';
@@ -26,7 +30,9 @@ export function setThemeChoice(next: ThemeChoice): void {
   const normalised = normaliseThemeChoice(next);
   if (
     normalised.accent === currentChoice.accent &&
-    normalised.era === currentChoice.era
+    normalised.era === currentChoice.era &&
+    normalised.colourMode === currentChoice.colourMode &&
+    normalised.fontScale === currentChoice.fontScale
   ) {
     return;
   }
@@ -66,8 +72,26 @@ export const webInputReset = { outlineStyle: 'none', outlineWidth: 0 } as any;
 
 export type Palette = ThemePalette;
 
-export function usePalette(): Palette {
-  const scheme = useColorScheme();
-  const choice = useThemeChoice();
-  return buildPalette(scheme === 'dark' ? 'dark' : 'light', choice);
+/** The platform scheme after the person's System/Light/Dark choice. */
+export function useResolvedScheme(): ColorScheme {
+  const system = useColorScheme();
+  const { colourMode } = useThemeChoice();
+  return resolveScheme(system === 'dark' ? 'dark' : 'light', colourMode);
 }
+
+export function usePalette(): Palette {
+  const scheme = useResolvedScheme();
+  const choice = useThemeChoice();
+  return buildPalette(scheme, choice);
+}
+
+/** One font scale for post and composer text, set in Appearance. */
+export function useFontScale(): (base: number) => number {
+  const { fontScale } = useThemeChoice();
+  return useCallback(
+    (base: number) => scaleFontSize(base, fontScale),
+    [fontScale]
+  );
+}
+
+export type { FontScaleId };

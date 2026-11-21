@@ -3,7 +3,6 @@ import {
   Platform,
   StyleSheet,
   Text,
-  useColorScheme,
   useWindowDimensions,
   View,
 } from 'react-native';
@@ -41,6 +40,10 @@ import { ReportReceiptsScreen } from './src/screens/ReportReceiptsScreen';
 import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
 import { FeedsScreen } from './src/screens/FeedsScreen';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
+import { AccessibilitySettingsScreen } from './src/screens/AccessibilitySettingsScreen';
+import { LanguageSettingsScreen } from './src/screens/LanguageSettingsScreen';
+import { FeedPreferencesScreen } from './src/screens/FeedPreferencesScreen';
+import { ThreadPreferencesScreen } from './src/screens/ThreadPreferencesScreen';
 import { StarterPackScreen } from './src/screens/StarterPackScreen';
 import { ListsScreen } from './src/screens/ListsScreen';
 import { ListDetailScreen } from './src/screens/ListDetailScreen';
@@ -53,10 +56,11 @@ import { ViewerProvider } from './src/lib/viewer';
 import { ModerationProvider } from './src/lib/moderationContext';
 import { FeedsProvider } from './src/lib/feedsContext';
 import { PreferencesProvider } from './src/lib/preferences';
+import { ViewPreferencesProvider } from './src/lib/viewPreferences';
 import { restore, setOnLoggedOut } from './src/lib/agent';
 import { installWebAccessibility } from './src/lib/accessibility';
 import { webLinking } from './src/lib/webLinking';
-import { PREVIEW_WARNING, usePalette } from './src/theme';
+import { PREVIEW_WARNING, usePalette, useResolvedScheme } from './src/theme';
 import {
   COMPACT_TAB_LABEL_MAX_WIDTH,
   HEADER_SEARCH_MIN_WIDTH,
@@ -142,7 +146,7 @@ function Tabs() {
 
 export default function App() {
   const p = usePalette();
-  const scheme = useColorScheme();
+  const scheme = useResolvedScheme();
   const { width } = useWindowDimensions();
   const initialTab = (MOCK_MODE ? mockInitialTab() : 'Home') as TabName;
   const [ready, setReady] = useState(false);
@@ -212,6 +216,8 @@ export default function App() {
       navigationRef.navigate('UserProfile', { actor: MOCK_OTHER_ACTOR });
     } else if (screen === 'Compose') {
       navigationRef.navigate('Compose');
+    } else if (screen !== 'Tabs') {
+      navigationRef.navigate(screen as any);
     }
   }, []);
 
@@ -252,104 +258,110 @@ export default function App() {
     <SafeAreaProvider>
       <PreferencesProvider>
         <ViewerProvider>
-          <ModerationProvider>
-            <FeedsProvider>
-              <NavigationContainer
-                ref={navigationRef}
-                linking={Platform.OS === 'web' ? webLinking : undefined}
-                theme={customNavTheme as any}
-                onReady={handleReady}
-                onStateChange={syncActiveTab}
-              >
-                <View style={{ flex: 1, backgroundColor: p.bg }}>
-                  <StatusBar style={p.chromeIsDark ? 'light' : 'dark'} />
-                  {showChrome ? (
-                    <AppHeader
-                      wide={showLeft}
-                      onNavigate={navigateToTab}
-                      onOpenSettings={openSettings}
-                      onOpenLists={openLists}
-                      onOpenFeeds={openFeeds}
-                    />
-                  ) : null}
-                  {MOCK_MODE ? (
-                    <View
-                      style={{
-                        backgroundColor: PREVIEW_WARNING.background,
-                        paddingVertical: 4,
-                        alignItems: 'center',
-                      }}
-                    >
-                      <Text style={{ color: PREVIEW_WARNING.text, fontSize: 11, fontWeight: '700' }}>
-                        Preview · mock data
-                      </Text>
-                    </View>
-                  ) : null}
-                  <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center' }}>
-                    {showChrome && showLeft ? (
-                      <LeftRail
-                        activeTab={activeTab}
+          <ViewPreferencesProvider>
+            <ModerationProvider>
+              <FeedsProvider>
+                <NavigationContainer
+                  ref={navigationRef}
+                  linking={Platform.OS === 'web' ? webLinking : undefined}
+                  theme={customNavTheme as any}
+                  onReady={handleReady}
+                  onStateChange={syncActiveTab}
+                >
+                  <View style={{ flex: 1, backgroundColor: p.bg }}>
+                    <StatusBar style={p.chromeIsDark ? 'light' : 'dark'} />
+                    {showChrome ? (
+                      <AppHeader
+                        wide={showLeft}
                         onNavigate={navigateToTab}
                         onOpenSettings={openSettings}
                         onOpenLists={openLists}
                         onOpenFeeds={openFeeds}
                       />
                     ) : null}
-                    <View style={{ flex: 1, maxWidth: READING_COLUMN_MAX_WIDTH }}>
-                      <Stack.Navigator
-                        screenOptions={{
-                          headerStyle: { backgroundColor: p.chrome },
-                          headerTintColor: p.chromeAction,
-                          headerTitleStyle: {
-                            color: p.chromeText,
-                            fontSize: 17,
-                            fontWeight: '600',
-                          },
-                          headerTitleAlign: 'center',
-                          headerShadowVisible: false,
-                          contentStyle: { backgroundColor: p.bg },
+                    {MOCK_MODE ? (
+                      <View
+                        style={{
+                          backgroundColor: PREVIEW_WARNING.background,
+                          paddingVertical: 4,
+                          alignItems: 'center',
                         }}
                       >
-                        <Stack.Screen
-                          name="Tabs"
-                          component={Tabs}
-                          options={{ headerShown: false }}
+                        <Text style={{ color: PREVIEW_WARNING.text, fontSize: 11, fontWeight: '700' }}>
+                          Preview · mock data
+                        </Text>
+                      </View>
+                    ) : null}
+                    <View style={{ flex: 1, flexDirection: 'row', justifyContent: 'center' }}>
+                      {showChrome && showLeft ? (
+                        <LeftRail
+                          activeTab={activeTab}
+                          onNavigate={navigateToTab}
+                          onOpenSettings={openSettings}
+                          onOpenLists={openLists}
+                          onOpenFeeds={openFeeds}
                         />
-                        <Stack.Screen name="Thread" component={ThreadScreen} />
-                        <Stack.Screen
-                          name="InteractionSettings"
-                          component={InteractionSettingsScreen}
-                        />
-                        <Stack.Screen name="Compose" component={ComposeScreen} />
-                        <Stack.Screen name="UserProfile" component={ProfileScreen} />
-                        <Stack.Screen name="Settings" component={SettingsScreen} />
-                        <Stack.Screen name="Appearance" component={AppearanceScreen} />
-                        <Stack.Screen name="Info" component={InfoScreen} />
-                        <Stack.Screen name="PeopleList" component={PeopleListScreen} />
-                        <Stack.Screen name="EngagementList" component={EngagementListScreen} />
-                        <Stack.Screen name="ContentFilters" component={ContentFiltersScreen} />
-                        <Stack.Screen name="AccountLifecycle" component={AccountLifecycleScreen} />
-                        <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
-                        <Stack.Screen name="EditProfile" component={EditProfileScreen} />
-                        <Stack.Screen name="ModerationInbox" component={ModerationInboxScreen} />
-                        <Stack.Screen name="ModerationReport" component={ModerationReportScreen} />
-                        <Stack.Screen name="ModerationNotice" component={ModerationNoticeScreen} />
-                        <Stack.Screen name="ReportReceipts" component={ReportReceiptsScreen} />
-                        <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
-                        <Stack.Screen name="Feeds" component={FeedsScreen} />
-                        <Stack.Screen name="StarterPack" component={StarterPackScreen} />
-                        <Stack.Screen name="Lists" component={ListsScreen} />
-                        <Stack.Screen name="ListDetail" component={ListDetailScreen} />
-                        <Stack.Screen name="ListEdit" component={ListEditScreen} />
-                        <Stack.Screen name="ListMembers" component={ListMembersScreen} />
-                      </Stack.Navigator>
+                      ) : null}
+                      <View style={{ flex: 1, maxWidth: READING_COLUMN_MAX_WIDTH }}>
+                        <Stack.Navigator
+                          screenOptions={{
+                            headerStyle: { backgroundColor: p.chrome },
+                            headerTintColor: p.chromeAction,
+                            headerTitleStyle: {
+                              color: p.chromeText,
+                              fontSize: 17,
+                              fontWeight: '600',
+                            },
+                            headerTitleAlign: 'center',
+                            headerShadowVisible: false,
+                            contentStyle: { backgroundColor: p.bg },
+                          }}
+                        >
+                          <Stack.Screen
+                            name="Tabs"
+                            component={Tabs}
+                            options={{ headerShown: false }}
+                          />
+                          <Stack.Screen name="Thread" component={ThreadScreen} />
+                          <Stack.Screen
+                            name="InteractionSettings"
+                            component={InteractionSettingsScreen}
+                          />
+                          <Stack.Screen name="Compose" component={ComposeScreen} />
+                          <Stack.Screen name="UserProfile" component={ProfileScreen} />
+                          <Stack.Screen name="Settings" component={SettingsScreen} />
+                          <Stack.Screen name="Appearance" component={AppearanceScreen} />
+                          <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} />
+                          <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
+                          <Stack.Screen name="FeedPreferences" component={FeedPreferencesScreen} />
+                          <Stack.Screen name="ThreadPreferences" component={ThreadPreferencesScreen} />
+                          <Stack.Screen name="Info" component={InfoScreen} />
+                          <Stack.Screen name="PeopleList" component={PeopleListScreen} />
+                          <Stack.Screen name="EngagementList" component={EngagementListScreen} />
+                          <Stack.Screen name="ContentFilters" component={ContentFiltersScreen} />
+                          <Stack.Screen name="AccountLifecycle" component={AccountLifecycleScreen} />
+                          <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+                          <Stack.Screen name="EditProfile" component={EditProfileScreen} />
+                          <Stack.Screen name="ModerationInbox" component={ModerationInboxScreen} />
+                          <Stack.Screen name="ModerationReport" component={ModerationReportScreen} />
+                          <Stack.Screen name="ModerationNotice" component={ModerationNoticeScreen} />
+                          <Stack.Screen name="ReportReceipts" component={ReportReceiptsScreen} />
+                          <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
+                          <Stack.Screen name="Feeds" component={FeedsScreen} />
+                          <Stack.Screen name="StarterPack" component={StarterPackScreen} />
+                          <Stack.Screen name="Lists" component={ListsScreen} />
+                          <Stack.Screen name="ListDetail" component={ListDetailScreen} />
+                          <Stack.Screen name="ListEdit" component={ListEditScreen} />
+                          <Stack.Screen name="ListMembers" component={ListMembersScreen} />
+                        </Stack.Navigator>
+                      </View>
+                      {showChrome && showRight ? <RightRail onNavigate={navigateToTab} /> : null}
                     </View>
-                    {showChrome && showRight ? <RightRail onNavigate={navigateToTab} /> : null}
                   </View>
-                </View>
-              </NavigationContainer>
-            </FeedsProvider>
-          </ModerationProvider>
+                </NavigationContainer>
+              </FeedsProvider>
+            </ModerationProvider>
+          </ViewPreferencesProvider>
         </ViewerProvider>
       </PreferencesProvider>
     </SafeAreaProvider>

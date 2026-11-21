@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -14,6 +14,12 @@ import { agent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
+import { usePreferences } from '../lib/preferences';
+import { useViewPreferences } from '../lib/viewPreferences';
+import {
+  filterByContentLanguages,
+  filterFeedItems,
+} from '../lib/viewPreferencesModel';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { FeedSwitcherSheet } from '../components/FeedSwitcherSheet';
@@ -30,6 +36,8 @@ export function FeedScreen() {
   const navigation = useNavigation<any>();
   const { profile: me } = useViewer();
   const { savedFeeds, generators } = useFeeds();
+  const { preferences } = usePreferences();
+  const { feedFilters } = useViewPreferences();
   const [activeFeed, setActiveFeed] = useState<string | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -128,6 +136,19 @@ export function FeedScreen() {
       )
     );
   }
+
+  // Only Following is filtered here. Custom feeds keep the order their
+  // generator returns; filters are the home feedViewPref, not a global rule.
+  const visiblePosts = useMemo(
+    () =>
+      activeFeed
+        ? posts
+        : filterByContentLanguages(
+            filterFeedItems(posts, feedFilters),
+            preferences.contentLanguages
+          ),
+    [activeFeed, posts, feedFilters, preferences.contentLanguages]
+  );
 
   const activeGenerator = activeFeed ? generators[activeFeed] : undefined;
   const activeCreator = activeGenerator?.creator;
@@ -266,7 +287,7 @@ export function FeedScreen() {
   return (
     <View style={{ flex: 1, backgroundColor: p.bg }}>
       <FlashList
-        data={posts}
+        data={visiblePosts}
         keyExtractor={(item: any) => item.post.uri}
         renderItem={({ item }) => (
           <PostCard
@@ -291,7 +312,9 @@ export function FeedScreen() {
             >
               {activeFeed
                 ? 'This feed has no posts right now. Pull to refresh, or choose Following.'
-                : 'Nothing here yet. Follow some folk, or pull to refresh.'}
+                : posts.length > 0
+                  ? 'Your feed and language filters hide every post on this page. Change them in Settings.'
+                  : 'Nothing here yet. Follow some folk, or pull to refresh.'}
             </Text>
           )
         }
