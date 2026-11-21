@@ -1,5 +1,38 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx expo export --platform web",
-  "outputDirectory": "dist"
+  "framework": null,
+  "installCommand": "npm ci",
+  "buildCommand": "node scripts/build-site.mjs",
+  "outputDirectory": "dist-site",
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/oauth-callback",
+      "destination": "/app",
+      "permanent": true
+    }
+  ],
+  "headers": [
+    {
+      "source": "/oauth-client-metadata.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "X-Content-Type-Options", "value": "nosniff" }
+      ]
+    },
+    {
+      "source": "/app",
+      "headers": [{ "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "X-Content-Type-Options", "value": "nosniff" },
+        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+      ]
+    }
+  ]
 }

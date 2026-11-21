@@ -3,7 +3,7 @@
     "name": "Balla",
     "slug": "balla",
     "version": "0.1.0",
-    "scheme": "balla",
+    "scheme": ["balla", "click.croft.balla"],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
@@ -24,7 +24,27 @@
       }
     },
     "web": {
-      "favicon": "./assets/favicon.png"
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/favicon.png",
+      "name": "Balla",
+      "shortName": "Balla",
+      "lang": "en-GB",
+      "themeColor": "#1877F2",
+      "backgroundColor": "#F0F2F5",
+      "description": "A chronological, Facebook-shaped Bluesky client."
+    },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Balla needs access to your photos so you can add photos to posts or choose a profile picture or banner.",
+          "cameraPermission": "Balla needs access to your camera so you can take a photo for a post."
+        }
+      ]
+    ],
+    "experiments": {
+      "baseUrl": "/app"
     }
   }
 }

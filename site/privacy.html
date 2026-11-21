@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Privacy — Balla</title>
+    <meta name="description" content="How Balla handles your account, session and content." />
+    <meta name="theme-color" content="#1877F2" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Balla home"><img src="/mark.svg" width="30" height="30" alt="" /><span>balla</span></a>
+      <nav aria-label="Main"><a href="/">Home</a><a href="/privacy" aria-current="page">Privacy</a><a href="https://github.com/ewanc26/balla">GitHub <span aria-hidden="true">↗</span></a></nav>
+    </header>
+    <main id="main" class="legal wrap">
+      <p class="section-kicker">Privacy note</p>
+      <h1>Small surface.<br /><em>Clear boundaries.</em></h1>
+      <p class="legal-meta">Last updated 21 November 2026 · Balla is in development.</p>
+
+      <h2>The short version</h2>
+      <p>Balla does not run a server that stores your posts, profile or social graph. It is a client for the AT Protocol: your content belongs to your account on your PDS, and the app talks to Bluesky’s AppView and your PDS to show it.</p>
+
+      <h2>What stays on your device</h2>
+      <ul>
+        <li>Your OAuth session, including DPoP keys and tokens, is stored in the app’s local MMKV storage.</li>
+        <li>The last signed-in DID is stored in AsyncStorage so the app can restore your session.</li>
+        <li>Balla does not ask for or store your password. Sign-in happens on your server’s OAuth page.</li>
+        <li>Signing out removes the local DID and attempts to revoke the OAuth session.</li>
+      </ul>
+
+      <h2>What leaves your device</h2>
+      <p>When you use Balla, the app sends requests to your PDS and to Bluesky’s AppView for the actions you take: loading your feed, reading threads, searching, following, liking, reposting, bookmarking and loading notifications. Those services handle the data under their own terms and privacy policies. Balla does not add an analytics, advertising or tracking SDK.</p>
+
+      <h2>Bookmarks</h2>
+      <p>Bookmarks are Bluesky’s private saved-post feature. Balla reads and changes them through Bluesky’s bookmark API; it does not keep a separate copy on a Balla server.</p>
+
+      <h2>Reports and moderation</h2>
+      <p>Reports from posts and profiles go to Bluesky’s moderation labeler through the AT Protocol report API. Balla does not keep a separate copy of a report. Labels, content warnings, blocks and mutes are applied by the client using Bluesky’s moderation preferences and server state.</p>
+
+      <h2>Deletion</h2>
+      <p>You can delete your own posts from Balla’s post menu; that removes the PDS record. Account deletion and data export are not available in Balla yet. Use Bluesky or your PDS’s account tools for those. Deleting the app removes its local session; it does not delete your AT Protocol records.</p>
+
+      <h2>Children and safety</h2>
+      <p>Balla is not directed at children. Labels, content warnings, reporting, blocking and muting are available, but Balla is not a moderation service and does not employ moderators. Do not rely on Balla as the only safety surface for a community.</p>
+
+      <h2>Contact</h2>
+      <p>For bugs and general project contact, use <a href="https://github.com/ewanc26/balla/issues">the issue tracker</a>. For a security or privacy report that should not be public, use <a href="https://github.com/ewanc26/balla/security/advisories/new">GitHub’s private advisory form</a>. The project’s report handling and retention are documented in the repository.</p>
+
+      <p class="legal-note">Balla is independent software and is not affiliated with Bluesky Social PBC or Meta Platforms, Inc.</p>
+    </main>
+    <footer class="site-footer wrap">
+      <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
+      <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta.</p>
+      <div class="footer-links"><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/guidelines">Guidelines</a><a href="/copyright">Copyright</a><a href="https://ewancroft.uk/support">Support Balla</a><a href="https://github.com/ewanc26/balla">GitHub</a></div>
+    </footer>
+  </body>
+</html>

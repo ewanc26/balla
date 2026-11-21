@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "A Facebook-like Bluesky client.",
+  "engines": {
+    "node": ">=22"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ewanc26/balla.git"
@@ -11,27 +14,43 @@
   "license": "AGPL-3.0",
   "main": "index.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "start": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
+    "site:build": "node scripts/build-site.mjs",
+    "test": "node --test tests/*.test.mjs",
     "icons": "python3 scripts/gen-icons.py"
   },
   "dependencies": {
     "@atproto/api": "^0.32.3",
+    "@atproto/oauth-client-expo": "^0.2.14",
+    "@expo/metro-runtime": "~58.0.17",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-navigation/bottom-tabs": "^7.15.5",
     "@react-navigation/native": "^7.1.33",
     "@react-navigation/native-stack": "^7.14.4",
     "@shopify/flash-list": "2.3.2",
+    "core-js": "^3.51.0",
     "expo": "~58.0.0",
+    "expo-clipboard": "~58.0.4",
+    "expo-dev-client": "~58.0.21",
     "expo-font": "~58.0.12",
+    "expo-image-manipulator": "~58.0.16",
+    "expo-image-picker": "~58.0.10",
     "expo-status-bar": "~58.0.5",
+    "expo-web-browser": "~58.1.0",
     "react": "19.3.0",
+    "react-dom": "19.3.0",
     "react-native": "0.88.1",
+    "react-native-mmkv": "^4.3.2",
+    "react-native-nitro-modules": "^0.37.2",
     "react-native-safe-area-context": "~5.11.1",
-    "react-native-screens": "~4.30.1"
+    "react-native-screens": "~4.30.1",
+    "react-native-url-polyfill": "^4.0.0",
+    "react-native-web": "^0.21.4",
+    "unicode-segmenter": "^0.14.5"
   },
   "devDependencies": {
     "@types/react": "^19.1.1",
