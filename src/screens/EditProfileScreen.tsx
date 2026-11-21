@@ -640,7 +640,7 @@ export function EditProfileScreen({ navigation }: { navigation: any }) {
             opacity: pressed ? 0.7 : 1,
           })}
         >
-          <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>Retry</Text>
+          <Text style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}>Retry</Text>
         </Pressable>
       </View>
     );
@@ -1006,8 +1006,8 @@ export function EditProfileScreen({ navigation }: { navigation: any }) {
             opacity: !dirty || saving ? 0.5 : pressed ? 0.75 : 1,
           })}
         >
-          {saving ? <ActivityIndicator size="small" color="#FFFFFF" /> : null}
-          <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700', marginLeft: saving ? 7 : 0 }}>
+          {saving ? <ActivityIndicator size="small" color={p.onAccent} /> : null}
+          <Text style={{ color: p.onAccent, fontSize: 15, fontWeight: '700', marginLeft: saving ? 7 : 0 }}>
             Save changes
           </Text>
         </Pressable>

@@ -380,9 +380,9 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
                 })}
               >
                 {addLabelerBusy ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={p.onAccent} />
                 ) : (
-                  <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Add</Text>
+                  <Text style={{ color: p.onAccent, fontWeight: '700' }}>Add</Text>
                 )}
               </Pressable>
             </View>
@@ -480,11 +480,11 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
                             })}
                           >
                             {saving === key ? (
-                              <ActivityIndicator size="small" color={selected ? '#FFFFFF' : p.accent} />
+                              <ActivityIndicator size="small" color={selected ? p.onAccent : p.accent} />
                             ) : (
                               <Text
                                 style={{
-                                  color: selected ? '#FFFFFF' : p.text,
+                                  color: selected ? p.onAccent : p.text,
                                   fontSize: 13,
                                   fontWeight: '600',
                                 }}
@@ -618,7 +618,7 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
                 opacity: !word.trim() || saving || pressed ? 0.55 : 1,
               })}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Add</Text>
+              <Text style={{ color: p.onAccent, fontWeight: '700' }}>Add</Text>
             </Pressable>
           </View>
         </View>
@@ -663,7 +663,7 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
                 accessibilityLabel="I am over 18, enable adult content"
                 style={({ pressed }) => [styles.dialogButton, { borderColor: p.accent, backgroundColor: p.accent, opacity: pressed ? 0.65 : 1 }]}
               >
-                <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>I’m over 18</Text>
+                <Text style={{ color: p.onAccent, fontWeight: '700' }}>I’m over 18</Text>
               </Pressable>
             </View>
           </View>

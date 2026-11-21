@@ -103,11 +103,11 @@ export function PersonRow({
           })}
         >
           {busy ? (
-            <ActivityIndicator color={currentFollow ? p.text : '#FFFFFF'} />
+            <ActivityIndicator color={currentFollow ? p.text : p.onAccent} />
           ) : (
             <Text
               style={{
-                color: isBlocked ? p.secondary : currentFollow ? p.text : '#FFFFFF',
+                color: isBlocked ? p.secondary : currentFollow ? p.text : p.onAccent,
                 fontWeight: '700',
                 fontSize: 14,
               }}

@@ -103,7 +103,9 @@ the card out of that list immediately, and the Saved tab reloads when focused.
 Every card's comment button opens a Thread
 screen: the ancestor chain, the highlighted post, its replies, and a composer
 that replies into the same tree (root travels up correctly when replying to a
-reply). Dark mode follows the system. Tapping any post image opens a full-screen
+reply). Dark mode follows the system. Appearance settings offer four researched
+Facebook-era chrome presets and nine solid accent colours; they are stored on
+the device and keep Following chronological. Tapping any post image opens a full-screen
 viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
 keep the text rather than eating it. Tapping a notification opens the thread

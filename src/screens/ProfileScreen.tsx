@@ -454,9 +454,9 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                       opacity: pressed ? 0.72 : 1,
                     })}
                   >
-                    <Ionicons name="create-outline" size={18} color="#FFFFFF" />
+                    <Ionicons name="create-outline" size={18} color={p.onAccent} />
                     <Text
-                      style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15, marginLeft: 6 }}
+                      style={{ color: p.onAccent, fontWeight: '700', fontSize: 15, marginLeft: 6 }}
                     >
                       Edit profile
                     </Text>
@@ -508,17 +508,17 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                   })}
                 >
                   {followBusy ? (
-                    <ActivityIndicator color={followingUri ? p.text : '#FFFFFF'} />
+                    <ActivityIndicator color={followingUri ? p.text : p.onAccent} />
                   ) : (
                     <>
                       <Ionicons
                         name={isBlocked ? 'ban-outline' : followingUri ? 'checkmark' : 'person-add-outline'}
                         size={18}
-                        color={followingUri ? p.text : '#FFFFFF'}
+                        color={followingUri ? p.text : p.onAccent}
                       />
                       <Text
                         style={{
-                          color: followingUri ? p.text : '#FFFFFF',
+                          color: followingUri ? p.text : p.onAccent,
                           fontWeight: '700',
                           fontSize: 15,
                           marginLeft: 6,

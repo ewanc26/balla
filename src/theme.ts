@@ -1,34 +1,46 @@
+import { useSyncExternalStore } from 'react';
 import { useColorScheme } from 'react-native';
+import {
+  buildPalette,
+  DEFAULT_THEME_CHOICE,
+  normaliseThemeChoice,
+  type Palette as ThemePalette,
+  type ThemeChoice,
+} from './lib/themeModel';
 
-// Facebook's current chrome is a light grey canvas with white, lightly raised
-// cards and a blue reserved for actions. Dark mode keeps the same hierarchy.
+let currentChoice: ThemeChoice = DEFAULT_THEME_CHOICE;
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void) {
+  listeners.add(listener);
+  return () => {
+    listeners.delete(listener);
+  };
+}
+
+function getSnapshot(): ThemeChoice {
+  return currentChoice;
+}
+
+export function setThemeChoice(next: ThemeChoice): void {
+  const normalised = normaliseThemeChoice(next);
+  if (
+    normalised.accent === currentChoice.accent &&
+    normalised.era === currentChoice.era
+  ) {
+    return;
+  }
+  currentChoice = normalised;
+  for (const listener of listeners) listener();
+}
+
+export function useThemeChoice(): ThemeChoice {
+  return useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
 export const palettes = {
-  light: {
-    bg: '#F0F2F5', // Facebook's warm grey canvas
-    card: '#FFFFFF',
-    text: '#050505',
-    secondary: '#65676B',
-    divider: '#E4E6EB',
-    soft: '#E4E6EB',
-    accent: '#1877F2', // that blue
-    accentSoft: '#E7F3FF',
-    danger: '#E41E3F',
-    green: '#31A24C',
-    overlay: 'rgba(0, 0, 0, 0.45)',
-  },
-  dark: {
-    bg: '#18191A',
-    card: '#242526',
-    text: '#E4E6EB',
-    secondary: '#B0B3B8',
-    divider: '#3A3B3C',
-    soft: '#3A3B3C',
-    accent: '#2D88FF',
-    accentSoft: '#263951',
-    danger: '#F02849',
-    green: '#3FB65B',
-    overlay: 'rgba(0, 0, 0, 0.65)',
-  },
+  light: buildPalette('light', DEFAULT_THEME_CHOICE),
+  dark: buildPalette('dark', DEFAULT_THEME_CHOICE),
 };
 
 export const CARD_RADIUS = 8;
@@ -45,9 +57,10 @@ export const cardShadow = {
 // which breaks the flat Facebook field treatment.
 export const webInputReset = { outlineStyle: 'none', outlineWidth: 0 } as any;
 
-export type Palette = typeof palettes.light;
+export type Palette = ThemePalette;
 
 export function usePalette(): Palette {
   const scheme = useColorScheme();
-  return scheme === 'dark' ? palettes.dark : palettes.light;
+  const choice = useThemeChoice();
+  return buildPalette(scheme === 'dark' ? 'dark' : 'light', choice);
 }

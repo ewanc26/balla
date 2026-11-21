@@ -362,7 +362,7 @@ export function ModerationNoticeScreen({
                     },
                   ]}
                 >
-                  <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
+                  <Text style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}>
                     Appeal this decision
                   </Text>
                 </Pressable>

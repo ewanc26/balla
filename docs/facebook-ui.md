@@ -55,6 +55,7 @@ product, not a claim that every account looks identical.
 | Settings and privacy cards | `src/screens/SettingsScreen.tsx`: Account, privacy, moderation, notifications, content, feeds, appearance, language, help and legal |
 | Cover, overlapping avatar, bold counts, Posts tab | `src/screens/ProfileScreen.tsx` |
 | Underlined search tabs and result cards | `src/screens/SearchScreen.tsx` |
+| Era-selectable chrome and canvas with nine accent colours | `src/screens/AppearanceScreen.tsx`, `src/lib/themeModel.ts` |
 | Reason badges on notification avatars | `src/screens/NotificationsScreen.tsx` |
 | Centred sign-in card | `src/screens/LoginScreen.tsx` |
 | Three-column desktop, bottom tabs on mobile | `App.tsx`, `src/lib/layout.ts` |

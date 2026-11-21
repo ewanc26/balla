@@ -14,6 +14,7 @@ import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
 import { useModerationInboxUnread } from '../lib/moderationInbox';
 import { useFeeds } from '../lib/feedsContext';
+import { accentFor, eraFor } from '../lib/themeModel';
 import { Avatar } from '../components/Avatar';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
@@ -27,6 +28,8 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
   const { profile } = useViewer();
   const { preferences, setRequireAltText } = usePreferences();
+  const selectedEra = eraFor(preferences.era);
+  const selectedAccent = accentFor(preferences.accent);
   const { unreadCounts } = useModerationInboxUnread();
   const { pinnedFeeds } = useFeeds();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
@@ -211,6 +214,13 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
       </Section>
 
       <Section title="Appearance and accessibility">
+        <Row
+          icon="color-palette-outline"
+          label="Appearance"
+          detail={`${selectedEra.label} era · ${selectedAccent.label} accent`}
+          value="Change"
+          onPress={() => navigation.navigate('Appearance')}
+        />
         <Row icon="contrast-outline" label="Theme" value="Follow system" />
         <Row icon="text-outline" label="Text size" value="Device setting" />
         <Row
