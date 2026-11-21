@@ -473,7 +473,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   notice: {
-    minHeight: 40,
+    minHeight: 44,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,

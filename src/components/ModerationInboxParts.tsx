@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -15,6 +15,12 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
+import {
+  dialogAccessibilityProps,
+  dialogAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 import {
   actionLabel,
   appealAction,
@@ -468,6 +474,15 @@ export function AppealModal({
   const [error, setError] = useState<string | null>(null);
   const count = countGraphemes(reason);
   const over = count > MAX_APPEAL;
+  const containerRef = useRef<any>(null);
+  const closeButtonRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible,
+    onClose,
+    containerRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   useEffect(() => {
     if (!visible) {
@@ -505,7 +520,7 @@ export function AppealModal({
     <Modal
       transparent
       visible
-      animationType="fade"
+      animationType={dialogAnimation(reducedMotion)}
       statusBarTranslucent
       onRequestClose={busy ? undefined : onClose}
       accessibilityViewIsModal
@@ -516,11 +531,14 @@ export function AppealModal({
       >
         <Pressable
           onPress={busy ? undefined : onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Close appeal"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
           style={styles.backdrop}
         />
         <View
+          ref={containerRef}
+          {...dialogAccessibilityProps('Appeal this decision')}
+          accessibilityViewIsModal
           style={[
             styles.sheet,
             {
@@ -534,6 +552,7 @@ export function AppealModal({
               Appeal this decision
             </Text>
             <Pressable
+              ref={closeButtonRef}
               onPress={onClose}
               disabled={busy}
               accessibilityRole="button"

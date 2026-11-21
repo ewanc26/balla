@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   KeyboardAvoidingView,
   Modal,
@@ -12,6 +12,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  dialogAccessibilityProps,
+  sheetAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 import {
   cleanSearchFilters,
   EMPTY_SEARCH_FILTERS,
@@ -35,6 +41,15 @@ export function SearchFiltersModal({
   const insets = useSafeAreaInsets();
   const [draft, setDraft] = useState<SearchFilters>(initialFilters);
   const [error, setError] = useState<string | null>(null);
+  const containerRef = useRef<any>(null);
+  const closeButtonRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible,
+    onClose,
+    containerRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   useEffect(() => {
     if (visible) {
@@ -63,7 +78,7 @@ export function SearchFiltersModal({
     <Modal
       transparent
       visible
-      animationType="slide"
+      animationType={sheetAnimation(reducedMotion)}
       statusBarTranslucent
       onRequestClose={onClose}
       accessibilityViewIsModal
@@ -74,11 +89,14 @@ export function SearchFiltersModal({
       >
         <Pressable
           onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Close advanced search"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
           style={styles.backdrop}
         />
         <View
+          ref={containerRef}
+          {...dialogAccessibilityProps('Advanced search')}
+          accessibilityViewIsModal
           style={[
             styles.sheet,
             {
@@ -97,6 +115,7 @@ export function SearchFiltersModal({
               </Text>
             </View>
             <Pressable
+              ref={closeButtonRef}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close advanced search"

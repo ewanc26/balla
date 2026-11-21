@@ -369,6 +369,13 @@ export function PostCard({
                             key={`segment-${index}`}
                             onPress={() => openFacet(segment)}
                             accessibilityRole="link"
+                            accessibilityLabel={
+                              segment.kind === 'mention'
+                                ? `Open profile for ${segment.text.replace(/^@/, '')}`
+                                : segment.kind === 'tag'
+                                  ? `Search posts tagged ${segment.text.replace(/^#/, '')}`
+                                  : `Open link ${segment.text}`
+                            }
                             accessibilityHint={
                               segment.kind === 'tag'
                                 ? 'Searches for this hashtag'
@@ -505,6 +512,8 @@ export function PostCard({
             color={liked ? p.accent : p.secondary}
             label={likeLabel}
             accessibilityLabel={liked ? 'Unlike post' : 'Like post'}
+            selected={liked}
+            busy={likeBusy}
             onPress={toggleLike}
           />
           <ActionButton
@@ -512,6 +521,8 @@ export function PostCard({
             color={reposted ? p.green : p.secondary}
             label={repostLabel}
             accessibilityLabel={reposted ? 'Undo repost' : 'Repost post'}
+            selected={reposted}
+            busy={repostBusy}
             onPress={toggleRepost}
           />
           <ActionButton
@@ -737,12 +748,16 @@ function ActionButton({
   color,
   label,
   accessibilityLabel,
+  selected,
+  busy,
   onPress,
 }: {
   icon: any;
   color: string;
   label?: string;
   accessibilityLabel: string;
+  selected?: boolean;
+  busy?: boolean;
   onPress: () => void;
 }) {
   const p = usePalette();
@@ -751,6 +766,10 @@ function ActionButton({
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
+      accessibilityState={{
+        ...(selected !== undefined ? { selected } : {}),
+        ...(busy !== undefined ? { busy } : {}),
+      }}
       hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
       style={({ pressed }) => [
         styles.action,

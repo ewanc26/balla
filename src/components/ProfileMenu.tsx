@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -14,6 +14,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  dialogAccessibilityProps,
+  dialogAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 import {
   blockActor,
@@ -52,6 +58,15 @@ export function ProfileMenu({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reportSent, setReportSent] = useState(false);
+  const containerRef = useRef<any>(null);
+  const closeButtonRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible,
+    onClose: close,
+    containerRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   useEffect(() => {
     if (!visible) return;
@@ -199,6 +214,8 @@ export function ProfileMenu({
                 key={item.value}
                 onPress={() => setReason(item.value)}
                 accessibilityRole="radio"
+                accessibilityLabel={item.label}
+                accessibilityHint={item.detail}
                 accessibilityState={{ checked: selected }}
                 style={({ pressed }) => [
                   styles.reportChoice,
@@ -349,7 +366,7 @@ export function ProfileMenu({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType={dialogAnimation(reducedMotion)}
       onRequestClose={close}
       accessibilityViewIsModal
     >
@@ -364,6 +381,9 @@ export function ProfileMenu({
           style={styles.backdrop}
         />
         <View
+          ref={containerRef}
+          {...dialogAccessibilityProps(title)}
+          accessibilityViewIsModal
           style={[
             styles.sheet,
             {
@@ -378,10 +398,12 @@ export function ProfileMenu({
               {title}
             </Text>
             <Pressable
+              ref={closeButtonRef}
               onPress={close}
               disabled={busy}
               accessibilityRole="button"
               accessibilityLabel="Close account options"
+              accessibilityState={{ disabled: busy }}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.closeButton,
@@ -421,6 +443,7 @@ function MenuRow({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={detail}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.row,
         {

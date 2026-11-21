@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   notice: {
-    minHeight: 40,
+    minHeight: 44,
     borderRadius: 6,
     paddingHorizontal: 10,
     paddingVertical: 8,

@@ -18,6 +18,12 @@ import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { agent } from '../lib/agent';
+import {
+  dialogAccessibilityProps,
+  sheetAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
 import { Avatar } from '../components/Avatar';
 import { useViewer } from '../lib/viewer';
@@ -963,15 +969,25 @@ function AltTextSheet({
   const insets = useSafeAreaInsets();
   const altCount = countGraphemes(altText.trim());
   const over = altCount > MAX_ALT_TEXT;
+  const containerRef = useRef<any>(null);
+  const closeButtonRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible: true,
+    onClose,
+    containerRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   return (
     <Modal
       transparent
       visible
-      animationType="slide"
+      animationType={sheetAnimation(reducedMotion)}
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={onClose}
+      accessibilityViewIsModal
     >
       <KeyboardAvoidingView
         style={styles.modalRoot}
@@ -979,11 +995,13 @@ function AltTextSheet({
       >
         <Pressable
           onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel="Close alt text editor"
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
           style={styles.backdrop}
         />
         <View
+          ref={containerRef}
+          {...dialogAccessibilityProps('Alt text')}
           accessibilityViewIsModal
           style={[
             styles.sheet,
@@ -998,6 +1016,7 @@ function AltTextSheet({
               Alt text
             </Text>
             <Pressable
+              ref={closeButtonRef}
               onPress={onClose}
               accessibilityRole="button"
               accessibilityLabel="Close alt text editor"
@@ -1010,126 +1029,131 @@ function AltTextSheet({
             </Pressable>
           </View>
 
-          <Image
-            source={{ uri: image.uri }}
-            style={[styles.altPreview, { backgroundColor: p.bg }]}
-            resizeMode="contain"
-            accessible
-            accessibilityLabel={altText || 'Photo being described'}
-          />
-          <Text style={{ color: p.secondary, fontSize: 11, marginTop: 5 }}>
-            {image.width} × {image.height} · {formatBytes(image.byteSize)} · JPEG
-          </Text>
+          <ScrollView
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={{ paddingBottom: 4 }}
+          >
+            <Image
+              source={{ uri: image.uri }}
+              style={[styles.altPreview, { backgroundColor: p.bg }]}
+              resizeMode="contain"
+              accessible
+              accessibilityLabel={altText || 'Photo being described'}
+            />
+            <Text style={{ color: p.secondary, fontSize: 11, marginTop: 5 }}>
+              {image.width} × {image.height} · {formatBytes(image.byteSize)} · JPEG
+            </Text>
 
-          <Text
-            style={{
-              color: p.text,
-              fontSize: 14,
-              fontWeight: '700',
-              marginTop: 12,
-            }}
-          >
-            Describe this photo
-          </Text>
-          <Text
-            style={{
-              color: p.secondary,
-              fontSize: 12,
-              lineHeight: 17,
-              marginTop: 2,
-              marginBottom: 6,
-            }}
-          >
-            Say what matters in the image, not just that it is a photo. Leave it
-            blank if the image is purely decorative.
-          </Text>
-          <TextInput
-            autoFocus
-            multiline
-            value={altText}
-            onChangeText={onChangeAltText}
-            placeholder="e.g. A black cat asleep on a blue armchair"
-            placeholderTextColor={p.secondary}
-            accessibilityLabel="Descriptive alt text"
-            textAlignVertical="top"
-            style={[
-              styles.altInput,
-              {
-                color: p.text,
-                backgroundColor: p.bg,
-                borderColor: over ? p.danger : p.divider,
-              },
-              webInputReset,
-            ]}
-          />
-          <View
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              marginTop: 6,
-              gap: 10,
-            }}
-          >
             <Text
               style={{
-                color: over ? p.danger : p.secondary,
-                fontSize: 12,
-                flex: 1,
+                color: p.text,
+                fontSize: 14,
+                fontWeight: '700',
+                marginTop: 12,
               }}
             >
-              {over
-                ? `Shorten this by ${altCount - MAX_ALT_TEXT} character${
-                    altCount - MAX_ALT_TEXT === 1 ? '' : 's'
-                  }.`
-                : 'Descriptions are public and shown with the photo.'}
+              Describe this photo
             </Text>
             <Text
-              style={{ color: over ? p.danger : p.secondary, fontSize: 12 }}
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 17,
+                marginTop: 2,
+                marginBottom: 6,
+              }}
             >
-              {altCount}/{MAX_ALT_TEXT}
+              Say what matters in the image, not just that it is a photo. Leave it
+              blank if the image is purely decorative.
             </Text>
-          </View>
-
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
-            <Pressable
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel alt text changes"
-              style={({ pressed }) => [
-                styles.sheetButton,
+            <TextInput
+              autoFocus
+              multiline
+              value={altText}
+              onChangeText={onChangeAltText}
+              placeholder="e.g. A black cat asleep on a blue armchair"
+              placeholderTextColor={p.secondary}
+              accessibilityLabel="Descriptive alt text"
+              textAlignVertical="top"
+              style={[
+                styles.altInput,
                 {
+                  color: p.text,
                   backgroundColor: p.bg,
-                  borderColor: p.divider,
-                  opacity: pressed ? 0.7 : 1,
+                  borderColor: over ? p.danger : p.divider,
                 },
+                webInputReset,
               ]}
-            >
-              <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>
-                Cancel
-              </Text>
-            </Pressable>
-            <Pressable
-              onPress={onSave}
-              disabled={over}
-              accessibilityRole="button"
-              accessibilityLabel="Save alt text"
-              accessibilityState={{ disabled: over }}
-              style={({ pressed }) => [
-                styles.sheetButton,
-                {
-                  backgroundColor: p.accent,
-                  borderColor: p.accent,
-                  opacity: over ? 0.45 : pressed ? 0.7 : 1,
-                },
-              ]}
+            />
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                marginTop: 6,
+                gap: 10,
+              }}
             >
               <Text
-                style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}
+                style={{
+                  color: over ? p.danger : p.secondary,
+                  fontSize: 12,
+                  flex: 1,
+                }}
               >
-                Save
+                {over
+                  ? `Shorten this by ${altCount - MAX_ALT_TEXT} character${
+                      altCount - MAX_ALT_TEXT === 1 ? '' : 's'
+                    }.`
+                  : 'Descriptions are public and shown with the photo.'}
               </Text>
-            </Pressable>
-          </View>
+              <Text
+                style={{ color: over ? p.danger : p.secondary, fontSize: 12 }}
+              >
+                {altCount}/{MAX_ALT_TEXT}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 12 }}>
+              <Pressable
+                onPress={onClose}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel alt text changes"
+                style={({ pressed }) => [
+                  styles.sheetButton,
+                  {
+                    backgroundColor: p.bg,
+                    borderColor: p.divider,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>
+                  Cancel
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={onSave}
+                disabled={over}
+                accessibilityRole="button"
+                accessibilityLabel="Save alt text"
+                accessibilityState={{ disabled: over }}
+                style={({ pressed }) => [
+                  styles.sheetButton,
+                  {
+                    backgroundColor: p.accent,
+                    borderColor: p.accent,
+                    opacity: over ? 0.45 : pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Text
+                  style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}
+                >
+                  Save
+                </Text>
+              </Pressable>
+            </View>
+          </ScrollView>
         </View>
       </KeyboardAvoidingView>
     </Modal>

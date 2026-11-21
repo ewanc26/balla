@@ -183,7 +183,13 @@ privacy, block/mute, report and leave/delete flows.
    optimistic like/repost/bookmark changes roll back, and failed posts,
    replies, deletes and reports stay visible with a retry.
 8. Complete an accessibility pass: screen reader labels, focus order, Dynamic
-   Type and reduced-motion behaviour.
+   Type and reduced-motion behaviour. Done: shared rules in
+   `src/lib/accessibilityModel.ts` and hooks in `src/lib/accessibility.ts`;
+   every action, card and dialog is labelled, web dialogs trap focus with a
+   visible keyboard ring, text scales without clipping, motion respects the
+   system reduced-motion setting, and standalone controls are at least 44pt
+   with no gesture-only actions (inline links keep the normal text flow).
+   Thread views state their structure explicitly.
 
 ### P1 — parity with the main Bluesky surfaces
 

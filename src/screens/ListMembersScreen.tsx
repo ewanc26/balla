@@ -482,7 +482,7 @@ const styles = StyleSheet.create({
     gap: 9,
   },
   personAction: {
-    minHeight: 38,
+    minHeight: 44,
     minWidth: 70,
     borderRadius: 8,
     borderWidth: 1,

@@ -90,6 +90,11 @@ export function PersonRow({
                 ? `Unfollow ${person.handle}`
                 : `Follow ${person.handle}`
           }
+          accessibilityState={{
+            disabled: busy || isBlocked,
+            busy,
+            selected: !!currentFollow,
+          }}
           style={({ pressed }) => ({
             minHeight: 44,
             minWidth: 96,

@@ -10,6 +10,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
@@ -66,6 +67,40 @@ function removePost(
     }));
 }
 
+/**
+ * A short, visible cue for where a post sits in the conversation. It is a real
+ * text node with its own label so a screen reader hears the role before the
+ * card, while the card's own action buttons stay individually focusable.
+ */
+function ThreadRoleLabel({
+  text,
+  accessibilityLabel,
+  focus,
+}: {
+  text: string;
+  accessibilityLabel?: string;
+  focus?: boolean;
+}) {
+  const p = usePalette();
+  return (
+    <View style={styles.roleRow}>
+      <View
+        style={[
+          styles.roleDot,
+          { backgroundColor: focus ? p.accent : p.divider },
+        ]}
+      />
+      <Text
+        accessibilityRole="text"
+        accessibilityLabel={accessibilityLabel || text}
+        style={[styles.roleText, { color: focus ? p.accent : p.secondary }]}
+      >
+        {text}
+      </Text>
+    </View>
+  );
+}
+
 function ReplyBranch({
   node,
   depth,
@@ -81,7 +116,9 @@ function ReplyBranch({
 }) {
   const p = usePalette();
   const replies = (node.replies || []).filter(isThreadViewPost);
-  const indented = depth > 0 && depth <= 3;
+  // Every reply carries a connector, including top-level ones, so the chain
+  // back to the focused post is visible rather than a stack of loose cards.
+  const indented = depth <= 3;
   return (
     <View
       style={
@@ -92,9 +129,17 @@ function ReplyBranch({
               borderLeftColor: p.divider,
               paddingLeft: 8,
             }
-          : undefined
+          : { marginLeft: 12, paddingLeft: 8 }
       }
     >
+      <ThreadRoleLabel
+        text="Reply"
+        accessibilityLabel={
+          depth > 0
+            ? `Reply, nested ${depth} level${depth === 1 ? '' : 's'} deep in this thread`
+            : 'Reply in this thread'
+        }
+      />
       <PostCard
         post={node.post}
         onOpenThread={onOpenThread}
@@ -196,7 +241,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   }, []);
 
   useLayoutEffect(() => {
-    navigation.setOptions({ title: 'Post' });
+    navigation.setOptions({ title: 'Thread' });
   }, [navigation]);
 
   async function sendReply() {
@@ -271,14 +316,40 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <ScrollView contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}>
-        {thread.ancestors.map((a: any) => (
-          <PostCard
-            key={a.post.uri}
-            post={a.post}
-            onOpenProfile={openProfile}
-            onPostHidden={hidePost}
-          />
+        <View
+          accessibilityRole="header"
+          accessibilityLabel="Thread: a conversation in order, oldest first"
+          style={styles.threadHeading}
+        >
+          <Ionicons name="chatbubbles-outline" size={18} color={p.accent} />
+          <View style={{ flex: 1, marginLeft: 8 }}>
+            <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+              Thread
+            </Text>
+            <Text style={{ color: p.secondary, fontSize: 12, marginTop: 1 }}>
+              A conversation in order, oldest first
+            </Text>
+          </View>
+        </View>
+
+        {thread.ancestors.map((a: any, index: number) => (
+          <View key={a.post.uri}>
+            <ThreadRoleLabel
+              text={index === thread.ancestors.length - 1 ? 'Replying to' : 'Earlier in thread'}
+              accessibilityLabel={
+                index === thread.ancestors.length - 1
+                  ? 'This post is a reply to the one above'
+                  : 'Earlier post in this thread'
+              }
+            />
+            <PostCard
+              post={a.post}
+              onOpenProfile={openProfile}
+              onPostHidden={hidePost}
+            />
+          </View>
         ))}
+        <ThreadRoleLabel text="This post" focus accessibilityLabel="The post you opened" />
         <PostCard
           post={thread.post}
           highlight
@@ -288,6 +359,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
         />
         {replyCount > 0 && (
           <Text
+            accessibilityRole="header"
             style={{
               color: p.secondary,
               fontSize: 13,
@@ -333,6 +405,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             ref={replyInput}
             placeholder="Write a reply…"
             placeholderTextColor={p.secondary}
+            accessibilityLabel="Write a reply to this thread"
             value={replyText}
             onChangeText={setReplyText}
             multiline
@@ -340,7 +413,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
               {
                 color: p.text,
                 flex: 1,
-                minHeight: 40,
+                minHeight: 44,
                 paddingHorizontal: 12,
                 paddingVertical: 8,
                 maxHeight: 120,
@@ -374,6 +447,33 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
 }
 
 const styles = StyleSheet.create({
+  threadHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    marginBottom: 4,
+  },
+  roleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 16,
+    paddingTop: 6,
+    paddingBottom: 2,
+  },
+  roleDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  roleText: {
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.4,
+    flexShrink: 1,
+  },
   composer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
