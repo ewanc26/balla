@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.9.1
+
+- Strip the decorative AI-tell surface from the marketing site: flat warm-grey canvas instead of gradient blobs, a solid header instead of a blurred one, flat buttons and cards without hover lifts or glows, and the same 8px card radius the app uses.
+- Drop numbered feature/principle markers and pulsing status dots. The hero preview now uses plain action labels instead of made-up counts and glyphs, so the site's "honest labels" claim holds on its own page.
+
 ## 0.9.0
 
 - Add reply and quote controls built strictly from `app.bsky.feed.threadgate` and `app.bsky.feed.postgate`. The composer writes the gate records after publishing; the same rkey is reused, and open access means no record at all rather than an invented rule. List-based rules are left out until there is a real list picker.
