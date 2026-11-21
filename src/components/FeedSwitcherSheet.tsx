@@ -7,6 +7,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import {
   dialogAccessibilityProps,
@@ -36,6 +37,7 @@ export function FeedSwitcherSheet({
   onManage: () => void;
 }) {
   const p = usePalette();
+  const insets = useSafeAreaInsets();
   const containerRef = useRef<any>(null);
   const closeRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -67,7 +69,14 @@ export function FeedSwitcherSheet({
           ref={containerRef}
           {...dialogAccessibilityProps('Switch feed')}
           accessibilityViewIsModal
-          style={[styles.sheet, { backgroundColor: p.card, borderColor: p.divider }]}
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: p.card,
+              borderColor: p.divider,
+              paddingBottom: Math.max(insets.bottom, 8),
+            },
+          ]}
         >
           <View style={styles.header}>
             <View style={{ flex: 1, minWidth: 0 }}>

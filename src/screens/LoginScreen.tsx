@@ -8,6 +8,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEFAULT_SERVICE, login } from '../lib/agent';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 
@@ -17,6 +18,7 @@ function normaliseIdentifier(value: string): string {
 
 export function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   const p = usePalette();
+  const insets = useSafeAreaInsets();
   const [identifier, setIdentifier] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,13 @@ export function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: p.bg }}
-      contentContainerStyle={styles.content}
+      contentContainerStyle={[
+        styles.content,
+        {
+          paddingTop: 40 + insets.top,
+          paddingBottom: 40 + insets.bottom,
+        },
+      ]}
       keyboardShouldPersistTaps="handled"
     >
       <View style={styles.shell}>
