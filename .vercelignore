@@ -1,0 +1,10 @@
+.git/
+.expo/
+android/
+ios/
+node_modules/
+dist-site/
+dist-app/
+*.log
+*.tsbuildinfo
+.research/

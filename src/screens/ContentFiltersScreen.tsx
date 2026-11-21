@@ -1,0 +1,780 @@
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { agent } from '../lib/agent';
+import { BSKY_LABELER_DID } from '../lib/moderation';
+import { useModeration } from '../lib/moderationContext';
+import { Avatar } from '../components/Avatar';
+import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
+
+type Visibility = 'ignore' | 'warn' | 'hide';
+type WordTarget = 'content' | 'tag';
+
+const DEFAULT_LABELER_NAME = 'Bluesky moderation';
+
+function labelText(definition: any): { name: string; description: string } {
+  const locale =
+    (definition.locales || []).find((item: any) =>
+      String(item.lang || '').toLowerCase().startsWith('en')
+    ) || (definition.locales || [])[0];
+  return {
+    name: locale?.name || definition.identifier || 'Label',
+    description:
+      locale?.description || `Labels content as “${definition.identifier || 'unknown'}”.`,
+  };
+}
+
+// Content-filter controls backed by the same app.bsky.actor preferences the
+// official client writes. Every write reloads the moderation context so the
+// feed rendering changes without a restart.
+export function ContentFiltersScreen({ navigation }: { navigation: any }) {
+  const p = usePalette();
+  const { reload } = useModeration();
+  const [prefs, setPrefs] = useState<any>(null);
+  const [labelDefs, setLabelDefs] = useState<Record<string, any[]>>({});
+  const [services, setServices] = useState<Record<string, any>>({});
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [confirmAdult, setConfirmAdult] = useState(false);
+  const [addLabelerOpen, setAddLabelerOpen] = useState(false);
+  const [labelerInput, setLabelerInput] = useState('');
+  const [addLabelerBusy, setAddLabelerBusy] = useState(false);
+  const [word, setWord] = useState('');
+  const [wordTarget, setWordTarget] = useState<WordTarget>('content');
+
+  useLayoutEffect(() => {
+    navigation.setOptions({ title: 'Content filters' });
+  }, [navigation]);
+
+  const load = useCallback(async (showSpinner: boolean) => {
+    if (showSpinner) setLoading(true);
+    setError(null);
+    try {
+      const next = await agent.getPreferences();
+      setPrefs(next);
+      const definitions = await agent.getLabelDefinitions(next).catch(() => ({}));
+      setLabelDefs(definitions);
+
+      const dids = next.moderationPrefs.labelers.map((labeler: any) => labeler.did);
+      try {
+        const response = await agent.getLabelers({ dids, detailed: true });
+        const byDid: Record<string, any> = {};
+        for (const item of response.data.views || []) {
+          const view: any = item;
+          const did = view.creator?.did;
+          if (did) byDid[did] = view;
+        }
+        setServices(byDid);
+      } catch {
+        // Names are cosmetic. The underlying prefs still load and save.
+        setServices({});
+      }
+    } catch {
+      setError('Could not load your moderation preferences.');
+    } finally {
+      if (showSpinner) setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void load(true);
+  }, [load]);
+
+  function labelerName(did: string): string {
+    if (did === BSKY_LABELER_DID) return DEFAULT_LABELER_NAME;
+    const view = services[did];
+    return (
+      view?.creator?.displayName ||
+      view?.creator?.handle ||
+      `${did.slice(0, 16)}…`
+    );
+  }
+
+  async function save(key: string, action: () => Promise<void>, failure: string) {
+    if (saving) return;
+    setSaving(key);
+    setError(null);
+    try {
+      await action();
+      await load(false);
+      reload();
+    } catch {
+      setError(failure);
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  function requestAdult(enabled: boolean) {
+    if (enabled) {
+      setConfirmAdult(true);
+      return;
+    }
+    void save(
+      'adult',
+      () => agent.setAdultContentEnabled(false),
+      'Could not save the adult-content setting.'
+    );
+  }
+
+  function confirmAdultEnabled() {
+    setConfirmAdult(false);
+    void save(
+      'adult',
+      () => agent.setAdultContentEnabled(true),
+      'Could not save the adult-content setting.'
+    );
+  }
+
+  async function submitLabeler() {
+    const raw = labelerInput.trim().replace(/^@/, '');
+    if (!raw || addLabelerBusy) return;
+    setAddLabelerBusy(true);
+    setError(null);
+    try {
+      // The AppView profile lookup resolves a handle using the scope Balla
+      // already has; there is no separate identity RPC grant.
+      const did = raw.startsWith('did:')
+        ? raw
+        : (await agent.getProfile({ actor: raw })).data.did;
+      if (did === BSKY_LABELER_DID) {
+        throw new Error('Bluesky moderation is already subscribed.');
+      }
+      if (prefs.moderationPrefs.labelers.some((labeler: any) => labeler.did === did)) {
+        throw new Error('That labeler is already subscribed.');
+      }
+      const response = await agent.getLabelers({ dids: [did], detailed: true });
+      if (!(response.data.views || []).length) {
+        throw new Error('That account is not a labeler.');
+      }
+      await agent.addLabeler(did);
+      setLabelerInput('');
+      setAddLabelerOpen(false);
+      await load(false);
+      reload();
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : 'Could not add that labeler. Try again.'
+      );
+    } finally {
+      setAddLabelerBusy(false);
+    }
+  }
+
+  async function submitWord() {
+    const value = word.trim();
+    if (!value) return;
+    const duplicate = (prefs.moderationPrefs.mutedWords || []).some(
+      (item: any) =>
+        item.value.toLowerCase() === value.toLowerCase() &&
+        (item.targets || []).includes(wordTarget)
+    );
+    if (duplicate) {
+      setError('That word or hashtag is already muted for this target.');
+      return;
+    }
+    await save(
+      'word:add',
+      () =>
+        agent.addMutedWord({
+          value,
+          targets: [wordTarget] as any,
+          actorTarget: 'all',
+        }),
+      'Could not add that muted word. Try again.'
+    );
+    setWord('');
+  }
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator size="large" color={p.accent} />
+      </View>
+    );
+  }
+
+  if (!prefs) {
+    return (
+      <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Text style={{ color: p.secondary, textAlign: 'center' }}>
+          {error || 'Could not load your moderation preferences.'}
+        </Text>
+        <Pressable
+          onPress={() => void load(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Try loading moderation preferences again"
+          style={{ marginTop: 12, minHeight: 44, paddingHorizontal: 20, justifyContent: 'center', borderRadius: 8, backgroundColor: p.soft }}
+        >
+          <Text style={{ color: p.text, fontWeight: '600' }}>Try again</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
+  const moderation = prefs.moderationPrefs;
+  const adultEnabled = !!moderation.adultContentEnabled;
+  const labelers = moderation.labelers || [];
+  const mutedWords = moderation.mutedWords || [];
+
+  function currentLabelPref(labelerDid: string, identifier: string, fallback: Visibility): Visibility {
+    if (labelerDid === BSKY_LABELER_DID) {
+      return (moderation.labels[identifier] || fallback) as Visibility;
+    }
+    const labeler = labelers.find((item: any) => item.did === labelerDid);
+    return (labeler?.labels?.[identifier] || fallback) as Visibility;
+  }
+
+  return (
+    <ScrollView
+      style={{ flex: 1, backgroundColor: p.bg }}
+      contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
+    >
+      {error ? (
+        <Text
+          accessibilityRole="alert"
+          style={{ color: p.danger, fontSize: 13, lineHeight: 19, marginHorizontal: 18, marginBottom: 8 }}
+        >
+          {error}
+        </Text>
+      ) : null}
+
+      <Section title="Adult content">
+        <View style={styles.settingRow}>
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+              Show adult content
+            </Text>
+            <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 2 }}>
+              Adult labels stay hidden until this is on. Balla asks you to confirm you are
+              over 18 first.
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => requestAdult(!adultEnabled)}
+            accessibilityRole="switch"
+            accessibilityLabel="Show adult content"
+            accessibilityState={{ checked: adultEnabled, busy: saving === 'adult' }}
+            style={({ pressed }) => [
+              styles.toggle,
+              {
+                backgroundColor: adultEnabled ? p.accent : p.soft,
+                opacity: pressed || saving === 'adult' ? 0.6 : 1,
+              },
+            ]}
+          >
+            <View
+              style={[
+                styles.knob,
+                { backgroundColor: p.card, alignSelf: adultEnabled ? 'flex-end' : 'flex-start' },
+              ]}
+            />
+          </Pressable>
+        </View>
+      </Section>
+
+      <Section title="Subscribed labelers">
+        {labelers.map((labeler: any) => {
+          const isDefault = labeler.did === BSKY_LABELER_DID;
+          const view = services[labeler.did];
+          return (
+            <View key={labeler.did} style={[styles.labelerRow, { borderBottomColor: p.divider }]}>
+              <Avatar
+                avatar={isDefault ? undefined : view?.creator?.avatar}
+                displayName={labelerName(labeler.did)}
+                size={40}
+              />
+              <View style={{ flex: 1, marginLeft: 10, minWidth: 0 }}>
+                <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+                  {labelerName(labeler.did)}
+                </Text>
+                <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
+                  {isDefault
+                    ? 'Always on · independent of your other labelers'
+                    : view?.creator?.handle
+                      ? `@${view.creator.handle}`
+                      : labeler.did}
+                </Text>
+              </View>
+              {isDefault ? (
+                <View style={[styles.badge, { backgroundColor: p.accentSoft }]}>
+                  <Text style={{ color: p.accent, fontSize: 11, fontWeight: '700' }}>Default</Text>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() =>
+                    void save(
+                      `labeler:${labeler.did}`,
+                      () => agent.removeLabeler(labeler.did),
+                      'Could not remove that labeler.'
+                    )
+                  }
+                  disabled={!!saving}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Unsubscribe from ${labelerName(labeler.did)}`}
+                  style={({ pressed }) => ({
+                    minHeight: 44,
+                    minWidth: 84,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderRadius: 6,
+                    backgroundColor: pressed ? p.soft : 'transparent',
+                    opacity: saving ? 0.55 : 1,
+                  })}
+                >
+                  {saving === `labeler:${labeler.did}` ? (
+                    <ActivityIndicator size="small" color={p.secondary} />
+                  ) : (
+                    <Text style={{ color: p.danger, fontSize: 13, fontWeight: '600' }}>Remove</Text>
+                  )}
+                </Pressable>
+              )}
+            </View>
+          );
+        })}
+
+        {addLabelerOpen ? (
+          <View style={{ padding: 12 }}>
+            <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginBottom: 8 }}>
+              Enter a labeler’s handle or DID. Balla checks that the account is a labeler
+              before subscribing.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput
+                value={labelerInput}
+                onChangeText={setLabelerInput}
+                placeholder="labeler.bsky.social"
+                placeholderTextColor={p.secondary}
+                autoCapitalize="none"
+                autoCorrect={false}
+                accessibilityLabel="Labeler handle or DID"
+                style={[
+                  styles.input,
+                  { color: p.text, borderColor: p.divider, backgroundColor: p.bg, flex: 1 },
+                  webInputReset,
+                ]}
+              />
+              <Pressable
+                onPress={() => void submitLabeler()}
+                disabled={addLabelerBusy || !labelerInput.trim()}
+                accessibilityRole="button"
+                accessibilityLabel="Subscribe to labeler"
+                style={({ pressed }) => ({
+                  minHeight: 44,
+                  paddingHorizontal: 16,
+                  borderRadius: 6,
+                  backgroundColor: p.accent,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  opacity: addLabelerBusy || !labelerInput.trim() || pressed ? 0.55 : 1,
+                })}
+              >
+                {addLabelerBusy ? (
+                  <ActivityIndicator size="small" color="#FFFFFF" />
+                ) : (
+                  <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Add</Text>
+                )}
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => setAddLabelerOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Add a labeler"
+            style={({ pressed }) => [styles.addRow, { backgroundColor: pressed ? p.bg : 'transparent' }]}
+          >
+            <Ionicons name="add-circle-outline" size={20} color={p.accent} />
+            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '600', marginLeft: 8 }}>
+              Add a labeler
+            </Text>
+          </Pressable>
+        )}
+      </Section>
+
+      <Section title="Label filters">
+        {labelers.map((labeler: any) => {
+          const definitions = (labelDefs[labeler.did] || []).filter(
+            (definition: any) => definition.configurable
+          );
+          if (!definitions.length) return null;
+          return (
+            <View key={labeler.did} style={{ paddingHorizontal: 12, paddingBottom: 4 }}>
+              <Text style={{ color: p.secondary, fontSize: 12, fontWeight: '700', marginTop: 10, marginBottom: 2 }}>
+                {labelerName(labeler.did)}
+              </Text>
+              {definitions.map((definition: any) => {
+                const copy = labelText(definition);
+                const adultOnly = (definition.flags || []).includes('adult');
+                const disabled = adultOnly && !adultEnabled;
+                const canWarn = !(
+                  definition.blurs === 'none' && definition.severity === 'none'
+                );
+                const current = currentLabelPref(
+                  labeler.did,
+                  definition.identifier,
+                  definition.defaultSetting || 'warn'
+                );
+                const key = `label:${labeler.did}:${definition.identifier}`;
+                return (
+                  <View
+                    key={definition.identifier}
+                    style={[styles.labelRow, { borderTopColor: p.divider }]}
+                  >
+                    <Text style={{ color: p.text, fontSize: 14, fontWeight: '600' }}>
+                      {copy.name}
+                    </Text>
+                    <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 1 }}>
+                      {disabled ? 'Adult content is off. Enable it above to change this label.' : copy.description}
+                    </Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                      {(
+                        [
+                          ['ignore', 'Show'],
+                          ['warn', 'Warn'],
+                          ['hide', 'Hide'],
+                        ] as [Visibility, string][]
+                      ).map(([value, label]) => {
+                        if (value === 'warn' && !canWarn) return null;
+                        const selected = current === value;
+                        return (
+                          <Pressable
+                            key={value}
+                            onPress={() =>
+                              void save(
+                                key,
+                                () =>
+                                  agent.setContentLabelPref(
+                                    definition.identifier,
+                                    value as any,
+                                    labeler.did === BSKY_LABELER_DID ? undefined : labeler.did
+                                  ),
+                                'Could not save that label preference.'
+                              )
+                            }
+                            disabled={disabled || !!saving}
+                            accessibilityRole="button"
+                            accessibilityLabel={`${label} ${copy.name}`}
+                            accessibilityState={{ selected, disabled: disabled || !!saving }}
+                            style={({ pressed }) => ({
+                              minHeight: 44,
+                              minWidth: 64,
+                              paddingHorizontal: 12,
+                              borderRadius: 6,
+                              borderWidth: 1,
+                              borderColor: selected ? p.accent : p.divider,
+                              backgroundColor: selected ? p.accent : 'transparent',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              opacity: disabled ? 0.4 : pressed ? 0.65 : 1,
+                            })}
+                          >
+                            {saving === key ? (
+                              <ActivityIndicator size="small" color={selected ? '#FFFFFF' : p.accent} />
+                            ) : (
+                              <Text
+                                style={{
+                                  color: selected ? '#FFFFFF' : p.text,
+                                  fontSize: 13,
+                                  fontWeight: '600',
+                                }}
+                              >
+                                {label}
+                              </Text>
+                            )}
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          );
+        })}
+        {labelers.every(
+          (labeler: any) => !(labelDefs[labeler.did] || []).some((definition: any) => definition.configurable)
+        ) ? (
+          <Text style={{ color: p.secondary, fontSize: 13, padding: 14 }}>
+            No configurable labels are available from your subscribed labelers.
+          </Text>
+        ) : null}
+      </Section>
+
+      <Section title="Muted words and hashtags">
+        {mutedWords.length ? (
+          mutedWords.map((item: any) => (
+            <View
+              key={`${item.value}:${(item.targets || []).join(',')}`}
+              style={[styles.wordRow, { borderBottomColor: p.divider }]}
+            >
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+                  {item.value}
+                </Text>
+                <Text style={{ color: p.secondary, fontSize: 12, marginTop: 1 }}>
+                  {(item.targets || []).includes('tag') ? 'Hashtag' : 'Word'}
+                  {(item.targets || []).includes('content') && (item.targets || []).includes('tag')
+                    ? ' · both'
+                    : ''}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() =>
+                  void save(
+                    `word:${item.value}`,
+                    () => agent.removeMutedWord(item),
+                    'Could not remove that muted word.'
+                  )
+                }
+                disabled={!!saving}
+                accessibilityRole="button"
+                accessibilityLabel={`Remove mute for ${item.value}`}
+                style={({ pressed }) => ({
+                  minHeight: 44,
+                  minWidth: 64,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 6,
+                  backgroundColor: pressed ? p.soft : 'transparent',
+                })}
+              >
+                <Ionicons name="trash-outline" size={18} color={p.danger} />
+              </Pressable>
+            </View>
+          ))
+        ) : (
+          <Text style={{ color: p.secondary, fontSize: 13, paddingHorizontal: 14, paddingTop: 12 }}>
+            No muted words yet.
+          </Text>
+        )}
+        <View style={{ padding: 12 }}>
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+            {(['content', 'tag'] as WordTarget[]).map((target) => {
+              const selected = wordTarget === target;
+              return (
+                <Pressable
+                  key={target}
+                  onPress={() => setWordTarget(target)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected }}
+                  style={({ pressed }) => ({
+                    minHeight: 44,
+                    paddingHorizontal: 14,
+                    borderRadius: 6,
+                    borderWidth: 1,
+                    borderColor: selected ? p.accent : p.divider,
+                    backgroundColor: selected ? p.accentSoft : 'transparent',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    opacity: pressed ? 0.65 : 1,
+                  })}
+                >
+                  <Text style={{ color: selected ? p.accent : p.text, fontSize: 13, fontWeight: '600' }}>
+                    {target === 'content' ? 'Words' : 'Hashtags'}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TextInput
+              value={word}
+              onChangeText={setWord}
+              onSubmitEditing={() => void submitWord()}
+              placeholder={wordTarget === 'content' ? 'Add a word to mute' : 'Add a hashtag to mute'}
+              placeholderTextColor={p.secondary}
+              autoCapitalize="none"
+              autoCorrect={false}
+              accessibilityLabel="Muted word or hashtag"
+              style={[
+                styles.input,
+                { color: p.text, borderColor: p.divider, backgroundColor: p.bg, flex: 1 },
+                webInputReset,
+              ]}
+            />
+            <Pressable
+              onPress={() => void submitWord()}
+              disabled={!word.trim() || !!saving}
+              accessibilityRole="button"
+              accessibilityLabel="Add muted word"
+              style={({ pressed }) => ({
+                minHeight: 44,
+                paddingHorizontal: 16,
+                borderRadius: 6,
+                backgroundColor: p.accent,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: !word.trim() || saving || pressed ? 0.55 : 1,
+              })}
+            >
+              <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Add</Text>
+            </Pressable>
+          </View>
+        </View>
+      </Section>
+
+      <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, paddingHorizontal: 18 }}>
+        These preferences are stored on your Bluesky account. Balla applies them before
+        rendering posts, profiles and notifications.
+      </Text>
+
+      <Modal
+        visible={confirmAdult}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setConfirmAdult(false)}
+      >
+        <View style={styles.overlay}>
+          <Pressable
+            onPress={() => setConfirmAdult(false)}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            style={styles.backdrop}
+          />
+          <View style={[styles.dialog, { backgroundColor: p.card }]}>
+            <Text style={{ color: p.text, fontSize: 19, fontWeight: '700' }}>Show adult content?</Text>
+            <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20, marginTop: 8 }}>
+              You must be at least 18. This changes your Bluesky account preference, so
+              other clients you use will respect it too. You can turn it off again here.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+              <Pressable
+                onPress={() => setConfirmAdult(false)}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel enabling adult content"
+                style={({ pressed }) => [styles.dialogButton, { borderColor: p.divider, backgroundColor: p.bg, opacity: pressed ? 0.65 : 1 }]}
+              >
+                <Text style={{ color: p.text, fontWeight: '600' }}>Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={confirmAdultEnabled}
+                accessibilityRole="button"
+                accessibilityLabel="I am over 18, enable adult content"
+                style={({ pressed }) => [styles.dialogButton, { borderColor: p.accent, backgroundColor: p.accent, opacity: pressed ? 0.65 : 1 }]}
+              >
+                <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>I’m over 18</Text>
+              </Pressable>
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </ScrollView>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  const p = usePalette();
+  return (
+    <View style={{ marginBottom: 14 }}>
+      <Text style={{ color: p.secondary, fontSize: 13, fontWeight: '700', paddingHorizontal: 18, marginBottom: 6 }}>
+        {title}
+      </Text>
+      <View style={[styles.card, { backgroundColor: p.card, borderColor: p.divider }, cardShadow]}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: 8,
+    overflow: 'hidden',
+  },
+  settingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    padding: 14,
+  },
+  toggle: {
+    width: 52,
+    height: 32,
+    borderRadius: 16,
+    padding: 2,
+    justifyContent: 'center',
+  },
+  knob: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+  },
+  labelerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 64,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  badge: {
+    borderRadius: 10,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  addRow: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+  },
+  input: {
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 6,
+    paddingHorizontal: 12,
+    fontSize: 15,
+  },
+  labelRow: {
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingVertical: 10,
+  },
+  wordRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 56,
+    paddingHorizontal: 14,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  overlay: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+  },
+  backdrop: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+  },
+  dialog: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 12,
+    padding: 18,
+  },
+  dialogButton: {
+    flex: 1,
+    minHeight: 44,
+    borderWidth: 1,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});

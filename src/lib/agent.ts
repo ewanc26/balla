@@ -1,70 +1,150 @@
 import { Agent } from '@atproto/api';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
+import {
+  ExpoOAuthClient,
+  type OAuthClientMetadataInput,
+  type OAuthSession,
+} from '@atproto/oauth-client-expo';
+import clientMetadata from '../../oauth-client-metadata.json';
 
-// The session is stored with AsyncStorage for now so it works in Expo Go.
-// TODO for real builds: move to expo-secure-store, and move auth to ATProto
-// OAuth via @atproto/oauth-client-expo (client metadata on balla.croft.click).
+// OAuth stores its DPoP keys and tokens in MMKV. AsyncStorage only remembers
+// which account to restore, so signing in again does not require re-entering a
+// handle.
+const LAST_DID_KEY = 'balla.oauth.did.v1';
+const LEGACY_SESSION_KEY = 'balla.session.v1';
+const APPVIEW_PROXY = 'did:web:api.bsky.app#bsky_appview';
+const WEB_REDIRECT_URI = 'https://balla.croft.click/app';
 
-const KEY = 'balla.session.v1';
+// The browser build exposes handleCallback(); the native entry does not.
+type WebOAuthClient = {
+  handleCallback?: () => Promise<OAuthSession | null>;
+};
+type WebSignIn = (
+  input: string,
+  options: { redirect_uri: string },
+) => Promise<OAuthSession>;
+
+function isPopupHandoff(err: unknown): boolean {
+  return (
+    typeof err === 'object' &&
+    err !== null &&
+    'code' in err &&
+    (err as { code?: unknown }).code === 'LOGIN_CONTINUED_IN_PARENT_WINDOW'
+  );
+}
+
+async function handleWebCallback(): Promise<OAuthSession | null> {
+  const webClient = oauthClient as unknown as WebOAuthClient;
+  if (typeof webClient.handleCallback !== 'function') return null;
+
+  try {
+    return await webClient.handleCallback();
+  } catch (err) {
+    // This page is the OAuth popup: it has passed the session to the window
+    // that opened it and closed itself.
+    if (isPopupHandoff(err)) return null;
+    throw err;
+  }
+}
+
+async function signInOnWeb(input: string): Promise<OAuthSession> {
+  const webSignIn = oauthClient.signIn as unknown as WebSignIn;
+  return webSignIn.call(oauthClient, input, { redirect_uri: WEB_REDIRECT_URI });
+}
+
 export const DEFAULT_SERVICE = 'https://bsky.social';
 
-// new Agent() has accepted a service URL as a plain string in every era of
-// @atproto/api, but the constructor signature has drifted; keep it behind
-// one cast so versions can move without touching every call site.
-function createAgent(service: string): Agent {
-  return new (Agent as any)(service) as Agent;
+let session: OAuthSession | null = null;
+let loggedOutCb: (() => void) | null = null;
+
+function createAgent(source: any): Agent {
+  return new Agent(source);
 }
 
 export let agent: Agent = createAgent(DEFAULT_SERVICE);
 
-export interface StoredSession {
-  service: string;
-  session: any;
-}
-
-let loggedOutCb: (() => void) | null = null;
 export function setOnLoggedOut(cb: (() => void) | null) {
   loggedOutCb = cb;
 }
 
-// The generic Agent in @atproto/api 0.32 keeps the bsky read/write methods
-// (getTimeline, like, repost, and friends) but no longer carries the
-// password-session methods; those live on BskyAgent / the session objects.
-// The casts below are deliberate and local: the runtime behaviour is the
-// same, only the SDK's type surface moved.
-export async function login(
-  identifier: string,
-  password: string,
-  service: string = DEFAULT_SERVICE
-): Promise<void> {
-  const a = createAgent(service);
-  await (a as any).login({ identifier, password });
-  agent = a;
-  const stored: StoredSession = { service, session: (a as any).session };
-  await AsyncStorage.setItem(KEY, JSON.stringify(stored));
+export const oauthClient = new ExpoOAuthClient({
+  handleResolver: DEFAULT_SERVICE,
+  clientMetadata: clientMetadata as OAuthClientMetadataInput,
+  onSessionDeleted: (sub: string) => {
+    void AsyncStorage.removeItem(LAST_DID_KEY).catch(() => {});
+    if (session && session.did === sub) {
+      session = null;
+      agent = createAgent(DEFAULT_SERVICE);
+      loggedOutCb?.();
+    }
+  },
+});
+
+function attachSession(next: OAuthSession) {
+  session = next;
+  agent = new Agent(next);
+  // app.bsky.* reads are served by the AppView, reached through the PDS.
+  agent.configureProxy(APPVIEW_PROXY);
+}
+
+export async function login(input: string): Promise<void> {
+  // A stale app-password session is password-equivalent; do not leave it next
+  // to the OAuth session.
+  await AsyncStorage.removeItem(LEGACY_SESSION_KEY).catch(() => {});
+  const next =
+    Platform.OS === 'web' ? await signInOnWeb(input) : await oauthClient.signIn(input);
+  attachSession(next);
+  await AsyncStorage.setItem(LAST_DID_KEY, next.did);
 }
 
 export async function restore(): Promise<boolean> {
-  const raw = await AsyncStorage.getItem(KEY);
-  if (!raw) return false;
+  await AsyncStorage.removeItem(LEGACY_SESSION_KEY).catch(() => {});
+
+  // On the web the OAuth popup lands on /app; whichever window owns the
+  // callback exchanges the code and the new session is attached here.
+  if (Platform.OS === 'web') {
+    try {
+      const callbackSession = await handleWebCallback();
+      if (callbackSession) {
+        attachSession(callbackSession);
+        await AsyncStorage.setItem(LAST_DID_KEY, callbackSession.did);
+        return true;
+      }
+    } catch (err) {
+      console.warn('Balla OAuth callback failed', err);
+    }
+  }
+
+  const did = await AsyncStorage.getItem(LAST_DID_KEY);
+  if (!did) return false;
+
   try {
-    const stored: StoredSession = JSON.parse(raw);
-    const a = createAgent(stored.service);
-    await (a as any).resumeSession(stored.session);
-    agent = a;
-    return true;
+    const next = await oauthClient.restore(did, false);
+    attachSession(next);
+    // Refresh now so a revoked grant is noticed at startup instead of on the
+    // first API call. An offline start keeps the local session.
+    await next.getTokenInfo(true).catch(() => {});
+    return session !== null;
   } catch {
-    await AsyncStorage.removeItem(KEY);
+    await AsyncStorage.removeItem(LAST_DID_KEY).catch(() => {});
     return false;
   }
 }
 
 export async function logout(): Promise<void> {
-  try {
-    await (agent as any).logout();
-  } catch {
-    // A failed logout on the server should not block a local sign-out.
+  const current = session;
+  session = null;
+  agent = createAgent(DEFAULT_SERVICE);
+  await AsyncStorage.removeItem(LAST_DID_KEY).catch(() => {});
+  loggedOutCb?.();
+
+  if (current) {
+    try {
+      await current.signOut();
+    } catch {
+      // The local session is already gone; a failed revocation must not keep
+      // the UI signed in.
+    }
   }
-  await AsyncStorage.removeItem(KEY);
-  if (loggedOutCb) loggedOutCb();
 }

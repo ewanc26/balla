@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Balla — a calmer Bluesky</title>
+    <meta
+      name="description"
+      content="Balla is a Facebook-shaped Bluesky client: your people, in order, with no ranking, ads or suggested posts."
+    />
+    <meta name="theme-color" content="#1877F2" />
+    <meta property="og:title" content="Balla — a calmer Bluesky" />
+    <meta property="og:description" content="Your people. In order. A Facebook-shaped home for Bluesky." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://balla.croft.click/" />
+    <link rel="canonical" href="https://balla.croft.click/" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Balla home">
+        <img src="/mark.svg" width="30" height="30" alt="" />
+        <span>balla</span>
+      </a>
+      <nav aria-label="Main">
+        <a href="#why">Why</a>
+        <a href="#features">What’s inside</a>
+        <a href="/privacy">Privacy</a>
+        <a class="nav-cta" href="/app">Open Balla <span aria-hidden="true">→</span></a>
+      </nav>
+    </header>
+
+    <main id="main">
+      <section class="hero wrap">
+        <div class="hero-copy">
+          <p class="eyebrow"><span class="dot"></span> Balla for Bluesky</p>
+          <h1>Your people.<br /><em>In order.</em></h1>
+          <p class="lede">
+            Balla gives Bluesky the familiar shape of a wall: your friends’ posts as cards,
+            newest first, with no algorithm deciding what you see.
+          </p>
+          <div class="actions">
+            <a class="button" href="/app">
+              Open Balla <span aria-hidden="true">→</span>
+            </a>
+            <a class="quiet-link" href="https://github.com/ewanc26/balla">
+              Follow development <span aria-hidden="true">↗</span>
+            </a>
+          </div>
+          <p class="status"><span class="dot"></span> On the web now · iOS and Android in development</p>
+        </div>
+
+        <div class="wall-preview" aria-hidden="true">
+          <div class="preview-bar"><span></span><span></span><span></span></div>
+          <div class="preview-card">
+            <div class="preview-head">
+              <span class="preview-avatar avatar-blue">M</span>
+              <span><strong>Mum</strong><small>just now · your wall</small></span>
+            </div>
+            <p>This is what a feed looks like when it is just the people you chose.</p>
+            <div class="preview-line"></div>
+            <div class="preview-actions"><span>♡ 12</span><span>↻ 2</span><span>◌ 4</span><span>▮ Save</span></div>
+          </div>
+          <div class="preview-card preview-card-small">
+            <div class="preview-head">
+              <span class="preview-avatar avatar-green">A</span>
+              <span><strong>A friend</strong><small>newest first, always</small></span>
+            </div>
+            <p>No ads. No “people you may know”. No engagement tricks.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="manifesto wrap" id="why">
+        <p class="section-kicker">Why Balla exists</p>
+        <div class="manifesto-grid">
+          <h2>Facebook’s <em>reading</em> experience was never the problem.</h2>
+          <div>
+            <p>
+              Balla exists because of my mum. She was comfortable with Facebook and found
+              Bluesky’s interface confusing; the posts were there, but the shape of the app
+              was not.
+            </p>
+            <p>
+              Facebook’s warm grey canvas, cards from people you actually know and a
+              newest-first feed worked. The dark patterns wrapped around them did not. Balla
+              keeps the reading experience and refuses the rest.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section class="features wrap" id="features">
+        <div class="section-heading">
+          <p class="section-kicker">What’s inside</p>
+          <h2>A familiar wall.<br /><em>Bluesky underneath.</em></h2>
+        </div>
+        <div class="feature-grid">
+          <article class="feature-card">
+            <span class="feature-number">01</span>
+            <h3>Newest first. Always.</h3>
+            <p>The Following feed is chronological by design. There is no ranking, no injected content and no engagement experiment.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number">02</span>
+            <h3>People, not a marketplace</h3>
+            <p>Public profiles, follow and unfollow, threads and replies. The social graph is yours, not an ad targeting product.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number">03</span>
+            <h3>Search when you ask</h3>
+            <p>Find people and posts across Bluesky explicitly. No suggested accounts on every surface, no attention hijacking.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number">04</span>
+            <h3>Save quietly</h3>
+            <p>Bluesky bookmarks are private. Save a post now and return when you have the attention for it.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number">05</span>
+            <h3>Readable by design</h3>
+            <p>Large cards, honest timestamps, 44pt controls and a light or dark canvas that follows your system.</p>
+          </article>
+          <article class="feature-card">
+            <span class="feature-number">06</span>
+            <h3>AT Protocol all the way down</h3>
+            <p>Your account stays on Bluesky or whatever PDS you use. Balla is an ordinary client, not a new silo.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="refusals wrap">
+        <div class="refusal-copy">
+          <p class="section-kicker">The short version</p>
+          <h2>No algorithm.<br /><em>No ads. No theatre.</em></h2>
+        </div>
+        <ul class="refusal-list">
+          <li><span aria-hidden="true">×</span> No engagement ranking</li>
+          <li><span aria-hidden="true">×</span> No ads dressed as posts</li>
+          <li><span aria-hidden="true">×</span> No suggested content in the Following feed</li>
+          <li><span aria-hidden="true">×</span> No reactions palette, pages or “people you may know”</li>
+          <li><span aria-hidden="true">✓</span> The people you chose, in the order they posted</li>
+        </ul>
+      </section>
+
+      <section class="protocol wrap">
+        <div>
+          <p class="section-kicker">Open by construction</p>
+          <h2>Built on the <em>AT Protocol.</em></h2>
+        </div>
+        <div class="protocol-copy">
+          <p>
+            Balla signs in with AT Protocol OAuth and talks to Bluesky like any other client.
+            It is independent software: not affiliated with Bluesky Social PBC or Meta.
+          </p>
+          <div class="protocol-links">
+            <a href="https://github.com/ewanc26/balla">Source and issues <span aria-hidden="true">↗</span></a>
+            <a href="/oauth-client-metadata.json">OAuth client metadata</a>
+            <a href="/privacy">Privacy note</a>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer wrap">
+      <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
+      <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta.</p>
+      <div class="footer-links">
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="/guidelines">Guidelines</a>
+        <a href="/copyright">Copyright</a>
+        <a href="https://github.com/ewanc26/balla/issues">Report an issue</a>
+        <a href="https://ewancroft.uk/support">Support Balla</a>
+        <a href="https://github.com/ewanc26/balla">GitHub</a>
+      </div>
+    </footer>
+  </body>
+</html>

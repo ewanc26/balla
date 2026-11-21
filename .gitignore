@@ -1,5 +1,8 @@
 node_modules/
 .expo/
+.vercel/
+dist-site/
+dist-app/
 .expo-shared/
 dist/
 web-build/
@@ -10,3 +13,6 @@ ios/
 .nyc_output/
 .DS_Store
 *.orig.*
+.vercel
+.env*
+.research/

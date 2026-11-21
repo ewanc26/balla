@@ -1,13 +1,30 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import {
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
 import { agent } from '../lib/agent';
+import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
-import { usePalette } from '../theme';
+import { Avatar } from '../components/Avatar';
+import { useViewer } from '../lib/viewer';
+import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
-// Minimal navigation over the threadViewPost tree: the ancestor chain, the
-// highlighted post, then the immediate replies. Deeper branches stay behind
-// their own comment buttons when we grow trees; for now one level reads like
-// Facebook's comment list.
+// Navigation over the threadViewPost tree: the ancestor chain, the highlighted
+// post, then every reply branch. getPostThread returns replies as a tree, so
+// render it recursively and cap the visual indentation rather than dropping
+// deeper replies on the floor.
+
+function isThreadViewPost(node: any): boolean {
+  return !!node && String(node.$type || '').endsWith('threadViewPost');
+}
 
 function flattenThread(node: any): { ancestors: any[]; post: any; replies: any[] } {
   const ancestors: any[] = [];
@@ -16,24 +33,128 @@ function flattenThread(node: any): { ancestors: any[]; post: any; replies: any[]
     ancestors.unshift(current.parent);
     current = current.parent;
   }
-  const replies = (node.replies || []).map((r: any) => r.post);
+  const replies = (node.replies || []).filter(isThreadViewPost);
   return { ancestors, post: node.post, replies };
+}
+
+function countReplies(nodes: any[]): number {
+  return nodes.reduce(
+    (total, node) => total + 1 + countReplies((node.replies || []).filter(isThreadViewPost)),
+    0
+  );
+}
+
+function removePost(
+  nodes: any[],
+  post: any,
+  scope: 'post' | 'author'
+): any[] {
+  return nodes
+    .filter((node) =>
+      scope === 'author'
+        ? node.post.author.did !== post.author.did
+        : node.post.uri !== post.uri
+    )
+    .map((node) => ({
+      ...node,
+      replies: removePost(
+        (node.replies || []).filter(isThreadViewPost),
+        post,
+        scope
+      ),
+    }));
+}
+
+function ReplyBranch({
+  node,
+  depth,
+  onOpenThread,
+  onOpenProfile,
+  onPostHidden,
+}: {
+  node: any;
+  depth: number;
+  onOpenThread?: (uri: string) => void;
+  onOpenProfile: (did: string) => void;
+  onPostHidden?: (post: any, scope: 'post' | 'author') => void;
+}) {
+  const p = usePalette();
+  const replies = (node.replies || []).filter(isThreadViewPost);
+  const indented = depth > 0 && depth <= 3;
+  return (
+    <View
+      style={
+        indented
+          ? {
+              marginLeft: 12,
+              borderLeftWidth: StyleSheet.hairlineWidth,
+              borderLeftColor: p.divider,
+              paddingLeft: 8,
+            }
+          : undefined
+      }
+    >
+      <PostCard
+        post={node.post}
+        onOpenThread={onOpenThread}
+        onOpenProfile={onOpenProfile}
+        onPostHidden={onPostHidden}
+      />
+      {replies.map((child: any) => (
+        <ReplyBranch
+          key={child.post.uri}
+          node={child}
+          depth={depth + 1}
+          onOpenThread={onOpenThread}
+          onOpenProfile={onOpenProfile}
+          onPostHidden={onPostHidden}
+        />
+      ))}
+    </View>
+  );
 }
 
 export function ThreadScreen({ route, navigation }: { route: any; navigation: any }) {
   const p = usePalette();
+  const { profile: me } = useViewer();
   const uri = route.params && route.params.uri;
   const [thread, setThread] = useState<any>(null);
   const [failed, setFailed] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [sending, setSending] = useState(false);
+  const replyInput = React.useRef<React.ComponentRef<typeof TextInput>>(null);
+
+  function openProfile(did: string) {
+    navigation.navigate('UserProfile', { actor: did });
+  }
+
+  function hidePost(post: any, scope: 'post' | 'author') {
+    if (
+      thread &&
+      (scope === 'author'
+        ? thread.post.author.did === post.author.did
+        : thread.post.uri === post.uri)
+    ) {
+      navigation.goBack();
+      return;
+    }
+    setThread((prev: any) =>
+      prev
+        ? {
+            ...prev,
+            ancestors: removePost(prev.ancestors, post, scope),
+            replies: removePost(prev.replies, post, scope),
+          }
+        : prev
+    );
+  }
 
   async function load() {
     setFailed(false);
     try {
-      const res = await agent.getPostThread({ uri });
+      const res = await agent.getPostThread({ uri, depth: 10 });
       const t = res.data.thread;
-      if (String(t.$type || '').endsWith('threadViewPost')) {
+      if (isThreadViewPost(t)) {
         setThread(flattenThread(t));
       } else {
         setFailed(true);
@@ -47,6 +168,24 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [uri]);
+
+  React.useEffect(() => {
+    return subscribeActorHidden((did) => {
+      setThread((prev: any) =>
+        prev
+          ? {
+              ...prev,
+              ancestors: removePost(
+                prev.ancestors,
+                { author: { did } },
+                'author'
+              ),
+              replies: removePost(prev.replies, { author: { did } }, 'author'),
+            }
+          : prev
+      );
+    });
+  }, []);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Post' });
@@ -94,38 +233,97 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
     );
   }
 
+  const replyCount = countReplies(thread.replies);
+
   return (
-    <View style={{ flex: 1, backgroundColor: p.bg }}>
-      <ScrollView contentContainerStyle={{ padding: 8, paddingBottom: 24 }}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: p.bg }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
+      <ScrollView contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}>
         {thread.ancestors.map((a: any) => (
-          <PostCard key={a.post.uri} post={a.post} />
+          <PostCard
+            key={a.post.uri}
+            post={a.post}
+            onOpenProfile={openProfile}
+            onPostHidden={hidePost}
+          />
         ))}
-        <PostCard post={thread.post} highlight onOpenThread={() => load()} />
-        {thread.replies.length > 0 && (
-          <Text style={{ color: p.secondary, fontSize: 13, fontWeight: '600', marginTop: 8, marginBottom: 4, paddingHorizontal: 4 }}>
-            {thread.replies.length === 1 ? '1 reply' : thread.replies.length + ' replies'}
+        <PostCard
+          post={thread.post}
+          highlight
+          onOpenThread={() => replyInput.current?.focus()}
+          onOpenProfile={openProfile}
+          onPostHidden={hidePost}
+        />
+        {replyCount > 0 && (
+          <Text
+            style={{
+              color: p.secondary,
+              fontSize: 13,
+              fontWeight: '600',
+              marginTop: 4,
+              marginBottom: 8,
+              paddingHorizontal: 16,
+            }}
+          >
+            {replyCount === 1 ? '1 reply' : replyCount + ' replies'}
           </Text>
         )}
         {thread.replies.map((r: any) => (
-          <PostCard key={r.uri} post={r} />
+          <ReplyBranch
+            key={r.post.uri}
+            node={r}
+            depth={0}
+            onOpenThread={(replyUri: string) => navigation.push('Thread', { uri: replyUri })}
+            onOpenProfile={openProfile}
+            onPostHidden={hidePost}
+          />
         ))}
       </ScrollView>
+
       <View style={[styles.composer, { backgroundColor: p.card, borderTopColor: p.divider }]}>
-        <TextInput
-          placeholder="Write a reply…"
-          placeholderTextColor={p.secondary}
-          value={replyText}
-          onChangeText={setReplyText}
-          multiline
-          style={{ color: p.text, flex: 1, minHeight: 44, paddingHorizontal: 12, maxHeight: 120 }}
+        <Avatar
+          avatar={me && me.avatar}
+          displayName={(me && (me.displayName || me.handle)) || 'You'}
+          size={36}
         />
+        <View
+          style={[
+            styles.inputWrap,
+            { backgroundColor: p.bg, borderColor: p.divider },
+          ]}
+        >
+          <TextInput
+            ref={replyInput}
+            placeholder="Write a reply…"
+            placeholderTextColor={p.secondary}
+            value={replyText}
+            onChangeText={setReplyText}
+            multiline
+            style={[
+              {
+                color: p.text,
+                flex: 1,
+                minHeight: 40,
+                paddingHorizontal: 12,
+                paddingVertical: 8,
+                maxHeight: 120,
+                fontSize: 15,
+              },
+              webInputReset,
+            ]}
+          />
+        </View>
         <Pressable
           onPress={sendReply}
           disabled={sending || replyText.trim().length === 0}
+          accessibilityRole="button"
+          accessibilityLabel="Reply"
           style={({ pressed }) => ({
             backgroundColor: p.accent,
             opacity: pressed || sending || replyText.trim().length === 0 ? 0.5 : 1,
-            borderRadius: 8,
+            borderRadius: CARD_RADIUS,
             minHeight: 44,
             paddingHorizontal: 16,
             alignItems: 'center',
@@ -133,10 +331,10 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             marginLeft: 8,
           })}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Reply</Text>
+          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Reply</Text>
         </Pressable>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -147,5 +345,12 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 8,
     paddingVertical: 8,
+  },
+  inputWrap: {
+    flex: 1,
+    borderRadius: 20,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginLeft: 8,
+    overflow: 'hidden',
   },
 });

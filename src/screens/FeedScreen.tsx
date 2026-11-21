@@ -1,101 +1,235 @@
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Pressable, RefreshControl, Text, View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  ActivityIndicator,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { subscribeActorHidden } from '../lib/moderation';
+import { useFeeds } from '../lib/feedsContext';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
-import { usePalette } from '../theme';
+import { useViewer } from '../lib/viewer';
+import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 export function FeedScreen() {
   const p = usePalette();
   const navigation = useNavigation<any>();
+  const { profile: me } = useViewer();
+  const { pinnedFeeds, generators } = useFeeds();
+  const [activeFeed, setActiveFeed] = useState<string | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [me, setMe] = useState<any>(null);
+  const requestId = useRef(0);
 
   const load = useCallback(
     async (fresh: boolean) => {
-      if (fresh) {
-        setRefreshing(true);
-      } else {
-        setMoreLoading(true);
-      }
+      const id = ++requestId.current;
+      if (fresh) setRefreshing(true);
+      else setMoreLoading(true);
       setError(null);
       try {
         const target = fresh ? undefined : cursor;
-        const res = await agent.getTimeline({ limit: 25, cursor: target });
+        const res = activeFeed
+          ? await agent.app.bsky.feed.getFeed({
+              feed: activeFeed,
+              limit: 25,
+              cursor: target,
+            })
+          : await agent.getTimeline({ limit: 25, cursor: target });
+        if (id !== requestId.current) return;
         const feed = res.data.feed || [];
         setPosts((prev) => (fresh ? feed : prev.concat(feed)));
         setCursor(res.data.cursor);
       } catch {
-        setError('Could not load the timeline. Pull to try again.');
+        if (id === requestId.current) {
+          setError(
+            activeFeed
+              ? 'Could not load this feed. Pull to try again.'
+              : 'Could not load the timeline. Pull to try again.'
+          );
+        }
+      } finally {
+        if (id === requestId.current) {
+          setRefreshing(false);
+          setMoreLoading(false);
+          setLoading(false);
+        }
       }
-      setRefreshing(false);
-      setMoreLoading(false);
-      setLoading(false);
     },
-    [cursor]
+    [activeFeed, cursor]
   );
 
-  React.useEffect(() => {
-    load(true);
-    // The "What's on your mind?" row above the feed shows your own avatar;
-    // if the profile call fails it falls back to the Avatar's initial.
-    (async () => {
-      try {
-        const session = (agent as any).session;
-        if (session && session.did) {
-          const res = await agent.getProfile({ actor: session.did });
-          setMe(res.data);
-        }
-      } catch {
-        // ignored; the trigger works without an avatar
-      }
-    })();
+  useEffect(() => {
+    setPosts([]);
+    setCursor(undefined);
+    setError(null);
+    setLoading(true);
+    void load(true);
+    return () => {
+      requestId.current += 1;
+    };
+    // The cursor is deliberately not a dependency: loading another page must
+    // not reset the timeline. Switching feeds owns the reload.
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeFeed]);
+
+  useEffect(() => {
+    if (activeFeed && !pinnedFeeds.some((feed) => feed.value === activeFeed)) {
+      setActiveFeed(null);
+    }
+  }, [activeFeed, pinnedFeeds]);
+
+  useEffect(() => {
+    return subscribeActorHidden((did) =>
+      setPosts((prev) =>
+        prev.filter((item: any) => item.post.author.did !== did)
+      )
+    );
   }, []);
 
   function openThread(uri: string) {
     navigation.navigate('Thread', { uri });
   }
 
+  function openProfile(did: string) {
+    navigation.navigate('UserProfile', { actor: did });
+  }
+
+  function hidePost(post: any, scope: 'post' | 'author') {
+    setPosts((prev) =>
+      prev.filter((item: any) =>
+        scope === 'author'
+          ? item.post.author.did !== post.author.did
+          : item.post.uri !== post.uri
+      )
+    );
+  }
+
+  const activeGenerator = activeFeed ? generators[activeFeed] : undefined;
+  const activeCreator = activeGenerator?.creator;
+
   function Header() {
     return (
-      <View style={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: 10 }}>
-        <Text style={{ color: p.text, fontSize: 28, fontWeight: '800' }}>Balla</Text>
-        <Text style={{ color: p.secondary, fontSize: 13, marginTop: 2 }}>
-          Following, newest first. No algorithm.
-        </Text>
-        <Pressable
-          onPress={() => navigation.navigate('Compose')}
-          accessibilityRole="button"
-          accessibilityLabel="Write a new post"
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            backgroundColor: p.card,
-            borderRadius: 10,
-            paddingHorizontal: 12,
-            paddingVertical: 10,
-            marginTop: 12,
-            minHeight: 44,
-            opacity: pressed ? 0.7 : 1,
-          })}
+      <View>
+        <View
+          style={[
+            styles.feedTabs,
+            { backgroundColor: p.card, borderBottomColor: p.divider },
+          ]}
         >
-          <Avatar
-            avatar={me && me.avatar}
-            displayName={(me && (me.displayName || me.handle)) || 'You'}
-            size={36}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.feedTabsContent}
+          >
+            <FeedTab
+              label="Following"
+              selected={!activeFeed}
+              onPress={() => setActiveFeed(null)}
+              palette={p}
+            />
+            {pinnedFeeds.map((feed) => (
+              <FeedTab
+                key={feed.id}
+                label={generators[feed.value]?.displayName || 'Saved feed'}
+                selected={activeFeed === feed.value}
+                onPress={() => setActiveFeed(feed.value)}
+                palette={p}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
+        {activeFeed ? (
+          <View style={[styles.feedNote, { borderColor: p.divider }]}>
+            <Ionicons
+              name="git-branch-outline"
+              size={16}
+              color={p.secondary}
+            />
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 17,
+                flex: 1,
+              }}
+            >
+              Custom feed
+              {activeCreator?.handle ? ` by @${activeCreator.handle}` : ''}. Its
+              order comes from the generator, not Balla. Following remains
+              chronological and first.
+            </Text>
+          </View>
+        ) : null}
+
+        <View
+          style={[
+            styles.composer,
+            { backgroundColor: p.card, borderColor: p.divider },
+            cardShadow,
+          ]}
+        >
+          <Pressable
+            onPress={() => navigation.navigate('Compose')}
+            accessibilityRole="button"
+            accessibilityLabel="Write a new post"
+            style={({ pressed }) => [
+              styles.composerTop,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
+          >
+            <Avatar
+              avatar={me && me.avatar}
+              displayName={(me && (me.displayName || me.handle)) || 'You'}
+              size={40}
+            />
+            <View style={[styles.pill, { backgroundColor: p.bg }]}>
+              <Text style={{ color: p.secondary, fontSize: 15 }}>
+                What's on your mind?
+              </Text>
+            </View>
+          </Pressable>
+          <View
+            style={{
+              height: StyleSheet.hairlineWidth,
+              backgroundColor: p.divider,
+            }}
           />
-          <Text style={{ color: p.secondary, fontSize: 15, marginLeft: 10 }}>
-            What's on your mind?
-          </Text>
-        </Pressable>
+          <Pressable
+            onPress={() => navigation.navigate('Compose')}
+            accessibilityRole="button"
+            accessibilityLabel="Create a text post"
+            style={({ pressed }) => [
+              styles.composerAction,
+              { backgroundColor: pressed ? p.bg : 'transparent' },
+            ]}
+          >
+            <Ionicons name="create-outline" size={20} color={p.accent} />
+            <Text
+              style={{
+                color: p.accent,
+                fontSize: 15,
+                fontWeight: '600',
+                marginLeft: 8,
+              }}
+            >
+              Post
+            </Text>
+          </Pressable>
+        </View>
       </View>
     );
   }
@@ -105,20 +239,42 @@ export function FeedScreen() {
       <FlashList
         data={posts}
         keyExtractor={(item: any) => item.post.uri}
-        renderItem={({ item }) => <PostCard post={item.post} onOpenThread={openThread} />}
+        renderItem={({ item }) => (
+          <PostCard
+            post={item.post}
+            onOpenThread={openThread}
+            onOpenProfile={openProfile}
+            onPostHidden={hidePost}
+          />
+        )}
         // FlashList v2 measures items itself; estimatedItemSize is gone.
         contentContainerStyle={{ paddingBottom: 24 }}
         ListHeaderComponent={Header}
         ListEmptyComponent={
           loading ? undefined : (
-            <Text style={{ color: p.secondary, textAlign: 'center', marginTop: 48, paddingHorizontal: 24 }}>
-              Nothing here yet. Follow some folk, or pull to refresh.
+            <Text
+              style={{
+                color: p.secondary,
+                textAlign: 'center',
+                marginTop: 48,
+                paddingHorizontal: 24,
+              }}
+            >
+              {activeFeed
+                ? 'This feed has no posts right now. Pull to refresh, or choose Following.'
+                : 'Nothing here yet. Follow some folk, or pull to refresh.'}
             </Text>
           )
         }
-        ListFooterComponent={moreLoading ? <ActivityIndicator style={{ margin: 12 }} /> : null}
+        ListFooterComponent={
+          moreLoading ? <ActivityIndicator style={{ margin: 12 }} /> : null
+        }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={p.accent} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => load(true)}
+            tintColor={p.accent}
+          />
         }
         onEndReached={() => {
           if (!loading && !moreLoading && cursor) load(false);
@@ -126,13 +282,119 @@ export function FeedScreen() {
         onEndReachedThreshold={0.6}
       />
       {loading && (
-        <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center' }}>
+        <View
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            justifyContent: 'center',
+          }}
+        >
           <ActivityIndicator size="large" color={p.accent} />
         </View>
       )}
       {error && !loading && (
-        <Text style={{ color: p.danger, textAlign: 'center', margin: 12 }}>{error}</Text>
+        <Text style={{ color: p.danger, textAlign: 'center', margin: 12 }}>
+          {error}
+        </Text>
       )}
     </View>
   );
 }
+
+function FeedTab({
+  label,
+  selected,
+  onPress,
+  palette,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  palette: ReturnType<typeof usePalette>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label} feed`}
+      accessibilityState={{ selected }}
+      style={({ pressed }) => [
+        styles.tab,
+        {
+          borderBottomColor: selected ? palette.accent : 'transparent',
+          opacity: pressed ? 0.65 : 1,
+        },
+      ]}
+    >
+      <Text
+        numberOfLines={1}
+        style={{
+          color: selected ? palette.accent : palette.secondary,
+          fontSize: 14,
+          fontWeight: '700',
+          maxWidth: 170,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+const styles = StyleSheet.create({
+  feedTabs: {
+    minHeight: 48,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  feedTabsContent: {
+    paddingHorizontal: 4,
+  },
+  tab: {
+    minHeight: 48,
+    minWidth: 88,
+    paddingHorizontal: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderBottomWidth: 3,
+  },
+  feedNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  composer: {
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: 8,
+    marginTop: 8,
+    marginBottom: 8,
+    padding: 12,
+  },
+  composerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+  },
+  pill: {
+    flex: 1,
+    height: 40,
+    borderRadius: 20,
+    marginLeft: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  composerAction: {
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 2,
+    borderRadius: 6,
+  },
+});
