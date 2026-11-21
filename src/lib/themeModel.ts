@@ -149,7 +149,7 @@ export const DEFAULT_THEME_CHOICE: ThemeChoice = {
   era: 'newfacebook',
 };
 
-const THefacebook_LIGHT: EraBase = {
+const THEFACEBOOK_LIGHT: EraBase = {
   bg: '#D8DFEA',
   card: '#FFFFFF',
   text: '#111827',
@@ -169,7 +169,7 @@ const THefacebook_LIGHT: EraBase = {
   chromeActionUsesAccent: false,
 };
 
-const THefacebook_DARK: EraBase = {
+const THEFACEBOOK_DARK: EraBase = {
   bg: '#0E1420',
   card: '#1A2434',
   text: '#F3F5F9',
@@ -315,8 +315,8 @@ export const FACEBOOK_ERAS: readonly FacebookEra[] = [
     label: 'Thefacebook',
     years: '2004–2005',
     description: 'Pale blue canvas, navy chrome and flat white columns.',
-    light: THefacebook_LIGHT,
-    dark: THefacebook_DARK,
+    light: THEFACEBOOK_LIGHT,
+    dark: THEFACEBOOK_DARK,
   },
   {
     id: 'newsfeed',

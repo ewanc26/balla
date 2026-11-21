@@ -51,6 +51,36 @@ test('the shared stylesheet handles reduced motion and focus', () => {
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
 
+test('one brand blue is shared by the site, mark, icons, config and accent', () => {
+  const brand = '#0866FF';
+  const css = readFileSync(join(new URL('site/', root).pathname, 'styles.css'), 'utf8');
+  const generator = readFileSync(new URL('scripts/gen-icons.py', root), 'utf8');
+  const appConfig = JSON.parse(readFileSync(new URL('app.json', root), 'utf8'));
+  const theme = readFileSync(new URL('src/lib/themeModel.ts', root), 'utf8');
+
+  assert.match(css, /--blue:\s*#0866ff\b/i, 'the site uses the brand blue');
+  assert.ok(read('mark.svg').includes(brand), 'the mark uses the brand blue');
+  assert.match(generator, /BLUE = \(8, 102, 255, 255\)/, 'the icons use the brand blue');
+  assert.equal(appConfig.expo.web.themeColor, brand);
+  assert.equal(appConfig.expo.splash.backgroundColor, brand);
+  assert.match(theme, /light:\s*'#0866FF'/, 'the default accent is the brand blue');
+  for (const page of pages) {
+    assert.ok(read(page).includes(`content="${brand}"`), `${page} uses the brand theme colour`);
+  }
+});
+
+test('every page shares the same social metadata', () => {
+  for (const page of pages) {
+    const html = read(page);
+    assert.match(html, /<meta property="og:site_name" content="Balla" \/>/, `${page} names the site`);
+    assert.match(
+      html,
+      /<meta property="og:image" content="https:\/\/balla\.croft\.click\/icon\.png" \/>/,
+      `${page} uses the one brand image`
+    );
+  }
+});
+
 function luminance(hex) {
   const channels = hex.replace('#', '').match(/../g).map((part) => {
     const value = parseInt(part, 16) / 255;

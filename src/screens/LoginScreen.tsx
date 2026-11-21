@@ -11,6 +11,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEFAULT_SERVICE, login } from '../lib/agent';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
+import { BrandMark } from '../components/BrandMark';
 
 function normaliseIdentifier(value: string): string {
   return value.trim().replace(/\s+/g, '').replace(/^@/, '');
@@ -59,9 +60,7 @@ export function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
     >
       <View style={styles.shell}>
         <View style={styles.brandRow}>
-          <View style={[styles.mark, { backgroundColor: p.accent }]}>
-            <Text style={[styles.markLetter, { color: p.onAccent }]}>b</Text>
-          </View>
+          <BrandMark size={56} background={p.accent} foreground={p.onAccent} />
           <Text style={[styles.wordmark, { color: p.accent }]}>balla</Text>
         </View>
 
@@ -220,19 +219,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  mark: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  markLetter: {
-    fontSize: 42,
-    fontWeight: '800',
-    lineHeight: 48,
-    marginTop: -3,
   },
   wordmark: {
     fontSize: 38,

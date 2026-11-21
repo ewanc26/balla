@@ -13,7 +13,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#1877F2"
+      "backgroundColor": "#0866FF"
     },
     "ios": {
       "supportsTablet": true,
@@ -23,7 +23,7 @@
       "package": "click.croft.balla",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#1877F2"
+        "backgroundColor": "#0866FF"
       }
     },
     "web": {
@@ -33,7 +33,7 @@
       "name": "Balla",
       "shortName": "Balla",
       "lang": "en-GB",
-      "themeColor": "#1877F2",
+      "themeColor": "#0866FF",
       "backgroundColor": "#F0F2F5",
       "description": "A chronological, Facebook-inspired Bluesky client."
     },

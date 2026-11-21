@@ -61,8 +61,9 @@ The nine solid accent colours are:
 9. Slate
 
 There are no gradients. The accent is independent of the era, so a chosen
-colour applies to links, tabs, selected controls, the wordmark and primary
-buttons in every era. Era chrome remains period-specific.
+colour applies to links, selected controls and primary buttons in every era. In
+the New Facebook era it also colours the wordmark and mark; the retro eras use
+period chrome for the header brand instead. Era chrome remains period-specific.
 
 Each accent has a light and dark variant plus a matching soft background. The
 palette computes `onAccent` from the greater of white or dark ink contrast, so a

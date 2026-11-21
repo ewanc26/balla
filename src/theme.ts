@@ -45,6 +45,13 @@ export const palettes = {
 
 export const CARD_RADIUS = 8;
 
+// Deliberately outside the palettes: the mock preview strip must read as a
+// warning in every era and scheme, never as a themed surface.
+export const PREVIEW_WARNING = {
+  background: '#F7B125',
+  text: '#1C1E21',
+} as const;
+
 export const cardShadow = {
   shadowColor: '#000000',
   shadowOffset: { width: 0, height: 1 },

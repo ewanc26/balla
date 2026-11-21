@@ -1,9 +1,12 @@
 :root {
   color-scheme: light dark;
-  --blue: #1877f2;
-  --blue-deep: #0b57c7;
+  /* Balla's one brand blue, shared with the mark, icons, app config and the
+     default app accent. The deeper/ink shades are contrast-safe steps of the
+     same hue, never a second brand colour. */
+  --blue: #0866ff;
+  --blue-deep: #0866ff;
   --blue-soft: #e7f0ff;
-  --blue-ink: #0b57c7;
+  --blue-ink: #0057cc;
   --bg: #f0f2f5;
   --card: #ffffff;
   --text: #050505;
@@ -18,6 +21,8 @@
   --amber-ink: #8a4f0d;
   --shadow: 0 12px 32px rgba(16, 24, 40, 0.08);
   --shadow-lg: 0 26px 64px rgba(16, 24, 40, 0.14);
+  /* Marketing cards are deliberately more rounded than the app's 8px cards;
+     the app's CARD_RADIUS is the product standard. */
   --radius: 14px;
   --wrap: 1120px;
 }
@@ -57,7 +62,7 @@ body {
 a { color: inherit; }
 a:focus-visible, button:focus-visible {
   outline: 3px solid var(--blue);
-  outline-offset: 4px;
+  outline-offset: 2px;
   border-radius: 4px;
 }
 img { display: block; }
@@ -135,7 +140,7 @@ img { display: block; }
   align-items: center;
   transition: background 150ms ease;
 }
-.site-header nav .nav-cta:hover { color: #fff; background: #08429b; }
+.site-header nav .nav-cta:hover { color: #fff; background: #0057d9; }
 
 /* Shared type */
 
@@ -207,7 +212,7 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   box-shadow: 0 10px 24px color-mix(in srgb, var(--blue), transparent 72%);
   transition: background 150ms ease, transform 150ms ease;
 }
-.button:hover { background: #08429b; transform: translateY(-1px); }
+.button:hover { background: #0057d9; transform: translateY(-1px); }
 .button--ghost {
   background: var(--card);
   color: var(--text);
@@ -568,7 +573,7 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
     font-weight: 700;
     cursor: pointer;
   }
-  .nav-toggle-input:focus-visible + .nav-toggle { outline: 3px solid var(--blue); outline-offset: 4px; }
+  .nav-toggle-input:focus-visible + .nav-toggle { outline: 3px solid var(--blue); outline-offset: 2px; }
   .nav-toggle-input:checked + .nav-toggle {
     background: var(--blue-soft);
     border-color: transparent;

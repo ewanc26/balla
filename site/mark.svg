@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Balla">
-  <rect width="32" height="32" rx="8" fill="#1877F2"/>
+  <rect width="32" height="32" rx="8" fill="#0866FF"/>
   <path d="M7 9h18v4H7zM7 15h18v4H7zM7 21h11v4H7z" fill="#fff"/>
   <path d="M17 21h8v4h-8z" fill="#BFD7FF"/>
 </svg>

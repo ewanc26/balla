@@ -55,7 +55,7 @@ import { PreferencesProvider } from './src/lib/preferences';
 import { restore, setOnLoggedOut } from './src/lib/agent';
 import { installWebAccessibility } from './src/lib/accessibility';
 import { webLinking } from './src/lib/webLinking';
-import { palettes, usePalette } from './src/theme';
+import { PREVIEW_WARNING, usePalette } from './src/theme';
 import {
   COMPACT_TAB_LABEL_MAX_WIDTH,
   HEADER_SEARCH_MIN_WIDTH,
@@ -237,7 +237,7 @@ export default function App() {
   };
 
   if (!ready) {
-    return <View style={{ flex: 1, backgroundColor: palettes.light.accent }} />;
+    return <View style={{ flex: 1, backgroundColor: p.accent }} />;
   }
   if (!loggedIn) {
     return (
@@ -274,12 +274,12 @@ export default function App() {
                   {MOCK_MODE ? (
                     <View
                       style={{
-                        backgroundColor: '#F7B125',
+                        backgroundColor: PREVIEW_WARNING.background,
                         paddingVertical: 4,
                         alignItems: 'center',
                       }}
                     >
-                      <Text style={{ color: '#1C1E21', fontSize: 11, fontWeight: '700' }}>
+                      <Text style={{ color: PREVIEW_WARNING.text, fontSize: 11, fontWeight: '700' }}>
                         Preview · mock data
                       </Text>
                     </View>

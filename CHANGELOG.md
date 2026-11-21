@@ -11,6 +11,10 @@ Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 - Shorten the Notifications tab label to “Alerts” on narrow phones so it is not clipped, and remove its fixed-height label box.
 - Collapse deep thread reply indentation on phones so nested posts keep a readable text column, while the role label still states the real depth.
 - Respect the bottom safe area in the reply composer, feed switcher, list report sheet and sign-in screen.
+- Use one wall mark and one Balla blue across the site, the generated icons, the app mark, the app configuration and the theme metadata. The site's focus ring now follows the same accent and offset as the app.
+- Route the app's loading colour and the composer's ALT badge through the theme, and read the in-app version from `app.json` so it cannot drift from the release.
+- Make page metadata, status copy and roadmap wording consistent and honest across the site, README and docs.
+- Give the quoted-post link in a card the shared 44pt minimum hit area.
 
 ## 0.5.1
 

@@ -14,6 +14,7 @@ import { agent } from '../lib/agent';
 import { describeFailure, withOptimisticRollback } from '../lib/reliability';
 import { timeAgo } from '../lib/time';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
+import { touchTargetStyle } from '../lib/accessibilityModel';
 import { Avatar } from './Avatar';
 import { ImageViewer } from './ImageViewer';
 import { PostMenu } from './PostMenu';
@@ -727,7 +728,9 @@ function QuoteCard({
               accessibilityRole="button"
               accessibilityLabel={`Open quoted post by ${record.authorName}`}
               accessibilityHint="Opens the quoted post in its thread"
-              style={({ pressed }) => [{ marginTop: 8, opacity: pressed ? 0.65 : 1 }]}
+              style={({ pressed }) => [
+                { marginTop: 8, minHeight: touchTargetStyle.minHeight, opacity: pressed ? 0.65 : 1 },
+              ]}
             >
               {record.text ? (
                 <Text
