@@ -37,11 +37,13 @@ import { ModerationInboxScreen } from './src/screens/ModerationInboxScreen';
 import { ModerationReportScreen } from './src/screens/ModerationReportScreen';
 import { ModerationNoticeScreen } from './src/screens/ModerationNoticeScreen';
 import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
+import { FeedsScreen } from './src/screens/FeedsScreen';
 import { StarterPackScreen } from './src/screens/StarterPackScreen';
 import { AppHeader, type TabName } from './src/components/AppHeader';
 import { LeftRail, RightRail } from './src/components/AppRail';
 import { ViewerProvider } from './src/lib/viewer';
 import { ModerationProvider } from './src/lib/moderationContext';
+import { FeedsProvider } from './src/lib/feedsContext';
 import { PreferencesProvider } from './src/lib/preferences';
 import { restore, setOnLoggedOut } from './src/lib/agent';
 import { palettes, usePalette } from './src/theme';
@@ -212,6 +214,7 @@ export default function App() {
       <PreferencesProvider>
       <ViewerProvider>
         <ModerationProvider>
+          <FeedsProvider>
         <NavigationContainer
           ref={navigationRef}
           theme={customNavTheme as any}
@@ -284,6 +287,7 @@ export default function App() {
                   <Stack.Screen name="ModerationReport" component={ModerationReportScreen} />
                   <Stack.Screen name="ModerationNotice" component={ModerationNoticeScreen} />
                   <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
+                  <Stack.Screen name="Feeds" component={FeedsScreen} />
                   <Stack.Screen name="StarterPack" component={StarterPackScreen} />
                 </Stack.Navigator>
               </View>
@@ -291,6 +295,7 @@ export default function App() {
             </View>
           </View>
         </NavigationContainer>
+          </FeedsProvider>
         </ModerationProvider>
       </ViewerProvider>
       </PreferencesProvider>

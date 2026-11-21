@@ -16,7 +16,7 @@ three separate things that can each be tested:
 
 Balla is not yet fully compliant. The gap is not primarily visual: the remaining
 pieces are label handling on future list/feed surfaces, video and GIF
-composition, lists/feeds, DMs and the remaining settings. Post-level reporting,
+composition, lists, DMs and the remaining settings. Post-level reporting,
 muting, blocking, deletion, quoting, image posts and the moderation inbox are
 now shipped. This document records the bar and the order in which to close the
 rest.
@@ -27,7 +27,7 @@ rest.
 | --- | --- | --- |
 | OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo and AppView scopes | Existing broad sessions must re-authorise; chat audience is intentionally absent until DMs exist |
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
-| Home feed | Chronological Following timeline, pagination, pull-to-refresh | Correct: no ranking or injected suggestions |
+| Home feed | Chronological Following first, opt-in pinned custom-feed tabs, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
 | Threads | Ancestor chain, nested replies, reply composer | Missing thread/post gates and some moderation states |
 | Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner | No verification state or pinned post |
 | Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history and in-app feed/starter-pack destinations | Profile-scoped search remains (#25) |
@@ -36,7 +36,7 @@ rest.
 | Media | Profile photo/banner upload; post photos with up to 10 images, alt text, previews, compression, retries, full-screen viewer, record-with-media quotes and label warnings | Video/GIF upload and video captions remain (#14) |
 | Moderation | Post/profile report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox for reports, decisions, notices, account standing, action history and appeals | Missing list/feed reports and device push for inbox outcomes (#36) |
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
-| Lists/feeds | None | Missing lists, custom feeds, feed generators and starter packs |
+| Lists/feeds | Saved and pinned custom feeds, discovery/search, feed pages and pin/reorder/remove controls | Missing lists, list feeds and list/feed reports |
 | DMs | None | Missing `chat.bsky.convo`, group chat and chat moderation |
 | Settings | Settings shell with account, privacy, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes | Account/security controls, other preference editors and delivery preferences remain |
 | Support/legal | In-app Help, privacy, terms, community guidelines, copyright, contact and about pages; matching public site pages | Monitored public contact is the GitHub issue tracker and private advisory form |
@@ -189,7 +189,8 @@ privacy, block/mute, report and leave/delete flows.
 3. Verification and pinned post. Profile editing, followers, following, known
    followers and per-post engagement lists are shipped.
 4. Notification preferences route (tabs, grouping and seen state are shipped).
-5. Lists, saved/custom feeds and feed discovery.
+5. Lists, list feeds and list management. Saved/custom feeds and discovery are
+   shipped.
 6. Settings preference editors for content, language, appearance, privacy and
    account. Content filtering, labelers, adult content and muted words are
    shipped; the other editors remain.

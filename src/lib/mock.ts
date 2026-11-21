@@ -238,9 +238,10 @@ export function installMockAgent() {
     data: { follows: [mum, ailsa], cursor: undefined },
   });
   mock.updateSeenNotifications = async () => ({ data: {} });
+  let mockSavedFeedItems: any[] = [];
   mock.getPreferences = async () => ({
     feeds: { saved: undefined, pinned: undefined },
-    savedFeeds: [],
+    savedFeeds: mockSavedFeedItems,
     feedViewPrefs: { home: {} },
     threadViewPrefs: { sort: 'hotness' },
     moderationPrefs: {
@@ -299,9 +300,70 @@ export function installMockAgent() {
     joinedWeekCount: 4,
     indexedAt: minutesAgo(2880),
   };
+  mockSavedFeedItems = [
+    {
+      id: 'mock-following',
+      type: 'timeline',
+      value: 'following',
+      pinned: true,
+    },
+    {
+      id: 'mock-saved-quiet',
+      type: 'feed',
+      value: mockFeed.uri,
+      pinned: true,
+    },
+  ];
   mock.app.bsky.unspecced.getPopularFeedGenerators = async () => ({
     data: { feeds: [mockFeed], cursor: undefined },
   });
+  mock.app.bsky.feed.getFeedGenerators = async ({
+    feeds,
+  }: {
+    feeds: string[];
+  }) => ({
+    data: {
+      feeds: feeds
+        .filter((uri) => uri === mockFeed.uri)
+        .map(() => mockFeed),
+    },
+  });
+  mock.overwriteSavedFeeds = async (next: any[]) => {
+    const seen = new Set<string>();
+    mockSavedFeedItems = next
+      .filter((item) => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+      })
+      .sort((a, b) => Number(b.pinned) - Number(a.pinned));
+    return mockSavedFeedItems;
+  };
+  mock.updateSavedFeeds = async (updates: any[]) => {
+    mockSavedFeedItems = mockSavedFeedItems
+      .map((item) => {
+        const changed = updates.find((update) => update.id === item.id);
+        return changed ? { ...item, pinned: changed.pinned } : item;
+      })
+      .sort((a, b) => Number(b.pinned) - Number(a.pinned));
+    return mockSavedFeedItems;
+  };
+  mock.addSavedFeeds = async (feeds: any[]) => {
+    const added = feeds.map((item, index) => ({
+      ...item,
+      id: `mock-saved-${Date.now()}-${index}`,
+    }));
+    mockSavedFeedItems = [...mockSavedFeedItems, ...added].sort(
+      (a, b) => Number(b.pinned) - Number(a.pinned)
+    );
+    return mockSavedFeedItems;
+  };
+  mock.removeSavedFeeds = async (ids: string[]) => {
+    mockSavedFeedItems = mockSavedFeedItems.filter(
+      (item) => !ids.includes(item.id)
+    );
+    return mockSavedFeedItems;
+  };
   mock.app.bsky.graph.searchStarterPacksV2 = async () => ({
     data: { starterPacks: [mockPack], cursor: undefined, hitsTotal: 1 },
   });

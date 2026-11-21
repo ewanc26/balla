@@ -13,6 +13,7 @@ import { logout } from '../lib/agent';
 import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
 import { useModerationInboxUnread } from '../lib/moderationInbox';
+import { useFeeds } from '../lib/feedsContext';
 import { Avatar } from '../components/Avatar';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
@@ -27,6 +28,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
   const { profile } = useViewer();
   const { preferences, setRequireAltText } = usePreferences();
   const { unreadCounts } = useModerationInboxUnread();
+  const { pinnedFeeds } = useFeeds();
   const [confirmSignOut, setConfirmSignOut] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -195,6 +197,16 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           icon="images-outline"
           label="Media"
           detail="Post up to 10 photos with descriptions; images open full-screen"
+        />
+      </Section>
+
+      <Section title="Feeds">
+        <Row
+          icon="albums-outline"
+          label="Saved feeds"
+          detail="Pin custom feeds to Home, reorder them or discover new ones"
+          value={`${pinnedFeeds.length} pinned`}
+          onPress={() => navigation.navigate('Feeds')}
         />
       </Section>
 

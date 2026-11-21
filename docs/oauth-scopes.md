@@ -4,7 +4,7 @@ Last updated: **21 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **42 tokens**.
+the scope currently has **48 tokens**.
 
 ## Repository writes
 
@@ -41,16 +41,17 @@ All of these use:
 
 | Method | Used by |
 | --- | --- |
-| `app.bsky.actor.getPreferences` | Label and adult-content preferences |
+| `app.bsky.actor.getPreferences` | Label, adult-content and saved-feed preferences |
 | `app.bsky.actor.getProfile` | Profile screens and the viewer chrome |
-| `app.bsky.actor.putPreferences` | Labelers, label filters, adult content and muted words |
+| `app.bsky.actor.putPreferences` | Labelers, label filters, adult content, muted words and saved-feed/pin order |
 | `app.bsky.actor.searchActors` | People search |
 | `app.bsky.bookmark.createBookmark` | Saving a post |
 | `app.bsky.bookmark.deleteBookmark` | Removing a saved post |
 | `app.bsky.bookmark.getBookmarks` | Saved screen |
 | `app.bsky.feed.getAuthorFeed` | Profile posts |
-| `app.bsky.feed.getFeed` | Custom feed posts |
+| `app.bsky.feed.getFeed` | Custom feed posts, including pinned Home tabs |
 | `app.bsky.feed.getFeedGenerator` | Custom feed metadata |
+| `app.bsky.feed.getFeedGenerators` | Batched metadata for saved feeds |
 | `app.bsky.feed.getLikes` | Liked-by list for a post |
 | `app.bsky.feed.getPostThread` | Thread screen |
 | `app.bsky.feed.getQuotes` | Quote-post list for a post |
@@ -69,7 +70,7 @@ All of these use:
 | `app.bsky.notification.listNotifications` | Notifications |
 | `app.bsky.notification.putPreferencesV2` | Saving notification settings |
 | `app.bsky.notification.updateSeen` | Mark all read |
-| `app.bsky.unspecced.getPopularFeedGenerators` | Feed discovery in search |
+| `app.bsky.unspecced.getPopularFeedGenerators` | Feed discovery in search and the Feeds screen |
 
 ## Labeler report audience
 
@@ -106,20 +107,21 @@ database.
   are converted to JPEG. Video and GIF uploads are not implemented.
 - Account and app-password scopes — account lifecycle is a PDS operation and
   Balla links to the server controls instead.
-- Feed, list, starter-pack and threadgate repo scopes — those surfaces are not
-  implemented.
+- Feed-generator, list, starter-pack and threadgate repo scopes — Balla reads
+  custom feeds and writes saved-feed preferences through the AppView; it does
+  not create generators, lists, starter packs or threadgates.
 - `chat.bsky.*` — DMs are not implemented. A chat audience must be added before
   shipping them.
 - `transition:*` and broad wildcards.
 
 ## Re-authorisation
 
-The client metadata has widened over time for profile editing and the moderation
-inbox while staying granular. Sessions authorised before either change keep their
-old grant and must re-authorise before the new profile/link/blob or inbox scopes
-are available. Signing out and back in requests the current scope. The consent
-screen should show the collection and RPC list above, not “access to nearly
-everything”.
+The client metadata has widened over time for profile editing, saved feeds and
+the moderation inbox while staying granular. Sessions authorised before any of
+those changes keep their old grant and must re-authorise before the new
+profile/link/blob, saved-feed or inbox scopes are available. Signing out and back
+in requests the current scope. The consent screen should show the collection and
+RPC list above, not “access to nearly everything”.
 
 ## Caveat
 

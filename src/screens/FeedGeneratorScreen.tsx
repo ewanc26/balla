@@ -19,6 +19,7 @@ import { agent } from '../lib/agent';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { subscribeActorHidden } from '../lib/moderation';
+import { useFeeds } from '../lib/feedsContext';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 export function FeedGeneratorScreen({
@@ -29,7 +30,14 @@ export function FeedGeneratorScreen({
   navigation: any;
 }) {
   const p = usePalette();
+  const {
+    savedFeeds,
+    loading: savedFeedsLoading,
+    error: savedFeedsError,
+    saveFeed,
+  } = useFeeds();
   const feed = typeof route.params?.feed === 'string' ? route.params.feed : '';
+  const savedFeed = savedFeeds.find((item) => item.value === feed);
   const [generator, setGenerator] = useState<any>(null);
   const [isOnline, setIsOnline] = useState<boolean | null>(null);
   const [isValid, setIsValid] = useState<boolean | null>(null);
@@ -40,6 +48,8 @@ export function FeedGeneratorScreen({
   const [moreLoading, setMoreLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [moreError, setMoreError] = useState<string | null>(null);
+  const [savingFeed, setSavingFeed] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const requestId = useRef(0);
   const moreInFlight = useRef(false);
 
@@ -156,6 +166,19 @@ export function FeedGeneratorScreen({
     );
   }
 
+  async function saveThisFeed() {
+    if (savingFeed) return;
+    setSavingFeed(true);
+    setSaveError(null);
+    try {
+      await saveFeed(feed, false);
+    } catch {
+      setSaveError('Could not save this feed. Try again.');
+    } finally {
+      setSavingFeed(false);
+    }
+  }
+
   if (loading && !generator) {
     return (
       <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}>
@@ -238,6 +261,70 @@ export function FeedGeneratorScreen({
       {generator.description ? (
         <Text style={{ color: p.text, fontSize: 14, lineHeight: 20, marginTop: 12 }}>
           {generator.description}
+        </Text>
+      ) : null}
+
+      <View style={styles.feedActions}>
+        <View
+          style={[
+            styles.savedChip,
+            { backgroundColor: p.bg, borderColor: p.divider },
+          ]}
+        >
+          <Ionicons
+            name={savedFeed ? 'bookmark' : 'bookmark-outline'}
+            size={16}
+            color={savedFeed ? p.accent : p.secondary}
+          />
+          <Text style={{ color: savedFeed ? p.accent : p.secondary, fontSize: 12, fontWeight: '600' }}>
+            {savedFeed
+              ? savedFeed.pinned
+                ? 'Pinned to Home'
+                : 'Saved feed'
+              : savedFeedsLoading
+                ? 'Checking saved feeds…'
+                : savedFeedsError
+                  ? 'Saved feeds unavailable'
+                  : 'Not saved'}
+          </Text>
+        </View>
+        <Pressable
+          onPress={() => {
+            if (savedFeed) navigation.navigate('Feeds');
+            else void saveThisFeed();
+          }}
+          disabled={
+            savingFeed ||
+            (!savedFeed && (savedFeedsLoading || !!savedFeedsError))
+          }
+          accessibilityRole="button"
+          accessibilityLabel={savedFeed ? 'Manage saved feeds' : 'Save this feed'}
+          style={({ pressed }) => [
+            styles.feedActionButton,
+            {
+              backgroundColor: savedFeed ? p.bg : p.accent,
+              borderColor: savedFeed ? p.divider : p.accent,
+              opacity:
+                pressed ||
+                savingFeed ||
+                (!savedFeed && (savedFeedsLoading || !!savedFeedsError))
+                  ? 0.6
+                  : 1,
+            },
+          ]}
+        >
+          {savingFeed ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={{ color: savedFeed ? p.accent : '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+              {savedFeed ? 'Manage feeds' : 'Save feed'}
+            </Text>
+          )}
+        </Pressable>
+      </View>
+      {saveError ? (
+        <Text style={{ color: p.danger, fontSize: 12, lineHeight: 17, marginTop: 7 }}>
+          {saveError}
         </Text>
       ) : null}
 
@@ -357,6 +444,31 @@ const styles = StyleSheet.create({
     height: 44,
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  feedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 12,
+  },
+  savedChip: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  feedActionButton: {
+    minHeight: 44,
+    minWidth: 106,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },

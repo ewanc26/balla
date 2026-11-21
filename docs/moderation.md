@@ -40,8 +40,9 @@ labels after the fact or rely on a local block list.
 - Warning cards name the labeler that supplied each label. The default Bluesky
   labeler is always subscribed and is not removable from Balla; additional
   labelers can be added by handle or DID and removed again.
-- Lists and custom feeds do not exist yet, so they cannot render labels. They
-  must use the same moderation helpers when issue #19 and #18 land.
+- Custom feed pages render post labels through the shared PostCard, but
+  generator-level labels and list feeds are not implemented. Lists and list
+  feeds must use the same moderation helpers when issue #19 lands.
 
 ## Reports and enforcement
 

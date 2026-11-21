@@ -193,14 +193,14 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 | Surface | Balla now | Gap |
 | --- | --- | --- |
 | Auth | OAuth-only, DPoP, native and web callback, granular collection and AppView scope | No multi-account; existing sessions need one re-authorisation for the narrower scope |
-| Home | Chronological Following and pagination | No pinned/custom feeds, Discover, video, hashtag or topic surfaces |
+| Home | Chronological Following first, opt-in pinned custom-feed tabs, pagination and pull-to-refresh | No Discover, video, hashtag or topic surfaces |
 | Posts | Text, one-to-ten photo uploads with alt text and legacy/gallery embeds, record-with-media quotes, like, repost, bookmark, reply, delete, copy link/text, share sheet, translation with show-original and image viewing | No video, GIF, pin or edit interaction settings |
 | Threads | Ancestors, nested replies, reply composer | No threadgate, hidden replies, reply sorting or tree preference |
 | Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, report/block/mute, and editing of name, bio, pronouns, links, avatar and banner | No verification or pinned post |
-| Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed and starter-pack destinations | Profile-scoped search (#25); list and saved-feed management (#18/#19) |
+| Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed and starter-pack destinations | Profile-scoped search (#25); list management (#19) |
 | Notifications | Tabs, grouping, unread count, mark-all-read and per-category in-app/push preferences with audience filters | No device push registration (#36) |
-| Saved | Private bookmarks and remove-in-place | No saved feeds or feed management |
-| Feeds/lists | None | Feeds, lists, list feeds, moderation lists and starter packs all absent |
+| Saved | Private bookmarks and remove-in-place | Custom feed management lives in Feeds |
+| Feeds/lists | Saved and pinned custom feeds, discovery/search, feed pages and pin/reorder/remove controls | Lists, list feeds and list/feed reports absent |
 | Messages | None | Chat, requests, groups and chat moderation all absent |
 | Moderation | Post/profile report, block/mute, delete, labels with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox with reports, account standing, notices, actions and appeals | List/feed reports and inbox push delivery absent |
 | Settings | Settings shell with account, privacy, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes | Other preference editors and account lifecycle controls remain |
@@ -248,7 +248,7 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 ### Slice 3 — discovery and curation
 
 1. Search Top/Latest/People/Feeds/Starter Packs and advanced filters are **done**.
-2. Saved/pinned feeds, feed discovery and feed management.
+2. **Done:** saved/pinned feeds, feed discovery and feed management.
 3. Lists, list feeds, moderation lists and starter packs.
 4. Notification seen state, filter tabs and grouped activity.
 5. Settings for content, language, accessibility and following-feed filters.

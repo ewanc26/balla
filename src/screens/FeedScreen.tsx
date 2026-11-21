@@ -1,8 +1,9 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -12,6 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { subscribeActorHidden } from '../lib/moderation';
+import { useFeeds } from '../lib/feedsContext';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { useViewer } from '../lib/viewer';
@@ -21,43 +23,75 @@ export function FeedScreen() {
   const p = usePalette();
   const navigation = useNavigation<any>();
   const { profile: me } = useViewer();
+  const { pinnedFeeds, generators } = useFeeds();
+  const [activeFeed, setActiveFeed] = useState<string | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const requestId = useRef(0);
 
   const load = useCallback(
     async (fresh: boolean) => {
-      if (fresh) {
-        setRefreshing(true);
-      } else {
-        setMoreLoading(true);
-      }
+      const id = ++requestId.current;
+      if (fresh) setRefreshing(true);
+      else setMoreLoading(true);
       setError(null);
       try {
         const target = fresh ? undefined : cursor;
-        const res = await agent.getTimeline({ limit: 25, cursor: target });
+        const res = activeFeed
+          ? await agent.app.bsky.feed.getFeed({
+              feed: activeFeed,
+              limit: 25,
+              cursor: target,
+            })
+          : await agent.getTimeline({ limit: 25, cursor: target });
+        if (id !== requestId.current) return;
         const feed = res.data.feed || [];
         setPosts((prev) => (fresh ? feed : prev.concat(feed)));
         setCursor(res.data.cursor);
       } catch {
-        setError('Could not load the timeline. Pull to try again.');
+        if (id === requestId.current) {
+          setError(
+            activeFeed
+              ? 'Could not load this feed. Pull to try again.'
+              : 'Could not load the timeline. Pull to try again.'
+          );
+        }
+      } finally {
+        if (id === requestId.current) {
+          setRefreshing(false);
+          setMoreLoading(false);
+          setLoading(false);
+        }
       }
-      setRefreshing(false);
-      setMoreLoading(false);
-      setLoading(false);
     },
-    [cursor]
+    [activeFeed, cursor]
   );
 
-  React.useEffect(() => {
-    load(true);
+  useEffect(() => {
+    setPosts([]);
+    setCursor(undefined);
+    setError(null);
+    setLoading(true);
+    void load(true);
+    return () => {
+      requestId.current += 1;
+    };
+    // The cursor is deliberately not a dependency: loading another page must
+    // not reset the timeline. Switching feeds owns the reload.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [activeFeed]);
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (activeFeed && !pinnedFeeds.some((feed) => feed.value === activeFeed)) {
+      setActiveFeed(null);
+    }
+  }, [activeFeed, pinnedFeeds]);
+
+  useEffect(() => {
     return subscribeActorHidden((did) =>
       setPosts((prev) =>
         prev.filter((item: any) => item.post.author.did !== did)
@@ -83,6 +117,9 @@ export function FeedScreen() {
     );
   }
 
+  const activeGenerator = activeFeed ? generators[activeFeed] : undefined;
+  const activeCreator = activeGenerator?.creator;
+
   function Header() {
     return (
       <View>
@@ -92,12 +129,51 @@ export function FeedScreen() {
             { backgroundColor: p.card, borderBottomColor: p.divider },
           ]}
         >
-          <View style={[styles.activeTab, { borderBottomColor: p.accent }]}>
-            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
-              Following
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.feedTabsContent}
+          >
+            <FeedTab
+              label="Following"
+              selected={!activeFeed}
+              onPress={() => setActiveFeed(null)}
+              palette={p}
+            />
+            {pinnedFeeds.map((feed) => (
+              <FeedTab
+                key={feed.id}
+                label={generators[feed.value]?.displayName || 'Saved feed'}
+                selected={activeFeed === feed.value}
+                onPress={() => setActiveFeed(feed.value)}
+                palette={p}
+              />
+            ))}
+          </ScrollView>
+        </View>
+
+        {activeFeed ? (
+          <View style={[styles.feedNote, { borderColor: p.divider }]}>
+            <Ionicons
+              name="git-branch-outline"
+              size={16}
+              color={p.secondary}
+            />
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 17,
+                flex: 1,
+              }}
+            >
+              Custom feed
+              {activeCreator?.handle ? ` by @${activeCreator.handle}` : ''}. Its
+              order comes from the generator, not Balla. Following remains
+              chronological and first.
             </Text>
           </View>
-        </View>
+        ) : null}
 
         <View
           style={[
@@ -110,7 +186,10 @@ export function FeedScreen() {
             onPress={() => navigation.navigate('Compose')}
             accessibilityRole="button"
             accessibilityLabel="Write a new post"
-            style={({ pressed }) => [styles.composerTop, { opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [
+              styles.composerTop,
+              { opacity: pressed ? 0.7 : 1 },
+            ]}
           >
             <Avatar
               avatar={me && me.avatar}
@@ -123,7 +202,12 @@ export function FeedScreen() {
               </Text>
             </View>
           </Pressable>
-          <View style={{ height: StyleSheet.hairlineWidth, backgroundColor: p.divider }} />
+          <View
+            style={{
+              height: StyleSheet.hairlineWidth,
+              backgroundColor: p.divider,
+            }}
+          />
           <Pressable
             onPress={() => navigation.navigate('Compose')}
             accessibilityRole="button"
@@ -134,7 +218,14 @@ export function FeedScreen() {
             ]}
           >
             <Ionicons name="create-outline" size={20} color={p.accent} />
-            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '600', marginLeft: 8 }}>
+            <Text
+              style={{
+                color: p.accent,
+                fontSize: 15,
+                fontWeight: '600',
+                marginLeft: 8,
+              }}
+            >
               Post
             </Text>
           </Pressable>
@@ -169,13 +260,21 @@ export function FeedScreen() {
                 paddingHorizontal: 24,
               }}
             >
-              Nothing here yet. Follow some folk, or pull to refresh.
+              {activeFeed
+                ? 'This feed has no posts right now. Pull to refresh, or choose Following.'
+                : 'Nothing here yet. Follow some folk, or pull to refresh.'}
             </Text>
           )
         }
-        ListFooterComponent={moreLoading ? <ActivityIndicator style={{ margin: 12 }} /> : null}
+        ListFooterComponent={
+          moreLoading ? <ActivityIndicator style={{ margin: 12 }} /> : null
+        }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={p.accent} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => load(true)}
+            tintColor={p.accent}
+          />
         }
         onEndReached={() => {
           if (!loading && !moreLoading && cursor) load(false);
@@ -197,24 +296,77 @@ export function FeedScreen() {
         </View>
       )}
       {error && !loading && (
-        <Text style={{ color: p.danger, textAlign: 'center', margin: 12 }}>{error}</Text>
+        <Text style={{ color: p.danger, textAlign: 'center', margin: 12 }}>
+          {error}
+        </Text>
       )}
     </View>
   );
 }
 
+function FeedTab({
+  label,
+  selected,
+  onPress,
+  palette,
+}: {
+  label: string;
+  selected: boolean;
+  onPress: () => void;
+  palette: ReturnType<typeof usePalette>;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`${label} feed`}
+      accessibilityState={{ selected }}
+      style={({ pressed }) => [
+        styles.tab,
+        {
+          borderBottomColor: selected ? palette.accent : 'transparent',
+          opacity: pressed ? 0.65 : 1,
+        },
+      ]}
+    >
+      <Text
+        numberOfLines={1}
+        style={{
+          color: selected ? palette.accent : palette.secondary,
+          fontSize: 14,
+          fontWeight: '700',
+          maxWidth: 170,
+        }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   feedTabs: {
-    height: 48,
+    minHeight: 48,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    justifyContent: 'center',
   },
-  activeTab: {
-    paddingHorizontal: 18,
+  feedTabsContent: {
+    paddingHorizontal: 4,
+  },
+  tab: {
+    minHeight: 48,
+    minWidth: 88,
+    paddingHorizontal: 14,
+    alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 3,
+  },
+  feedNote: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderBottomWidth: StyleSheet.hairlineWidth,
   },
   composer: {
     borderRadius: CARD_RADIUS,

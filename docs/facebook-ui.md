@@ -49,10 +49,10 @@ product, not a claim that every account looks identical.
 | Left shortcuts and right contextual rail | `src/components/AppRail.tsx` |
 | Grey canvas, white 8px cards, hairline borders | `src/theme.ts`, `src/components/PostCard.tsx` |
 | Composer card with avatar and rounded prompt | `src/screens/FeedScreen.tsx` |
-| Following tab with blue underline | `src/screens/FeedScreen.tsx` |
+| Following tab with blue underline, plus opt-in pinned feed tabs | `src/screens/FeedScreen.tsx` |
 | Like/Comment/Share action bar | `PostCard.tsx`: Like, Repost, Comment and a 44pt Save control |
 | Post overflow for sharing and safety | `src/components/PostMenu.tsx`: Copy, Share, Quote, Report, Mute, Block and Delete |
-| Settings and privacy cards | `src/screens/SettingsScreen.tsx`: Account, privacy, moderation, notifications, content, appearance, language, help and legal |
+| Settings and privacy cards | `src/screens/SettingsScreen.tsx`: Account, privacy, moderation, notifications, content, feeds, appearance, language, help and legal |
 | Cover, overlapping avatar, bold counts, Posts tab | `src/screens/ProfileScreen.tsx` |
 | Underlined search tabs and result cards | `src/screens/SearchScreen.tsx` |
 | Reason badges on notification avatars | `src/screens/NotificationsScreen.tsx` |
