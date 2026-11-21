@@ -3,6 +3,15 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.6.0
+
+- Make the marketing site's mobile header a single compact row with a visible, keyboard-reachable menu button, 44pt menu targets and no horizontal overflow. The desktop navigation is unchanged.
+- Cap the reading column at 680px at every width, so tablets and landscape phones keep the same line length as desktop.
+- Give mobile a direct 44pt header action for Feeds and Lists instead of burying those destinations several taps deep. The five-tab bar still owns tab navigation, so nothing is duplicated.
+- Shorten the Notifications tab label to “Alerts” on narrow phones so it is not clipped, and remove its fixed-height label box.
+- Collapse deep thread reply indentation on phones so nested posts keep a readable text column, while the role label still states the real depth.
+- Respect the bottom safe area in the reply composer, feed switcher, list report sheet and sign-in screen.
+
 ## 0.5.1
 
 - Correct the web deep-link fallback so nested `/app` routes serve the app shell under the site's `cleanUrls` setting.

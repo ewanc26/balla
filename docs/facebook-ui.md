@@ -74,17 +74,24 @@ product, not a claim that every account looks identical.
 | Three-column desktop, bottom tabs on mobile | `App.tsx`, `src/lib/layout.ts` |
 
 The desktop rails appear at 1000px and the right rail at 1300px. The centre
-column is capped at 680px so line length stays readable. The bottom tab bar is
-hidden while the rails are visible. The header does not repeat those
-destinations: the left rail owns them on desktop and the bottom tabs own them
-on mobile, so a screen never shows the same navigation twice.
+column is capped at 680px at every width so line length stays readable on
+phones and tablets too. The bottom tab bar is hidden while the rails are
+visible. The header does not repeat tab destinations: the left rail owns them
+on desktop and the bottom tabs own them on mobile, so a screen never shows the
+same navigation twice. On narrow screens the header adds direct 44pt actions
+for Feeds, Lists and settings — destinations the five-tab bar cannot fit —
+without duplicating a tab.
 
 Balla follows the Feeds pattern but keeps every control visible: Home has a
 44pt **Switch** button that opens a sheet with Following first, then pinned
-feeds in the user's order, then other saved feeds. On desktop the left rail also
-has a Feeds entry for management. There is no “See more” hiding it, no ranked
-Home feed, no suggested posts, no adverts and no engagement bait. Custom feeds
-keep the generator's order and say so; Following is always newest-first.
+feeds in the user's order, then other saved feeds. Feeds and Lists are one tap
+from the mobile header and are also in the desktop rail. Thread replies use a
+smaller indent on phones, capped at two visible levels, so deep branches keep a
+readable text column; the role label still states the real depth. Bottom sheets
+and the reply composer respect the device's bottom safe area. There is no
+“See more” hiding it, no ranked Home feed, no suggested posts, no adverts and
+no engagement bait. Custom feeds keep the generator's order and say so;
+Following is always newest-first.
 
 ## Mock preview
 

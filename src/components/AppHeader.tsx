@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePalette } from '../theme';
+import { HEADER_SEARCH_MIN_WIDTH } from '../lib/layout';
 
 export type TabName = 'Home' | 'Search' | 'Notifications' | 'Saved' | 'Profile';
 
@@ -10,15 +11,19 @@ export function AppHeader({
   wide,
   onNavigate,
   onOpenSettings,
+  onOpenLists,
+  onOpenFeeds,
 }: {
   wide: boolean;
   onNavigate: (tab: TabName) => void;
   onOpenSettings: () => void;
+  onOpenLists: () => void;
+  onOpenFeeds: () => void;
 }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const showSearch = wide && width >= 1200;
+  const showSearch = wide && width >= HEADER_SEARCH_MIN_WIDTH;
   const retroChrome = p.era !== 'newfacebook';
   const pressedBackground = retroChrome ? p.chromePressed : p.bg;
   const searchBackground = retroChrome ? p.chromeField : p.bg;
@@ -77,22 +82,46 @@ export function AppHeader({
           ) : null}
         </View>
 
-        {/* The left rail owns tab, profile and settings actions on desktop;
-            the bottom tabs own them on mobile. Repeating either set here would
-            put the same controls in two places at once. */}
+        {/* Tabs stay in exactly one place: the rail on desktop, the bottom bar
+            on mobile. These are direct actions to destinations the bottom bar
+            cannot show, so they are not a second copy of tab navigation. */}
         <View style={styles.right}>
           {!wide ? (
-            <Pressable
-              onPress={onOpenSettings}
-              accessibilityRole="button"
-              accessibilityLabel="Settings and privacy"
-              style={({ pressed }) => [
-                styles.iconButton,
-                { backgroundColor: pressed ? pressedBackground : 'transparent' },
-              ]}
-            >
-              <Ionicons name="settings-outline" size={22} color={p.chromeMuted} />
-            </Pressable>
+            <>
+              <Pressable
+                onPress={onOpenFeeds}
+                accessibilityRole="button"
+                accessibilityLabel="Manage feeds"
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
+                ]}
+              >
+                <Ionicons name="albums-outline" size={22} color={p.chromeMuted} />
+              </Pressable>
+              <Pressable
+                onPress={onOpenLists}
+                accessibilityRole="button"
+                accessibilityLabel="Lists"
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
+                ]}
+              >
+                <Ionicons name="list-outline" size={22} color={p.chromeMuted} />
+              </Pressable>
+              <Pressable
+                onPress={onOpenSettings}
+                accessibilityRole="button"
+                accessibilityLabel="Settings and privacy"
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
+                ]}
+              >
+                <Ionicons name="settings-outline" size={22} color={p.chromeMuted} />
+              </Pressable>
+            </>
           ) : null}
         </View>
       </View>

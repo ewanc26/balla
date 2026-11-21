@@ -8,8 +8,10 @@ import {
   StyleSheet,
   Text,
   TextInput,
+  useWindowDimensions,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
@@ -17,6 +19,7 @@ import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { useViewer } from '../lib/viewer';
+import { replyIndent } from '../lib/layout';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 // Navigation over the threadViewPost tree: the ancestor chain, the highlighted
@@ -115,21 +118,23 @@ function ReplyBranch({
   onPostHidden?: (post: any, scope: 'post' | 'author') => void;
 }) {
   const p = usePalette();
+  const { width } = useWindowDimensions();
+  const indent = replyIndent(width);
   const replies = (node.replies || []).filter(isThreadViewPost);
   // Every reply carries a connector, including top-level ones, so the chain
   // back to the focused post is visible rather than a stack of loose cards.
-  const indented = depth <= 3;
+  const indented = depth <= indent.maxDepth;
   return (
     <View
       style={
         indented
           ? {
-              marginLeft: 12,
+              marginLeft: indent.marginLeft,
               borderLeftWidth: StyleSheet.hairlineWidth,
               borderLeftColor: p.divider,
-              paddingLeft: 8,
+              paddingLeft: indent.paddingLeft,
             }
-          : { marginLeft: 12, paddingLeft: 8 }
+          : { marginLeft: indent.marginLeft, paddingLeft: indent.paddingLeft }
       }
     >
       <ThreadRoleLabel
@@ -162,6 +167,7 @@ function ReplyBranch({
 
 export function ThreadScreen({ route, navigation }: { route: any; navigation: any }) {
   const p = usePalette();
+  const insets = useSafeAreaInsets();
   const { profile: me } = useViewer();
   const uri = route.params && route.params.uri;
   const [thread, setThread] = useState<any>(null);
@@ -389,7 +395,16 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
           {replyError}
         </Text>
       ) : null}
-      <View style={[styles.composer, { backgroundColor: p.card, borderTopColor: p.divider }]}>
+      <View
+        style={[
+          styles.composer,
+          {
+            backgroundColor: p.card,
+            borderTopColor: p.divider,
+            paddingBottom: Math.max(insets.bottom, 8),
+          },
+        ]}
+      >
         <Avatar
           avatar={me && me.avatar}
           displayName={(me && (me.displayName || me.handle)) || 'You'}

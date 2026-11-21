@@ -104,16 +104,22 @@ img { display: block; }
   display: inline-flex;
   align-items: center;
   gap: 0.6rem;
+  min-height: 44px;
   text-decoration: none;
   font-weight: 800;
   font-size: 1.45rem;
   letter-spacing: -0.045em;
 }
+.nav-toggle-input, .nav-toggle { display: none; }
 .site-header nav { display: flex; align-items: center; gap: 1.4rem; font-size: 0.92rem; font-weight: 600; }
 .site-header nav a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
   text-decoration: none;
   color: var(--muted);
-  padding: 0.35rem 0;
   border-bottom: 2px solid transparent;
 }
 .site-header nav a:hover { color: var(--text); }
@@ -124,7 +130,7 @@ img { display: block; }
   border: 0;
   border-radius: 999px;
   padding: 0.6rem 1rem;
-  min-height: 2.6rem;
+  min-height: 44px;
   display: inline-flex;
   align-items: center;
   transition: background 150ms ease;
@@ -400,7 +406,14 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
 .protocol { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; padding: 4rem 0; align-items: start; }
 .protocol-copy p { color: var(--muted); line-height: 1.75; }
 .protocol-links { display: flex; flex-wrap: wrap; gap: 0.8rem 1.4rem; margin-top: 1.5rem; }
-.protocol-links a { color: var(--blue-ink); font-weight: 650; text-underline-offset: 4px; }
+.protocol-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--blue-ink);
+  font-weight: 650;
+  text-underline-offset: 4px;
+}
 .references { border-top: 1px solid var(--line); }
 .reference-note {
   margin-top: 1.2rem;
@@ -432,6 +445,7 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   font-size: 0.92rem;
 }
 .check-list li::before { content: "✓"; color: var(--green-ink); font-weight: 800; }
+.check-list li a { display: inline-flex; align-items: center; min-height: 44px; }
 .check-list li small { display: block; color: var(--muted); font-size: 0.8rem; margin-top: 0.15rem; }
 .roadmap-table { display: grid; gap: 0.6rem; }
 .roadmap-row {
@@ -446,7 +460,16 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
 }
 .roadmap-row strong { font-size: 0.95rem; }
 .roadmap-row p { margin: 0; color: var(--muted); font-size: 0.88rem; }
-.roadmap-row a { color: var(--blue-ink); font-size: 0.85rem; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.roadmap-row a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--blue-ink);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
 .roadmap-row a:hover { text-decoration: underline; }
 .decision-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0 4rem; }
 .decision {
@@ -473,7 +496,7 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
 .footer-brand { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--text); font-weight: 800; font-size: 1rem; }
 .site-footer p { margin: 0.7rem 0 0; max-width: 26rem; }
 .footer-links { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
-.footer-links a { text-decoration: none; }
+.footer-links a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; text-decoration: none; }
 .footer-links a:hover { color: var(--text); text-decoration: underline; }
 .footer-status { display: block; margin-top: 0.8rem; color: var(--green-ink); font-weight: 700; }
 
@@ -514,13 +537,77 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
 
 @media (max-width: 620px) {
   .wrap, .site-header { width: min(100% - 28px, var(--wrap)); }
-  .site-header { align-items: flex-start; flex-direction: column; gap: 0.5rem; padding: 0.7rem 0; }
-  .site-header nav { flex-wrap: wrap; gap: 0.8rem 1.1rem; }
+  html { scroll-padding-top: 4.75rem; }
+
+  /* One compact row: brand and a visible disclosure button. A checkbox drives
+     the menu so it works without JavaScript; the desktop nav is unchanged. */
+  .site-header { min-height: 4rem; padding: 0.5rem 0; }
+  .nav-toggle-input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  .nav-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 4.6rem;
+    min-height: 44px;
+    padding: 0 0.9rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+  .nav-toggle-input:focus-visible + .nav-toggle { outline: 3px solid var(--blue); outline-offset: 4px; }
+  .nav-toggle-input:checked + .nav-toggle {
+    background: var(--blue-soft);
+    border-color: transparent;
+    color: var(--blue-ink);
+  }
+  .site-header nav {
+    position: absolute;
+    top: calc(100% + 0.5rem);
+    right: 0;
+    z-index: 50;
+    display: none;
+    gap: 0;
+    min-width: 13rem;
+    padding: 0.35rem;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--card);
+    box-shadow: var(--shadow-lg);
+    font-size: 0.95rem;
+  }
+  .nav-toggle-input:checked ~ nav { display: grid; }
+  .site-header nav a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 0.8rem;
+    border-bottom: 0;
+    border-radius: 0.65rem;
+  }
+  .site-header nav a[aria-current="page"] { background: var(--soft); }
+  .site-header nav .nav-cta { justify-content: center; margin-top: 0.25rem; }
+
   h1 { font-size: clamp(3rem, 15vw, 4.5rem); }
   .principles, .feature-grid, .check-list, .decision-grid, .roadmap-columns { grid-template-columns: 1fr; }
   .feature-group__head { display: block; }
+  .roadmap-teaser { gap: 1.5rem; }
+  .refusals { gap: 1.5rem; padding: 1.6rem; margin: 3rem auto; }
   .roadmap-row { grid-template-columns: 1fr; gap: 0.4rem; }
-  .refusals { padding: 1.6rem; margin: 3rem auto; }
+  .roadmap-row a, .protocol-links a, .footer-links a, .check-list li a { min-width: 44px; }
   .site-footer { grid-template-columns: 1fr; gap: 0.8rem; }
   .actions { align-items: flex-start; flex-direction: column; }
   .actions .button, .actions .button--ghost { width: 100%; }

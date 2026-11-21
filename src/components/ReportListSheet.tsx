@@ -9,6 +9,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import {
   dialogAccessibilityProps,
@@ -34,6 +35,7 @@ export function ReportListSheet({
   onClose: () => void;
 }) {
   const p = usePalette();
+  const insets = useSafeAreaInsets();
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState('');
   const [busy, setBusy] = useState(false);
@@ -88,7 +90,13 @@ export function ReportListSheet({
           ref={containerRef}
           {...dialogAccessibilityProps('Report this list')}
           accessibilityViewIsModal
-          style={[styles.sheet, { backgroundColor: p.card }]}
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: p.card,
+              paddingBottom: Math.max(insets.bottom, 20),
+            },
+          ]}
         >
           <View style={styles.header}>
             <Text style={{ color: p.text, fontSize: 18, fontWeight: '700' }}>
