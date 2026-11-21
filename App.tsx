@@ -54,7 +54,7 @@ import { PreferencesProvider } from './src/lib/preferences';
 import { restore, setOnLoggedOut } from './src/lib/agent';
 import { installWebAccessibility } from './src/lib/accessibility';
 import { palettes, usePalette } from './src/theme';
-import { DESKTOP_MIN_WIDTH, RIGHT_RAIL_MIN_WIDTH } from './src/lib/layout';
+import { DESKTOP_MIN_WIDTH, navigationLayout } from './src/lib/layout';
 import {
   MOCK_MODE,
   MOCK_OTHER_ACTOR,
@@ -74,7 +74,7 @@ function Tabs() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const wide = width >= DESKTOP_MIN_WIDTH;
+  const showBottomTabs = navigationLayout(width).bottomTabs;
   const initialTab = (MOCK_MODE ? mockInitialTab() : 'Home') as TabName;
 
   return (
@@ -84,16 +84,16 @@ function Tabs() {
         headerShown: false,
         tabBarActiveTintColor: p.chromeAction,
         tabBarInactiveTintColor: p.chromeMuted,
-        tabBarStyle: wide
-          ? { display: 'none' }
-          : {
+        tabBarStyle: showBottomTabs
+          ? {
               backgroundColor: p.chrome,
               borderTopColor: p.chromeBorder,
               borderTopWidth: StyleSheet.hairlineWidth,
               height: 64 + insets.bottom,
               paddingTop: 6,
               paddingBottom: insets.bottom + 10,
-            },
+            }
+          : { display: 'none' },
         tabBarLabelStyle: {
           fontSize: 10,
           lineHeight: 14,
@@ -143,8 +143,9 @@ export default function App() {
     installWebAccessibility(p.accent);
   }, [p.accent]);
 
-  const showLeft = width >= DESKTOP_MIN_WIDTH;
-  const showRight = width >= RIGHT_RAIL_MIN_WIDTH;
+  const layout = navigationLayout(width);
+  const showLeft = layout.leftRail;
+  const showRight = layout.rightRail;
 
   useEffect(() => {
     setOnLoggedOut(() => setLoggedIn(false));
@@ -243,7 +244,6 @@ export default function App() {
             {showChrome ? (
               <AppHeader
                 wide={showLeft}
-                activeTab={activeTab}
                 onNavigate={navigateToTab}
                 onOpenSettings={openSettings}
               />

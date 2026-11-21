@@ -3,39 +3,21 @@ import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-na
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { usePalette } from '../theme';
-import { Avatar } from './Avatar';
-import { useViewer } from '../lib/viewer';
 
 export type TabName = 'Home' | 'Search' | 'Notifications' | 'Saved' | 'Profile';
 
-const NAV_ITEMS: { name: TabName; icon: any; activeIcon: any; label: string }[] = [
-  { name: 'Home', icon: 'home-outline', activeIcon: 'home', label: 'Home' },
-  { name: 'Search', icon: 'search-outline', activeIcon: 'search', label: 'Search' },
-  {
-    name: 'Notifications',
-    icon: 'notifications-outline',
-    activeIcon: 'notifications',
-    label: 'Notifications',
-  },
-  { name: 'Saved', icon: 'bookmark-outline', activeIcon: 'bookmark', label: 'Saved' },
-  { name: 'Profile', icon: 'person-outline', activeIcon: 'person', label: 'Profile' },
-];
-
 export function AppHeader({
   wide,
-  activeTab,
   onNavigate,
   onOpenSettings,
 }: {
   wide: boolean;
-  activeTab: TabName;
   onNavigate: (tab: TabName) => void;
   onOpenSettings: () => void;
 }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
-  const { profile } = useViewer();
   const showSearch = wide && width >= 1200;
   const retroChrome = p.era !== 'newfacebook';
   const pressedBackground = retroChrome ? p.chromePressed : p.bg;
@@ -95,84 +77,23 @@ export function AppHeader({
           ) : null}
         </View>
 
-        {wide ? (
-          <View style={styles.centerNav}>
-            {NAV_ITEMS.map((item) => {
-              const active = activeTab === item.name;
-              return (
-                <Pressable
-                  key={item.name}
-                  onPress={() => onNavigate(item.name)}
-                  accessibilityRole="button"
-                  accessibilityLabel={item.label}
-                  accessibilityState={{ selected: active }}
-                  style={({ pressed }) => [
-                    styles.navItem,
-                    active && { borderBottomColor: p.chromeAction },
-                    { opacity: pressed ? 0.6 : 1 },
-                  ]}
-                >
-                  <Ionicons
-                    name={active ? item.activeIcon : item.icon}
-                    size={24}
-                    color={active ? p.chromeAction : p.chromeMuted}
-                  />
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-
+        {/* The left rail owns tab, profile and settings actions on desktop;
+            the bottom tabs own them on mobile. Repeating either set here would
+            put the same controls in two places at once. */}
         <View style={styles.right}>
           {!wide ? (
-            <>
-              <Pressable
-                onPress={() => onNavigate('Search')}
-                accessibilityRole="button"
-                accessibilityLabel="Search"
-                style={({ pressed }) => [
-                  styles.iconButton,
-                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
-                ]}
-              >
-                <Ionicons name="search" size={22} color={p.chromeMuted} />
-              </Pressable>
-              <Pressable
-                onPress={() => onNavigate('Notifications')}
-                accessibilityRole="button"
-                accessibilityLabel="Notifications"
-                style={({ pressed }) => [
-                  styles.iconButton,
-                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
-                ]}
-              >
-                <Ionicons name="notifications-outline" size={22} color={p.chromeMuted} />
-              </Pressable>
-            </>
+            <Pressable
+              onPress={onOpenSettings}
+              accessibilityRole="button"
+              accessibilityLabel="Settings and privacy"
+              style={({ pressed }) => [
+                styles.iconButton,
+                { backgroundColor: pressed ? pressedBackground : 'transparent' },
+              ]}
+            >
+              <Ionicons name="settings-outline" size={22} color={p.chromeMuted} />
+            </Pressable>
           ) : null}
-          <Pressable
-            onPress={onOpenSettings}
-            accessibilityRole="button"
-            accessibilityLabel="Settings and privacy"
-            style={({ pressed }) => [
-              styles.iconButton,
-              { backgroundColor: pressed ? pressedBackground : 'transparent' },
-            ]}
-          >
-            <Ionicons name="settings-outline" size={22} color={p.chromeMuted} />
-          </Pressable>
-          <Pressable
-            onPress={() => onNavigate('Profile')}
-            accessibilityRole="button"
-            accessibilityLabel="Your profile"
-            style={({ pressed }) => [styles.avatarButton, { opacity: pressed ? 0.7 : 1 }]}
-          >
-            <Avatar
-              avatar={profile && profile.avatar}
-              displayName={(profile && (profile.displayName || profile.handle)) || 'You'}
-              size={34}
-            />
-          </Pressable>
         </View>
       </View>
     </View>
@@ -232,19 +153,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  centerNav: {
-    flexDirection: 'row',
-    alignItems: 'stretch',
-    height: 56,
-  },
-  navItem: {
-    width: 88,
-    height: 56,
-    borderBottomWidth: 3,
-    borderBottomColor: 'transparent',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   right: {
     flex: 1,
     minWidth: 0,
@@ -259,13 +167,5 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  avatarButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 2,
   },
 });

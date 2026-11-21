@@ -128,8 +128,14 @@ To match Bluesky’s composer, Balla eventually needs:
   images, alt text, media dimensions, compression and failure/retry UI;
 - video upload and processing states, including failure and retry UI;
 - rich-text facets for mentions, links and hashtags;
-- quote posts using `app.bsky.embed.record`;
-- external link cards and embeds;
+- **Done:** quote posts using `app.bsky.embed.record`, including the view in
+  cards and threads with the quoted post's own labels and honest unavailable
+  states;
+- **Done:** external link cards resolved by `app.bsky.embed.getEmbedExternalView`,
+  with removal and an honest fallback when Bluesky returns no metadata;
+- **Done:** multi-post thread composition with per-post text, photos, quotes or
+  link cards, one publish action, and `reply.root`/`reply.parent` chained to the
+  first post and its predecessor;
 - post/thread gates and reply controls;
 - drafts;
 - honest character counting and posting errors.
@@ -197,7 +203,7 @@ privacy, block/mute, report and leave/delete flows.
 ### P1 — parity with the main Bluesky surfaces
 
 1. Image/video composer with alt text.
-2. Link cards (text-only quote posts now use `app.bsky.embed.record`).
+2. Link cards and quote embeds are shipped, including multi-post composition.
 3. Verification and pinned post. Profile editing, followers, following, known
    followers and per-post engagement lists are shipped.
 4. Notification preferences route (tabs, grouping and seen state are shipped).

@@ -8,6 +8,7 @@ import {
   buildPostEmbed,
   canPublishPost,
   missingAltTextCount,
+  threadReply,
 } from '../src/lib/composerPost.ts';
 
 function image(alt = 'A description', index = 1) {
@@ -83,6 +84,49 @@ test('a quote without media stays a plain record embed', () => {
   assert.equal(embed.$type, 'app.bsky.embed.record');
 });
 
+test('a resolved link card becomes a lexicon external embed', () => {
+  const card = {
+    uri: 'https://www.example.com/story',
+    title: 'A real headline',
+    description: 'Real description',
+    host: 'example.com',
+  };
+  const embed = buildPostEmbed([], null, card);
+  assert.equal(embed.$type, 'app.bsky.embed.external');
+  assert.equal(embed.external.uri, card.uri);
+  assert.equal(embed.external.title, card.title);
+  assert.equal(embed.external.description, card.description);
+});
+
+test('a quote with a link card uses external as record-with-media', () => {
+  const embed = buildPostEmbed(
+    [],
+    { uri: 'at://did:plc:test/app.bsky.feed.post/1', cid: 'bafy-test' },
+    { uri: 'https://example.com', title: 'Example', description: '', host: 'example.com' }
+  );
+  assert.equal(embed.$type, 'app.bsky.embed.recordWithMedia');
+  assert.equal(embed.media.$type, 'app.bsky.embed.external');
+});
+
+test('photos take precedence over a link card so the post stays valid', () => {
+  const embed = buildPostEmbed(
+    [image()],
+    null,
+    { uri: 'https://example.com', title: 'Example', description: '', host: 'example.com' }
+  );
+  assert.equal(embed.$type, 'app.bsky.embed.images');
+});
+
+test('thread replies keep the first post as root and the previous as parent', () => {
+  const first = { uri: 'at://post/1', cid: 'cid-1' };
+  const second = { uri: 'at://post/2', cid: 'cid-2' };
+  const third = { uri: 'at://post/3', cid: 'cid-3' };
+  assert.equal(threadReply(null, null), null);
+  assert.deepEqual(threadReply(null, first), { reply: { root: first, parent: first } });
+  assert.deepEqual(threadReply(first, second), { reply: { root: first, parent: second } });
+  assert.deepEqual(threadReply(first, third), { reply: { root: first, parent: third } });
+});
+
 test('alt text is trimmed but descriptions are not invented', () => {
   const embed = buildImageEmbed([image('  A cat  '), image('   ')]);
   assert.equal(embed.images[0].alt, 'A cat');
@@ -108,5 +152,9 @@ test('empty text is allowed only with an image or quote', () => {
   assert.equal(
     canPublishPost({ text: '   ', imageCount: 0, hasQuote: false }),
     false
+  );
+  assert.equal(
+    canPublishPost({ text: '', imageCount: 0, hasQuote: false, hasLink: true }),
+    true
   );
 });

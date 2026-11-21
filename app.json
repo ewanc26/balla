@@ -2,8 +2,11 @@
   "expo": {
     "name": "Balla",
     "slug": "balla",
-    "version": "0.1.0",
-    "scheme": ["balla", "click.croft.balla"],
+    "version": "0.2.0",
+    "scheme": [
+      "balla",
+      "click.croft.balla"
+    ],
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "automatic",
