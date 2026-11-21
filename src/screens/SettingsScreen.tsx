@@ -389,7 +389,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
       )}
 
       <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, textAlign: 'center', paddingHorizontal: 24, marginTop: 18 }}>
-        Balla is independent software and is not affiliated with Bluesky or Meta.
+        Balla is independent software. Facebook-era styling is a design reference only, and Bluesky references identify the network Balla uses. Balla is not affiliated with, endorsed by or sponsored by Meta or Bluesky Social PBC.
       </Text>
     </ScrollView>
   );

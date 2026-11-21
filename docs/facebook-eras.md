@@ -3,9 +3,12 @@
 Last researched: **21 November 2026**.
 
 Balla lets each person choose a Facebook-era chrome and canvas independently
-from a nine-colour accent palette. The feature is a visual translation exercise,
-not a claim that Facebook endorses Balla or a licence to use its assets. Balla
-does not ship Facebook logos, wordmarks, icons or photography.
+from a nine-colour accent palette. The feature is a visual translation exercise.
+Facebook-era references are visual references only, not a claim that Facebook or
+Meta endorses, sponsors or is affiliated with Balla, and not a licence to use its
+assets. Bluesky references identify the network Balla connects to and do not make
+Balla an official client. Balla does not ship Facebook logos, wordmarks, icons or
+photography.
 
 ## Research basis
 

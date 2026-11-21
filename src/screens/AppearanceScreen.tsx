@@ -179,8 +179,10 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
         <Ionicons name="information-circle-outline" size={16} color={p.secondary} />
         <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 17, flex: 1 }}>
           Era styling follows published Facebook design history from 2004, 2006,
-          2011 and 2020. Colours are Balla’s own accessible approximations; no
-          Facebook logos or assets are used. Following always stays chronological.
+          2011 and 2020. These are visual references only, not an affiliation
+          with or endorsement by Meta. Colours are Balla’s own accessible
+          approximations; no Facebook logos or assets are used. Following always
+          stays chronological.
         </Text>
       </View>
     </ScrollView>

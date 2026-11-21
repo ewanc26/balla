@@ -183,7 +183,7 @@ export function RightRail({ onNavigate }: { onNavigate: (tab: TabName) => void }
       </Pressable>
 
       <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, paddingHorizontal: 8 }}>
-        Balla is independent software, not affiliated with Bluesky or Meta.
+        Balla is independent software. Facebook-era styling is a design reference, not a claim; not affiliated with Bluesky or Meta.
       </Text>
     </View>
   );
