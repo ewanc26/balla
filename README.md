@@ -111,7 +111,9 @@ production project is `balla`; deploy with:
     vercel --prod --project balla
 
 The custom domain is a Cloudflare CNAME to Vercel, verified on 20 November
-2026. Vercel manages the Let's Encrypt certificate.
+2026. Vercel manages the Let's Encrypt certificate. The landing page links to
+`https://balla.croft.click/features` for the issue-linked feature and roadmap
+matrix; keep that page and the site's legal pages in step with the code.
 
 ## Logging in
 

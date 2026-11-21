@@ -13,7 +13,7 @@
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <a class="brand" href="/" aria-label="Balla home"><img src="/mark.svg" width="30" height="30" alt="" /><span>balla</span></a>
-      <nav aria-label="Main"><a href="/">Home</a><a href="/privacy" aria-current="page">Privacy</a><a href="https://github.com/ewanc26/balla">GitHub <span aria-hidden="true">↗</span></a></nav>
+      <nav aria-label="Main"><a href="/">Home</a><a href="/features">Features</a><a href="/privacy" aria-current="page">Privacy</a><a href="/terms">Terms</a><a href="https://github.com/ewanc26/balla">GitHub <span aria-hidden="true">↗</span></a></nav>
     </header>
     <main id="main" class="legal wrap">
       <p class="section-kicker">Privacy note</p>
@@ -34,6 +34,14 @@
       <h2>What leaves your device</h2>
       <p>When you use Balla, the app sends requests to your PDS and to Bluesky’s AppView for the actions you take: loading your feed, reading threads, searching, following, liking, reposting, bookmarking and loading notifications. Those services handle the data under their own terms and privacy policies. Balla does not add an analytics, advertising or tracking SDK.</p>
 
+      <h2>What we do not collect</h2>
+      <ul>
+        <li>No analytics, advertising identifiers, crash-reporting payloads or tracking SDKs.</li>
+        <li>No address book, contacts, precise location or advertising identifiers.</li>
+        <li>No copy of your feed, posts or social graph on a Balla server.</li>
+        <li>No password. Authorisation happens on your own server’s OAuth page.</li>
+      </ul>
+
       <h2>Bookmarks</h2>
       <p>Bookmarks are Bluesky’s private saved-post feature. Balla reads and changes them through Bluesky’s bookmark API; it does not keep a separate copy on a Balla server.</p>
 
@@ -41,7 +49,10 @@
       <p>Lists and their membership are public AT Protocol records on your PDS. Creating or editing a list, adding or removing people, and blocking a list write those records. Subscribing to a list writes your list preference to Bluesky; Balla does not keep a separate copy.</p>
 
       <h2>Reports and moderation</h2>
-      <p>Reports from posts and profiles go to Bluesky’s moderation labeler through the AT Protocol report API. Balla does not keep a separate copy of a report. Labels, content warnings, blocks and mutes are applied by the client using Bluesky’s moderation preferences and server state.</p>
+      <p>Reports from posts and profiles go to Bluesky’s moderation labeler through the AT Protocol report API. Balla does not keep a separate copy of a report or a local record of its contents. Labels, content warnings, blocks and mutes are applied by the client using Bluesky’s moderation preferences and server state.</p>
+      <div class="legal-callout">
+        <p><strong>Report handling.</strong> Reports are handled by the labeler that receives them under its own process and retention rules. Balla is not a moderation service and cannot promise an outcome. For a concern about Balla itself, use the project contact routes below; those are monitored by the maintainer.</p>
+      </div>
 
       <h2>Deletion</h2>
       <p>You can delete your own posts from Balla’s post menu; that removes the PDS record. Account deletion and data export are not available in Balla yet. Use Bluesky or your PDS’s account tools for those. Deleting the app removes its local session; it does not delete your AT Protocol records.</p>
@@ -50,14 +61,14 @@
       <p>Balla is not directed at children. Labels, content warnings, reporting, blocking and muting are available, but Balla is not a moderation service and does not employ moderators. Do not rely on Balla as the only safety surface for a community.</p>
 
       <h2>Contact</h2>
-      <p>For bugs and general project contact, use <a href="https://github.com/ewanc26/balla/issues">the issue tracker</a>. For a security or privacy report that should not be public, use <a href="https://github.com/ewanc26/balla/security/advisories/new">GitHub’s private advisory form</a>. The project’s report handling and retention are documented in the repository.</p>
+      <p>The project contact route is <a href="https://github.com/ewanc26/balla/issues">the issue tracker</a>, monitored by the maintainer. For a security or privacy report that should not be public, use <a href="https://github.com/ewanc26/balla/security/advisories/new">GitHub’s private advisory form</a>. Please do not post personal data in a public issue. Report handling and retention are documented in the repository, and the site and in-app policy pages are versioned with the code.</p>
 
       <p class="legal-note">Balla is independent software and is not affiliated with, endorsed by or sponsored by Bluesky Social PBC or Meta Platforms, Inc. Facebook-era styling is a design reference only, and Bluesky references identify the network Balla connects to; they do not imply official status or affiliation.</p>
     </main>
     <footer class="site-footer wrap">
       <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
       <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta. Facebook-era styling is a design reference, not a claim.</p>
-      <div class="footer-links"><a href="/">Home</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/guidelines">Guidelines</a><a href="/copyright">Copyright</a><a href="https://ewancroft.uk/support">Support Balla</a><a href="https://github.com/ewanc26/balla">GitHub</a></div>
+      <div class="footer-links"><a href="/">Home</a><a href="/features">Features</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/guidelines">Guidelines</a><a href="/copyright">Copyright</a><a href="https://github.com/ewanc26/balla/issues">Report an issue ↗</a><a href="https://github.com/ewanc26/balla/security/advisories/new">Private security report ↗</a><a href="https://ewancroft.uk/support">Support Balla</a></div>
     </footer>
   </body>
 </html>
