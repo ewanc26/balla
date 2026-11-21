@@ -25,6 +25,8 @@ import {
   useReducedMotion,
 } from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
+import { firstWebUrl, type ExternalView } from '../lib/embedModel';
+import { resolveExternalLink } from '../lib/externalLink';
 import { Avatar } from '../components/Avatar';
 import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
@@ -37,6 +39,8 @@ import {
   buildPostEmbed,
   canPublishPost,
   missingAltTextCount,
+  threadReply,
+  type StrongRef,
 } from '../lib/composerPost';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 
@@ -56,8 +60,21 @@ type ComposerImage = {
 };
 
 type UploadProgress = { current: number; total: number };
+type PendingPost = {
+  key: string;
+  text: string;
+  images: ComposerImage[];
+  quote: any;
+  linkCard: ExternalView | null;
+};
 
 let imageSequence = 0;
+let draftSequence = 0;
+
+function newDraftKey(): string {
+  draftSequence += 1;
+  return `compose-post-${draftSequence}-${Date.now()}`;
+}
 
 function newImageKey(): string {
   imageSequence += 1;
@@ -133,7 +150,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const p = usePalette();
   const { profile } = useViewer();
   const { preferences } = usePreferences();
-  const quote = route && route.params ? route.params.quote : null;
+  const [quote, setQuote] = useState(
+    route && route.params ? route.params.quote : null
+  );
 
   const [text, setText] = useState('');
   const [images, setImages] = useState<ComposerImage[]>([]);
@@ -145,6 +164,16 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [notice, setNotice] = useState<string | null>(null);
   const [mediaBusy, setMediaBusy] = useState<'library' | 'camera' | null>(null);
   const [confirmWithoutAlt, setConfirmWithoutAlt] = useState(false);
+  const [linkCard, setLinkCard] = useState<ExternalView | null>(null);
+  const [resolvingLink, setResolvingLink] = useState(false);
+  const [pending, setPending] = useState<PendingPost[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingOriginal, setEditingOriginal] = useState<PendingPost | null>(null);
+  const [threadRoot, setThreadRoot] = useState<StrongRef | null>(null);
+  const [threadParent, setThreadParent] = useState<StrongRef | null>(null);
+  const [postProgress, setPostProgress] = useState<UploadProgress | null>(null);
+  const [altAction, setAltAction] = useState<'send' | 'add'>('send');
+  const editorRef = useRef<any>(null);
 
   const uploadedRef = useRef<Map<string, unknown>>(new Map());
   const uploadAbortRef = useRef<AbortController | null>(null);
@@ -174,6 +203,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     text: trimmed,
     imageCount: images.length,
     hasQuote: !!quote,
+    hasLink: !!linkCard,
   });
   const blocked = sending || !canPost || over;
   const editingImage = editingKey
@@ -199,6 +229,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
     if (prepared.length) {
       setImages((prev) => [...prev, ...prepared].slice(0, MAX_COMPOSER_IMAGES));
+      // A post may carry one media embed. Photos win, so drop the link card
+      // visibly rather than silently deciding which one to keep.
+      if (linkCard) setLinkCard(null);
     }
 
     if (failures) {
@@ -213,8 +246,30 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       setNotice(
         `You can attach up to ${MAX_COMPOSER_IMAGES} photos. Only the first ${remaining} selected here were added.`
       );
+    } else if (prepared.length && linkCard) {
+      setNotice('Photos and link cards cannot share a post. The link card was removed.');
     } else if (prepared.length) {
       setNotice(null);
+    }
+  }
+
+  async function addLinkCard() {
+    if (resolvingLink || sending) return;
+    setError(null);
+    const candidate = firstWebUrl(text);
+    if (!candidate) {
+      setError('Add a complete web link to your post, then tap Link card.');
+      return;
+    }
+    setResolvingLink(true);
+    try {
+      setLinkCard(await resolveExternalLink(candidate));
+      setNotice(null);
+    } catch (err) {
+      setLinkCard(null);
+      setError(describeFailure(err, 'Could not build a link card for that URL.'));
+    } finally {
+      setResolvingLink(false);
     }
   }
 
@@ -339,9 +394,32 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     uploadAbortRef.current?.abort();
   }
 
-  async function send(withoutAltPrompt = false) {
-    if (sending || over || !canPost) return;
+  function snapshot(key = newDraftKey()): PendingPost {
+    return { key, text: trimmed, images, quote, linkCard };
+  }
 
+  function resetEditor() {
+    setText('');
+    setImages([]);
+    setQuote(null);
+    setLinkCard(null);
+    setEditingKey(null);
+    setConfirmWithoutAlt(false);
+    setNotice(null);
+  }
+
+  function loadDraft(draft: PendingPost) {
+    setText(draft.text);
+    setImages(draft.images);
+    setQuote(draft.quote);
+    setLinkCard(draft.linkCard);
+    setEditingKey(null);
+    editorRef.current?.focus();
+  }
+
+  /** Shared preflight for publishing and for queueing a post in a thread. */
+  function ready(withoutAltPrompt: boolean, action: 'send' | 'add'): boolean {
+    if (sending || over || !canPost) return false;
     if (tooLongAlt > 0) {
       setError(
         `Alt text is limited to ${MAX_ALT_TEXT} characters. Shorten the highlighted photo description.`
@@ -350,83 +428,172 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         (item) => countGraphemes(item.alt.trim()) > MAX_ALT_TEXT
       );
       if (image) openAltText(image.key);
-      return;
+      return false;
     }
-
     if (missingAlt > 0) {
       if (preferences.requireAltText) {
         setError(
-          `Add alt text to ${missingAlt === 1 ? 'the photo' : `all ${missingAlt} photos`} before posting. You can turn off “Require alt text” in Settings.`
+          `Add alt text to ${missingAlt === 1 ? 'the photo' : `all ${missingAlt} photos`} before ${pending.length ? 'adding another post' : 'posting'}. You can turn off “Require alt text” in Settings.`
         );
         openFirstMissingAlt();
-        return;
+        return false;
       }
       if (!withoutAltPrompt) {
+        setAltAction(action);
         setConfirmWithoutAlt(true);
-        return;
+        return false;
       }
     }
+    return true;
+  }
 
+  function addAnother(withoutAltPrompt = false) {
+    if (!ready(withoutAltPrompt, 'add')) return;
+    const draft = snapshot(
+      editingIndex !== null && editingOriginal ? editingOriginal.key : newDraftKey()
+    );
+    if (editingIndex !== null) {
+      setPending((prev) => [
+        ...prev.slice(0, editingIndex),
+        draft,
+        ...prev.slice(editingIndex),
+      ]);
+    } else {
+      setPending((prev) => [...prev, draft]);
+    }
+    setEditingIndex(null);
+    setEditingOriginal(null);
+    resetEditor();
+    setError(null);
+    const position = editingIndex !== null ? editingIndex + 1 : pending.length + 1;
+    setNotice(`Post ${position} added to the thread. Write the next one.`);
+    editorRef.current?.focus();
+  }
+
+  function editPending(index: number) {
+    const original = pending[index];
+    if (!original) return;
+    setPending((prev) => prev.filter((_, i) => i !== index));
+    setEditingIndex(index);
+    setEditingOriginal(original);
+    setError(null);
+    loadDraft(original);
+    setNotice(`Editing post ${index + 1}. Add it back with Add to thread.`);
+  }
+
+  function cancelEdit() {
+    if (editingIndex !== null && editingOriginal) {
+      setPending((prev) => [
+        ...prev.slice(0, editingIndex),
+        editingOriginal,
+        ...prev.slice(editingIndex),
+      ]);
+    }
+    setEditingIndex(null);
+    setEditingOriginal(null);
+    resetEditor();
+  }
+
+  function removePending(index: number) {
+    setPending((prev) => prev.filter((_, i) => i !== index));
+    if (editingIndex !== null && index < editingIndex) {
+      setEditingIndex(editingIndex - 1);
+    }
+    setNotice('Post removed from the thread.');
+  }
+
+  async function send(withoutAltPrompt = false) {
+    if (!ready(withoutAltPrompt, 'send')) return;
+
+    const drafts = [...pending, snapshot()];
+    const total = drafts.length;
     setConfirmWithoutAlt(false);
     setError(null);
     setNotice(null);
     setSending(true);
     const controller = new AbortController();
     uploadAbortRef.current = controller;
+    let published = 0;
+    let root = threadRoot;
+    let parent = threadParent;
 
     try {
-      const attachments = [];
-      for (let index = 0; index < images.length; index += 1) {
+      for (let index = 0; index < drafts.length; index += 1) {
         if (controller.signal.aborted) throw abortError();
-        const image = images[index];
-        setUploadProgress({ current: index + 1, total: images.length });
-
-        let blob = uploadedRef.current.get(image.key);
-        if (!blob) {
+        const draft = drafts[index];
+        setPostProgress({ current: index + 1, total });
+        const attachments = [];
+        for (let imageIndex = 0; imageIndex < draft.images.length; imageIndex += 1) {
           if (controller.signal.aborted) throw abortError();
-          const uploaded = await agent.uploadBlob(image.bytes, {
-            encoding: 'image/jpeg',
-            signal: controller.signal,
+          const image = draft.images[imageIndex];
+          setUploadProgress({
+            current: imageIndex + 1,
+            total: draft.images.length,
           });
-          blob = uploaded.data.blob;
-          uploadedRef.current.set(image.key, blob);
+          let blob = uploadedRef.current.get(image.key);
+          if (!blob) {
+            if (controller.signal.aborted) throw abortError();
+            const uploaded = await agent.uploadBlob(image.bytes, {
+              encoding: 'image/jpeg',
+              signal: controller.signal,
+            });
+            blob = uploaded.data.blob;
+            uploadedRef.current.set(image.key, blob);
+          }
+          attachments.push({
+            alt: image.alt,
+            blob,
+            width: image.width,
+            height: image.height,
+          });
         }
 
-        attachments.push({
-          alt: image.alt,
-          blob,
-          width: image.width,
-          height: image.height,
+        if (controller.signal.aborted) throw abortError();
+        setUploadProgress(null);
+        const embed = buildPostEmbed(attachments, draft.quote, draft.linkCard);
+        const created = await agent.post({
+          text: draft.text.trim(),
+          ...(embed ? { embed } : {}),
+          ...threadReply(root, parent),
         });
+        // The first post is the root; every later post replies to the one
+        // before it, so a thread stays one conversation.
+        root = root || created;
+        parent = created;
+        published = index + 1;
       }
 
-      setUploadProgress(null);
-      if (controller.signal.aborted) throw abortError();
-      const embed = buildPostEmbed(attachments, quote);
-
-      await agent.post({
-        text: trimmed,
-        ...(embed ? { embed } : {}),
-      });
       uploadedRef.current.clear();
-      setSending(false);
-      setUploadProgress(null);
+      setPending([]);
+      setEditingIndex(null);
+      setEditingOriginal(null);
+      setThreadRoot(null);
+      setThreadParent(null);
+      resetEditor();
       navigation.goBack();
       return;
     } catch (err) {
-      if (controller.signal.aborted) {
-        setError(
-          'Upload cancelled. Your text and photos are still here; tap Post to try again.'
-        );
-      } else {
-        setError(
-          `${describeFailure(err, 'Could not publish this post.')} Your text and photos are safe here; tap Post to retry.`
+      const failure = controller.signal.aborted
+        ? 'Upload cancelled. Your text and photos are still here; tap Post to try again.'
+        : `${describeFailure(err, 'Could not publish this post.')} Your text and photos are safe here; tap Post to retry.`;
+      if (published > 0) {
+        const remaining = drafts.slice(published);
+        setThreadRoot(root);
+        setThreadParent(parent);
+        setPending(remaining.slice(0, -1));
+        loadDraft(remaining[remaining.length - 1]);
+        setEditingIndex(null);
+        setEditingOriginal(null);
+        setNotice(
+          `${published} of ${total} posts published. The remaining ${remaining.length} are still here and will continue the thread.`
         );
       }
+      setError(failure);
     } finally {
       uploadAbortRef.current = null;
       setSending(false);
       setUploadProgress(null);
+      setPostProgress(null);
     }
   }
 
@@ -440,6 +607,111 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         contentContainerStyle={{ padding: 8, paddingBottom: 28 }}
         keyboardShouldPersistTaps="handled"
       >
+        {pending.length > 0 || editingIndex !== null ? (
+          <View
+            style={[
+              styles.card,
+              { backgroundColor: p.card, borderColor: p.divider },
+              cardShadow,
+            ]}
+          >
+            <Text
+              accessibilityRole="header"
+              style={{ color: p.text, fontSize: 16, fontWeight: '700' }}
+            >
+              Thread · {pending.length + (editingIndex !== null ? 1 : 0)} posts
+            </Text>
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 18,
+                marginTop: 4,
+              }}
+            >
+              Posts publish in order as one conversation. Nothing is published
+              until you tap Post all.
+            </Text>
+            {pending.map((draft, index) => {
+              const position =
+                editingIndex !== null && index >= editingIndex ? index + 2 : index + 1;
+              return (
+                <View
+                  key={draft.key}
+                  style={[
+                    styles.queued,
+                    { backgroundColor: p.bg, borderColor: p.divider },
+                  ]}
+                >
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      style={{
+                        color: p.accent,
+                        fontSize: 11,
+                        fontWeight: '700',
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      Post {position}
+                    </Text>
+                    <Text
+                      numberOfLines={2}
+                      style={{ color: p.text, fontSize: 14, marginTop: 2 }}
+                    >
+                      {draft.text.trim() || 'No text'}
+                    </Text>
+                    <Text style={{ color: p.secondary, fontSize: 11, marginTop: 2 }}>
+                      {draft.images.length
+                        ? `${draft.images.length} photo${draft.images.length === 1 ? '' : 's'}`
+                        : draft.linkCard
+                          ? 'Link card'
+                          : draft.quote
+                            ? 'Quoted post'
+                            : 'Text only'}
+                    </Text>
+                  </View>
+                  <Pressable
+                    onPress={() => editPending(index)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Edit post ${position}`}
+                    style={({ pressed }) => [
+                      styles.queuedButton,
+                      { opacity: pressed ? 0.6 : 1 },
+                    ]}
+                  >
+                    <Ionicons name="create-outline" size={20} color={p.secondary} />
+                  </Pressable>
+                  <Pressable
+                    onPress={() => removePending(index)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Remove post ${position} from thread`}
+                    style={({ pressed }) => [
+                      styles.queuedButton,
+                      { opacity: pressed ? 0.6 : 1 },
+                    ]}
+                  >
+                    <Ionicons name="trash-outline" size={20} color={p.danger} />
+                  </Pressable>
+                </View>
+              );
+            })}
+            {editingIndex !== null ? (
+              <Pressable
+                onPress={cancelEdit}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel editing and restore this post"
+                style={({ pressed }) => [
+                  styles.textButton,
+                  { opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Text style={{ color: p.secondary, fontSize: 13 }}>
+                  Cancel editing post {editingIndex + 1}
+                </Text>
+              </Pressable>
+            ) : null}
+          </View>
+        ) : null}
         <View
           style={[
             styles.card,
@@ -480,6 +752,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           </View>
 
           <TextInput
+            ref={editorRef}
             autoFocus
             multiline
             editable={!sending}
@@ -578,7 +851,73 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
               onPress={() => void takePhoto()}
               disabled={!!mediaBusy || sending || images.length >= MAX_COMPOSER_IMAGES}
             />
+            <MediaButton
+              icon="link-outline"
+              label="Link card"
+              accessibilityLabel="Build a link card from the first web link in your post"
+              onPress={() => void addLinkCard()}
+              disabled={resolvingLink || sending || images.length > 0}
+            />
           </View>
+          {images.length > 0 ? (
+            <Text style={{ color: p.secondary, fontSize: 11, marginTop: 4 }}>
+              Link cards are unavailable while photos are attached.
+            </Text>
+          ) : null}
+
+          {linkCard ? (
+            <View
+              style={[
+                styles.quote,
+                { borderColor: p.divider, backgroundColor: p.bg },
+              ]}
+            >
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+                <View style={{ flex: 1, minWidth: 0 }}>
+                  <Text
+                    accessibilityRole="header"
+                    style={{
+                      color: p.secondary,
+                      fontSize: 11,
+                      fontWeight: '700',
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    Link card
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    style={{ color: p.secondary, fontSize: 12, marginTop: 4 }}
+                  >
+                    {linkCard.host}
+                  </Text>
+                  <Text
+                    numberOfLines={2}
+                    style={{
+                      color: p.text,
+                      fontSize: 14,
+                      fontWeight: '700',
+                      marginTop: 2,
+                    }}
+                  >
+                    {linkCard.title}
+                  </Text>
+                </View>
+                <Pressable
+                  onPress={() => setLinkCard(null)}
+                  accessibilityRole="button"
+                  accessibilityLabel="Remove link card"
+                  accessibilityHint="The link stays in your post text"
+                  style={({ pressed }) => [
+                    styles.removeLink,
+                    { backgroundColor: pressed ? p.divider : 'transparent' },
+                  ]}
+                >
+                  <Ionicons name="close" size={20} color={p.secondary} />
+                </Pressable>
+              </View>
+            </View>
+          ) : null}
 
           {quote ? (
             <View
@@ -673,9 +1012,15 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                   </Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => void send(true)}
+                  onPress={() =>
+                    void (altAction === 'add' ? addAnother(true) : send(true))
+                  }
                   accessibilityRole="button"
-                  accessibilityLabel="Post without alt text"
+                  accessibilityLabel={
+                    altAction === 'add'
+                      ? 'Add post without alt text'
+                      : 'Post without alt text'
+                  }
                   style={({ pressed }) => [
                     styles.promptButton,
                     {
@@ -686,7 +1031,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                   ]}
                 >
                   <Text style={{ color: p.text, fontSize: 13, fontWeight: '600' }}>
-                    Post anyway
+                    {altAction === 'add' ? 'Add anyway' : 'Post anyway'}
                   </Text>
                 </Pressable>
               </View>
@@ -730,6 +1075,33 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
             style={{ height: StyleSheet.hairlineWidth, backgroundColor: p.divider }}
           />
 
+          <Pressable
+            onPress={() => void addAnother(false)}
+            accessibilityRole="button"
+            accessibilityLabel={
+              editingIndex !== null
+                ? 'Add changes to thread'
+                : 'Add another post to this thread'
+            }
+            accessibilityHint="Queues this post; nothing is published until you tap Post all"
+            accessibilityState={{ disabled: blocked }}
+            disabled={blocked}
+            style={({ pressed }) => [
+              styles.addThread,
+              { backgroundColor: p.accentSoft, opacity: blocked || pressed ? 0.5 : 1 },
+            ]}
+          >
+            <Ionicons
+              name="add-circle-outline"
+              size={20}
+              color={p.accent}
+              style={{ marginRight: 8 }}
+            />
+            <Text style={{ color: p.accent, fontSize: 14, fontWeight: '700' }}>
+              {editingIndex !== null ? 'Add changes to thread' : 'Add another post'}
+            </Text>
+          </Pressable>
+
           <View style={styles.footer}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text
@@ -750,9 +1122,11 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                   style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}
                   numberOfLines={1}
                 >
-                  {uploadProgress
-                    ? `Uploading photo ${uploadProgress.current} of ${uploadProgress.total}…`
-                    : 'Publishing…'}
+                  {postProgress
+                    ? `Publishing post ${postProgress.current} of ${postProgress.total}…`
+                    : uploadProgress
+                      ? `Uploading photo ${uploadProgress.current} of ${uploadProgress.total}…`
+                      : 'Publishing…'}
                 </Text>
               ) : null}
             </View>
@@ -779,7 +1153,11 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                 onPress={() => void send(false)}
                 disabled={blocked}
                 accessibilityRole="button"
-                accessibilityLabel="Post"
+                accessibilityLabel={
+                  pending.length || editingIndex !== null
+                    ? `Post all ${pending.length + 1} posts as one thread`
+                    : 'Post'
+                }
                 accessibilityState={{ disabled: blocked, busy: sending }}
                 style={({ pressed }) => ({
                   backgroundColor: p.accent,
@@ -799,7 +1177,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                   <Text
                     style={{ color: p.onAccent, fontWeight: '700', fontSize: 15 }}
                   >
-                    Post
+                    {pending.length || editingIndex !== null ? 'Post all' : 'Post'}
                   </Text>
                 )}
               </Pressable>
@@ -1243,6 +1621,43 @@ const styles = StyleSheet.create({
     borderRadius: CARD_RADIUS,
     padding: 12,
     marginTop: 10,
+  },
+  removeLink: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 6,
+  },
+  queued: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: CARD_RADIUS,
+    padding: 10,
+    marginTop: 10,
+  },
+  queuedButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textButton: {
+    minHeight: 44,
+    alignItems: 'flex-start',
+    justifyContent: 'center',
+    marginTop: 4,
+  },
+  addThread: {
+    minHeight: 44,
+    borderRadius: CARD_RADIUS,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    marginBottom: 10,
   },
   warning: {
     borderWidth: 1,

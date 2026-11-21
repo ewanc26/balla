@@ -1,5 +1,6 @@
 import { Platform } from 'react-native';
 import { agent } from './agent';
+import { externalHost } from './embedModel';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -63,6 +64,7 @@ function makePost({
   repostCount,
   replyCount,
   viewerState = {},
+  embed,
 }: {
   uri: string;
   author: any;
@@ -72,6 +74,7 @@ function makePost({
   repostCount: number;
   replyCount: number;
   viewerState?: Record<string, any>;
+  embed?: any;
 }) {
   const indexedAt = minutesAgo(minutes);
   return {
@@ -84,6 +87,7 @@ function makePost({
       createdAt: indexedAt,
     },
     indexedAt,
+    ...(embed ? { embed } : {}),
     likeCount,
     repostCount,
     replyCount,
@@ -128,6 +132,37 @@ const posts = [
     },
     text:
       'Balla now has a web client at balla.croft.click/app. Same chronological Following feed, same private bookmarks, just a browser to read it in.',
+    embed: {
+      $type: 'app.bsky.embed.external#view',
+      external: {
+        uri: 'https://balla.croft.click/app',
+        title: 'Balla for the web',
+        description: 'The same chronological Following feed in a browser.',
+      },
+    },
+  }),
+  makePost({
+    uri: 'at://did:plc:mockmum/app.bsky.feed.post/4',
+    author: mum,
+    minutes: 300,
+    likeCount: 5,
+    repostCount: 0,
+    replyCount: 1,
+    text: 'This is the sort of find that makes the book fair worth the cold walk.',
+    embed: {
+      $type: 'app.bsky.embed.record#view',
+      record: {
+        $type: 'app.bsky.embed.record#viewRecord',
+        uri: 'at://did:plc:mockailsa/app.bsky.feed.post/quoted',
+        cid: 'bafy-quoted',
+        author: ailsa,
+        value: {
+          $type: 'app.bsky.feed.post',
+          text: 'A damaged family bible from the 1890s, and the loveliest handwritten inscription on the inside cover.',
+        },
+        indexedAt: minutesAgo(320),
+      },
+    },
   }),
 ];
 
@@ -459,6 +494,21 @@ export function installMockAgent() {
       createdAt: new Date().toISOString(),
     },
   });
+  mock.app.bsky.embed.getEmbedExternalView = async ({ url }: { url?: string }) => {
+    const uri = typeof url === 'string' ? url : '';
+    return {
+      data: {
+        view: {
+          $type: 'app.bsky.embed.external#view',
+          external: {
+            uri,
+            title: externalHost(uri),
+            description: 'Preview metadata for this link in the offline preview.',
+          },
+        },
+      },
+    };
+  };
   mock.app.bsky.graph.muteActor = async () => ({ data: {} });
   mock.app.bsky.graph.unmuteActor = async () => ({ data: {} });
 

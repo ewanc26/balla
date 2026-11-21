@@ -1,4 +1,5 @@
 import { countGraphemes } from 'unicode-segmenter/grapheme';
+import { normaliseWebUrl, type ExternalView } from './embedModel.ts';
 
 // The current official client accepts ten images. One to four use the legacy
 // app.bsky.embed.images shape; five to ten use app.bsky.embed.gallery.
@@ -8,6 +9,20 @@ export const MAX_ALT_TEXT = 2000;
 // The post image lexicon now permits 2 MB. Balla still re-encodes everything
 // to JPEG so the existing blob:image/jpeg scope remains sufficient.
 export const MAX_POST_IMAGE_BYTES = 2_000_000;
+
+export type StrongRef = { uri: string; cid: string };
+
+/**
+ * Every post after the first replies to the one before it, while `root`
+ * always points at the first post. Both refs are required by the lexicon.
+ */
+export function threadReply(
+  root: StrongRef | null,
+  parent: StrongRef | null
+): { reply: { root: StrongRef; parent: StrongRef } } | null {
+  if (!parent) return null;
+  return { reply: { root: root || parent, parent } };
+}
 
 export type ComposerAttachment = {
   alt: string;
@@ -40,12 +55,14 @@ export function canPublishPost({
   text,
   imageCount,
   hasQuote,
+  hasLink = false,
 }: {
   text: string;
   imageCount: number;
   hasQuote: boolean;
+  hasLink?: boolean;
 }): boolean {
-  return text.trim().length > 0 || imageCount > 0 || hasQuote;
+  return text.trim().length > 0 || imageCount > 0 || hasQuote || hasLink;
 }
 
 export function buildImageEmbed(images: ComposerAttachment[]): any {
@@ -80,11 +97,27 @@ export function buildImageEmbed(images: ComposerAttachment[]): any {
   };
 }
 
+function buildExternalEmbed(card: ExternalView | null): any {
+  if (!card || !normaliseWebUrl(card.uri)) return undefined;
+  return {
+    $type: 'app.bsky.embed.external',
+    external: {
+      uri: card.uri,
+      title: card.title,
+      description: card.description,
+      ...(card.thumb ? { thumb: card.thumb } : {}),
+    },
+  };
+}
+
 export function buildPostEmbed(
   images: ComposerAttachment[],
-  quote: QuoteRef | null
+  quote: QuoteRef | null,
+  external: ExternalView | null = null
 ): any {
-  const media = buildImageEmbed(images);
+  // One media embed per post. Photos win when both are present; the composer
+  // clears a link card when photos are added so this is never a silent choice.
+  const media = buildImageEmbed(images) || buildExternalEmbed(external);
   const record =
     quote && quote.uri && quote.cid
       ? {

@@ -67,7 +67,9 @@ product, not a claim that every account looks identical.
 
 The desktop rails appear at 1000px and the right rail at 1300px. The centre
 column is capped at 680px so line length stays readable. The bottom tab bar is
-hidden while the rails are visible.
+hidden while the rails are visible. The header does not repeat those
+destinations: the left rail owns them on desktop and the bottom tabs own them
+on mobile, so a screen never shows the same navigation twice.
 
 ## Mock preview
 

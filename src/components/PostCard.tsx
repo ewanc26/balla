@@ -17,10 +17,17 @@ import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { Avatar } from './Avatar';
 import { ImageViewer } from './ImageViewer';
 import { PostMenu } from './PostMenu';
-import { ContentWarning } from './ContentWarning';
 import { usePostModeration } from '../lib/moderationContext';
+import { ContentWarning } from './ContentWarning';
 import { translateText } from '../lib/translate';
 import { richTextSegments, type RichTextSegment } from '../lib/richtext';
+import {
+  QUOTE_UNAVAILABLE_COPY,
+  externalFromEmbed,
+  quoteFromEmbed,
+  type ExternalView,
+  type QuoteView,
+} from '../lib/embedModel';
 
 function formatCount(n: number): string {
   if (n < 1000) return String(n);
@@ -79,6 +86,8 @@ export function PostCard({
   const quotes = post ? post.quoteCount || 0 : 0;
   const hasEngagement = likes > 0 || reposts > 0 || quotes > 0;
   const imgs = extractImages(post);
+  const quote = quoteFromEmbed(post?.embed);
+  const linkCard = externalFromEmbed(post?.embed);
   // Roughly eight lines of the body at this width. Measuring the rendered
   // text avoids showing "See more" when the whole post already fits.
   const longPost =
@@ -463,6 +472,23 @@ export function PostCard({
               ) : (
                 <Images images={imgs} onOpen={setViewerIndex} />
               ))}
+
+              {quote ? (
+                <QuoteCard
+                  quote={quote}
+                  onOpenThread={() => {
+                    if (quote.kind !== 'record' || !quote.uri) return;
+                    if (onOpenThread) onOpenThread(quote.uri);
+                    else navigation.navigate('Thread', { uri: quote.uri });
+                  }}
+                  onOpenProfile={
+                    quote.kind === 'record' && quote.authorDid && onOpenProfile
+                      ? () => onOpenProfile(quote.authorDid)
+                      : undefined
+                  }
+                />
+              ) : null}
+              {linkCard ? <LinkCard card={linkCard} /> : null}
           </>
         )}
 
@@ -600,6 +626,174 @@ export function PostCard({
         translationBusy={translating}
       />
     </>
+  );
+}
+
+/** Quoted posts are read-only previews; their own thread is one tap away. */
+function QuoteCard({
+  quote,
+  onOpenThread,
+  onOpenProfile,
+}: {
+  quote: QuoteView;
+  onOpenThread: () => void;
+  onOpenProfile?: () => void;
+}) {
+  const p = usePalette();
+  const [quoteRevealed, setQuoteRevealed] = useState(false);
+  const record = quote.kind === 'record' ? quote : null;
+  const unavailable = quote.kind === 'unavailable' ? quote : null;
+  // A quoted post keeps its own labels; they must not be bypassed by reading
+  // it inside another person's post.
+  const quoteModeration = usePostModeration(
+    record
+      ? {
+          uri: record.uri,
+          cid: record.cid,
+          author: { did: record.authorDid, handle: record.authorHandle },
+          labels: record.labels,
+        }
+      : null
+  );
+  const quoteUi = quoteModeration?.ui('contentView');
+  return (
+    <View
+      style={[
+        styles.embedCard,
+        { backgroundColor: p.bg, borderColor: p.divider },
+      ]}
+    >
+      <Text
+        accessibilityRole="header"
+        style={{ color: p.secondary, fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}
+      >
+        Quoted post
+      </Text>
+      {record ? (
+        <>
+          <Pressable
+            onPress={onOpenProfile}
+            disabled={!onOpenProfile}
+            accessibilityRole="button"
+            accessibilityLabel={`Open ${record.authorName}'s profile`}
+            accessibilityState={{ disabled: !onOpenProfile }}
+            style={({ pressed }) => [
+              styles.quoteAuthor,
+              { opacity: pressed && onOpenProfile ? 0.65 : 1 },
+            ]}
+          >
+            <Avatar
+              avatar={record.authorAvatar}
+              displayName={record.authorName}
+              size={28}
+            />
+            <View style={{ flex: 1, marginLeft: 8, minWidth: 0 }}>
+              <Text
+                numberOfLines={1}
+                style={{ color: p.text, fontSize: 14, fontWeight: '700' }}
+              >
+                {record.authorName}
+              </Text>
+              <Text numberOfLines={1} style={{ color: p.secondary, fontSize: 12 }}>
+                @{record.authorHandle}
+              </Text>
+            </View>
+          </Pressable>
+          {quoteUi?.blur && !quoteRevealed ? (
+            <ContentWarning
+              compact
+              causes={quoteModeration?.labelCauses || []}
+              noOverride={quoteUi.noOverride}
+              onReveal={() => setQuoteRevealed(true)}
+            />
+          ) : (
+            <Pressable
+              onPress={onOpenThread}
+              accessibilityRole="button"
+              accessibilityLabel={`Open quoted post by ${record.authorName}`}
+              accessibilityHint="Opens the quoted post in its thread"
+              style={({ pressed }) => [{ marginTop: 8, opacity: pressed ? 0.65 : 1 }]}
+            >
+              {record.text ? (
+                <Text
+                  numberOfLines={6}
+                  style={{ color: p.text, fontSize: 14, lineHeight: 20 }}
+                >
+                  {record.text}
+                </Text>
+              ) : (
+                <Text style={{ color: p.secondary, fontSize: 13 }}>
+                  This quoted post has no text.
+                </Text>
+              )}
+            </Pressable>
+          )}
+        </>
+      ) : unavailable ? (
+        <Text
+          accessibilityRole="text"
+          style={{ color: p.secondary, fontSize: 13, lineHeight: 19, marginTop: 6 }}
+        >
+          {QUOTE_UNAVAILABLE_COPY[unavailable.reason]}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
+/** External cards show only the metadata Bluesky returned, never invented copy. */
+function LinkCard({ card }: { card: ExternalView }) {
+  const p = usePalette();
+  return (
+    <Pressable
+      onPress={() => void Linking.openURL(card.uri).catch(() => {})}
+      accessibilityRole="link"
+      accessibilityLabel={`Open ${card.title} on ${card.host}`}
+      accessibilityHint="Opens this link in your browser"
+      style={({ pressed }) => [
+        styles.embedCard,
+        {
+          backgroundColor: p.bg,
+          borderColor: p.divider,
+          opacity: pressed ? 0.65 : 1,
+        },
+      ]}
+    >
+      {card.thumb ? (
+        <Image
+          source={{ uri: card.thumb }}
+          style={{
+            width: '100%',
+            height: 140,
+            borderRadius: 8,
+            backgroundColor: p.divider,
+          }}
+          resizeMode="cover"
+          accessible
+          accessibilityLabel={`Preview image for ${card.title}`}
+        />
+      ) : null}
+      <Text
+        numberOfLines={1}
+        style={{ color: p.secondary, fontSize: 11, marginTop: card.thumb ? 8 : 0 }}
+      >
+        {card.host}
+      </Text>
+      <Text
+        numberOfLines={2}
+        style={{ color: p.text, fontSize: 15, fontWeight: '700', marginTop: 2 }}
+      >
+        {card.title}
+      </Text>
+      {card.description ? (
+        <Text
+          numberOfLines={3}
+          style={{ color: p.secondary, fontSize: 13, lineHeight: 18, marginTop: 2 }}
+        >
+          {card.description}
+        </Text>
+      ) : null}
+    </Pressable>
   );
 }
 
@@ -790,6 +984,18 @@ function ActionButton({
 }
 
 const styles = StyleSheet.create({
+  embedCard: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: CARD_RADIUS,
+    padding: 10,
+    marginTop: 12,
+  },
+  quoteAuthor: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+    marginTop: 6,
+  },
   card: {
     borderRadius: CARD_RADIUS,
     borderWidth: StyleSheet.hairlineWidth,
