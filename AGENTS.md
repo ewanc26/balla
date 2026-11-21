@@ -119,8 +119,10 @@ the device and keep Following chronological. Tapping any post image opens a full
 viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
 keep the text rather than eating it. The composer supports threads, photos with
-alt text, link cards, quotes, self-applied content warnings and up to three post
-languages per post. Tapping a notification opens the thread
+alt text, link cards, quotes, self-applied content warnings, up to three post
+languages per post, and reply and quote controls written to real threadgate and
+postgate records. An unfinished post is kept locally with a Restore/Discard
+prompt, and posts you authored have an Interaction settings screen. Tapping a notification opens the thread
 it belongs to (follows stay inert). Lists support creation and editing,
 membership, list feeds, subscribe/block states and profile links; list reports
 are not implemented yet. There are no DMs. Saved and pinned custom feeds have

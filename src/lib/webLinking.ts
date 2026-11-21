@@ -33,6 +33,7 @@ export const WEB_LINKING_CONFIG = {
       },
     },
     Thread: 'post/:uri',
+    InteractionSettings: 'post/:uri/interaction',
     UserProfile: 'profile/:actor',
     Compose: 'compose',
     Settings: 'settings',

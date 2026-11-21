@@ -215,7 +215,18 @@ const posts = [
       },
     },
   }),
+  makePost({
+    uri: 'at://did:plc:mockviewer/app.bsky.feed.post/own-1',
+    author: viewerProfile,
+    minutes: 90,
+    likeCount: 2,
+    repostCount: 0,
+    replyCount: 1,
+    text: 'A small post from your own account, so reply and quote settings can be checked in the preview.',
+  }),
 ];
+
+export const MOCK_OWN_POST_URI = posts[posts.length - 1].uri;
 
 const replyPost = makePost({
   uri: 'at://did:plc:mockailsa/app.bsky.feed.post/reply-1',
@@ -347,7 +358,46 @@ export function installMockAgent() {
     liveEventPreferences: { hiddenFeedIds: [], hideAllFeeds: false },
   });
   mock.getLabelDefinitions = async () => ({});
-  mock.getPostThread = async () => ({ data: { thread } });
+  const mockGateRecords = new Map<string, any>();
+  const gateKey = (collection: string, rkey: string) => `${collection}:${rkey}`;
+  mock.getPostThread = async ({ uri }: { uri?: string } = {}) => {
+    const requested = (uri || '').split('/').pop() || '1';
+    const post = posts.find((item) => item.uri === uri) || thread.post;
+    return {
+      data: {
+        thread: {
+          ...thread,
+          post,
+          threadgate: mockGateRecords.get(
+            gateKey('app.bsky.feed.threadgate', requested)
+          ),
+        },
+      },
+    };
+  };
+  mock.com.atproto.repo.getRecord = async ({
+    collection,
+    rkey,
+  }: {
+    collection?: string;
+    rkey?: string;
+  } = {}) => {
+    const value = mockGateRecords.get(gateKey(collection || '', rkey || ''));
+    if (!value) throw new Error('Record not found');
+    return { data: { uri: '', cid: '', value } };
+  };
+  mock.com.atproto.repo.putRecord = async ({
+    collection,
+    rkey,
+    record,
+  }: {
+    collection?: string;
+    rkey?: string;
+    record?: any;
+  } = {}) => {
+    mockGateRecords.set(gateKey(collection || '', rkey || ''), record);
+    return { data: { uri: '', cid: '' } };
+  };
   mock.getPosts = async ({ uris }: { uris?: string[] }) => ({
     data: {
       posts: (uris || [])

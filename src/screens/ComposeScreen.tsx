@@ -26,6 +26,12 @@ import {
   webCheckedProps,
 } from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
+import {
+  clearStoredDraft,
+  loadStoredDraft,
+  saveStoredDraft,
+} from '../lib/draftStorage';
+import { describeDraft, type StoredDraft } from '../lib/draftModel';
 import { firstWebUrl, type ExternalView } from '../lib/embedModel';
 import { resolveExternalLink } from '../lib/externalLink';
 import { Avatar } from '../components/Avatar';
@@ -52,12 +58,36 @@ import {
   normaliseLanguages,
   normaliseSelfLabels,
 } from '../lib/postOptions';
+import {
+  DEFAULT_INTERACTION_GATES,
+  describeGates,
+  gatesEqual,
+  normaliseGates,
+  postgateWrite,
+  threadgateWrite,
+  type InteractionGates,
+  type QuoteAccess,
+  type ReplyAccess,
+} from '../lib/interactionGates';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 
 // Bluesky caps posts at 300 graphemes; the counter is honest and always
 // visible rather than a colour shift you have to notice.
 const LIMIT = 300;
 const MAX_LONG_EDGE = 2048;
+
+const REPLY_OPTIONS: Array<{ value: ReplyAccess; label: string; detail: string }> = [
+  { value: 'everyone', label: 'Everyone', detail: 'Anyone on Bluesky can reply' },
+  { value: 'mentioned', label: 'Mentioned accounts', detail: 'Only people named in the post' },
+  { value: 'following', label: 'People you follow', detail: 'Anyone in your following list' },
+  { value: 'followers', label: 'People who follow you', detail: 'Anyone following your account' },
+  { value: 'nobody', label: 'Nobody', detail: 'Close replies on this post' },
+];
+
+const QUOTE_OPTIONS: Array<{ value: QuoteAccess; label: string; detail: string }> = [
+  { value: 'everyone', label: 'Anyone', detail: 'This post can be quoted' },
+  { value: 'nobody', label: 'Nobody', detail: 'Disable quotes of this post' },
+];
 
 type ComposerImage = {
   key: string;
@@ -78,6 +108,7 @@ type PendingPost = {
   linkCard: ExternalView | null;
   selfLabels: string[];
   languages: string[];
+  gates: InteractionGates;
 };
 
 let imageSequence = 0;
@@ -179,6 +210,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [linkCard, setLinkCard] = useState<ExternalView | null>(null);
   const [selfLabels, setSelfLabels] = useState<string[]>([]);
   const [languages, setLanguages] = useState<string[]>([]);
+  const [gates, setGates] = useState<InteractionGates>(DEFAULT_INTERACTION_GATES);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [resolvingLink, setResolvingLink] = useState(false);
   const [pending, setPending] = useState<PendingPost[]>([]);
@@ -187,7 +219,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [threadRoot, setThreadRoot] = useState<StrongRef | null>(null);
   const [threadParent, setThreadParent] = useState<StrongRef | null>(null);
   const [postProgress, setPostProgress] = useState<UploadProgress | null>(null);
+  const [publishedDone, setPublishedDone] = useState(false);
   const [altAction, setAltAction] = useState<'send' | 'add'>('send');
+  const [recoverDraft, setRecoverDraft] = useState<StoredDraft | null>(null);
+  const [draftChecked, setDraftChecked] = useState(false);
   const editorRef = useRef<any>(null);
 
   const uploadedRef = useRef<Map<string, unknown>>(new Map());
@@ -196,6 +231,35 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Create post' });
   }, [navigation]);
+
+  useEffect(() => {
+    let active = true;
+    void loadStoredDraft().then((draft) => {
+      if (!active) return;
+      if (draft) setRecoverDraft(draft);
+      setDraftChecked(true);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    // Save the unfinished post so it survives an app restart. Wait until the
+    // recovery prompt is resolved, or an empty editor would overwrite the very
+    // draft we are asking to restore. Photos and quotes are not persisted.
+    if (!draftChecked || recoverDraft || sending || publishedDone) return;
+    const timer = setTimeout(() => {
+      void saveStoredDraft({
+        text,
+        selfLabels: normaliseSelfLabels(selfLabels),
+        languages: normaliseLanguages(languages),
+        gates: normaliseGates(gates),
+        savedAt: new Date().toISOString(),
+      });
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [text, selfLabels, languages, gates, draftChecked, recoverDraft, sending, publishedDone]);
 
   useEffect(() => {
     return navigation.addListener('beforeRemove', (event: any) => {
@@ -418,6 +482,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       linkCard,
       selfLabels: normaliseSelfLabels(selfLabels),
       languages: normaliseLanguages(languages),
+      gates: normaliseGates(gates),
     };
   }
 
@@ -428,9 +493,28 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setLinkCard(null);
     setSelfLabels([]);
     setLanguages([]);
+    setGates(DEFAULT_INTERACTION_GATES);
     setEditingKey(null);
     setConfirmWithoutAlt(false);
     setNotice(null);
+  }
+
+  function recoverStoredDraft() {
+    if (!recoverDraft) return;
+    // Only the text and simple choices are saved. A quote passed in from
+    // another screen stays in place, and photos must be added again.
+    setText(recoverDraft.text);
+    setSelfLabels(normaliseSelfLabels(recoverDraft.selfLabels));
+    setLanguages(normaliseLanguages(recoverDraft.languages));
+    setGates(normaliseGates(recoverDraft.gates));
+    setRecoverDraft(null);
+    setNotice('Draft restored. Photos and quoted posts need adding again.');
+    editorRef.current?.focus();
+  }
+
+  function discardStoredDraft() {
+    void clearStoredDraft();
+    setRecoverDraft(null);
   }
 
   function loadDraft(draft: PendingPost) {
@@ -440,6 +524,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setLinkCard(draft.linkCard);
     setSelfLabels(normaliseSelfLabels(draft.selfLabels || []));
     setLanguages(normaliseLanguages(draft.languages || []));
+    setGates(normaliseGates(draft.gates));
     setEditingKey(null);
     editorRef.current?.focus();
   }
@@ -601,7 +686,39 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       setThreadRoot(null);
       setThreadParent(null);
       resetEditor();
-      navigation.goBack();
+      // The post is already live, so keep its local draft cleared even if a
+      // gate write fails. A retry here would publish the post a second time.
+      void clearStoredDraft();
+      setPublishedDone(true);
+
+      let gateFailed = false;
+      if (root) {
+        const rootGates = normaliseGates(drafts[0].gates);
+        const createdAt = new Date().toISOString();
+        const writes = [
+          threadgateWrite(root.uri, rootGates, createdAt),
+          postgateWrite(root.uri, rootGates, createdAt),
+        ];
+        for (const write of writes) {
+          if (!write) continue;
+          try {
+            await agent.com.atproto.repo.putRecord({
+              repo: agent.did!,
+              collection: write.collection,
+              rkey: write.rkey,
+              record: write.record,
+              validate: true,
+            });
+          } catch (err) {
+            gateFailed = true;
+            setError(
+              `${describeFailure(err, 'Could not write the interaction record.')} Your post is published; you can change who can reply and quote from its options.`
+            );
+            break;
+          }
+        }
+      }
+      if (!gateFailed) navigation.goBack();
       return;
     } catch (err) {
       const failure = controller.signal.aborted
@@ -700,7 +817,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                             ? 'Quoted post'
                             : 'Text only'}
                     </Text>
-                    {draft.selfLabels?.length || draft.languages?.length ? (
+                    {draft.selfLabels?.length ||
+                    draft.languages?.length ||
+                    (draft.gates && !gatesEqual(draft.gates, DEFAULT_INTERACTION_GATES)) ? (
                       <Text style={{ color: p.accent, fontSize: 11, marginTop: 2 }}>
                         {[
                           draft.selfLabels?.length
@@ -708,6 +827,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                             : null,
                           draft.languages?.length
                             ? languageSummary(draft.languages)
+                            : null,
+                          draft.gates && !gatesEqual(draft.gates, DEFAULT_INTERACTION_GATES)
+                            ? describeGates(draft.gates)
                             : null,
                         ]
                           .filter(Boolean)
@@ -920,8 +1042,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
               onPress={() => setOptionsOpen(true)}
               disabled={sending}
               accessibilityRole="button"
-              accessibilityLabel="Content warning and language options"
-              accessibilityHint="Opens options to label this post and choose its language"
+              accessibilityLabel="Content warning and post options"
+              accessibilityHint="Opens options for content warnings, languages, replies and quotes"
               accessibilityState={{ disabled: sending }}
               style={({ pressed }) => [
                 styles.optionsButton,
@@ -959,8 +1081,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
               onPress={() => setOptionsOpen(true)}
               disabled={sending}
               accessibilityRole="button"
-              accessibilityLabel="Post language options"
-              accessibilityHint="Opens options to choose the languages used in this post"
+              accessibilityLabel="Language and interaction options"
+              accessibilityHint="Opens options for languages, replies and quotes"
               accessibilityState={{ disabled: sending }}
               style={({ pressed }) => [
                 styles.optionsButton,
@@ -1193,6 +1315,27 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
             </View>
           ) : null}
 
+          {publishedDone ? (
+            <Pressable
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Done after publishing"
+              style={({ pressed }) => [
+                styles.sheetButton,
+                {
+                  backgroundColor: p.accent,
+                  borderColor: p.accent,
+                  marginTop: 10,
+                  opacity: pressed ? 0.8 : 1,
+                },
+              ]}
+            >
+              <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: 14 }}>
+                Done
+              </Text>
+            </Pressable>
+          ) : null}
+
           {notice ? (
             <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18 }}>
               {notice}
@@ -1328,12 +1471,155 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         <PostOptionsSheet
           selfLabels={selfLabels}
           languages={languages}
+          gates={gates}
           onChangeSelfLabels={setSelfLabels}
           onChangeLanguages={setLanguages}
+          onChangeGates={setGates}
           onClose={() => setOptionsOpen(false)}
         />
       ) : null}
+
+      {recoverDraft ? (
+        <DraftRecoverySheet
+          draft={recoverDraft}
+          onRecover={recoverStoredDraft}
+          onDiscard={discardStoredDraft}
+        />
+      ) : null}
     </KeyboardAvoidingView>
+  );
+}
+
+function DraftRecoverySheet({
+  draft,
+  onRecover,
+  onDiscard,
+}: {
+  draft: StoredDraft;
+  onRecover: () => void;
+  onDiscard: () => void;
+}) {
+  const p = usePalette();
+  const insets = useSafeAreaInsets();
+  const containerRef = useRef<any>(null);
+  const recoverRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible: true,
+    onClose: onDiscard,
+    containerRef,
+    initialFocusRef: recoverRef,
+  });
+  const preview = describeDraft(draft);
+
+  return (
+    <Modal
+      transparent
+      visible
+      animationType={sheetAnimation(reducedMotion)}
+      statusBarTranslucent
+      navigationBarTranslucent
+      onRequestClose={onDiscard}
+      accessibilityViewIsModal
+    >
+      <KeyboardAvoidingView
+        style={styles.modalRoot}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <Pressable
+          onPress={onDiscard}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          style={styles.backdrop}
+        />
+        <View
+          ref={containerRef}
+          {...dialogAccessibilityProps('Restore draft')}
+          accessibilityViewIsModal
+          style={[
+            styles.sheet,
+            {
+              backgroundColor: p.card,
+              paddingBottom: Math.max(insets.bottom, 16),
+            },
+          ]}
+        >
+          <View style={styles.sheetHeader}>
+            <Text
+              accessibilityRole="header"
+              style={{ color: p.text, fontSize: 18, fontWeight: '700' }}
+            >
+              Restore your last post?
+            </Text>
+            <Ionicons name="create-outline" size={20} color={p.accent} />
+          </View>
+          <Text
+            style={{
+              color: p.secondary,
+              fontSize: 14,
+              lineHeight: 20,
+              marginBottom: 10,
+            }}
+          >
+            Balla kept an unfinished post on this device. Restoring brings back
+            the text, content warnings, languages and interaction settings.
+            Photos and quoted posts are not stored; add them again if you need
+            them.
+          </Text>
+          {preview ? (
+            <View
+              style={[
+                styles.draftPreview,
+                { backgroundColor: p.bg, borderColor: p.divider },
+              ]}
+            >
+              <Text
+                accessibilityLabel={`Saved draft preview: ${preview}`}
+                numberOfLines={3}
+                style={{ color: p.text, fontSize: 14, lineHeight: 20 }}
+              >
+                {preview}
+              </Text>
+            </View>
+          ) : null}
+          <Pressable
+            ref={recoverRef}
+            onPress={onRecover}
+            accessibilityRole="button"
+            accessibilityLabel="Restore this draft"
+            style={({ pressed }) => [
+              styles.sheetButton,
+              {
+                backgroundColor: p.accent,
+                borderColor: p.accent,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: 14 }}>
+              Restore draft
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={onDiscard}
+            accessibilityRole="button"
+            accessibilityLabel="Discard saved draft"
+            style={({ pressed }) => [
+              styles.sheetButton,
+              {
+                backgroundColor: p.bg,
+                borderColor: p.divider,
+                opacity: pressed ? 0.8 : 1,
+              },
+            ]}
+          >
+            <Text style={{ color: p.text, fontWeight: '600', fontSize: 14 }}>
+              Discard and start fresh
+            </Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
@@ -1674,17 +1960,60 @@ function AltTextSheet({
   );
 }
 
+function GateChoiceRow({
+  label,
+  detail,
+  selected,
+  onPress,
+}: {
+  label: string;
+  detail: string;
+  selected: boolean;
+  onPress: () => void;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="radio"
+      accessibilityLabel={`${label}. ${detail}`}
+      accessibilityState={{ selected }}
+      style={({ pressed }) => [
+        styles.optionRow,
+        {
+          borderBottomColor: p.divider,
+          opacity: pressed ? 0.7 : 1,
+        },
+      ]}
+    >
+      <Ionicons
+        name={selected ? 'radio-button-on' : 'radio-button-off'}
+        size={20}
+        color={selected ? p.accent : p.secondary}
+      />
+      <View style={{ flex: 1, minWidth: 0, marginLeft: 10 }}>
+        <Text style={{ color: p.text, fontSize: 14, fontWeight: '600' }}>{label}</Text>
+        <Text style={{ color: p.secondary, fontSize: 12, marginTop: 1 }}>{detail}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
 function PostOptionsSheet({
   selfLabels,
   languages,
+  gates,
   onChangeSelfLabels,
   onChangeLanguages,
+  onChangeGates,
   onClose,
 }: {
   selfLabels: string[];
   languages: string[];
+  gates: InteractionGates;
   onChangeSelfLabels: (values: string[]) => void;
   onChangeLanguages: (codes: string[]) => void;
+  onChangeGates: (gates: InteractionGates) => void;
   onClose: () => void;
 }) {
   const p = usePalette();
@@ -1843,6 +2172,74 @@ function PostOptionsSheet({
                 </Pressable>
               );
             })}
+
+            <View
+              style={[
+                styles.optionsDivider,
+                { backgroundColor: p.divider, marginVertical: 14 },
+              ]}
+            />
+
+            <Text
+              accessibilityRole="header"
+              style={{ color: p.text, fontSize: 15, fontWeight: '700' }}
+            >
+              Who can reply
+            </Text>
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 17,
+                marginTop: 2,
+                marginBottom: 8,
+              }}
+            >
+              Written to a Bluesky reply gate after the post is published. Choose Everyone to leave replies open.
+            </Text>
+            {REPLY_OPTIONS.map((option) => (
+              <GateChoiceRow
+                key={option.value}
+                label={option.label}
+                detail={option.detail}
+                selected={gates.reply === option.value}
+                onPress={() => onChangeGates({ ...gates, reply: option.value })}
+              />
+            ))}
+
+            <View
+              style={[
+                styles.optionsDivider,
+                { backgroundColor: p.divider, marginVertical: 14 },
+              ]}
+            />
+
+            <Text
+              accessibilityRole="header"
+              style={{ color: p.text, fontSize: 15, fontWeight: '700' }}
+            >
+              Quotes
+            </Text>
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 12,
+                lineHeight: 17,
+                marginTop: 2,
+                marginBottom: 8,
+              }}
+            >
+              Disabling quotes writes a Bluesky post gate after publishing. Existing quotes stay where they are.
+            </Text>
+            {QUOTE_OPTIONS.map((option) => (
+              <GateChoiceRow
+                key={option.value}
+                label={option.label}
+                detail={option.detail}
+                selected={gates.quote === option.value}
+                onPress={() => onChangeGates({ ...gates, quote: option.value })}
+              />
+            ))}
 
             <View
               style={[
@@ -2204,6 +2601,13 @@ const styles = StyleSheet.create({
     height: 170,
     borderRadius: CARD_RADIUS,
     marginTop: 4,
+  },
+  draftPreview: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 12,
   },
   altInput: {
     minHeight: 112,
