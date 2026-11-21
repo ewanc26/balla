@@ -36,7 +36,6 @@
 
     <main id="main" class="wrap">
       <section class="page-hero">
-        <p class="section-kicker">Features and roadmap</p>
         <h1>What works.<br /><em>What’s next.</em></h1>
         <p>
           Balla is in development. This page describes the code that exists today and the work
@@ -52,40 +51,40 @@
       <section class="feature-group" id="today">
         <div class="feature-group__head">
           <div>
-            <p class="section-kicker"><span class="pill pill--green">Shipped</span></p>
+            <span class="pill pill--green">Shipped</span>
             <h2>Here today</h2>
           </div>
-          <p>Read, write, search and moderate on any AT Protocol service host. The Following feed stays chronological; everything else is an explicit destination.</p>
+          <p>Read, write, search and moderate through AT Protocol services that expose the relevant lexicons. The Following feed stays chronological; everything else is an explicit destination.</p>
         </div>
-        <ul class="check-list">
-          <li><span><strong>AT Protocol OAuth</strong><small>Sign in with a handle, DID or PDS URL. No password field, DPoP-bound tokens.</small></span></li>
-          <li><span><strong>Chronological Following</strong><small>Newest first, paginated, pull-to-refresh. No ranking or injected posts.</small></span></li>
-          <li><span><strong>Threads and replies</strong><small>Ancestor chains, capped nested branches and a reply composer with correct roots. Every view is labelled as a thread, and each post says whether it is earlier in the conversation, the one you opened, or a reply.</small></span></li>
-          <li><span><strong>Profiles</strong><small>Posts, followers, following, known followers and per-post engagement lists, plus verification badges, label warnings, pinned posts and authored lists, feeds and starter packs.</small></span></li>
-          <li><span><strong>Profile editing</strong><small>Name, bio, pronouns, links, avatar and banner.</small></span></li>
-          <li><span><strong>Search</strong><small>Top, Latest, People, Feeds and Starter Packs, with filters, local history and account-scoped post search from any profile.</small></span></li>
-          <li><span><strong>Notifications</strong><small>Tabs, grouped activity, seen state, unread count and per-category preferences.</small></span></li>
-          <li><span><strong>Private bookmarks</strong><small>Bluesky saved posts, removable in place from the Saved tab.</small></span></li>
-          <li><span><strong>Photo posts</strong><small>Up to ten images, per-image alt text, compression, retries and a full-screen viewer.</small></span></li>
-          <li><span><strong>Video and GIF posts</strong><small>MP4 and animated GIF uploads with visible processing states, cancellable waits, optional WebVTT captions and Bluesky's muted GIF presentation in the feed.</small></span></li>
-          <li><span><strong>Post options</strong><small>Content warnings from Bluesky's self-label vocabulary, up to three post languages, and reply and quote controls written to real threadgate and postgate records. Edit interaction settings on any post you authored.</small></span></li>
-          <li><span><strong>Local drafts</strong><small>An unfinished post is kept on your device. Reopen the composer to restore or discard it; photos, videos and quoted posts need adding again.</small></span></li>
-          <li><span><strong>Custom feeds</strong><small>Discover, save, pin and reorder generators. Switch feed on Home puts Following first and any saved feed one tap away.</small></span></li>
-          <li><span><strong>Lists</strong><small>Create and edit curation and moderation lists, manage members, read list feeds, subscribe or block.</small></span></li>
-          <li><span><strong>Moderation</strong><small>Report posts, accounts and lists; block and mute; label warnings before content; labeler filters, muted words and an inbox for reports and appeals. Sent reports leave a local-only receipt on your device (<a href="https://github.com/ewanc26/balla/issues/51">issue #51 ↗</a>).</small></span></li>
-          <li><span><strong>Post actions</strong><small>Copy link, copy text, share sheet, translate with a show-original toggle, and delete your own posts.</small></span></li>
-          <li><span><strong>Appearance</strong><small>Four researched Facebook-era presets, nine accents, system light and dark.</small></span></li>
-          <li><span><strong>Account guidance</strong><small>Export, deactivation and deletion routes that link to your PDS controls.</small></span></li>
-          <li><span><strong>Web client</strong><small>Available at /app with popup OAuth that returns to the same tab. Every screen has its own address under /app, so threads and profiles can be linked and browser back works.</small></span></li>
-          <li><span><strong>Reliability and truthful failures</strong><small>Bounded retries on reads, Retry-After waits, rollback on failed likes, reposts and saves, and visible errors for posts, replies, deletes and reports (<a href="https://github.com/ewanc26/balla/issues/34">issue #34 ↗</a>).</small></span></li>
-          <li><span><strong>Accessibility pass</strong><small>Labelled actions and dialogs, trapped focus and visible keyboard rings, text that scales without clipping, reduced motion, and 44pt controls with no gesture-only actions (<a href="https://github.com/ewanc26/balla/issues/35">issue #35 ↗</a>).</small></span></li>
-        </ul>
+        <dl class="fact-list">
+          <div class="fact-row"><dt>AT Protocol OAuth</dt><dd>Sign in with a handle, DID or PDS URL. No password field, DPoP-bound tokens.</dd></div>
+          <div class="fact-row"><dt>Chronological Following</dt><dd>Newest first, paginated, pull-to-refresh. No ranking or injected posts.</dd></div>
+          <div class="fact-row"><dt>Threads and replies</dt><dd>Ancestor chains, capped nested branches and a reply composer with correct roots. Every view is labelled as a thread, and each post says whether it is earlier in the conversation, the one you opened, or a reply.</dd></div>
+          <div class="fact-row"><dt>Profiles</dt><dd>Posts, followers, following, known followers and per-post engagement lists, plus verification badges, label warnings, pinned posts and authored lists, feeds and starter packs.</dd></div>
+          <div class="fact-row"><dt>Profile editing</dt><dd>Name, bio, pronouns, links, avatar and banner.</dd></div>
+          <div class="fact-row"><dt>Search</dt><dd>Top, Latest, People, Feeds and Starter Packs, with filters, local history and account-scoped post search from any profile.</dd></div>
+          <div class="fact-row"><dt>Notifications</dt><dd>Tabs, grouped activity, seen state, unread count and per-category preferences.</dd></div>
+          <div class="fact-row"><dt>Private bookmarks</dt><dd>Bluesky saved posts, removable in place from the Saved tab.</dd></div>
+          <div class="fact-row"><dt>Photo posts</dt><dd>Up to ten images, per-image alt text, compression, retries and a full-screen viewer.</dd></div>
+          <div class="fact-row"><dt>Video and GIF posts</dt><dd>MP4 and animated GIF uploads with visible processing states, cancellable waits, optional WebVTT captions and Bluesky's muted GIF presentation in the feed.</dd></div>
+          <div class="fact-row"><dt>Post options</dt><dd>Content warnings from Bluesky's self-label vocabulary, up to three post languages, and reply and quote controls written to real threadgate and postgate records. Edit interaction settings on any post you authored.</dd></div>
+          <div class="fact-row"><dt>Local drafts</dt><dd>An unfinished post is kept on your device. Reopen the composer to restore or discard it; photos, videos and quoted posts need adding again.</dd></div>
+          <div class="fact-row"><dt>Custom feeds</dt><dd>Discover, save, pin and reorder generators. Switch feed on Home puts Following first and any saved feed one tap away.</dd></div>
+          <div class="fact-row"><dt>Lists</dt><dd>Create and edit curation and moderation lists, manage members, read list feeds, subscribe or block.</dd></div>
+          <div class="fact-row"><dt>Moderation</dt><dd>Report posts, accounts and lists; block and mute; label warnings before content; labeler filters, muted words and an inbox for reports and appeals. Sent reports leave a local-only receipt on your device (<a href="https://github.com/ewanc26/balla/issues/51">issue #51 ↗</a>).</dd></div>
+          <div class="fact-row"><dt>Post actions</dt><dd>Copy link, copy text, share sheet, translate with a show-original toggle, and delete your own posts.</dd></div>
+          <div class="fact-row"><dt>Appearance</dt><dd>Four Facebook-era presets, nine accents, system light and dark.</dd></div>
+          <div class="fact-row"><dt>Account guidance</dt><dd>Export, deactivation and deletion routes that link to your PDS controls.</dd></div>
+          <div class="fact-row"><dt>Web client</dt><dd>Available at /app with popup OAuth that returns to the same tab. Every screen has its own address under /app, so threads and profiles can be linked and browser back works.</dd></div>
+          <div class="fact-row"><dt>Reliability and truthful failures</dt><dd>Bounded retries on reads, Retry-After waits, rollback on failed likes, reposts and saves, and visible errors for posts, replies, deletes and reports (<a href="https://github.com/ewanc26/balla/issues/34">issue #34 ↗</a>).</dd></div>
+          <div class="fact-row"><dt>Accessibility pass</dt><dd>Labelled actions and dialogs, trapped focus and visible keyboard rings, text that scales without clipping, reduced motion, and 44pt controls with no gesture-only actions (<a href="https://github.com/ewanc26/balla/issues/35">issue #35 ↗</a>).</dd></div>
+        </dl>
       </section>
 
       <section class="feature-group" id="next">
         <div class="feature-group__head">
           <div>
-            <p class="section-kicker"><span class="pill pill--amber">Open work</span></p>
+            <span class="pill pill--amber">Open work</span>
             <h2>On the way</h2>
           </div>
           <p>Each row links to the public issue where the work is tracked. Priority follows user safety and reliability before depth.</p>
@@ -142,21 +141,28 @@
       <section class="feature-group" id="principles">
         <div class="feature-group__head">
           <div>
-            <p class="section-kicker">How we decide</p>
             <h2>What never ships</h2>
           </div>
           <p>These are product rules, not preferences. They are why some popular features will not appear in Balla.</p>
         </div>
-        <div class="decision-grid">
-          <div class="decision"><h3>Chronological or nothing</h3><p>Ranking, suggestions and inserted content belong in another app. Following stays newest first.</p></div>
-          <div class="decision"><h3>Visible buttons only</h3><p>No swipe-only or long-press-only actions. Every control is tappable, labelled and at least 44pt.</p></div>
-          <div class="decision"><h3>Protocol truth</h3><p>Shapes follow the app.bsky lexicons, not one convenient response. Claims describe the code.</p></div>
+        <div class="feature-list">
+          <article class="feature-row">
+            <h3>Chronological or nothing</h3>
+            <p>Ranking, suggestions and inserted content belong in another app. Following stays newest first.</p>
+          </article>
+          <article class="feature-row">
+            <h3>Visible buttons only</h3>
+            <p>No swipe-only or long-press-only actions. Every control is tappable, labelled and at least 44pt.</p>
+          </article>
+          <article class="feature-row">
+            <h3>Protocol truth</h3>
+            <p>Shapes follow the app.bsky lexicons, not one convenient response. Claims describe the code.</p>
+          </article>
         </div>
       </section>
 
       <section class="refusals wrap" style="margin-inline: 0;">
         <div class="refusal-copy">
-          <p class="section-kicker">The line we hold</p>
           <h2>A wall, not a <em>feed machine.</em></h2>
         </div>
         <ul class="refusal-list">
@@ -172,7 +178,6 @@
       <div>
         <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
         <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta. Facebook-era styling is a design reference, not a claim.</p>
-        <span class="footer-status">Web client live</span>
       </div>
       <div class="footer-links">
         <a href="/">Home</a>

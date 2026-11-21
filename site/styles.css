@@ -139,7 +139,7 @@ img { display: block; }
 
 /* Shared type */
 
-.eyebrow, .section-kicker {
+.section-kicker {
   margin: 0 0 0.9rem;
   color: var(--blue-ink);
   font-size: 0.74rem;
@@ -214,7 +214,6 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   align-items: center;
   padding: 4.5rem 0 4rem;
 }
-.hero .eyebrow { margin-bottom: 1.3rem; }
 .wall-preview {
   position: relative;
   padding: 1rem;
@@ -224,8 +223,6 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   box-shadow: var(--shadow-lg);
   transform: rotate(1.6deg);
 }
-.preview-bar { display: flex; gap: 0.35rem; padding: 0.15rem 0 0.8rem; }
-.preview-bar span { width: 0.45rem; height: 0.45rem; border-radius: 50%; background: var(--line); }
 .preview-card {
   background: var(--card);
   border: 1px solid var(--line);
@@ -261,39 +258,22 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   font-weight: 700;
 }
 
-/* Principle strip */
-
-.principles {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
-  padding: 1.4rem 0 4rem;
-}
-.principle {
-  padding: 0.9rem 1rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--card);
-}
-.principle strong { display: block; font-size: 0.88rem; }
-.principle span { display: block; color: var(--muted); font-size: 0.78rem; line-height: 1.45; margin-top: 0.2rem; }
-
 /* Sections */
 
 .manifesto { padding: 4.5rem 0; border-top: 1px solid var(--line); }
 .manifesto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; }
 .manifesto-grid p { color: var(--muted); font-size: 1rem; line-height: 1.75; }
 .features { padding: 4.5rem 0; }
-.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
-.feature-card {
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  padding: 1.5rem;
-  box-shadow: var(--shadow);
+/* A vertical list, matching the wall instead of a SaaS feature grid. */
+.feature-list { display: grid; gap: 1.9rem; }
+.feature-row {
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.75fr) 1.25fr;
+  gap: 2rem;
+  align-items: start;
 }
-.feature-card h3 { font-size: 1.08rem; margin-bottom: 0.5rem; }
-.feature-card p { color: var(--muted); font-size: 0.92rem; line-height: 1.6; margin-bottom: 0; }
+.feature-row h3 { font-size: 1.05rem; margin: 0; }
+.feature-row p { color: var(--muted); font-size: 0.94rem; line-height: 1.65; margin: 0; }
 
 /* Roadmap teaser */
 
@@ -309,17 +289,23 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   box-shadow: var(--shadow);
 }
 .roadmap-teaser h2 { font-size: clamp(1.8rem, 3vw, 2.6rem); }
-.roadmap-columns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.8rem; }
-.roadmap-column {
-  padding: 1rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--soft);
+.roadmap-list { display: grid; gap: 1.8rem; }
+.roadmap-status {
+  display: grid;
+  grid-template-columns: 8rem 1fr;
+  gap: 1.5rem;
+  align-items: start;
 }
-.roadmap-column h3 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.8rem; }
-.roadmap-column ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.45rem; }
-.roadmap-column li { font-size: 0.85rem; font-weight: 600; }
-.roadmap-column li::before { content: "—"; color: var(--blue-ink); margin-right: 0.4rem; }
+.roadmap-status h3 { font-size: 0.95rem; margin: 0; }
+.roadmap-status ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem 1.5rem;
+}
+.roadmap-status li { font-size: 0.85rem; font-weight: 600; }
 
 /* Refusals */
 
@@ -339,7 +325,6 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   background: var(--panel-bg);
   color: var(--panel-text);
 }
-.refusals .section-kicker { color: var(--panel-accent); }
 .refusals h2 { color: var(--panel-text); }
 .refusals h2 em { color: var(--panel-accent); }
 .refusal-list { list-style: none; padding: 0; margin: 0; align-self: center; }
@@ -384,21 +369,18 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
 .page-hero p { color: var(--muted); font-size: 1.1rem; line-height: 1.7; }
 .feature-group { padding: 2.5rem 0; border-top: 1px solid var(--line); }
 .feature-group__head { display: flex; align-items: end; justify-content: space-between; gap: 2rem; margin-bottom: 1.6rem; }
-.feature-group__head h2 { font-size: clamp(1.7rem, 3vw, 2.4rem); margin-bottom: 0; }
+.feature-group__head h2 { font-size: clamp(1.7rem, 3vw, 2.4rem); margin: 0.7rem 0 0; }
 .feature-group__head p { color: var(--muted); max-width: 32rem; margin-bottom: 0; }
-.check-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.7rem; }
-.check-list li {
-  display: flex;
-  gap: 0.75rem;
-  padding: 0.9rem 1rem;
-  background: var(--card);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  font-size: 0.92rem;
+.fact-list { display: grid; gap: 1.4rem; margin: 0; }
+.fact-row {
+  display: grid;
+  grid-template-columns: 12rem 1fr;
+  gap: 2rem;
+  align-items: start;
 }
-.check-list li::before { content: "✓"; color: var(--green-ink); font-weight: 800; }
-.check-list li a { display: inline-flex; align-items: center; min-height: 44px; }
-.check-list li small { display: block; color: var(--muted); font-size: 0.8rem; margin-top: 0.15rem; }
+.fact-row dt { font-size: 0.94rem; font-weight: 700; }
+.fact-row dd { margin: 0; color: var(--muted); font-size: 0.9rem; line-height: 1.6; }
+.fact-row a { display: inline-flex; align-items: center; min-height: 44px; }
 .roadmap-table { display: grid; gap: 0.6rem; }
 .roadmap-row {
   display: grid;
@@ -423,16 +405,6 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   white-space: nowrap;
 }
 .roadmap-row a:hover { text-decoration: underline; }
-.decision-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.5rem 0 4rem; }
-.decision {
-  padding: 1.3rem;
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  background: var(--soft);
-}
-.decision h3 { font-size: 1rem; margin-bottom: 0.4rem; }
-.decision p { margin: 0; color: var(--muted); font-size: 0.88rem; }
-
 /* Footer */
 
 .site-footer {
@@ -450,7 +422,6 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
 .footer-links { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; }
 .footer-links a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; text-decoration: none; }
 .footer-links a:hover { color: var(--text); text-decoration: underline; }
-.footer-status { display: block; margin-top: 0.8rem; color: var(--green-ink); font-weight: 700; }
 
 /* Legal pages */
 
@@ -481,8 +452,6 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   .hero, .manifesto-grid, .protocol, .refusals { grid-template-columns: 1fr; gap: 2.2rem; }
   .hero { padding: 3rem 0 3rem; }
   .wall-preview { transform: none; max-width: 34rem; }
-  .principles { grid-template-columns: repeat(2, 1fr); }
-  .feature-grid, .decision-grid { grid-template-columns: repeat(2, 1fr); }
   .roadmap-teaser { grid-template-columns: 1fr; padding: 1.6rem; }
   .site-footer { grid-template-columns: 1fr 1fr; }
 }
@@ -554,12 +523,12 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   .site-header nav .nav-cta { justify-content: center; margin-top: 0.25rem; }
 
   h1 { font-size: clamp(3rem, 15vw, 4.5rem); }
-  .principles, .feature-grid, .check-list, .decision-grid, .roadmap-columns { grid-template-columns: 1fr; }
+  .feature-row, .fact-row, .roadmap-status, .roadmap-status ul { grid-template-columns: 1fr; }
   .feature-group__head { display: block; }
   .roadmap-teaser { gap: 1.5rem; }
   .refusals { gap: 1.5rem; padding: 1.6rem; margin: 3rem auto; }
   .roadmap-row { grid-template-columns: 1fr; gap: 0.4rem; }
-  .roadmap-row a, .protocol-links a, .footer-links a, .check-list li a { min-width: 44px; }
+  .roadmap-row a, .protocol-links a, .footer-links a, .fact-row a { min-width: 44px; }
   .site-footer { grid-template-columns: 1fr; gap: 0.8rem; }
   .actions { align-items: flex-start; flex-direction: column; }
   .actions .button, .actions .button--ghost { width: 100%; }
