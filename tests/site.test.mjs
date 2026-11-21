@@ -50,3 +50,48 @@ test('the shared stylesheet handles reduced motion and focus', () => {
   assert.match(css, /:focus-visible/);
   assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
 });
+
+function luminance(hex) {
+  const channels = hex.replace('#', '').match(/../g).map((part) => {
+    const value = parseInt(part, 16) / 255;
+    return value <= 0.03928 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * channels[0] + 0.7152 * channels[1] + 0.0722 * channels[2];
+}
+
+function contrast(foreground, background) {
+  const [lighter, darker] = [luminance(foreground), luminance(background)].sort((a, b) => b - a);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function tokens(block) {
+  return Object.fromEntries(
+    [...block.matchAll(/(--[\w-]+):\s*(#[0-9a-f]{6});/g)].map((match) => [match[1], match[2]]),
+  );
+}
+
+test('text meets WCAG AA contrast in both colour schemes', () => {
+  const css = readFileSync(join(new URL('site/', root).pathname, 'styles.css'), 'utf8');
+  const darkStart = css.indexOf('@media (prefers-color-scheme: dark)');
+  const light = tokens(css.slice(0, darkStart));
+  const dark = { ...light, ...tokens(css.slice(darkStart)) };
+
+  for (const [name, theme] of [['light', light], ['dark', dark]]) {
+    const pairs = [
+      ['body text', theme['--text'], theme['--bg']],
+      ['muted text', theme['--muted'], theme['--bg']],
+      ['links', theme['--blue-ink'], theme['--bg']],
+      ['soft badges', theme['--blue-ink'], theme['--blue-soft']],
+      ['success badges', theme['--green-ink'], theme['--green-soft']],
+      ['warning badges', theme['--amber-ink'], theme['--amber-soft']],
+      ['white buttons', '#ffffff', theme['--blue-deep']],
+      ['panel text', '#f5f6f8', '#101114'],
+      ['panel accent', '#8bb9ff', '#101114'],
+      ['panel success', '#9be6ab', '#101114'],
+    ];
+    for (const [label, foreground, background] of pairs) {
+      const ratio = contrast(foreground, background);
+      assert.ok(ratio >= 4.5, `${name}: ${label} is ${ratio.toFixed(2)}:1 (needs 4.5:1)`);
+    }
+  }
+});
