@@ -9,7 +9,7 @@ Native 0.88.1, TypeScript. The premise: Facebook's reading experience without it
 dark patterns — the chronological Following feed, rendered as cards.
 
 - Language: TypeScript
-- Default branch: main
+- Default branch: main, rebase merges only
 
 ## Principles
 
@@ -128,6 +128,9 @@ mapping and the deliberate omissions (Stories, reactions, ranking) live in
 - Preserve existing architecture, naming, formatting and error handling.
 - Use project scripts for validation; keep changes scoped.
 - Use feature branches and pull requests; `main` is never pushed to directly.
+- Always rebase merge pull requests into `main` with `gh pr merge --rebase`.
+  Merge commits and squash merges are forbidden. Keep `main` linear and update
+  local checkouts with `git pull --ff-only`.
 - Treat generated files, credentials and release metadata as sensitive.
 
 <!-- allowed-agents -->
