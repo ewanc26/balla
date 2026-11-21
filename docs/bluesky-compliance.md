@@ -161,8 +161,11 @@ privacy, block/mute, report and leave/delete flows.
 ### P0 — before any public release
 
 1. Report post, profile and list; show report categories; record the report.
-   Post and profile reports are shipped; list reports and a local receipt
-   remain.
+   Done: all three subject kinds use
+   `com.atproto.moderation.createReport` through the Bluesky labeler proxy,
+   with the published reason categories. A successful report saves a bounded,
+   local-only receipt (id, reason, subject and time) that is visible in
+   Settings; receipts are explicitly not presented as an official status.
 2. Block and mute users; hide their content; expose unblock/unmute. Post and
    profile actions, plus filtering across feeds, search, saved posts, threads
    and notifications, are shipped.

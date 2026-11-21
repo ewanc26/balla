@@ -1,4 +1,12 @@
 import { agent } from './agent';
+import { recordReportReceipt } from './reportReceipts';
+import {
+  REPORT_REASONS,
+  type ReportReason,
+  type ReportSubjectKind,
+} from './reportModel';
+
+export { REPORT_REASONS, type ReportReason } from './reportModel';
 
 // Bluesky's moderation service. Reports must be sent to the labeler through
 // the atproto-proxy header, not to the AppView.
@@ -19,41 +27,6 @@ export function subscribeActorHidden(listener: ActorHiddenListener) {
   };
 }
 
-export const REPORT_REASONS = [
-  {
-    value: 'com.atproto.moderation.defs#reasonSpam',
-    label: 'Spam',
-    detail: 'Scams, repeated unwanted posts, or bulk commercial content.',
-  },
-  {
-    value: 'com.atproto.moderation.defs#reasonRude',
-    label: 'Harassment or abuse',
-    detail: 'Targeted abuse, threats, or bullying.',
-  },
-  {
-    value: 'com.atproto.moderation.defs#reasonMisleading',
-    label: 'Misleading',
-    detail: 'False or deceptive claims, including manipulated media.',
-  },
-  {
-    value: 'com.atproto.moderation.defs#reasonSexual',
-    label: 'Sexual content',
-    detail: 'Explicit sexual content or nudity.',
-  },
-  {
-    value: 'com.atproto.moderation.defs#reasonViolation',
-    label: 'Violence or illegal content',
-    detail: 'Graphic violence, self-harm, or illegal activity.',
-  },
-  {
-    value: 'com.atproto.moderation.defs#reasonOther',
-    label: 'Something else',
-    detail: 'Content that does not fit the categories above.',
-  },
-] as const;
-
-export type ReportReason = (typeof REPORT_REASONS)[number]['value'];
-
 function signedInDid(): string {
   if (!agent.did) throw new Error('You need to sign in first.');
   return agent.did;
@@ -65,23 +38,55 @@ function recordKey(uri: string): string {
   return key;
 }
 
+/**
+ * One submission path for every subject kind: the API call through the labeler
+ * proxy, then a local receipt only after the service has accepted the report.
+ */
+type ReportSubject =
+  | { $type: 'com.atproto.repo.strongRef'; uri: string; cid: string }
+  | { $type: 'com.atproto.admin.defs#repoRef'; did: string };
+
+async function submitReport(
+  subject: ReportSubject,
+  subjectKind: ReportSubjectKind,
+  subjectLabel: string,
+  subjectUri: string | undefined,
+  reasonType: ReportReason,
+  details: string
+) {
+  const reason = details.trim();
+  const response = await agent.com.atproto.moderation.createReport(
+    { reasonType, ...(reason ? { reason } : {}), subject },
+    { headers: { 'atproto-proxy': BSKY_LABELER_PROXY } }
+  );
+  await recordReportReceipt({
+    id: response.data.id,
+    createdAt: response.data.createdAt,
+    reasonType,
+    subjectKind,
+    subjectLabel,
+    ...(subjectUri ? { subjectUri } : {}),
+  });
+  return response;
+}
+
 export async function reportPost(
   post: any,
   reasonType: ReportReason,
   details: string
 ) {
-  const reason = details.trim();
-  return agent.com.atproto.moderation.createReport(
+  const handle = post?.author?.handle || 'unknown account';
+  return submitReport(
     {
-      reasonType,
-      ...(reason ? { reason } : {}),
-      subject: {
-        $type: 'com.atproto.repo.strongRef',
-        uri: post.uri,
-        cid: post.cid,
-      },
+      $type: 'com.atproto.repo.strongRef',
+      uri: post.uri,
+      cid: post.cid,
     },
-    { headers: { 'atproto-proxy': BSKY_LABELER_PROXY } }
+    'post',
+    `Post by @${handle}`,
+    post.uri,
+    reasonType,
+    details
   );
 }
 
@@ -90,17 +95,36 @@ export async function reportProfile(
   reasonType: ReportReason,
   details: string
 ) {
-  const reason = details.trim();
-  return agent.com.atproto.moderation.createReport(
+  return submitReport(
+    { $type: 'com.atproto.admin.defs#repoRef', did: profile.did },
+    'profile',
+    `@${profile.handle || 'unknown account'}`,
+    undefined,
+    reasonType,
+    details
+  );
+}
+
+/** Lists are records, so they are reported by strong ref like posts. */
+export async function reportList(
+  list: any,
+  reasonType: ReportReason,
+  details: string
+) {
+  const name = typeof list?.name === 'string' && list.name.trim()
+    ? list.name.trim()
+    : 'Unnamed list';
+  return submitReport(
     {
-      reasonType,
-      ...(reason ? { reason } : {}),
-      subject: {
-        $type: 'com.atproto.admin.defs#repoRef',
-        did: profile.did,
-      },
+      $type: 'com.atproto.repo.strongRef',
+      uri: list.uri,
+      cid: list.cid,
     },
-    { headers: { 'atproto-proxy': BSKY_LABELER_PROXY } }
+    'list',
+    `List “${name}”`,
+    list.uri,
+    reasonType,
+    details
   );
 }
 

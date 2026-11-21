@@ -456,7 +456,7 @@ export function installMockAgent() {
       id: 1,
       reasonType: 'com.atproto.moderation.defs#reasonOther',
       subject: {},
-      reportedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
     },
   });
   mock.app.bsky.graph.muteActor = async () => ({ data: {} });
