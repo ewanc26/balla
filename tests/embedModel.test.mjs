@@ -7,6 +7,7 @@ import {
   firstWebUrl,
   normaliseWebUrl,
   quoteFromEmbed,
+  videoFromEmbed,
 } from '../src/lib/embedModel.ts';
 
 const author = { did: 'did:plc:author', handle: 'alice.bsky.social', displayName: 'Alice' };
@@ -94,6 +95,43 @@ test('only complete web URLs become link-card candidates', () => {
   assert.equal(normaliseWebUrl('javascript:alert(1)'), null);
   assert.equal(firstWebUrl('See https://example.com/a and http://example.org/b'), 'https://example.com/a');
   assert.equal(firstWebUrl('no link here'), null);
+});
+
+test('a published video view is read from video and recordWithMedia embeds', () => {
+  const view = {
+    $type: 'app.bsky.embed.video#view',
+    cid: 'bafy-video',
+    playlist: 'https://video.bsky.app/playlist.m3u8',
+    alt: 'A wave breaking',
+    presentation: 'gif',
+    aspectRatio: { width: 640, height: 360 },
+  };
+  assert.deepEqual(videoFromEmbed(view), {
+    playlist: view.playlist,
+    alt: 'A wave breaking',
+    presentation: 'gif',
+    aspectRatio: { width: 640, height: 360 },
+  });
+  assert.deepEqual(
+    videoFromEmbed({
+      $type: 'app.bsky.embed.recordWithMedia#view',
+      record: {},
+      media: view,
+    }),
+    videoFromEmbed(view)
+  );
+});
+
+test('a video view without a safe playlist is not rendered', () => {
+  assert.equal(videoFromEmbed({ $type: 'app.bsky.embed.video#view' }), null);
+  assert.equal(
+    videoFromEmbed({
+      $type: 'app.bsky.embed.video#view',
+      playlist: 'javascript:alert(1)',
+    }),
+    null
+  );
+  assert.equal(videoFromEmbed(null), null);
 });
 
 test('an untitled external card falls back to its host, never a made-up title', () => {

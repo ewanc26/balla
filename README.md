@@ -67,8 +67,10 @@ reposted-by and quote lists, verification and labeler badges with the verifiers
 Bluesky reports, label warnings, a pinned post, authored lists, feeds and starter
 packs, and account-scoped post search; photo posts with up to ten images, per-photo alt
 text, an optional requirement to describe every image, cancellable uploads and
-retries; content warnings from the Bluesky self-label vocabulary and up to three
-post languages per post; local draft recovery with a Restore or Discard prompt;
+retries; MP4 video and animated GIF posts with visible processing states, a
+100 MB / 10-minute Balla limit, optional WebVTT captions and Bluesky's own GIF
+presentation in the feed; content warnings from the Bluesky self-label
+vocabulary and up to three post languages per post; local draft recovery with a Restore or Discard prompt;
 reply and quote controls written to Bluesky's real threadgate and postgate
 records, editable from any post you authored; profile editing for name, bio, pronouns, links,
 avatar and banner; a Search tab with Top, Latest, People, Feeds and Starter
@@ -133,7 +135,9 @@ The OAuth client is identified by `oauth-client-metadata.json`. That exact file
 must be published at `https://balla.croft.click/oauth-client-metadata.json`
 before sign-in can work; the server fetches it from the URL in `client_id`. The
 app bundles the same file at build time, so rebuild after changing the redirect
-URIs or scope. On the web, sign-in opens your server's approval page in a popup
+URIs or scope. Existing sessions keep the scope they were granted, so sign in
+again when a new permission is added. On the web, sign-in opens your server's
+approval page in a popup
 and returns to `https://balla.croft.click/app`, where the popup passes the
 session to the tab that opened it.
 

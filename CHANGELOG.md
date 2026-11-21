@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.10.0
+
+- Add MP4 video and animated GIF posts. Files are selected with visible controls, checked locally against Balla's stated 100 MB and 10-minute limits, and sent to Bluesky's video service; the post is only publishable once the job reports `JOB_STATE_COMPLETED` with a blob. Processing states, failures and cancellation are named plainly, and converting a GIF is left to Bluesky rather than claiming a local transcode.
+- Add optional WebVTT caption files (up to 20 per video, 20 kB each) using the published `app.bsky.embed.video#caption` shape. Captions use the post's first language, show that language in the composer, and can be removed before posting.
+- Render published video views, including Bluesky's GIF presentation as a muted loop, with native controls and the author's alt text; posts with videos and quotes use the real `recordWithMedia` embed.
+- Add exact OAuth scopes for the video service and caption blobs. Sessions created before 0.10.0 need sign-in again before video uploads are permitted; the upload error says so instead of guessing.
+
 ## 0.9.1
 
 - Strip the decorative AI-tell surface from the marketing site: flat warm-grey canvas instead of gradient blobs, a solid header instead of a blurred one, flat buttons and cards without hover lifts or glows, and the same 8px card radius the app uses.

@@ -61,6 +61,8 @@ product, not a claim that every account looks identical.
 | Left shortcuts and right contextual rail | `src/components/AppRail.tsx` |
 | Grey canvas, white 8px cards, hairline borders | `src/theme.ts`, `src/components/PostCard.tsx` |
 | Composer card with avatar and rounded prompt | `src/screens/FeedScreen.tsx` |
+| Visible photo, video/GIF and link controls with one media type per post | `src/screens/ComposeScreen.tsx`, `src/lib/videoModel.ts`, `src/lib/videoUpload.ts` |
+| Inset video with author alt text in a feed card | `src/components/PostCard.tsx`, `src/lib/embedModel.ts` |
 | Feeds in the left menu, with sub-filters for a chronological catch-up | `src/components/AppRail.tsx`, `src/screens/FeedsScreen.tsx` |
 | Visible feed switcher on Home, Following first | `src/components/FeedSwitcherSheet.tsx`, `src/screens/FeedScreen.tsx`, `src/lib/feedSwitcher.ts` |
 | Like/Comment/Share action bar | `PostCard.tsx`: Like, Repost, Comment and a 44pt Save control |

@@ -117,6 +117,33 @@ test('photos take precedence over a link card so the post stays valid', () => {
   assert.equal(embed.$type, 'app.bsky.embed.images');
 });
 
+test('a completed video embed can be combined with a quote', () => {
+  const video = {
+    $type: 'app.bsky.embed.video',
+    video: { $type: 'blob', ref: { $link: 'bafy-video' }, mimeType: 'video/mp4', size: 3 },
+    alt: 'A wave',
+  };
+  const embed = buildPostEmbed(
+    [],
+    { uri: 'at://did:plc:test/app.bsky.feed.post/1', cid: 'bafy-test' },
+    null,
+    video
+  );
+  assert.equal(embed.$type, 'app.bsky.embed.recordWithMedia');
+  assert.deepEqual(embed.media, video);
+});
+
+test('video alone is a publishable post', () => {
+  assert.equal(
+    canPublishPost({ text: '', imageCount: 0, hasQuote: false, hasVideo: true }),
+    true
+  );
+  assert.equal(
+    canPublishPost({ text: '   ', imageCount: 0, hasQuote: false }),
+    false
+  );
+});
+
 test('thread replies keep the first post as root and the previous as parent', () => {
   const first = { uri: 'at://post/1', cid: 'cid-1' };
   const second = { uri: 'at://post/2', cid: 'cid-2' };

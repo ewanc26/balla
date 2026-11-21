@@ -2,7 +2,7 @@
   "expo": {
     "name": "Balla",
     "slug": "balla",
-    "version": "0.9.1",
+    "version": "0.10.0",
     "scheme": [
       "balla",
       "click.croft.balla"
@@ -44,7 +44,8 @@
           "photosPermission": "Balla needs access to your photos so you can add photos to posts or choose a profile picture or banner.",
           "cameraPermission": "Balla needs access to your camera so you can take a photo for a post."
         }
-      ]
+      ],
+      "expo-video"
     ],
     "experiments": {
       "baseUrl": "/app"
