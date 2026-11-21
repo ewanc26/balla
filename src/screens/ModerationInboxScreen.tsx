@@ -442,7 +442,7 @@ function TabButton({
         </Text>
         {count > 0 ? (
           <View style={[styles.badge, { backgroundColor: p.accent }]}>
-            <Text style={{ color: '#FFFFFF', fontSize: 10, fontWeight: '800' }}>
+            <Text style={{ color: p.onAccent, fontSize: 10, fontWeight: '800' }}>
               {count > 99 ? '99+' : count}
             </Text>
           </View>

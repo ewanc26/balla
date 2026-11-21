@@ -646,10 +646,10 @@ export function AppealModal({
                 ]}
               >
                 {busy ? (
-                  <ActivityIndicator size="small" color="#FFFFFF" />
+                  <ActivityIndicator size="small" color={p.onAccent} />
                 ) : (
                   <Text
-                    style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}
+                    style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}
                   >
                     Submit
                   </Text>

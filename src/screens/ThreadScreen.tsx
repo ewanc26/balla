@@ -331,7 +331,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             marginLeft: 8,
           })}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}>Reply</Text>
+          <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: 15 }}>Reply</Text>
         </Pressable>
       </View>
     </KeyboardAvoidingView>

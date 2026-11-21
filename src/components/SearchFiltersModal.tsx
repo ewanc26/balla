@@ -302,7 +302,7 @@ export function SearchFiltersModal({
                 },
               ]}
             >
-              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
+              <Text style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}>
                 Show results
               </Text>
             </Pressable>

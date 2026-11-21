@@ -30,7 +30,7 @@ export function Avatar({ avatar, displayName, size = 40 }: Props) {
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: '#FFFFFF', fontWeight: '700', fontSize: Math.round(size * 0.45) }}>
+      <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: Math.round(size * 0.45) }}>
         {initial}
       </Text>
     </View>

@@ -38,6 +38,7 @@ import { ModerationReportScreen } from './src/screens/ModerationReportScreen';
 import { ModerationNoticeScreen } from './src/screens/ModerationNoticeScreen';
 import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
 import { FeedsScreen } from './src/screens/FeedsScreen';
+import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { StarterPackScreen } from './src/screens/StarterPackScreen';
 import { AppHeader, type TabName } from './src/components/AppHeader';
 import { LeftRail, RightRail } from './src/components/AppRail';
@@ -75,13 +76,13 @@ function Tabs() {
       initialRouteName={initialTab}
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarActiveTintColor: p.accent,
-        tabBarInactiveTintColor: p.secondary,
+        tabBarActiveTintColor: p.chromeAction,
+        tabBarInactiveTintColor: p.chromeMuted,
         tabBarStyle: wide
           ? { display: 'none' }
           : {
-              backgroundColor: p.card,
-              borderTopColor: p.divider,
+              backgroundColor: p.chrome,
+              borderTopColor: p.chromeBorder,
               borderTopWidth: StyleSheet.hairlineWidth,
               height: 64 + insets.bottom,
               paddingTop: 6,
@@ -222,7 +223,7 @@ export default function App() {
           onStateChange={syncActiveTab}
         >
           <View style={{ flex: 1, backgroundColor: p.bg }}>
-            <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
+            <StatusBar style={p.chromeIsDark ? 'light' : 'dark'} />
             {showChrome ? (
               <AppHeader
                 wide={showLeft}
@@ -255,10 +256,10 @@ export default function App() {
               <View style={{ flex: 1, maxWidth: width >= DESKTOP_MIN_WIDTH ? 680 : undefined }}>
                 <Stack.Navigator
                   screenOptions={{
-                    headerStyle: { backgroundColor: p.card },
-                    headerTintColor: p.accent,
+                    headerStyle: { backgroundColor: p.chrome },
+                    headerTintColor: p.chromeAction,
                     headerTitleStyle: {
-                      color: p.text,
+                      color: p.chromeText,
                       fontSize: 17,
                       fontWeight: '600',
                     },
@@ -276,6 +277,7 @@ export default function App() {
                   <Stack.Screen name="Compose" component={ComposeScreen} />
                   <Stack.Screen name="UserProfile" component={ProfileScreen} />
                   <Stack.Screen name="Settings" component={SettingsScreen} />
+                  <Stack.Screen name="Appearance" component={AppearanceScreen} />
                   <Stack.Screen name="Info" component={InfoScreen} />
                   <Stack.Screen name="PeopleList" component={PeopleListScreen} />
                   <Stack.Screen name="EngagementList" component={EngagementListScreen} />

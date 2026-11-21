@@ -52,7 +52,7 @@ export function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
       <View style={styles.shell}>
         <View style={styles.brandRow}>
           <View style={[styles.mark, { backgroundColor: p.accent }]}>
-            <Text style={styles.markLetter}>b</Text>
+            <Text style={[styles.markLetter, { color: p.onAccent }]}>b</Text>
           </View>
           <Text style={[styles.wordmark, { color: p.accent }]}>balla</Text>
         </View>
@@ -144,9 +144,9 @@ export function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
             })}
           >
             {busy ? (
-              <ActivityIndicator color="#FFFFFF" />
+              <ActivityIndicator color={p.onAccent} />
             ) : (
-              <Text style={{ color: '#FFFFFF', fontSize: 16, fontWeight: '700' }}>
+              <Text style={{ color: p.onAccent, fontSize: 16, fontWeight: '700' }}>
                 Continue
               </Text>
             )}
@@ -220,7 +220,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   markLetter: {
-    color: '#FFFFFF',
     fontSize: 42,
     fontWeight: '800',
     lineHeight: 48,

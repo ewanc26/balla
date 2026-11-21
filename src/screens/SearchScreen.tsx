@@ -778,7 +778,7 @@ function SearchEmpty({
             { backgroundColor: p.accent, opacity: pressed ? 0.7 : 1 },
           ]}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Clear filters</Text>
+          <Text style={{ color: p.onAccent, fontWeight: '700' }}>Clear filters</Text>
         </Pressable>
       </View>
     );

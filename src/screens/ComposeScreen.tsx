@@ -666,7 +666,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                   ]}
                 >
                   <Text
-                    style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '700' }}
+                    style={{ color: p.onAccent, fontSize: 13, fontWeight: '700' }}
                   >
                     Add descriptions
                   </Text>
@@ -793,10 +793,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
                 })}
               >
                 {sending ? (
-                  <ActivityIndicator color="#FFFFFF" />
+                  <ActivityIndicator color={p.onAccent} />
                 ) : (
                   <Text
-                    style={{ color: '#FFFFFF', fontWeight: '700', fontSize: 15 }}
+                    style={{ color: p.onAccent, fontWeight: '700', fontSize: 15 }}
                   >
                     Post
                   </Text>
@@ -1129,7 +1129,7 @@ function AltTextSheet({
               ]}
             >
               <Text
-                style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}
+                style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}
               >
                 Save
               </Text>

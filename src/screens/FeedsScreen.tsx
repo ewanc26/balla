@@ -352,7 +352,7 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
               { backgroundColor: p.accent, opacity: pressed ? 0.7 : 1 },
             ]}
           >
-            <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>
+            <Text style={{ color: p.onAccent, fontSize: 14, fontWeight: '700' }}>
               Search
             </Text>
           </Pressable>
@@ -678,7 +678,7 @@ function DiscoveryFeedRow({
           {busy ? (
             <ActivityIndicator
               size="small"
-              color={saved ? palette.accent : '#FFFFFF'}
+              color={saved ? palette.accent : palette.onAccent}
             />
           ) : (
             <>
@@ -691,11 +691,11 @@ function DiscoveryFeedRow({
                     : 'add'
                 }
                 size={16}
-                color={saved ? palette.accent : '#FFFFFF'}
+                color={saved ? palette.accent : palette.onAccent}
               />
               <Text
                 style={{
-                  color: saved ? palette.accent : '#FFFFFF',
+                  color: saved ? palette.accent : palette.onAccent,
                   fontSize: 13,
                   fontWeight: '700',
                 }}

@@ -212,7 +212,7 @@ export function FeedGeneratorScreen({
             opacity: pressed ? 0.7 : 1,
           })}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Try again</Text>
+          <Text style={{ color: p.onAccent, fontWeight: '700' }}>Try again</Text>
         </Pressable>
       </View>
     );
@@ -314,9 +314,9 @@ export function FeedGeneratorScreen({
           ]}
         >
           {savingFeed ? (
-            <ActivityIndicator size="small" color="#FFFFFF" />
+            <ActivityIndicator size="small" color={p.onAccent} />
           ) : (
-            <Text style={{ color: savedFeed ? p.accent : '#FFFFFF', fontSize: 13, fontWeight: '700' }}>
+            <Text style={{ color: savedFeed ? p.accent : p.onAccent, fontSize: 13, fontWeight: '700' }}>
               {savedFeed ? 'Manage feeds' : 'Save feed'}
             </Text>
           )}

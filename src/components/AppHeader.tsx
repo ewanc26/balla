@@ -37,14 +37,20 @@ export function AppHeader({
   const { width } = useWindowDimensions();
   const { profile } = useViewer();
   const showSearch = wide && width >= 1200;
+  const retroChrome = p.era !== 'newfacebook';
+  const pressedBackground = retroChrome ? p.chromePressed : p.bg;
+  const searchBackground = retroChrome ? p.chromeField : p.bg;
+  const brandColour = retroChrome ? p.chromeText : p.accent;
+  const markBackground = retroChrome ? p.chromeText : p.accent;
+  const markForeground = retroChrome ? p.chrome : p.onAccent;
 
   return (
     <View
       style={[
         styles.bar,
         {
-          backgroundColor: p.card,
-          borderBottomColor: p.divider,
+          backgroundColor: p.chrome,
+          borderBottomColor: p.chromeBorder,
           paddingTop: insets.top,
         },
       ]}
@@ -57,10 +63,18 @@ export function AppHeader({
             accessibilityLabel="Balla home"
             style={({ pressed }) => [styles.brand, { opacity: pressed ? 0.7 : 1 }]}
           >
-            <View style={[styles.mark, { backgroundColor: p.accent }]}>
-              <Text style={styles.markLetter}>b</Text>
+            <View
+              style={[
+                styles.mark,
+                {
+                  backgroundColor: markBackground,
+                  borderRadius: retroChrome ? 2 : 18,
+                },
+              ]}
+            >
+              <Text style={[styles.markLetter, { color: markForeground }]}>b</Text>
             </View>
-            <Text style={[styles.wordmark, { color: p.accent }]}>balla</Text>
+            <Text style={[styles.wordmark, { color: brandColour }]}>balla</Text>
           </Pressable>
 
           {showSearch ? (
@@ -70,11 +84,11 @@ export function AppHeader({
               accessibilityLabel="Search Bluesky"
               style={({ pressed }) => [
                 styles.search,
-                { backgroundColor: p.bg, opacity: pressed ? 0.75 : 1 },
+                { backgroundColor: searchBackground, opacity: pressed ? 0.75 : 1 },
               ]}
             >
-              <Ionicons name="search" size={17} color={p.secondary} />
-              <Text style={{ color: p.secondary, fontSize: 15, marginLeft: 8 }}>
+              <Ionicons name="search" size={17} color={p.chromeMuted} />
+              <Text style={{ color: p.chromeMuted, fontSize: 15, marginLeft: 8 }}>
                 Search Bluesky
               </Text>
             </Pressable>
@@ -94,14 +108,14 @@ export function AppHeader({
                   accessibilityState={{ selected: active }}
                   style={({ pressed }) => [
                     styles.navItem,
-                    active && { borderBottomColor: p.accent },
+                    active && { borderBottomColor: p.chromeAction },
                     { opacity: pressed ? 0.6 : 1 },
                   ]}
                 >
                   <Ionicons
                     name={active ? item.activeIcon : item.icon}
                     size={24}
-                    color={active ? p.accent : p.secondary}
+                    color={active ? p.chromeAction : p.chromeMuted}
                   />
                 </Pressable>
               );
@@ -118,10 +132,10 @@ export function AppHeader({
                 accessibilityLabel="Search"
                 style={({ pressed }) => [
                   styles.iconButton,
-                  { backgroundColor: pressed ? p.bg : 'transparent' },
+                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
                 ]}
               >
-                <Ionicons name="search" size={22} color={p.secondary} />
+                <Ionicons name="search" size={22} color={p.chromeMuted} />
               </Pressable>
               <Pressable
                 onPress={() => onNavigate('Notifications')}
@@ -129,10 +143,10 @@ export function AppHeader({
                 accessibilityLabel="Notifications"
                 style={({ pressed }) => [
                   styles.iconButton,
-                  { backgroundColor: pressed ? p.bg : 'transparent' },
+                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
                 ]}
               >
-                <Ionicons name="notifications-outline" size={22} color={p.secondary} />
+                <Ionicons name="notifications-outline" size={22} color={p.chromeMuted} />
               </Pressable>
             </>
           ) : null}
@@ -142,10 +156,10 @@ export function AppHeader({
             accessibilityLabel="Settings and privacy"
             style={({ pressed }) => [
               styles.iconButton,
-              { backgroundColor: pressed ? p.bg : 'transparent' },
+              { backgroundColor: pressed ? pressedBackground : 'transparent' },
             ]}
           >
-            <Ionicons name="settings-outline" size={22} color={p.secondary} />
+            <Ionicons name="settings-outline" size={22} color={p.chromeMuted} />
           </Pressable>
           <Pressable
             onPress={() => onNavigate('Profile')}
@@ -198,7 +212,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   markLetter: {
-    color: '#FFFFFF',
     fontSize: 27,
     fontWeight: '800',
     lineHeight: 32,

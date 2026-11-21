@@ -105,7 +105,7 @@ export function StarterPackScreen({
             opacity: pressed ? 0.7 : 1,
           })}
         >
-          <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Try again</Text>
+          <Text style={{ color: p.onAccent, fontWeight: '700' }}>Try again</Text>
         </Pressable>
       </View>
     );

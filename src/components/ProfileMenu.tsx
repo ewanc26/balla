@@ -467,7 +467,7 @@ function SheetButton({
   const p = usePalette();
   const background =
     variant === 'primary' ? p.accent : variant === 'danger' ? p.danger : p.bg;
-  const foreground = variant === 'secondary' ? p.text : '#FFFFFF';
+  const foreground = variant === 'secondary' ? p.text : p.onAccent;
   return (
     <Pressable
       onPress={onPress}
