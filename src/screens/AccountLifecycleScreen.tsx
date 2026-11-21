@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -11,6 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useViewer } from '../lib/viewer';
+import {
+  dialogAccessibilityProps,
+  dialogAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 // Bluesky's account panel contains data export, deactivation and permanent
@@ -27,6 +33,15 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const dialogRef = useRef<any>(null);
+  const cancelRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible: !!confirm,
+    onClose: () => setConfirm(null),
+    containerRef: dialogRef,
+    initialFocusRef: cancelRef,
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Account and data' });
@@ -146,7 +161,8 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
       <Modal
         visible={!!confirm}
         transparent
-        animationType="fade"
+        animationType={dialogAnimation(reducedMotion)}
+        accessibilityViewIsModal
         onRequestClose={() => setConfirm(null)}
       >
         <View style={styles.overlay}>
@@ -156,7 +172,14 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
             importantForAccessibility="no-hide-descendants"
             style={styles.backdrop}
           />
-          <View style={[styles.dialog, { backgroundColor: p.card }]}>
+          <View
+            ref={dialogRef}
+            {...dialogAccessibilityProps(
+              isDelete ? 'Delete account permanently?' : 'Deactivate account?'
+            )}
+            accessibilityViewIsModal
+            style={[styles.dialog, { backgroundColor: p.card }]}
+          >
             <Text style={{ color: p.text, fontSize: 19, fontWeight: '700' }}>
               {isDelete ? 'Delete account permanently?' : 'Deactivate account?'}
             </Text>
@@ -176,6 +199,7 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
             ) : null}
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
               <Pressable
+                ref={cancelRef}
                 onPress={() => setConfirm(null)}
                 disabled={opening}
                 accessibilityRole="button"

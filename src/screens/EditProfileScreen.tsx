@@ -1096,7 +1096,7 @@ function PhotoButton({
       accessibilityLabel={label}
       accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => ({
-        minHeight: 40,
+        minHeight: 44,
         borderRadius: CARD_RADIUS,
         borderWidth: 1,
         borderColor: dark ? 'rgba(255,255,255,0.45)' : p.divider,
@@ -1145,9 +1145,9 @@ function IconButton({
       accessibilityState={{ disabled: !!disabled }}
       hitSlop={4}
       style={({ pressed }) => ({
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         alignItems: 'center',
         justifyContent: 'center',
         opacity: disabled ? 0.35 : pressed ? 0.55 : 1,

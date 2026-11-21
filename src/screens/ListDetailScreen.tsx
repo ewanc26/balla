@@ -549,6 +549,7 @@ export function ListDetailScreen({
                 disabled={busy === 'block'}
                 accessibilityRole="button"
                 accessibilityLabel="Cancel blocking list"
+                accessibilityState={{ disabled: busy === 'block' }}
                 style={({ pressed }) => [
                   styles.confirmButton,
                   { backgroundColor: p.card, borderColor: p.divider, opacity: pressed ? 0.65 : 1 },
@@ -561,6 +562,7 @@ export function ListDetailScreen({
                 disabled={busy === 'block'}
                 accessibilityRole="button"
                 accessibilityLabel="Block every account on this list"
+                accessibilityState={{ disabled: busy === 'block', busy: busy === 'block' }}
                 style={({ pressed }) => [
                   styles.confirmButton,
                   { backgroundColor: p.danger, borderColor: p.danger, opacity: pressed ? 0.65 : 1 },
@@ -598,6 +600,7 @@ export function ListDetailScreen({
                 disabled={busy === 'delete'}
                 accessibilityRole="button"
                 accessibilityLabel="Cancel deleting list"
+                accessibilityState={{ disabled: busy === 'delete' }}
                 style={({ pressed }) => [
                   styles.confirmButton,
                   { backgroundColor: p.card, borderColor: p.divider, opacity: pressed ? 0.65 : 1 },
@@ -610,6 +613,7 @@ export function ListDetailScreen({
                 disabled={busy === 'delete'}
                 accessibilityRole="button"
                 accessibilityLabel="Delete list"
+                accessibilityState={{ disabled: busy === 'delete', busy: busy === 'delete' }}
                 style={({ pressed }) => [
                   styles.confirmButton,
                   { backgroundColor: p.danger, borderColor: p.danger, opacity: pressed ? 0.65 : 1 },
@@ -960,7 +964,7 @@ const styles = StyleSheet.create({
   },
   confirmButton: {
     flex: 1,
-    minHeight: 42,
+    minHeight: 44,
     borderWidth: 1,
     borderRadius: 8,
     alignItems: 'center',
@@ -982,9 +986,9 @@ const styles = StyleSheet.create({
     borderBottomWidth: 3,
   },
   addPeople: {
-    minHeight: 36,
+    minHeight: 44,
     marginLeft: 'auto',
-    borderRadius: 18,
+    borderRadius: 22,
     paddingHorizontal: 10,
     flexDirection: 'row',
     alignItems: 'center',

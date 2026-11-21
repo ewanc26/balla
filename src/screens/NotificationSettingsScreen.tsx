@@ -278,6 +278,7 @@ function SwitchRow({
         accessibilityRole="switch"
         accessibilityLabel={label}
         accessibilityState={{ checked: value, disabled: !!disabled }}
+        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
         style={({ pressed }) => [
           styles.toggle,
           {

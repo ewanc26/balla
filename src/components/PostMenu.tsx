@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -19,6 +19,12 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 import { agent } from '../lib/agent';
+import {
+  dialogAccessibilityProps,
+  dialogAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
 import {
   blockActor,
@@ -67,6 +73,15 @@ export function PostMenu({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [reportSent, setReportSent] = useState(false);
+  const containerRef = useRef<any>(null);
+  const closeButtonRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible,
+    onClose: close,
+    containerRef,
+    initialFocusRef: closeButtonRef,
+  });
 
   useEffect(() => {
     if (!visible) return;
@@ -302,6 +317,8 @@ export function PostMenu({
                 key={item.value}
                 onPress={() => setReason(item.value)}
                 accessibilityRole="radio"
+                accessibilityLabel={item.label}
+                accessibilityHint={item.detail}
                 accessibilityState={{ checked: selected }}
                 style={({ pressed }) => [
                   styles.reportChoice,
@@ -551,7 +568,7 @@ export function PostMenu({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType={dialogAnimation(reducedMotion)}
       onRequestClose={close}
       accessibilityViewIsModal
     >
@@ -566,6 +583,9 @@ export function PostMenu({
           style={styles.backdrop}
         />
         <View
+          ref={containerRef}
+          {...dialogAccessibilityProps(title)}
+          accessibilityViewIsModal
           style={[
             styles.sheet,
             {
@@ -580,10 +600,12 @@ export function PostMenu({
               {title}
             </Text>
             <Pressable
+              ref={closeButtonRef}
               onPress={close}
               disabled={busy}
               accessibilityRole="button"
               accessibilityLabel="Close post options"
+              accessibilityState={{ disabled: busy }}
               hitSlop={8}
               style={({ pressed }) => [
                 styles.closeButton,
@@ -623,6 +645,7 @@ function MenuRow({
       accessibilityRole="button"
       accessibilityLabel={label}
       accessibilityHint={detail}
+      accessibilityState={{ disabled: !!disabled }}
       style={({ pressed }) => [
         styles.row,
         {

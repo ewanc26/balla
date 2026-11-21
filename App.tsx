@@ -51,6 +51,7 @@ import { ModerationProvider } from './src/lib/moderationContext';
 import { FeedsProvider } from './src/lib/feedsContext';
 import { PreferencesProvider } from './src/lib/preferences';
 import { restore, setOnLoggedOut } from './src/lib/agent';
+import { installWebAccessibility } from './src/lib/accessibility';
 import { palettes, usePalette } from './src/theme';
 import { DESKTOP_MIN_WIDTH, RIGHT_RAIL_MIN_WIDTH } from './src/lib/layout';
 import {
@@ -134,6 +135,12 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [activeTab, setActiveTab] = useState<TabName>(initialTab);
   const [routeName, setRouteName] = useState<string>(initialTab);
+
+  // Keep the web keyboard focus ring in step with the palette accent. On
+  // native this is a no-op; RN's own focus and screen-reader APIs handle it.
+  useEffect(() => {
+    installWebAccessibility(p.accent);
+  }, [p.accent]);
 
   const showLeft = width >= DESKTOP_MIN_WIDTH;
   const showRight = width >= RIGHT_RAIL_MIN_WIDTH;

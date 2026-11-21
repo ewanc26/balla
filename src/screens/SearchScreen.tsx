@@ -1050,7 +1050,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   listsRow: {
-    minHeight: 40,
+    minHeight: 44,
     marginTop: 8,
     marginBottom: 4,
     borderRadius: 8,
@@ -1067,8 +1067,8 @@ const styles = StyleSheet.create({
     minHeight: 48,
   },
   filterButton: {
-    minHeight: 34,
-    borderRadius: 17,
+    minHeight: 44,
+    borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 12,
     flexDirection: 'row',

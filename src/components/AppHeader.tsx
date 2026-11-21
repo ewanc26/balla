@@ -224,7 +224,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   search: {
-    height: 40,
+    minHeight: 44,
     width: 240,
     borderRadius: 20,
     marginLeft: 16,

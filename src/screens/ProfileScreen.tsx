@@ -782,7 +782,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   seeAll: {
-    minHeight: 32,
+    minHeight: 44,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 2,
@@ -809,7 +809,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   profileLink: {
-    minHeight: 38,
+    minHeight: 44,
     maxWidth: '100%',
     borderWidth: 1,
     borderRadius: 19,

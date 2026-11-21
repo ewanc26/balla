@@ -56,7 +56,7 @@
         <ul class="check-list">
           <li><span><strong>AT Protocol OAuth</strong><small>Sign in with a handle, DID or PDS URL. No password field, DPoP-bound tokens.</small></span></li>
           <li><span><strong>Chronological Following</strong><small>Newest first, paginated, pull-to-refresh. No ranking or injected posts.</small></span></li>
-          <li><span><strong>Threads and replies</strong><small>Ancestor chains, capped nested branches and a reply composer with correct roots.</small></span></li>
+          <li><span><strong>Threads and replies</strong><small>Ancestor chains, capped nested branches and a reply composer with correct roots. Every view is labelled as a thread, and each post says whether it is earlier in the conversation, the one you opened, or a reply.</small></span></li>
           <li><span><strong>Profiles</strong><small>Posts, followers, following, known followers and per-post engagement lists.</small></span></li>
           <li><span><strong>Profile editing</strong><small>Name, bio, pronouns, links, avatar and banner.</small></span></li>
           <li><span><strong>Search</strong><small>Top, Latest, People, Feeds and Starter Packs, with filters and local history.</small></span></li>
@@ -71,6 +71,7 @@
           <li><span><strong>Account guidance</strong><small>Export, deactivation and deletion routes that link to your PDS controls.</small></span></li>
           <li><span><strong>Web client</strong><small>Available at /app with popup OAuth that returns to the same tab.</small></span></li>
           <li><span><strong>Reliability and truthful failures</strong><small>Bounded retries on reads, Retry-After waits, rollback on failed likes, reposts and saves, and visible errors for posts, replies, deletes and reports (<a href="https://github.com/ewanc26/balla/issues/34">issue #34 ↗</a>).</small></span></li>
+          <li><span><strong>Accessibility pass</strong><small>Labelled actions and dialogs, trapped focus and visible keyboard rings, text that scales without clipping, reduced motion, and 44pt controls with no gesture-only actions (<a href="https://github.com/ewanc26/balla/issues/35">issue #35 ↗</a>).</small></span></li>
         </ul>
       </section>
 
@@ -83,11 +84,6 @@
           <p>Each row links to the public issue where the work is tracked. Priority follows user safety and reliability before depth.</p>
         </div>
         <div class="roadmap-table">
-          <div class="roadmap-row">
-            <span class="pill pill--amber">P0</span>
-            <div><strong>Accessibility pass</strong><p>Screen-reader roles, focus order and trapping, text scaling, reduced motion and 44pt controls.</p></div>
-            <a href="https://github.com/ewanc26/balla/issues/35">Issue #35 ↗</a>
-          </div>
           <div class="roadmap-row">
             <span class="pill pill--blue">P1</span>
             <div><strong>Video, GIF and captions</strong><p>Validation, processing states, honest success reporting and alt text.</p></div>

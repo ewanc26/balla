@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -11,6 +11,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import {
+  dialogAccessibilityProps,
+  dialogAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 import { BSKY_LABELER_DID } from '../lib/moderation';
 import { useModeration } from '../lib/moderationContext';
 import { Avatar } from '../components/Avatar';
@@ -51,6 +57,15 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
   const [addLabelerBusy, setAddLabelerBusy] = useState(false);
   const [word, setWord] = useState('');
   const [wordTarget, setWordTarget] = useState<WordTarget>('content');
+  const adultDialogRef = useRef<any>(null);
+  const adultCancelRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible: confirmAdult,
+    onClose: () => setConfirmAdult(false),
+    containerRef: adultDialogRef,
+    initialFocusRef: adultCancelRef,
+  });
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Content filters' });
@@ -265,6 +280,7 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
             accessibilityRole="switch"
             accessibilityLabel="Show adult content"
             accessibilityState={{ checked: adultEnabled, busy: saving === 'adult' }}
+            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
             style={({ pressed }) => [
               styles.toggle,
               {
@@ -632,7 +648,8 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
       <Modal
         visible={confirmAdult}
         transparent
-        animationType="fade"
+        animationType={dialogAnimation(reducedMotion)}
+        accessibilityViewIsModal
         onRequestClose={() => setConfirmAdult(false)}
       >
         <View style={styles.overlay}>
@@ -642,7 +659,12 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
             importantForAccessibility="no-hide-descendants"
             style={styles.backdrop}
           />
-          <View style={[styles.dialog, { backgroundColor: p.card }]}>
+          <View
+            ref={adultDialogRef}
+            {...dialogAccessibilityProps('Show adult content?')}
+            accessibilityViewIsModal
+            style={[styles.dialog, { backgroundColor: p.card }]}
+          >
             <Text style={{ color: p.text, fontSize: 19, fontWeight: '700' }}>Show adult content?</Text>
             <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20, marginTop: 8 }}>
               You must be at least 18. This changes your Bluesky account preference, so
@@ -650,6 +672,7 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
             </Text>
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
               <Pressable
+                ref={adultCancelRef}
                 onPress={() => setConfirmAdult(false)}
                 accessibilityRole="button"
                 accessibilityLabel="Cancel enabling adult content"

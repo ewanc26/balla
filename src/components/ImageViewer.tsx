@@ -1,7 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import {
+  dialogAccessibilityProps,
+  dialogAnimation,
+  useDialogFocus,
+  useReducedMotion,
+} from '../lib/accessibility';
 
 interface ImageViewerImage {
   thumb?: string;
@@ -21,6 +27,15 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
   const insets = useSafeAreaInsets();
   const [current, setCurrent] = useState(0);
   const [loading, setLoading] = useState(false);
+  const containerRef = useRef<any>(null);
+  const closeRef = useRef<any>(null);
+  const reducedMotion = useReducedMotion();
+  useDialogFocus({
+    visible: index !== null && images.length > 0,
+    onClose,
+    containerRef,
+    initialFocusRef: closeRef,
+  });
 
   useEffect(() => {
     // One viewer per card, reused across taps; resync when it opens on a new image.
@@ -36,14 +51,20 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
     <Modal
       transparent
       visible
-      animationType="fade"
+      animationType={dialogAnimation(reducedMotion)}
       statusBarTranslucent
       navigationBarTranslucent
       onRequestClose={onClose}
     >
-      <View style={[styles.backdrop, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View
+        ref={containerRef}
+        {...dialogAccessibilityProps('Image viewer')}
+        accessibilityViewIsModal
+        style={[styles.backdrop, { paddingTop: insets.top, paddingBottom: insets.bottom }]}
+      >
         <View style={styles.topRow}>
           <Pressable
+            ref={closeRef}
             onPress={onClose}
             accessibilityRole="button"
             accessibilityLabel="Close image"
@@ -70,6 +91,8 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
             source={{ uri }}
             onLoadStart={() => setLoading(true)}
             onLoadEnd={() => setLoading(false)}
+            accessibilityRole="image"
+            accessibilityLabel={image.alt ? `Image. ${image.alt}` : 'Post image'}
             style={styles.image}
             resizeMode="contain"
           />
