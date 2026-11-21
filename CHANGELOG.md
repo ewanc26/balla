@@ -3,6 +3,10 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.5.1
+
+- Correct the web deep-link fallback so nested `/app` routes serve the app shell under the site's `cleanUrls` setting.
+
 ## 0.5.0
 
 - The web client now reflects the current screen in the address bar. Threads, profiles, lists, feeds and settings have shareable URLs under `/app`, and browser back/forward follows in-app navigation.
