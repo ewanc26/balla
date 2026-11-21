@@ -27,9 +27,15 @@ labels after the fact or rely on a local block list.
   the user chooses **Show anyway**, unless the label is non-overridable.
 - Adult and media labels blur images separately from the post text. The user can
   reveal media only when the label permits it.
-- Account, avatar, banner and display-name labels are applied to post headers
-  and profile headers. A labelled identity is replaced with “Hidden account”
-  rather than leaking the name or avatar.
+- Only a label whose preference is **Hide** (`filter`) removes a post or an
+  account. A **Warn** label (`blur` or `alert`) keeps the author's name, handle
+  and avatar visible and adds a labelled warning card with a visible **Show**
+  control when the label permits it. A hidden profile shows a short explanation
+  instead of pretending the account has no identity.
+- Identity warnings use account/profile labels only; a content label still
+  warns over the post body, not over the author's name.
+- A list's `viewer.hidden` state is the user's own list setting, not a
+  moderation label, and the UI says so.
 - Notifications run through `moderateNotification`; hidden notifications are
   omitted from the list.
 - Settings → Content filters edits the same Bluesky preferences the official

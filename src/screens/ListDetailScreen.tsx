@@ -448,8 +448,8 @@ export function ListDetailScreen({
             <Ionicons name="eye-off-outline" size={18} color={p.secondary} />
             <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, flex: 1 }}>
               {hiddenForMe
-                ? 'This list is hidden by a Bluesky moderation label. Balla does not render its feed or member list.'
-                : 'This list is hidden by a Bluesky moderation label. As its owner, you can still see its contents.'}
+                ? 'You hid this list in your Bluesky list settings. Balla does not render its feed or member list.'
+                : 'You hid this list in your Bluesky list settings. As its owner, you can still see its contents.'}
             </Text>
           </View>
         ) : null}

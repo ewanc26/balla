@@ -41,11 +41,13 @@ export function ContentWarning({
   noOverride,
   onReveal,
   compact,
+  compactTitle = 'Media hidden',
 }: {
   causes: any[];
   noOverride?: boolean;
   onReveal?: () => void;
   compact?: boolean;
+  compactTitle?: string;
 }) {
   const p = usePalette();
   const { labelers } = useModeration();
@@ -81,7 +83,7 @@ export function ContentWarning({
         <Ionicons name="eye-off-outline" size={20} color={p.accent} />
         <View style={{ flex: 1, marginLeft: 10, minWidth: 0 }}>
           <Text style={{ color: p.text, fontSize: 14, fontWeight: '700' }}>
-            Media hidden
+            {compactTitle}
           </Text>
           <Text style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}>
             {title}

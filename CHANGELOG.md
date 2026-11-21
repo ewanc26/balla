@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.4.0
+
+- Only a label whose preference is Hide conceals a post or account. A Warn
+  label now keeps the author's name, handle and avatar visible and adds a labelled warning card with a visible reveal control where the label allows it.
+- Hidden profile pages explain that the account was hidden by the user's label settings instead of showing a placeholder identity.
+- List visibility copy now says “hidden in your list settings” rather than blaming a moderation label.
+
 ## 0.3.0
 
 - Replace the horizontal Home feed tabs with a visible Switch feed button and

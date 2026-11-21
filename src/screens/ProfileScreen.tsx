@@ -18,6 +18,7 @@ import { Avatar } from '../components/Avatar';
 import { ProfileMenu } from '../components/ProfileMenu';
 import { ContentWarning } from '../components/ContentWarning';
 import { useModeration } from '../lib/moderationContext';
+import { accountLabelCauses, hiddenByLabel } from '../lib/labelVisibility';
 import { useViewer } from '../lib/viewer';
 import { profileLinkHost, profileLinkLabel } from '../lib/profileLinks';
 import {
@@ -233,12 +234,49 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const profileUi = profileDecision.ui('profileView');
   const avatarUi = profileDecision.ui('avatar');
   const displayNameUi = profileDecision.ui('displayName');
-  const bannerUi = profileDecision.ui('banner');
-  const profileWarningCauses = profileDecision.labelCauses || [];
+  const profileWarningCauses = accountLabelCauses(profileDecision.labelCauses);
   const showProfileWarning = !profileRevealed && profileWarningCauses.length > 0;
-  const hideIdentity = showProfileWarning;
   const noOverrideProfile =
     profileUi.noOverride || avatarUi.noOverride || displayNameUi.noOverride;
+
+  if (hiddenByLabel(profileDecision.ui('profileList'))) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          backgroundColor: p.bg,
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 24,
+        }}
+      >
+        <Ionicons name="eye-off-outline" size={34} color={p.secondary} />
+        <Text
+          style={{
+            color: p.text,
+            fontSize: 18,
+            fontWeight: '700',
+            textAlign: 'center',
+            marginTop: 12,
+          }}
+        >
+          Account hidden by a label
+        </Text>
+        <Text
+          style={{
+            color: p.secondary,
+            fontSize: 14,
+            lineHeight: 20,
+            textAlign: 'center',
+            marginTop: 8,
+          }}
+        >
+          Your label settings hide this account. Change the label to Warn or
+          Show in Content filters if you want to see it.
+        </Text>
+      </View>
+    );
+  }
 
   function Header() {
     return (
@@ -264,7 +302,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
           ]}
         >
           <View style={{ height: 200, backgroundColor: p.accent, overflow: 'hidden' }}>
-            {profile.banner && !bannerUi.blur ? (
+            {profile.banner ? (
               <Image
                 source={{ uri: profile.banner }}
                 style={{ width: '100%', height: 200 }}
@@ -303,8 +341,8 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 }}
               >
                 <Avatar
-                  avatar={hideIdentity ? undefined : profile.avatar}
-                  displayName={hideIdentity ? 'Hidden account' : profile.displayName || profile.handle}
+                  avatar={profile.avatar}
+                  displayName={profile.displayName || profile.handle}
                   size={104}
                 />
               </View>
@@ -313,29 +351,23 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1, minWidth: 0 }}>
                 <Text style={{ color: p.text, fontSize: 24, fontWeight: '700', marginTop: 8 }}>
-                  {hideIdentity ? 'Hidden account' : profile.displayName || profile.handle}
+                  {profile.displayName || profile.handle}
                 </Text>
-                {hideIdentity ? (
-                  <Text style={{ color: p.secondary, fontSize: 15 }}>
-                    Account hidden by a label
-                  </Text>
-                ) : (
-                  <View
-                    style={{
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: 8,
-                    }}
-                  >
-                    <Text style={{ color: p.secondary, fontSize: 15 }}>@{profile.handle}</Text>
-                    {profile.pronouns?.trim() ? (
-                      <Text style={{ color: p.secondary, fontSize: 15 }}>
-                        {profile.pronouns.trim()}
-                      </Text>
-                    ) : null}
-                  </View>
-                )}
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    gap: 8,
+                  }}
+                >
+                  <Text style={{ color: p.secondary, fontSize: 15 }}>@{profile.handle}</Text>
+                  {profile.pronouns?.trim() ? (
+                    <Text style={{ color: p.secondary, fontSize: 15 }}>
+                      {profile.pronouns.trim()}
+                    </Text>
+                  ) : null}
+                </View>
               </View>
               {!isSelf ? (
                 <Pressable
