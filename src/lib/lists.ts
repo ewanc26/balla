@@ -43,6 +43,36 @@ export async function loadListPage(list: string, cursor?: string) {
   return response.data;
 }
 
+const delay = (milliseconds: number) =>
+  new Promise<void>((resolve) => setTimeout(resolve, milliseconds));
+
+async function waitForList(
+  uri: string,
+  matches: (list: any) => boolean
+): Promise<boolean> {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      const page = await loadListPage(uri);
+      if (matches(page.list)) return true;
+    } catch {
+      // The AppView may not have indexed the record yet.
+    }
+    await delay(500);
+  }
+  return false;
+}
+
+async function waitForListGone(uri: string): Promise<void> {
+  for (let attempt = 0; attempt < 6; attempt += 1) {
+    try {
+      await loadListPage(uri);
+    } catch {
+      return;
+    }
+    await delay(500);
+  }
+}
+
 export async function loadListFeedPage(list: string, cursor?: string) {
   const response = await agent.app.bsky.feed.getListFeed({
     list,
@@ -96,6 +126,7 @@ export async function createList(draft: ListDraft): Promise<string> {
       createdAt: new Date().toISOString(),
     },
   });
+  await waitForList(response.data.uri, () => true);
   return response.data.uri;
 }
 
@@ -121,6 +152,13 @@ export async function updateListRecord(
       ...(description ? { description } : { description: undefined }),
     },
   });
+  await waitForList(
+    uri,
+    (list) =>
+      list?.name === draft.name.trim() &&
+      (typeof list?.description === 'string' ? list.description.trim() : '') ===
+        description
+  );
 }
 
 async function deleteListItems(uri: string) {
@@ -159,6 +197,7 @@ export async function deleteList(uri: string): Promise<void> {
     collection: 'app.bsky.graph.list',
     rkey: recordKey(uri),
   });
+  await waitForListGone(uri);
 }
 
 export async function addListMember(

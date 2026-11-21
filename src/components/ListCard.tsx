@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from './Avatar';
+import { agent } from '../lib/agent';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import {
   listMemberCount,
@@ -23,6 +24,35 @@ export function ListCard({
   const viewer = listViewerState(list);
   const count = listMemberCount(list);
   const creator = list?.creator || {};
+  const hiddenForMe = viewer.hidden && list?.creator?.did !== agent.did;
+
+  if (hiddenForMe) {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole="button"
+        accessibilityLabel="Open hidden list"
+        style={({ pressed }) => [
+          styles.card,
+          { backgroundColor: p.card, borderColor: p.divider, opacity: pressed ? 0.68 : 1 },
+          cardShadow,
+        ]}
+      >
+        <View style={[styles.hiddenIcon, { backgroundColor: p.soft }]}>
+          <Ionicons name="eye-off-outline" size={21} color={p.secondary} />
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+            Hidden list
+          </Text>
+          <Text style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}>
+            Hidden by a Bluesky moderation label
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={p.secondary} />
+      </Pressable>
+    );
+  }
 
   return (
     <Pressable
@@ -109,6 +139,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 11,
+  },
+  hiddenIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titleRow: {
     flexDirection: 'row',

@@ -35,9 +35,14 @@ account. A list block is an `app.bsky.graph.listblock` record.
   list index for that account.
 - **Search and navigation:** Search has a direct Lists destination; the desktop
   rail and Settings have the same route.
-- **Moderation states:** `!hide` lists render a hidden state instead of their
-  contents. `viewer.muted` shows Subscribed, and `viewer.blocked` shows Blocked
-  with an unblock action.
+- **Moderation states:** `!hide` lists show a generic hidden card to everyone
+  except their owner. Non-owners cannot see the name, description, member
+  count, members or feed. `viewer.muted` shows Subscribed, and `viewer.blocked`
+  shows Blocked with an unblock action.
+- **Blocking:** blocking a list requires confirmation because the list-block
+  record is public and applies to every account currently on the list.
+- **Indexing waits:** after creating, editing or deleting a list, Balla waits
+  for the AppView to reflect the change before returning to the list surface.
 - **Deletion:** deleting a list also removes its `listitem` records from the
   PDS before deleting the list record.
 
