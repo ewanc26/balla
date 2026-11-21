@@ -3,7 +3,6 @@ import {
   ActivityIndicator,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -17,6 +16,12 @@ import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
+import { FeedSwitcherSheet } from '../components/FeedSwitcherSheet';
+import {
+  feedChoices,
+  feedStillAvailable,
+  selectedFeed,
+} from '../lib/feedSwitcher';
 import { useViewer } from '../lib/viewer';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
@@ -24,7 +29,7 @@ export function FeedScreen() {
   const p = usePalette();
   const navigation = useNavigation<any>();
   const { profile: me } = useViewer();
-  const { pinnedFeeds, generators } = useFeeds();
+  const { savedFeeds, generators } = useFeeds();
   const [activeFeed, setActiveFeed] = useState<string | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -32,6 +37,7 @@ export function FeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const requestId = useRef(0);
 
   const load = useCallback(
@@ -94,10 +100,8 @@ export function FeedScreen() {
   }, [activeFeed]);
 
   useEffect(() => {
-    if (activeFeed && !pinnedFeeds.some((feed) => feed.value === activeFeed)) {
-      setActiveFeed(null);
-    }
-  }, [activeFeed, pinnedFeeds]);
+    if (!feedStillAvailable(activeFeed, savedFeeds)) setActiveFeed(null);
+  }, [activeFeed, savedFeeds]);
 
   useEffect(() => {
     return subscribeActorHidden((did) =>
@@ -127,37 +131,54 @@ export function FeedScreen() {
 
   const activeGenerator = activeFeed ? generators[activeFeed] : undefined;
   const activeCreator = activeGenerator?.creator;
+  const choices = feedChoices(savedFeeds, generators);
+  const activeChoice = selectedFeed(activeFeed, savedFeeds, generators);
 
   function Header() {
     return (
       <View>
         <View
           style={[
-            styles.feedTabs,
+            styles.switcherBar,
             { backgroundColor: p.card, borderBottomColor: p.divider },
           ]}
         >
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.feedTabsContent}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Text
+              style={{
+                color: p.secondary,
+                fontSize: 11,
+                fontWeight: '700',
+                textTransform: 'uppercase',
+              }}
+            >
+              {activeChoice.following ? 'Chronological feed' : 'Custom feed'}
+            </Text>
+            <Text
+              numberOfLines={1}
+              style={{ color: p.text, fontSize: 17, fontWeight: '700', marginTop: 1 }}
+            >
+              {activeChoice.label}
+            </Text>
+          </View>
+          <Pressable
+            onPress={() => setSwitcherOpen(true)}
+            accessibilityRole="button"
+            accessibilityLabel="Switch feed"
+            accessibilityHint="Choose Following or one of your saved feeds"
+            style={({ pressed }) => [
+              styles.switchButton,
+              {
+                backgroundColor: p.accentSoft,
+                opacity: pressed ? 0.65 : 1,
+              },
+            ]}
           >
-            <FeedTab
-              label="Following"
-              selected={!activeFeed}
-              onPress={() => setActiveFeed(null)}
-              palette={p}
-            />
-            {pinnedFeeds.map((feed) => (
-              <FeedTab
-                key={feed.id}
-                label={generators[feed.value]?.displayName || 'Saved feed'}
-                selected={activeFeed === feed.value}
-                onPress={() => setActiveFeed(feed.value)}
-                palette={p}
-              />
-            ))}
-          </ScrollView>
+            <Ionicons name="swap-horizontal-outline" size={19} color={p.accent} />
+            <Text style={{ color: p.accent, fontSize: 14, fontWeight: '700', marginLeft: 7 }}>
+              Switch
+            </Text>
+          </Pressable>
         </View>
 
         {activeFeed ? (
@@ -324,47 +345,21 @@ export function FeedScreen() {
           </Pressable>
         </View>
       )}
-    </View>
-  );
-}
-
-function FeedTab({
-  label,
-  selected,
-  onPress,
-  palette,
-}: {
-  label: string;
-  selected: boolean;
-  onPress: () => void;
-  palette: ReturnType<typeof usePalette>;
-}) {
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`${label} feed`}
-      accessibilityState={{ selected }}
-      style={({ pressed }) => [
-        styles.tab,
-        {
-          borderBottomColor: selected ? palette.accent : 'transparent',
-          opacity: pressed ? 0.65 : 1,
-        },
-      ]}
-    >
-      <Text
-        numberOfLines={1}
-        style={{
-          color: selected ? palette.accent : palette.secondary,
-          fontSize: 14,
-          fontWeight: '700',
-          maxWidth: 170,
+      <FeedSwitcherSheet
+        visible={switcherOpen}
+        choices={choices}
+        selected={activeFeed}
+        onClose={() => setSwitcherOpen(false)}
+        onSelect={(value) => {
+          setActiveFeed(value);
+          setSwitcherOpen(false);
         }}
-      >
-        {label}
-      </Text>
-    </Pressable>
+        onManage={() => {
+          setSwitcherOpen(false);
+          navigation.navigate('Feeds');
+        }}
+      />
+    </View>
   );
 }
 
@@ -390,20 +385,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  feedTabs: {
-    minHeight: 48,
+  switcherBar: {
+    minHeight: 60,
     borderBottomWidth: StyleSheet.hairlineWidth,
-  },
-  feedTabsContent: {
-    paddingHorizontal: 4,
-  },
-  tab: {
-    minHeight: 48,
-    minWidth: 88,
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 14,
+  },
+  switchButton: {
+    minHeight: 44,
+    minWidth: 110,
+    borderRadius: CARD_RADIUS,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderBottomWidth: 3,
+    paddingHorizontal: 12,
+    marginLeft: 10,
   },
   feedNote: {
     flexDirection: 'row',

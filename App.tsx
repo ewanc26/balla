@@ -176,6 +176,10 @@ export default function App() {
     if (navigationRef.isReady()) navigationRef.navigate('Lists');
   }, []);
 
+  const openFeeds = useCallback(() => {
+    if (navigationRef.isReady()) navigationRef.navigate('Feeds');
+  }, []);
+
   const syncActiveTab = useCallback(() => {
     const name = navigationRef.getCurrentRoute()?.name || 'Home';
     setRouteName(name);
@@ -268,6 +272,7 @@ export default function App() {
                   onNavigate={navigateToTab}
                   onOpenSettings={openSettings}
                   onOpenLists={openLists}
+                  onOpenFeeds={openFeeds}
                 />
               ) : null}
               <View style={{ flex: 1, maxWidth: width >= DESKTOP_MIN_WIDTH ? 680 : undefined }}>

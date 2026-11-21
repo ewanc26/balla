@@ -35,6 +35,13 @@ product, not a claim that every account looks identical.
   active underline, and account or messaging actions on the right.
 - **Mobile navigation.** The 2025 redesign puts the main destinations in one
   bottom tab bar: Home, Reels, Friends, Marketplace, Notifications and Profile.
+- **Feeds submenu.** Facebook puts Feeds in the desktop left menu (sometimes
+  behind “See more”) and in the mobile Menu. Feeds is the chronological catch-up
+  from followed sources, with sub-filters such as All, Favourites, Friends,
+  Groups and Pages. Meta says it has no Suggested For You posts, though ads still
+  appear there on Facebook. Sources: Meta's “Introducing Home and Feeds on
+  Facebook” (21 July 2022) and the current Facebook Help pages for Feeds and
+  Favourites, checked 21 November 2026.
 - **Composer.** A 40px avatar beside a rounded grey “What's on your mind?” pill,
   a divider and a row of post actions.
 - **Post anatomy.** A 40px avatar, 15px semibold name, 13px timestamp and
@@ -54,7 +61,8 @@ product, not a claim that every account looks identical.
 | Left shortcuts and right contextual rail | `src/components/AppRail.tsx` |
 | Grey canvas, white 8px cards, hairline borders | `src/theme.ts`, `src/components/PostCard.tsx` |
 | Composer card with avatar and rounded prompt | `src/screens/FeedScreen.tsx` |
-| Following tab with blue underline, plus opt-in pinned feed tabs | `src/screens/FeedScreen.tsx` |
+| Feeds in the left menu, with sub-filters for a chronological catch-up | `src/components/AppRail.tsx`, `src/screens/FeedsScreen.tsx` |
+| Visible feed switcher on Home, Following first | `src/components/FeedSwitcherSheet.tsx`, `src/screens/FeedScreen.tsx`, `src/lib/feedSwitcher.ts` |
 | Like/Comment/Share action bar | `PostCard.tsx`: Like, Repost, Comment and a 44pt Save control |
 | Post overflow for sharing and safety | `src/components/PostMenu.tsx`: Copy, Share, Quote, Report, Mute, Block and Delete |
 | Settings and privacy cards | `src/screens/SettingsScreen.tsx`: Account, privacy, moderation, notifications, content, feeds, appearance, language, help and legal |
@@ -70,6 +78,13 @@ column is capped at 680px so line length stays readable. The bottom tab bar is
 hidden while the rails are visible. The header does not repeat those
 destinations: the left rail owns them on desktop and the bottom tabs own them
 on mobile, so a screen never shows the same navigation twice.
+
+Balla follows the Feeds pattern but keeps every control visible: Home has a
+44pt **Switch** button that opens a sheet with Following first, then pinned
+feeds in the user's order, then other saved feeds. On desktop the left rail also
+has a Feeds entry for management. There is no “See more” hiding it, no ranked
+Home feed, no suggested posts, no adverts and no engagement bait. Custom feeds
+keep the generator's order and say so; Following is always newest-first.
 
 ## Mock preview
 

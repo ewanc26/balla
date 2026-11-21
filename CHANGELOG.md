@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.3.0
+
+- Replace the horizontal Home feed tabs with a visible Switch feed button and
+  sheet. Following is always first; pinned feeds keep the user's order, followed
+  by other saved feeds.
+- Add a Feeds entry to the desktop left rail for managing saved feeds, and keep
+  the header free of duplicate navigation.
+
 ## 0.2.0
 
 - Show quoted posts in cards and threads with their own author, text and

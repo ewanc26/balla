@@ -19,6 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { useFeeds } from '../lib/feedsContext';
 import type { SavedFeedItem } from '../lib/feedPreferences';
+import { generatorName } from '../lib/feedSwitcher';
 import { Avatar } from '../components/Avatar';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
@@ -177,8 +178,9 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
           <Ionicons name="albums-outline" size={21} color={p.accent} />
         </View>
         <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, flex: 1 }}>
-          Following is always the first, chronological feed. Pinned custom feeds
-          get their own tab and keep the generator’s order.
+          Following is always first and newest-first. Use Switch feed on Home to
+          choose any saved feed; pinning only adds shortcuts, it never changes
+          what Following contains.
         </Text>
       </View>
 
@@ -218,12 +220,12 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
       ) : null}
 
       <Section
-        title="Pinned to Home"
+        title="Pinned to the switcher"
         detail={`${pinnedFeeds.length} ${pinnedFeeds.length === 1 ? 'feed' : 'feeds'}`}
       >
         <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, paddingHorizontal: 18, marginBottom: 8 }}>
           Following stays first. Use the arrows to change the order of the other
-          pinned tabs.
+          pinned feeds in Switch feed.
         </Text>
         {loading && savedFeeds.length === 0 ? (
           <View style={styles.emptyCard}>
@@ -232,7 +234,8 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
         ) : pinnedFeeds.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: p.card, borderColor: p.divider }]}>
             <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, textAlign: 'center' }}>
-              No custom feeds are pinned. Pin one below to add a tab to Home.
+              No custom feeds are pinned. Pin one below to put it near the top
+              of Switch feed.
             </Text>
           </View>
         ) : (
@@ -497,7 +500,7 @@ function SavedFeedRow({
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 }) {
-  const name = generator?.displayName || 'Saved feed';
+  const name = generatorName(generator) || 'Saved feed';
   const creator = generator?.creator?.handle;
   const details = [
     creator ? `by @${creator}` : null,

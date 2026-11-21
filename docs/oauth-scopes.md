@@ -52,7 +52,7 @@ All of these use:
 | `app.bsky.bookmark.deleteBookmark` | Removing a saved post |
 | `app.bsky.bookmark.getBookmarks` | Saved screen |
 | `app.bsky.feed.getAuthorFeed` | Profile posts |
-| `app.bsky.feed.getFeed` | Custom feed posts, including pinned Home tabs |
+| `app.bsky.feed.getFeed` | Custom feed posts, including feeds chosen from Switch feed |
 | `app.bsky.feed.getFeedGenerator` | Custom feed metadata |
 | `app.bsky.feed.getFeedGenerators` | Batched metadata for saved feeds |
 | `app.bsky.feed.getLikes` | Liked-by list for a post |

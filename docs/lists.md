@@ -73,5 +73,5 @@ available.
 - List and feed reports are not implemented; post and account reporting are.
 - Reference lists are displayed if encountered, but only curation and moderation
   lists can be created.
-- List feeds are not pinned as Home tabs. That needs saved-feed support for list
+- List feeds are not pinned to the feed switcher. That needs saved-feed support for list
   URIs and is a separate change.

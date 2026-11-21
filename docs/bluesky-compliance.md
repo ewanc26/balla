@@ -26,7 +26,7 @@ shipped. This document records the bar and the order in which to close the rest.
 | --- | --- | --- |
 | OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo and AppView scopes | Existing broad sessions must re-authorise; chat audience is intentionally absent until DMs exist |
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
-| Home feed | Chronological Following first, opt-in pinned custom-feed tabs, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
+| Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
 | Threads | Ancestor chain, nested replies, reply composer | Missing thread/post gates and some moderation states |
 | Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, authored lists, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner | No verification state or pinned post |
 | Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history and in-app feed/starter-pack destinations | Profile-scoped search remains (#25) |

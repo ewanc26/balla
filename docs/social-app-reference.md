@@ -66,7 +66,7 @@ architecture wholesale.
 
 ### Home and reading
 
-- Following timeline and explicit custom-feed tabs.
+- Following timeline and an explicit switcher for saved custom feeds.
 - Pinned and saved feeds, including list feeds.
 - Discover, video feed, hashtags, topics and shared starter-pack landing pages.
 - Post thread with ancestors, nested replies, hidden replies, threadgates and
@@ -193,7 +193,7 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 | Surface | Balla now | Gap |
 | --- | --- | --- |
 | Auth | OAuth-only, DPoP, native and web callback, granular collection and AppView scope | No multi-account; existing sessions need one re-authorisation for the narrower scope |
-| Home | Chronological Following first, opt-in pinned custom-feed tabs, pagination and pull-to-refresh | No Discover, video, hashtag or topic surfaces |
+| Home | Chronological Following first, a visible switcher for saved feeds, pagination and pull-to-refresh | No Discover, video, hashtag or topic surfaces |
 | Posts | Text, one-to-ten photo uploads with alt text and legacy/gallery embeds, record-with-media quotes, like, repost, bookmark, reply, delete, copy link/text, share sheet, translation with show-original and image viewing | No video, GIF, pin or edit interaction settings |
 | Threads | Ancestors, nested replies, reply composer | No threadgate, hidden replies, reply sorting or tree preference |
 | Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, authored lists, report/block/mute, and editing of name, bio, pronouns, links, avatar and banner | No verification or pinned post |
