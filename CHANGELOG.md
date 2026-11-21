@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.8.0
+
+- Complete the public profile: verification badges only for `valid` statuses, with an accessible sheet listing the verifiers and records Bluesky reports; a labeler chip from `associated.labeler`; and profile labels that keep Warn states visible behind a labelled warning.
+- Show a pinned post once, using the real `pinnedPost.uri`, and list authored feeds and starter packs alongside authored lists. Optional lookups fail independently, so a missing AppView endpoint never hides the profile or its posts.
+- Add “Search this account's posts” from a profile. It reuses the Search tab with a fixed `authors` filter on `searchPostsV2`, a visible scope banner with a clear action, and honest placeholder and results copy.
+- Add framework-free profile derivations and tests, and correct the Settings copy that still said post languages were to come.
+
 ## 0.7.0
 
 - Add per-post content warnings and post languages to the composer. Warnings use the four self-label values Bluesky publishes; languages use real BCP-47 codes, capped at three, and both are written to the post record only when chosen. Each post in a thread keeps its own choices.

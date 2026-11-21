@@ -63,7 +63,9 @@ fullsize render with visible close and step buttons, and the alt text printed
 under it; notifications that open the conversation they belong to when tapped;
 public profiles — tap any author to view their profile, follow or unfollow, and
 see their posts, followers and following, plus known followers and liked-by,
-reposted-by and quote lists; photo posts with up to ten images, per-photo alt
+reposted-by and quote lists, verification and labeler badges with the verifiers
+Bluesky reports, label warnings, a pinned post, authored lists, feeds and starter
+packs, and account-scoped post search; photo posts with up to ten images, per-photo alt
 text, an optional requirement to describe every image, cancellable uploads and
 retries; content warnings from the Bluesky self-label vocabulary and up to three
 post languages per post; profile editing for name, bio, pronouns, links,

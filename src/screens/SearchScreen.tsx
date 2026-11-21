@@ -59,7 +59,8 @@ async function fetchSearchPage(
   tab: SearchTab,
   query: string,
   filters: SearchFilters,
-  cursor?: string
+  cursor?: string,
+  author?: string
 ): Promise<SearchPage> {
   if (tab === 'top' || tab === 'latest') {
     const params = buildPostSearchParams(
@@ -68,6 +69,9 @@ async function fetchSearchPage(
       agent.did || '',
       tab
     );
+    // An account scope from a profile is fixed: it overrides any author typed
+    // into the filter sheet so the results cannot quietly widen.
+    if (author) params.authors = [author];
     const res = await agent.app.bsky.feed.searchPostsV2({
       ...params,
       limit: 30,
@@ -175,6 +179,12 @@ export function SearchScreen({ route }: { route?: any }) {
   const [error, setError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [history, setHistory] = useState<string[]>([]);
+  const routeAuthor =
+    typeof route?.params?.author === 'string' ? route.params.author.trim() : '';
+  const [scopeAuthor, setScopeAuthor] = useState(routeAuthor);
+  // A ref keeps the fixed scope in sync for in-flight requests, including a
+  // new scope arriving while an earlier search is still resolving.
+  const scopeAuthorRef = useRef(routeAuthor);
   const requestId = useRef(0);
   const moreInFlight = useRef(false);
 
@@ -220,18 +230,34 @@ export function SearchScreen({ route }: { route?: any }) {
   }, []);
 
   const routeRequest = route?.params?.searchRequest;
+  const routeNonce = route?.params?.nonce ?? routeRequest?.nonce;
 
   useEffect(() => {
-    if (!routeRequest || typeof routeRequest.q !== 'string') return;
-    const term = routeRequest.q.trim();
-    if (!term) return;
-    const nextFilters = cleanSearchFilters(routeRequest.filters);
-    setQuery(term);
-    setFilters(nextFilters);
-    void performSearch('top', term, nextFilters, { remember: true });
-    // The nonce distinguishes repeated searches for the same term.
+    if (!routeNonce) return;
+    scopeAuthorRef.current = routeAuthor;
+    setScopeAuthor(routeAuthor);
+    if (routeRequest && typeof routeRequest.q === 'string') {
+      const term = routeRequest.q.trim();
+      if (!term) return;
+      const nextFilters = cleanSearchFilters(routeRequest.filters);
+      setQuery(term);
+      setFilters(nextFilters);
+      void performSearch('top', term, nextFilters, { remember: true });
+    } else if (routeAuthor) {
+      // A profile hands over the account but no query: show the scope and wait.
+      setQuery('');
+      setFilters({ ...EMPTY_SEARCH_FILTERS });
+      setSubmitted(null);
+      setItems([]);
+      setCursor(undefined);
+      setHitsTotal(undefined);
+      setError(null);
+      setLoaded(false);
+      requestId.current += 1;
+    }
+    // The nonce distinguishes repeated requests with the same target.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeRequest?.nonce]);
+  }, [routeNonce]);
 
   useEffect(() => {
     if (!MOCK_MODE) return;
@@ -290,7 +316,7 @@ export function SearchScreen({ route }: { route?: any }) {
 
     try {
       const page = await readWithRetry(() =>
-        fetchSearchPage(safeTab, term, nextFilters)
+        fetchSearchPage(safeTab, term, nextFilters, undefined, scopeAuthorRef.current)
       );
       if (id !== requestId.current) return;
       setItems(page.items);
@@ -331,7 +357,8 @@ export function SearchScreen({ route }: { route?: any }) {
           activeTab,
           submitted.query,
           submitted.filters,
-          activeCursor
+          activeCursor,
+          scopeAuthorRef.current
         )
       );
       if (id !== requestId.current) return;
@@ -377,6 +404,20 @@ export function SearchScreen({ route }: { route?: any }) {
     if (!term) return;
     const nextTab = filtersBlockTab(nextFilters, tab) ? 'top' : tab;
     void performSearch(nextTab, term, nextFilters, { remember: true });
+  }
+
+  function clearScope() {
+    scopeAuthorRef.current = '';
+    setScopeAuthor('');
+    setQuery('');
+    setSubmitted(null);
+    setItems([]);
+    setCursor(undefined);
+    setHitsTotal(undefined);
+    setError(null);
+    setLoaded(false);
+    setTab('top');
+    requestId.current += 1;
   }
 
   function openHistoryEntry(stored: string) {
@@ -492,8 +533,44 @@ export function SearchScreen({ route }: { route?: any }) {
             Search
           </Text>
           <Text style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}>
-            Posts, people, feeds, starter packs and lists
+            {scopeAuthor
+              ? 'Search this account’s posts'
+              : 'Posts, people, feeds, starter packs and lists'}
           </Text>
+          {scopeAuthor ? (
+            <View
+              style={[
+                styles.scopeBanner,
+                { backgroundColor: p.accentSoft, borderRadius: CARD_RADIUS },
+              ]}
+            >
+              <Ionicons name="person-outline" size={16} color={p.accent} />
+              <Text
+                style={{
+                  color: p.accent,
+                  fontSize: 13,
+                  fontWeight: '600',
+                  marginLeft: 8,
+                  flex: 1,
+                }}
+                numberOfLines={1}
+              >
+                Posts by @{scopeAuthor}
+              </Text>
+              <Pressable
+                onPress={clearScope}
+                accessibilityRole="button"
+                accessibilityLabel="Remove account search scope"
+                accessibilityHint="Return to searching all of Bluesky"
+                style={({ pressed }) => [
+                  styles.scopeClear,
+                  { opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Ionicons name="close" size={18} color={p.accent} />
+              </Pressable>
+            </View>
+          ) : null}
           <View
             style={[
               styles.searchBox,
@@ -505,19 +582,31 @@ export function SearchScreen({ route }: { route?: any }) {
               value={query}
               onChangeText={setQuery}
               onSubmitEditing={() => void performSearch(tab, query, filters)}
-              placeholder="Search Bluesky"
+              placeholder={
+                scopeAuthor
+                  ? `Search @${scopeAuthor}’s posts`
+                  : 'Search Bluesky'
+              }
               placeholderTextColor={p.secondary}
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="search"
-              accessibilityLabel="Search Bluesky"
+              accessibilityLabel={
+                scopeAuthor
+                  ? `Search @${scopeAuthor}’s posts`
+                  : 'Search Bluesky'
+              }
               style={[styles.input, { color: p.text }, webInputReset]}
             />
             <Pressable
               onPress={() => void performSearch(tab, query, filters)}
               disabled={!canSearch}
               accessibilityRole="button"
-              accessibilityLabel="Search Bluesky"
+              accessibilityLabel={
+                scopeAuthor
+                  ? `Search @${scopeAuthor}’s posts`
+                  : 'Search Bluesky'
+              }
               accessibilityState={{ disabled: !canSearch, busy: loading }}
               style={({ pressed }) => [
                 styles.searchButton,
@@ -623,7 +712,12 @@ export function SearchScreen({ route }: { route?: any }) {
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.tabs}
             >
-              {SEARCH_TABS.map((item) => (
+              {(scopeAuthor
+                ? SEARCH_TABS.filter(
+                    (item) => item.id === 'top' || item.id === 'latest'
+                  )
+                : SEARCH_TABS
+              ).map((item) => (
                 <Tab
                   key={item.id}
                   label={item.label}
@@ -643,6 +737,7 @@ export function SearchScreen({ route }: { route?: any }) {
                 numberOfLines={1}
               >
                 Results for “{submitted.query}”
+                {scopeAuthor ? ` by @${scopeAuthor}` : ''}
               </Text>
               {typeof hitsTotal === 'number' ? (
                 <Text style={{ color: p.secondary, fontSize: 12 }}>
@@ -1025,6 +1120,19 @@ function RecentSearches({
 const styles = StyleSheet.create({
   header: {
     borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  scopeBanner: {
+    minHeight: 44,
+    marginTop: 8,
+    paddingHorizontal: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  scopeClear: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   searchBox: {
     height: 44,

@@ -27,6 +27,15 @@ import {
   listViewerState,
 } from '../lib/listModel';
 import { subscribeActorHidden } from '../lib/moderation';
+import { VerificationSheet } from '../components/VerificationSheet';
+import {
+  profileAssociatedCounts,
+  profileIsLabeler,
+  profilePinnedUri,
+  profileVerification,
+  verificationBadgeLabel,
+  type VerificationSummary,
+} from '../lib/profileModel';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 export function ProfileScreen({ route, navigation }: { route?: any; navigation: any }) {
@@ -46,6 +55,10 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const [profileRevealed, setProfileRevealed] = useState(false);
   const [knownFollowers, setKnownFollowers] = useState<any[]>([]);
   const [lists, setLists] = useState<any[]>([]);
+  const [feeds, setFeeds] = useState<any[]>([]);
+  const [starterPacks, setStarterPacks] = useState<any[]>([]);
+  const [pinnedPost, setPinnedPost] = useState<any>(null);
+  const [verificationOpen, setVerificationOpen] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -58,6 +71,10 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
     setProfileRevealed(false);
     setKnownFollowers([]);
     setLists([]);
+    setFeeds([]);
+    setStarterPacks([]);
+    setPinnedPost(null);
+    setVerificationOpen(false);
 
     if (!actor) {
       setFailed(true);
@@ -69,24 +86,56 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
     (async () => {
       try {
-        const [prof, feed, listResult] = await readWithRetry(() =>
+        const [prof, feed] = await readWithRetry(() =>
           Promise.all([
             agent.getProfile({ actor }),
             agent.getAuthorFeed({ actor, limit: 30 }),
-            agent.app.bsky.graph
-              .getLists({ actor, limit: 20 })
-              .catch(() => null),
           ])
         );
         if (!active) return;
-        setProfile(prof.data);
-        setFollowingUri(prof.data.viewer && prof.data.viewer.following);
+        const detail = prof.data;
+        setProfile(detail);
+        setFollowingUri(detail.viewer && detail.viewer.following);
         setPosts((feed.data.feed || []).map((item: any) => item.post));
-        setLists(listResult?.data.lists || []);
-        if (prof.data.did !== agent.did) {
+
+        // The sections below are additive: a missing optional AppView endpoint
+        // must never hide the profile or its posts.
+        void Promise.all([
+          agent.app.bsky.graph
+            .getLists({ actor, limit: 20 })
+            .then((res) => {
+              if (active) setLists(res.data.lists || []);
+            })
+            .catch(() => {}),
+          agent.app.bsky.feed
+            .getActorFeeds({ actor, limit: 20 })
+            .then((res: any) => {
+              if (active) setFeeds(res.data.feeds || []);
+            })
+            .catch(() => {}),
+          agent.app.bsky.graph
+            .getActorStarterPacks({ actor, limit: 20 })
+            .then((res: any) => {
+              if (active) setStarterPacks(res.data.starterPacks || []);
+            })
+            .catch(() => {}),
+        ]);
+
+        const pinnedUri = profilePinnedUri(detail);
+        if (pinnedUri) {
+          agent
+            .getPosts({ uris: [pinnedUri] })
+            .then((res) => {
+              const post = res.data.posts?.[0];
+              if (active && post) setPinnedPost(post);
+            })
+            .catch(() => {});
+        }
+
+        if (detail.did !== agent.did) {
           // Social proof is optional: a failed lookup must not block the profile.
           agent.app.bsky.graph
-            .getKnownFollowers({ actor: prof.data.did, limit: 3 })
+            .getKnownFollowers({ actor: detail.did, limit: 3 })
             .then((known) => {
               if (active) setKnownFollowers(known.data.followers || []);
             })
@@ -108,6 +157,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   useEffect(() => {
     return subscribeActorHidden((did) => {
       setPosts((prev) => prev.filter((item: any) => item.author.did !== did));
+      setPinnedPost((prev: any) => (prev && prev.author.did === did ? null : prev));
     });
   }, []);
 
@@ -169,7 +219,10 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
         ? { ...prev, viewer: { ...(prev.viewer || {}), ...viewer } }
         : prev
     );
-    if (viewer.blocking) setPosts([]);
+    if (viewer.blocking) {
+      setPosts([]);
+      setPinnedPost(null);
+    }
   }
 
   function reloadProfile() {
@@ -184,6 +237,14 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
           : item.uri !== post.uri
       )
     );
+    if (
+      pinnedPost &&
+      (scope === 'author'
+        ? post.author.did === pinnedPost.author.did
+        : post.uri === pinnedPost.uri)
+    ) {
+      setPinnedPost(null);
+    }
     if (scope === 'post' && post.author.did === profile.did) {
       setProfile((prev: any) =>
         prev
@@ -230,6 +291,10 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
   const isSelf = profile.did === agent.did;
   const isBlocked = !!(profile.viewer?.blocking || profile.viewer?.blockedBy);
+  const verification: VerificationSummary = profileVerification(profile);
+  const badgeLabel = verificationBadgeLabel(verification);
+  const isLabeler = profileIsLabeler(profile);
+  const associatedCounts = profileAssociatedCounts(profile);
   const profileDecision = moderateProfile(profile, opts);
   const profileUi = profileDecision.ui('profileView');
   const avatarUi = profileDecision.ui('avatar');
@@ -350,9 +415,40 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ color: p.text, fontSize: 24, fontWeight: '700', marginTop: 8 }}>
-                  {profile.displayName || profile.handle}
-                </Text>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    marginTop: 8,
+                  }}
+                >
+                  <Text style={{ color: p.text, fontSize: 24, fontWeight: '700' }}>
+                    {profile.displayName || profile.handle}
+                  </Text>
+                  {badgeLabel ? (
+                    <Pressable
+                      onPress={() => setVerificationOpen(true)}
+                      accessibilityRole="button"
+                      accessibilityLabel={`${badgeLabel}. Show verification details`}
+                      accessibilityHint={`Shows the verification records Bluesky reports for @${profile.handle}`}
+                      style={({ pressed }) => [
+                        styles.verificationBadge,
+                        { opacity: pressed ? 0.6 : 1 },
+                      ]}
+                    >
+                      <Ionicons
+                        name={
+                          verification.verified
+                            ? 'checkmark-circle'
+                            : 'shield-checkmark-outline'
+                        }
+                        size={22}
+                        color={p.accent}
+                      />
+                    </Pressable>
+                  ) : null}
+                </View>
                 <View
                   style={{
                     flexDirection: 'row',
@@ -362,6 +458,13 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                   }}
                 >
                   <Text style={{ color: p.secondary, fontSize: 15 }}>@{profile.handle}</Text>
+                  {isLabeler ? (
+                    <View style={[styles.labelerChip, { backgroundColor: p.accentSoft }]}>
+                      <Text style={{ color: p.accent, fontSize: 11, fontWeight: '700' }}>
+                        LABELER
+                      </Text>
+                    </View>
+                  ) : null}
                   {profile.pronouns?.trim() ? (
                     <Text style={{ color: p.secondary, fontSize: 15 }}>
                       {profile.pronouns.trim()}
@@ -685,6 +788,92 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 })}
               </View>
             ) : null}
+
+            {!isBlocked ? (
+              <Pressable
+                onPress={() =>
+                  navigation.navigate('Tabs', {
+                    screen: 'Search',
+                    params: {
+                      author: profile.handle,
+                      nonce: Date.now(),
+                    },
+                  })
+                }
+                accessibilityRole="button"
+                accessibilityLabel={`Search posts by @${profile.handle}`}
+                accessibilityHint={`Opens search limited to @${profile.handle}’s posts`}
+                style={({ pressed }) => [
+                  styles.searchPostsRow,
+                  { borderTopColor: p.divider, opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Ionicons name="search-outline" size={18} color={p.accent} />
+                <Text
+                  style={{
+                    color: p.accent,
+                    fontSize: 14,
+                    fontWeight: '600',
+                    marginLeft: 10,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  Search @{profile.handle}’s posts
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={p.accent} />
+              </Pressable>
+            ) : null}
+
+            {feeds.length > 0 ? (
+              <View style={[styles.listsBlock, { borderTopColor: p.divider }]}>
+                <View style={styles.listsHeading}>
+                  <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', flex: 1 }}>
+                    Feeds
+                  </Text>
+                  <Text style={{ color: p.secondary, fontSize: 12 }}>
+                    {associatedCounts.feeds || feeds.length}
+                  </Text>
+                </View>
+                {feeds.slice(0, 3).map((feed: any) => (
+                  <ProfileSectionRow
+                    key={feed.uri}
+                    icon="albums-outline"
+                    title={feed.displayName || 'Untitled feed'}
+                    detail={`Feed · ${Number(feed.likeCount || 0)} likes`}
+                    label={`Open ${feed.displayName || 'Untitled feed'} feed`}
+                    onPress={() =>
+                      navigation.navigate('FeedGenerator', { feed: feed.uri })
+                    }
+                  />
+                ))}
+              </View>
+            ) : null}
+
+            {starterPacks.length > 0 ? (
+              <View style={[styles.listsBlock, { borderTopColor: p.divider }]}>
+                <View style={styles.listsHeading}>
+                  <Text style={{ color: p.text, fontSize: 15, fontWeight: '700', flex: 1 }}>
+                    Starter packs
+                  </Text>
+                  <Text style={{ color: p.secondary, fontSize: 12 }}>
+                    {associatedCounts.starterPacks || starterPacks.length}
+                  </Text>
+                </View>
+                {starterPacks.slice(0, 2).map((pack: any) => (
+                  <ProfileSectionRow
+                    key={pack.uri}
+                    icon="people-outline"
+                    title={pack.record?.name || 'Starter pack'}
+                    detail={`Starter pack · ${Number(pack.list?.listItemCount || 0)} people`}
+                    label={`Open ${pack.record?.name || 'Starter pack'} starter pack`}
+                    onPress={() =>
+                      navigation.navigate('StarterPack', { uri: pack.uri })
+                    }
+                  />
+                ))}
+              </View>
+            ) : null}
           </View>
         </View>
 
@@ -713,18 +902,45 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
     );
   }
 
+  // The pinned post appears once: in its natural place if it is in the feed,
+  // or at the top if it is older than the posts we fetched.
+  const feedItems: Array<{ post: any; pinned: boolean }> = posts.map((post) => ({
+    post,
+    pinned: !!pinnedPost && post.uri === pinnedPost.uri,
+  }));
+  if (pinnedPost && !feedItems.some((item) => item.post.uri === pinnedPost.uri)) {
+    feedItems.unshift({ post: pinnedPost, pinned: true });
+  }
+
   return (
     <>
       <FlashList
-        data={isBlocked ? [] : posts}
-        keyExtractor={(item: any) => item.uri}
+        data={isBlocked ? [] : feedItems}
+        keyExtractor={(item) => item.post.uri}
         renderItem={({ item }) => (
-          <PostCard
-            post={item}
-            onOpenThread={openThread}
-            onOpenProfile={openProfile}
-            onPostHidden={hidePost}
-          />
+          <View>
+            {item.pinned ? (
+              <View style={[styles.pinnedRow, { borderBottomColor: p.divider }]}>
+                <Ionicons name="pin-outline" size={14} color={p.secondary} />
+                <Text
+                  style={{
+                    color: p.secondary,
+                    fontSize: 12,
+                    fontWeight: '600',
+                    marginLeft: 6,
+                  }}
+                >
+                  Pinned
+                </Text>
+              </View>
+            ) : null}
+            <PostCard
+              post={item.post}
+              onOpenThread={openThread}
+              onOpenProfile={openProfile}
+              onPostHidden={hidePost}
+            />
+          </View>
         )}
         // FlashList v2 measures items itself; estimatedItemSize is gone.
         style={{ flex: 1, backgroundColor: p.bg }}
@@ -742,6 +958,12 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
         onClose={() => setMenuOpen(false)}
         onViewerChange={updateViewer}
         onReload={reloadProfile}
+      />
+      <VerificationSheet
+        visible={verificationOpen}
+        handle={profile.handle}
+        summary={verification}
+        onClose={() => setVerificationOpen(false)}
       />
     </>
   );
@@ -775,6 +997,46 @@ function Stat({
       })}
     >
       {text}
+    </Pressable>
+  );
+}
+
+function ProfileSectionRow({
+  icon,
+  title,
+  detail,
+  label,
+  onPress,
+}: {
+  icon: any;
+  title: string;
+  detail: string;
+  label: string;
+  onPress: () => void;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        styles.listLink,
+        { backgroundColor: pressed ? p.bg : 'transparent' },
+      ]}
+    >
+      <View style={[styles.listIcon, { backgroundColor: p.accentSoft }]}>
+        <Ionicons name={icon} size={16} color={p.accent} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ color: p.text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
+          {title}
+        </Text>
+        <Text style={{ color: p.secondary, fontSize: 11 }} numberOfLines={1}>
+          {detail}
+        </Text>
+      </View>
+      <Ionicons name="chevron-forward" size={15} color={p.secondary} />
     </Pressable>
   );
 }
@@ -833,6 +1095,36 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  verificationBadge: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: -8,
+  },
+  labelerChip: {
+    minHeight: 20,
+    borderRadius: 10,
+    paddingHorizontal: 7,
+    justifyContent: 'center',
+  },
+  searchPostsRow: {
+    minHeight: 48,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 4,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    marginTop: 14,
+  },
+  pinnedRow: {
+    minHeight: 30,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    backgroundColor: 'transparent',
   },
   profileLinks: {
     flexDirection: 'row',

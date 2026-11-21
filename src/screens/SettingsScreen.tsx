@@ -254,7 +254,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
         <Row
           icon="chatbubble-ellipses-outline"
           label="Post languages"
-          detail="Language controls in the composer are still to come"
+          detail="Choose up to three per post in the composer"
         />
       </Section>
 
