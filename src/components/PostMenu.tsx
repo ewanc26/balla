@@ -37,6 +37,8 @@ import {
   unmuteActor,
 } from '../lib/moderation';
 import type { ReportReason } from '../lib/moderation';
+import { usePreferences } from '../lib/preferences';
+import { languageSummary } from '../lib/postOptions';
 
 type Mode = 'menu' | 'report' | 'confirm-block' | 'confirm-delete';
 type HideScope = 'post' | 'author';
@@ -64,6 +66,7 @@ export function PostMenu({
 }: PostMenuProps) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
+  const { preferences } = usePreferences();
   const navigation = useNavigation<any>();
   const { width } = useWindowDimensions();
   const [mode, setMode] = useState<Mode>('menu');
@@ -473,7 +476,7 @@ export function PostMenu({
                     ? 'Show translation'
                     : 'Translate post'
             }
-            detail="Translate into English. Sends the post text to Google."
+            detail={`Translate into ${languageSummary([preferences.primaryLanguage])}. Sends the post text to Google.`}
             onPress={() => {
               onClose();
               onTranslate();

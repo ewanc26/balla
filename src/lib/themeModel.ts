@@ -17,10 +17,45 @@ export type FacebookEraId =
   | 'timeline'
   | 'newfacebook';
 
+export type ColourMode = 'system' | 'light' | 'dark';
+export type FontScaleId = 'small' | 'default' | 'large';
+
 export type ThemeChoice = {
   accent: AccentId;
   era: FacebookEraId;
+  colourMode: ColourMode;
+  fontScale: FontScaleId;
 };
+
+export const COLOUR_MODES: readonly ColourMode[] = ['system', 'light', 'dark'];
+export const FONT_SCALES: readonly FontScaleId[] = ['small', 'default', 'large'];
+
+export const FONT_SCALE_FACTORS: Record<FontScaleId, number> = {
+  small: 0.9,
+  default: 1,
+  large: 1.15,
+};
+
+export function isColourMode(value: unknown): value is ColourMode {
+  return COLOUR_MODES.includes(value as ColourMode);
+}
+
+export function isFontScaleId(value: unknown): value is FontScaleId {
+  return FONT_SCALES.includes(value as FontScaleId);
+}
+
+/** A forced mode wins; 'system' keeps whatever the platform reports. */
+export function resolveScheme(
+  system: ColorScheme,
+  mode: ColourMode
+): ColorScheme {
+  return mode === 'system' ? system : mode;
+}
+
+/** Post and composer text scales by one shared factor, never per component. */
+export function scaleFontSize(base: number, scale: FontScaleId): number {
+  return Math.round(base * FONT_SCALE_FACTORS[scale] * 10) / 10;
+}
 
 export type AccentColour = {
   id: AccentId;
@@ -147,6 +182,8 @@ export const ACCENT_COLOURS: readonly AccentColour[] = [
 export const DEFAULT_THEME_CHOICE: ThemeChoice = {
   accent: 'facebook',
   era: 'newfacebook',
+  colourMode: 'system',
+  fontScale: 'default',
 };
 
 const THEFACEBOOK_LIGHT: EraBase = {
@@ -364,6 +401,12 @@ export function normaliseThemeChoice(value: unknown): ThemeChoice {
     era: isFacebookEraId(candidate.era)
       ? candidate.era
       : DEFAULT_THEME_CHOICE.era,
+    colourMode: isColourMode(candidate.colourMode)
+      ? candidate.colourMode
+      : DEFAULT_THEME_CHOICE.colourMode,
+    fontScale: isFontScaleId(candidate.fontScale)
+      ? candidate.fontScale
+      : DEFAULT_THEME_CHOICE.fontScale,
   };
 }
 

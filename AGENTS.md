@@ -72,7 +72,7 @@ These are hard constraints, not preferences:
   client to `dist-site/app`; `vercel.json` serves the result.
 - `metro.config.js` — Expo’s Metro config plus a scoped resolver shim for the
   OAuth package’s platform-specific entry files.
-- `docs/bluesky-compliance.md` — the researched compliance bar and gap matrix.
+- `docs/bluesky-compliance.md` — the compliance bar and gap matrix.
   Keep its claims tied to the code and official guidance.
 - `docs/facebook-ui.md` — the Facebook UI research and the surface-by-surface
   mapping. Keep it tied to the implemented components.
@@ -130,9 +130,13 @@ the card out of that list immediately, and the Saved tab reloads when focused.
 Every card's comment button opens a Thread
 screen: the ancestor chain, the highlighted post, its replies, and a composer
 that replies into the same tree (root travels up correctly when replying to a
-reply). Dark mode follows the system. Appearance settings offer four researched
+reply). Appearance settings offer System/Light/Dark, post text size, four
 Facebook-era chrome presets and nine solid accent colours; they are stored on
-the device and keep Following chronological. Tapping any post image opens a full-screen
+the device and keep Following chronological. Accessibility settings cover the
+alt-text requirement and larger description badges. Language settings choose a
+primary post/translation language and content languages; Following filters and
+thread reply order are saved through `app.bsky.actor` preferences and applied
+locally. Tapping any post image opens a full-screen
 viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
 keep the text rather than eating it. The composer supports threads, photos with

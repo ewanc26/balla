@@ -7,15 +7,19 @@ import {
   buildPalette,
   contrastRatio,
   normaliseThemeChoice,
+  resolveScheme,
+  scaleFontSize,
 } from '../src/lib/themeModel.ts';
 
-test('nine solid accents and four researched eras are available', () => {
+test('nine solid accents and four Facebook-era presets are available', () => {
   assert.equal(ACCENT_COLOURS.length, 9);
   assert.equal(FACEBOOK_ERAS.length, 4);
   assert.equal(new Set(ACCENT_COLOURS.map((colour) => colour.id)).size, 9);
   assert.equal(new Set(FACEBOOK_ERAS.map((era) => era.id)).size, 4);
   assert.equal(DEFAULT_THEME_CHOICE.accent, 'facebook');
   assert.equal(DEFAULT_THEME_CHOICE.era, 'newfacebook');
+  assert.equal(DEFAULT_THEME_CHOICE.colourMode, 'system');
+  assert.equal(DEFAULT_THEME_CHOICE.fontScale, 'default');
   assert.deepEqual(
     FACEBOOK_ERAS.map((era) => era.years),
     ['2004–2005', '2006–2010', '2011–2019', '2020–present']
@@ -26,12 +30,30 @@ test('bad stored choices fall back without losing the valid half', () => {
   assert.deepEqual(normaliseThemeChoice(null), DEFAULT_THEME_CHOICE);
   assert.deepEqual(
     normaliseThemeChoice({ accent: 'orange', era: 'future' }),
-    { accent: 'orange', era: 'newfacebook' }
+    { ...DEFAULT_THEME_CHOICE, accent: 'orange' }
   );
   assert.deepEqual(
     normaliseThemeChoice({ accent: 'future', era: 'timeline' }),
-    { accent: 'facebook', era: 'timeline' }
+    { ...DEFAULT_THEME_CHOICE, era: 'timeline' }
   );
+  assert.deepEqual(
+    normaliseThemeChoice({ colourMode: 'dark', fontScale: 'large' }),
+    { ...DEFAULT_THEME_CHOICE, colourMode: 'dark', fontScale: 'large' }
+  );
+  assert.deepEqual(
+    normaliseThemeChoice({ colourMode: 'auto', fontScale: 'huge' }),
+    DEFAULT_THEME_CHOICE
+  );
+});
+
+test('colour mode and font scale are resolved from one shared rule', () => {
+  assert.equal(resolveScheme('light', 'system'), 'light');
+  assert.equal(resolveScheme('dark', 'system'), 'dark');
+  assert.equal(resolveScheme('light', 'dark'), 'dark');
+  assert.equal(resolveScheme('dark', 'light'), 'light');
+  assert.equal(scaleFontSize(15, 'small'), 13.5);
+  assert.equal(scaleFontSize(15, 'default'), 15);
+  assert.equal(scaleFontSize(15, 'large'), 17.3);
 });
 
 test('accent and era are independent', () => {

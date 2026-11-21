@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.11.0
+
+- Add System/Light/Dark and post text size controls in Appearance. Both are device-only choices; the resolved scheme now drives the palette, navigation chrome and status bar, and one shared scale sizes post and composer text.
+- Add an Accessibility screen for the existing alt-text requirement and a new larger-description-badge option. Described images and video now show a visible ALT badge. Balla emits no haptics, so no inert haptics toggle is offered.
+- Add language settings: a primary language used as the first composer language and as the translation target, and up to three content languages that hide tagged posts in Following. The interface remains English only; no UI translation is claimed.
+- Add Following filters for replies, reposts and quote posts, and thread reply ordering (oldest, newest or most liked), written through `app.bsky.actor.setFeedViewPrefs`/`setThreadViewPrefs` and applied locally. Following stays chronological; visible toggles roll back when a write fails.
+- Document what is deliberately absent: tree-view and external-media toggles would do nothing because Balla always nests replies and embeds no third-party players.
+
 ## 0.10.1
 
 - Remove the remaining template patterns from the marketing site: eyebrow labels above every heading, symmetric feature-card grids, decorative window dots in the hero preview and a static “live” footer badge. Features and roadmap now read as vertical lists, matching the wall rather than a SaaS landing page.

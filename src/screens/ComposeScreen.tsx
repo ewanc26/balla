@@ -84,7 +84,7 @@ import {
   type QuoteAccess,
   type ReplyAccess,
 } from '../lib/interactionGates';
-import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
+import { CARD_RADIUS, cardShadow, useFontScale, usePalette, webInputReset } from '../theme';
 
 // Bluesky caps posts at 300 graphemes; the counter is honest and always
 // visible rather than a colour shift you have to notice.
@@ -286,6 +286,7 @@ async function prepareImage(
 
 export function ComposeScreen({ route, navigation }: { route: any; navigation: any }) {
   const p = usePalette();
+  const font = useFontScale();
   const { profile } = useViewer();
   const { preferences } = usePreferences();
   const [quote, setQuote] = useState(
@@ -311,7 +312,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [confirmWithoutAlt, setConfirmWithoutAlt] = useState(false);
   const [linkCard, setLinkCard] = useState<ExternalView | null>(null);
   const [selfLabels, setSelfLabels] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<string[]>([]);
+  const [languages, setLanguages] = useState<string[]>([preferences.primaryLanguage]);
   const [gates, setGates] = useState<InteractionGates>(DEFAULT_INTERACTION_GATES);
   const [optionsOpen, setOptionsOpen] = useState(false);
   const [resolvingLink, setResolvingLink] = useState(false);
@@ -326,6 +327,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [recoverDraft, setRecoverDraft] = useState<StoredDraft | null>(null);
   const [draftChecked, setDraftChecked] = useState(false);
   const editorRef = useRef<any>(null);
+  const appliedPrimaryLanguage = useRef(preferences.primaryLanguage);
 
   const uploadedRef = useRef<Map<string, unknown>>(new Map());
   const uploadAbortRef = useRef<AbortController | null>(null);
@@ -335,6 +337,20 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Create post' });
   }, [navigation]);
+
+  useEffect(() => {
+    // Device preferences load after the first render. Wait for the draft
+    // check so a restored post keeps the languages it was written with.
+    if (!draftChecked || recoverDraft) return;
+    const previous = appliedPrimaryLanguage.current;
+    if (previous === preferences.primaryLanguage) return;
+    appliedPrimaryLanguage.current = preferences.primaryLanguage;
+    setLanguages((current) =>
+      current.length === 1 && current[0] === previous
+        ? [preferences.primaryLanguage]
+        : current
+    );
+  }, [preferences.primaryLanguage, draftChecked, recoverDraft]);
 
   useEffect(() => {
     let active = true;
@@ -805,6 +821,13 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     };
   }
 
+  function chooseLanguages(next: string[]) {
+    // A deliberate composer choice owns the post from here on, even if the
+    // device preference changes while this composer is open.
+    appliedPrimaryLanguage.current = preferences.primaryLanguage;
+    setLanguages(next);
+  }
+
   function resetEditor() {
     setText('');
     setImages([]);
@@ -816,7 +839,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setQuote(null);
     setLinkCard(null);
     setSelfLabels([]);
-    setLanguages([]);
+    setLanguages([preferences.primaryLanguage]);
+    appliedPrimaryLanguage.current = preferences.primaryLanguage;
     setGates(DEFAULT_INTERACTION_GATES);
     setEditingKey(null);
     setConfirmWithoutAlt(false);
@@ -827,9 +851,13 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     if (!recoverDraft) return;
     // Only the text and simple choices are saved. A quote passed in from
     // another screen stays in place, and photos must be added again.
+    const restoredLanguages = normaliseLanguages(recoverDraft.languages);
     setText(recoverDraft.text);
     setSelfLabels(normaliseSelfLabels(recoverDraft.selfLabels));
-    setLanguages(normaliseLanguages(recoverDraft.languages));
+    setLanguages(
+      restoredLanguages.length ? restoredLanguages : [preferences.primaryLanguage]
+    );
+    appliedPrimaryLanguage.current = preferences.primaryLanguage;
     setGates(normaliseGates(recoverDraft.gates));
     setRecoverDraft(null);
     setNotice(
@@ -841,6 +869,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   function discardStoredDraft() {
     void clearStoredDraft();
     setRecoverDraft(null);
+    setLanguages([preferences.primaryLanguage]);
+    appliedPrimaryLanguage.current = preferences.primaryLanguage;
   }
 
   function loadDraft(draft: PendingPost) {
@@ -857,8 +887,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     );
     setQuote(draft.quote);
     setLinkCard(draft.linkCard);
+    const draftLanguages = normaliseLanguages(draft.languages || []);
     setSelfLabels(normaliseSelfLabels(draft.selfLabels || []));
-    setLanguages(normaliseLanguages(draft.languages || []));
+    setLanguages(draftLanguages.length ? draftLanguages : [preferences.primaryLanguage]);
+    appliedPrimaryLanguage.current = preferences.primaryLanguage;
     setGates(normaliseGates(draft.gates));
     setEditingKey(null);
     editorRef.current?.focus();
@@ -1296,8 +1328,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
             style={[
               {
                 color: p.text,
-                fontSize: 17,
-                lineHeight: 24,
+                fontSize: font(17),
+                lineHeight: font(24),
                 paddingVertical: 14,
                 minHeight: 140,
                 marginTop: 4,
@@ -1937,7 +1969,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           languages={languages}
           gates={gates}
           onChangeSelfLabels={setSelfLabels}
-          onChangeLanguages={setLanguages}
+          onChangeLanguages={chooseLanguages}
           onChangeGates={setGates}
           onClose={() => setOptionsOpen(false)}
         />

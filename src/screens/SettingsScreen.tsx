@@ -26,7 +26,7 @@ const SUPPORT = 'https://ewancroft.uk/support';
 export function SettingsScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
   const { profile } = useViewer();
-  const { preferences, setRequireAltText } = usePreferences();
+  const { preferences } = usePreferences();
   const selectedEra = eraFor(preferences.era);
   const selectedAccent = accentFor(preferences.accent);
   const { unreadCounts } = useModerationInboxUnread();
@@ -232,29 +232,35 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           value="Change"
           onPress={() => navigation.navigate('Appearance')}
         />
-        <Row icon="contrast-outline" label="Theme" value="Follow system" />
-        <Row icon="text-outline" label="Text size" value="Device setting" />
         <Row
           icon="accessibility-outline"
           label="Accessibility"
-          detail="Touch targets, screen-reader labels and motion"
-          onPress={() => openInfo('accessibility', 'Accessibility')}
-        />
-        <PreferenceRow
-          icon="text-outline"
-          label="Require alt text before posting"
-          detail="Do not publish photos without a description"
-          value={preferences.requireAltText}
-          onValueChange={setRequireAltText}
+          detail="Description badges, alt text requirements and motion"
+          onPress={() => navigation.navigate('AccessibilitySettings')}
         />
       </Section>
 
       <Section title="Languages">
-        <Row icon="language-outline" label="App language" value="English (UK)" />
         <Row
-          icon="chatbubble-ellipses-outline"
-          label="Post languages"
-          detail="Choose up to three per post in the composer"
+          icon="language-outline"
+          label="Languages"
+          detail="Primary language for new posts and translation; languages to keep in Following"
+          onPress={() => navigation.navigate('LanguageSettings')}
+        />
+      </Section>
+
+      <Section title="Reading">
+        <Row
+          icon="swap-horizontal-outline"
+          label="Following feed"
+          detail="Hide replies, reposts or quote posts without changing the order"
+          onPress={() => navigation.navigate('FeedPreferences')}
+        />
+        <Row
+          icon="chatbubble-outline"
+          label="Thread order"
+          detail="Oldest, newest or most liked replies"
+          onPress={() => navigation.navigate('ThreadPreferences')}
         />
       </Section>
 
@@ -496,62 +502,6 @@ function Row({
   );
 }
 
-function PreferenceRow({
-  icon,
-  label,
-  detail,
-  value,
-  onValueChange,
-}: {
-  icon: any;
-  label: string;
-  detail: string;
-  value: boolean;
-  onValueChange: (value: boolean) => void;
-}) {
-  const p = usePalette();
-  return (
-    <View style={[styles.row, { borderBottomColor: p.divider }]}>
-      <View style={[styles.iconBubble, { backgroundColor: p.accentSoft }]}>
-        <Ionicons name={icon} size={19} color={p.accent} />
-      </View>
-      <View style={{ flex: 1, minWidth: 0 }}>
-        <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>
-          {label}
-        </Text>
-        <Text
-          style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 1 }}
-        >
-          {detail}
-        </Text>
-      </View>
-      <Pressable
-        onPress={() => onValueChange(!value)}
-        accessibilityRole="switch"
-        accessibilityLabel={label}
-        accessibilityState={{ checked: value }}
-        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-        style={({ pressed }) => [
-          styles.prefToggle,
-          {
-            backgroundColor: value ? p.accent : p.soft,
-            opacity: pressed ? 0.6 : 1,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.prefKnob,
-            {
-              backgroundColor: p.card,
-              alignSelf: value ? 'flex-end' : 'flex-start',
-            },
-          ]}
-        />
-      </Pressable>
-    </View>
-  );
-}
 
 const styles = StyleSheet.create({
   card: {
@@ -605,17 +555,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 16,
-  },
-  prefToggle: {
-    width: 52,
-    height: 32,
-    borderRadius: 16,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  prefKnob: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
   },
 });

@@ -14,7 +14,8 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { agent } from '../lib/agent';
 import { describeFailure, withOptimisticRollback } from '../lib/reliability';
 import { timeAgo } from '../lib/time';
-import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
+import { CARD_RADIUS, cardShadow, useFontScale, usePalette } from '../theme';
+import { usePreferences } from '../lib/preferences';
 import { touchTargetStyle } from '../lib/accessibilityModel';
 import { Avatar } from './Avatar';
 import { ImageViewer } from './ImageViewer';
@@ -58,6 +59,8 @@ export function PostCard({
   highlight,
 }: PostCardProps) {
   const p = usePalette();
+  const font = useFontScale();
+  const { preferences } = usePreferences();
   const navigation = useNavigation<any>();
   const moderation = usePostModeration(post);
   const author = post && post.author ? post.author : {};
@@ -229,7 +232,7 @@ export function PostCard({
     setTranslating(true);
     setTranslationError(null);
     try {
-      const result = await translateText(text);
+      const result = await translateText(text, preferences.primaryLanguage);
       setTranslation(result.text);
       setTranslationVisible(true);
     } catch {
@@ -291,13 +294,13 @@ export function PostCard({
       />
       <View style={{ marginLeft: 10, flex: 1, minWidth: 0 }}>
         <Text
-          style={{ color: p.text, fontSize: 15, fontWeight: '700' }}
+          style={{ color: p.text, fontSize: font(15), fontWeight: '700' }}
           numberOfLines={1}
         >
           {author.displayName || author.handle}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 1 }}>
-          <Text style={{ color: p.secondary, fontSize: 13 }}>
+          <Text style={{ color: p.secondary, fontSize: font(13) }}>
             {timeAgo(post.indexedAt)}
           </Text>
           <Ionicons
@@ -306,7 +309,7 @@ export function PostCard({
             color={p.secondary}
             style={{ marginLeft: 4 }}
           />
-          <Text style={{ color: p.secondary, fontSize: 13 }} numberOfLines={1}>
+          <Text style={{ color: p.secondary, fontSize: font(13) }} numberOfLines={1}>
             {' · @'}
             {author.handle}
           </Text>
@@ -386,7 +389,12 @@ export function PostCard({
                 <Text
                   numberOfLines={longPost && !expanded ? 8 : undefined}
                   onLayout={(event) => setTextWidth(event.nativeEvent.layout.width)}
-                  style={{ color: p.text, fontSize: 15, lineHeight: 20, marginTop: 12 }}
+                  style={{
+                    color: p.text,
+                    fontSize: font(15),
+                    lineHeight: font(20),
+                    marginTop: 12,
+                  }}
                 >
                   {translationVisible && translation
                     ? translation
@@ -856,6 +864,7 @@ function VideoEmbed({ video }: { video: VideoViewData }) {
           borderRadius: CARD_RADIUS,
           overflow: 'hidden',
           backgroundColor: p.divider,
+          position: 'relative',
         }}
       >
         <VideoView
@@ -867,6 +876,7 @@ function VideoEmbed({ video }: { video: VideoViewData }) {
             video.alt || (video.presentation === 'gif' ? 'Animated GIF' : 'Video')
           }
         />
+        {video.alt ? <AltBadge /> : null}
       </View>
       {video.alt ? (
         <Text
@@ -911,6 +921,34 @@ function extractImages(post: any): any[] {
   return [];
 }
 
+/** A visible clue that a description exists; the preference only changes its size. */
+function AltBadge() {
+  const p = usePalette();
+  const { preferences } = usePreferences();
+  const large = preferences.largerAltBadges;
+  return (
+    <View
+      accessible
+      accessibilityLabel="This media has a description"
+      style={{
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        backgroundColor: 'rgba(0, 0, 0, 0.72)',
+        borderRadius: 4,
+        paddingHorizontal: large ? 8 : 5,
+        paddingVertical: large ? 5 : 2,
+        minHeight: large ? 32 : 22,
+        justifyContent: 'center',
+      }}
+    >
+      <Text style={{ color: '#FFFFFF', fontSize: large ? 15 : 11, fontWeight: '800' }}>
+        ALT
+      </Text>
+    </View>
+  );
+}
+
 function Images({ images, onOpen }: { images: any[]; onOpen: (index: number) => void }) {
   const p = usePalette();
   const shown = images.slice(0, 4);
@@ -922,7 +960,7 @@ function Images({ images, onOpen }: { images: any[]; onOpen: (index: number) => 
         onPress={() => onOpen(0)}
         accessibilityRole="button"
         accessibilityLabel={i.alt || 'Open post image'}
-        style={{ marginTop: 12 }}
+        style={{ marginTop: 12, position: 'relative' }}
       >
         <Image
           source={{ uri: i.thumb || i.fullsize }}
@@ -934,6 +972,7 @@ function Images({ images, onOpen }: { images: any[]; onOpen: (index: number) => 
           }}
           resizeMode="cover"
         />
+        {i.alt ? <AltBadge /> : null}
       </Pressable>
     );
   }
@@ -974,6 +1013,7 @@ function Images({ images, onOpen }: { images: any[]; onOpen: (index: number) => 
               }}
               resizeMode="cover"
             />
+            {i.alt ? <AltBadge /> : null}
             {more ? (
               <View
                 pointerEvents="none"

@@ -336,11 +336,19 @@ export function installMockAgent() {
   });
   mock.updateSeenNotifications = async () => ({ data: {} });
   let mockSavedFeedItems: any[] = [];
+  let mockFeedViewPref: any = {};
+  let mockThreadSort = 'oldest';
+  mock.setFeedViewPrefs = async (feed: string, pref: any) => {
+    if (feed === 'home') mockFeedViewPref = { ...mockFeedViewPref, ...pref };
+  };
+  mock.setThreadViewPrefs = async (pref: any) => {
+    if (typeof pref?.sort === 'string') mockThreadSort = pref.sort;
+  };
   mock.getPreferences = async () => ({
     feeds: { saved: undefined, pinned: undefined },
     savedFeeds: mockSavedFeedItems,
-    feedViewPrefs: { home: {} },
-    threadViewPrefs: { sort: 'hotness' },
+    feedViewPrefs: { home: mockFeedViewPref },
+    threadViewPrefs: { sort: mockThreadSort },
     moderationPrefs: {
       adultContentEnabled: false,
       labels: {},
@@ -664,7 +672,18 @@ export function mockInitialTab(): string {
 export function mockInitialScreen(): string {
   const requested =
     queryParam('screen') || process.env.EXPO_PUBLIC_BALLA_MOCK_SCREEN || 'Tabs';
-  return ['Tabs', 'Thread', 'Compose', 'UserProfile'].includes(requested)
+  return [
+    'Tabs',
+    'Thread',
+    'Compose',
+    'UserProfile',
+    'Settings',
+    'Appearance',
+    'AccessibilitySettings',
+    'LanguageSettings',
+    'FeedPreferences',
+    'ThreadPreferences',
+  ].includes(requested)
     ? requested
     : 'Tabs';
 }
