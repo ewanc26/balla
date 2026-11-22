@@ -43,17 +43,18 @@ const TOPICS: Record<string, Topic> = {
     title: 'Account and security',
     paragraphs: [
       'Balla uses OAuth only. It does not support app passwords, so there is no password-equivalent secret stored in the app.',
-      'OAuth tokens are DPoP-bound and kept in the platform’s secure local storage. The browser build uses the browser’s storage for the same session.',
+      'The Account and security screen shows the identity Balla can read and writes birthday, automation and visibility self-labels through real profile and personal-details APIs.',
       'The app refreshes the session at startup so a revoked grant is noticed early. A failed refresh removes the remembered DID rather than silently keeping a dead session.',
-      'Account email, password, two-factor authentication and app passwords are not available in Balla. Settings → Export, deactivate or delete explains data export, deactivation and permanent deletion, and links to your PDS controls.',
+      'Email, password, two-factor authentication and app passwords are not available through Balla. Settings links to the provider controls instead of showing toggles Balla cannot honour. Export, deactivate or delete explains the PDS-owned account lifecycle.',
     ],
   },
   session: {
     title: 'Session security',
     paragraphs: [
       'Signing in opens your server’s OAuth page. Balla never sees your password.',
+      'Settings → Session security shows non-secret token metadata: your DID, authorization server, PDS, expiry and scope count. Access and refresh tokens are never displayed.',
       'The client requests only the record collections and AppView endpoints it uses, plus the report audience for Bluesky’s labeler. Sessions authorised before the granular scope was introduced need one fresh sign-in to receive it.',
-      'Signing out revokes the OAuth session where the server allows it and always clears the local session.',
+      'Signing out revokes the OAuth session where the server allows it and always clears the local session. It does not delete your account or posts.',
     ],
   },
   moderation: {

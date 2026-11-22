@@ -2,6 +2,8 @@
 // here invents a moderation outcome: unknown service values are shown verbatim
 // or described as unknown.
 
+import { formatDate, formatDateTime } from './time.ts';
+
 export type InboxFilter = 'all' | 'pending' | 'resolved' | 'unread';
 export type InboxSection = 'reports' | 'subjects' | 'accountStatus';
 export type SubjectKind =
@@ -401,27 +403,11 @@ export function standingLabel(standing?: string): {
 }
 
 export function formatModerationDate(value?: string): string {
-  if (!value) return '';
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }).format(date);
+  return formatDate(value);
 }
 
 export function formatModerationDateTime(value?: string): string {
-  if (!value) return '';
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return '';
-  return new Intl.DateTimeFormat('en-GB', {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  }).format(date);
+  return formatDateTime(value);
 }
 
 export function isSafeHttpUrl(value?: string): boolean {

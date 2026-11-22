@@ -68,6 +68,11 @@ export function setOnLoggedOut(cb: (() => void) | null) {
   loggedOutCb = cb;
 }
 
+/** Non-secret token metadata for the session screen. Never expose tokens. */
+export async function getSessionInfo() {
+  return session ? await session.getTokenInfo(false) : null;
+}
+
 export const oauthClient = new ExpoOAuthClient({
   handleResolver: DEFAULT_SERVICE,
   clientMetadata: clientMetadata as OAuthClientMetadataInput,

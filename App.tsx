@@ -31,6 +31,9 @@ import { PeopleListScreen } from './src/screens/PeopleListScreen';
 import { EngagementListScreen } from './src/screens/EngagementListScreen';
 import { ContentFiltersScreen } from './src/screens/ContentFiltersScreen';
 import { AccountLifecycleScreen } from './src/screens/AccountLifecycleScreen';
+import { AccountSettingsScreen } from './src/screens/AccountSettingsScreen';
+import { PrivacySecurityScreen } from './src/screens/PrivacySecurityScreen';
+import { SessionSecurityScreen } from './src/screens/SessionSecurityScreen';
 import { NotificationSettingsScreen } from './src/screens/NotificationSettingsScreen';
 import { EditProfileScreen } from './src/screens/EditProfileScreen';
 import { ModerationInboxScreen } from './src/screens/ModerationInboxScreen';
@@ -340,6 +343,9 @@ export default function App() {
                           <Stack.Screen name="EngagementList" component={EngagementListScreen} />
                           <Stack.Screen name="ContentFilters" component={ContentFiltersScreen} />
                           <Stack.Screen name="AccountLifecycle" component={AccountLifecycleScreen} />
+                          <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+                          <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
+                          <Stack.Screen name="SessionSecurity" component={SessionSecurityScreen} />
                           <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
                           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
                           <Stack.Screen name="ModerationInbox" component={ModerationInboxScreen} />

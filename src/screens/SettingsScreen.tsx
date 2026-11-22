@@ -1,6 +1,5 @@
-import React, { useLayoutEffect, useState } from 'react';
+import React, { useLayoutEffect } from 'react';
 import {
-  ActivityIndicator,
   Linking,
   Pressable,
   ScrollView,
@@ -9,13 +8,13 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { logout } from '../lib/agent';
 import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
 import { useModerationInboxUnread } from '../lib/moderationInbox';
 import { useFeeds } from '../lib/feedsContext';
 import { accentFor, eraFor } from '../lib/themeModel';
 import { Avatar } from '../components/Avatar';
+import { SignOutControl } from '../components/SignOutControl';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { APP_VERSION } from '../lib/version';
 const GITHUB = 'https://github.com/ewanc26/balla';
@@ -31,8 +30,6 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
   const selectedAccent = accentFor(preferences.accent);
   const { unreadCounts } = useModerationInboxUnread();
   const { pinnedFeeds } = useFeeds();
-  const [confirmSignOut, setConfirmSignOut] = useState(false);
-  const [signingOut, setSigningOut] = useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Settings & privacy' });
@@ -50,16 +47,6 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
     void Linking.openURL(url).catch(() => {
       // If the platform cannot open the link, leave the settings screen intact.
     });
-  }
-
-  async function signOut() {
-    if (signingOut) return;
-    setSigningOut(true);
-    try {
-      await logout();
-    } finally {
-      setSigningOut(false);
-    }
   }
 
   return (
@@ -117,12 +104,13 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           icon="at-outline"
           label="Handle"
           value={profile && profile.handle ? `@${profile.handle}` : 'Not loaded'}
+          onPress={() => navigation.navigate('AccountSettings')}
         />
         <Row
           icon="shield-checkmark-outline"
           label="Account and security"
-          detail="OAuth sessions and sign-in"
-          onPress={() => openInfo('security', 'Account and security')}
+          detail="Identity, birthday, automation label and provider controls"
+          onPress={() => navigation.navigate('AccountSettings')}
         />
         <Row
           icon="download-outline"
@@ -134,6 +122,12 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
 
       <Section title="Privacy and security">
         <Row
+          icon="eye-off-outline"
+          label="Privacy and security controls"
+          detail="2FA, app passwords, activity privacy and notifications"
+          onPress={() => navigation.navigate('PrivacySecurity')}
+        />
+        <Row
           icon="lock-closed-outline"
           label="Privacy policy"
           detail="What stays on your device and what leaves it"
@@ -142,8 +136,8 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
         <Row
           icon="key-outline"
           label="Session security"
-          detail="No app passwords; DPoP-bound OAuth tokens"
-          onPress={() => openInfo('session', 'Session security')}
+          detail="OAuth session facts, scope count and sign-out"
+          onPress={() => navigation.navigate('SessionSecurity')}
         />
       </Section>
 
@@ -328,82 +322,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
         />
       </Section>
 
-      {confirmSignOut ? (
-        <View
-          style={[
-            styles.confirmCard,
-            { backgroundColor: p.card, borderColor: p.danger },
-            cardShadow,
-          ]}
-        >
-          <Text style={{ color: p.text, fontSize: 17, fontWeight: '700' }}>
-            Sign out of Balla?
-          </Text>
-          <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20, marginTop: 6 }}>
-            The local OAuth session will be removed and Balla will ask your server to
-            revoke it. Your posts and account stay on your PDS.
-          </Text>
-          <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-            <Pressable
-              onPress={() => setConfirmSignOut(false)}
-              disabled={signingOut}
-              accessibilityRole="button"
-              accessibilityLabel="Cancel sign out"
-              style={({ pressed }) => [
-                styles.confirmButton,
-                {
-                  backgroundColor: p.bg,
-                  borderColor: p.divider,
-                  opacity: pressed || signingOut ? 0.6 : 1,
-                },
-              ]}
-            >
-              <Text style={{ color: p.text, fontSize: 15, fontWeight: '600' }}>Cancel</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => void signOut()}
-              disabled={signingOut}
-              accessibilityRole="button"
-              accessibilityLabel="Sign out of Balla"
-              style={({ pressed }) => [
-                styles.confirmButton,
-                {
-                  backgroundColor: p.danger,
-                  borderColor: p.danger,
-                  opacity: pressed || signingOut ? 0.6 : 1,
-                },
-              ]}
-            >
-              {signingOut ? (
-                <ActivityIndicator size="small" color="#FFFFFF" />
-              ) : (
-                <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
-                  Sign out
-                </Text>
-              )}
-            </Pressable>
-          </View>
-        </View>
-      ) : (
-        <Pressable
-          onPress={() => setConfirmSignOut(true)}
-          accessibilityRole="button"
-          accessibilityLabel="Sign out"
-          style={({ pressed }) => [
-            styles.signOut,
-            {
-              backgroundColor: p.card,
-              borderColor: p.divider,
-              opacity: pressed ? 0.7 : 1,
-            },
-          ]}
-        >
-          <Ionicons name="log-out-outline" size={20} color={p.danger} />
-          <Text style={{ color: p.danger, fontSize: 15, fontWeight: '600', marginLeft: 10 }}>
-            Sign out
-          </Text>
-        </Pressable>
-      )}
+      <SignOutControl />
 
       <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, textAlign: 'center', paddingHorizontal: 24, marginTop: 18 }}>
         Balla is independent software. Facebook-era styling is a design reference only, and Bluesky references identify the network Balla uses. Balla is not affiliated with, endorsed by or sponsored by Meta or Bluesky Social PBC.
@@ -532,28 +451,5 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  confirmCard: {
-    borderRadius: CARD_RADIUS,
-    borderWidth: 1,
-    marginHorizontal: 8,
-    padding: 16,
-  },
-  confirmButton: {
-    flex: 1,
-    minHeight: 44,
-    borderWidth: 1,
-    borderRadius: CARD_RADIUS,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  signOut: {
-    minHeight: 56,
-    marginHorizontal: 8,
-    borderRadius: CARD_RADIUS,
-    borderWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
   },
 });

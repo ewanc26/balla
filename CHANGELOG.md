@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.12.0
+
+- Add an Account and security screen with the identity Balla can read (handle, DID and PDS), a real birthday editor using `setPersonalDetails`, and an automation-label toggle using the existing profile self-label write. Email, password and handle changes stay on the provider and say so plainly.
+- Add a Privacy and security screen with the logged-out visibility self-label, the real notification-preference editor, and honest provider links for 2FA, app passwords, activity privacy and algorithmic recommendations. Those controls are outside Balla's OAuth grant, so no fake toggles are shown.
+- Add a Session security screen showing non-secret OAuth metadata: DID, authorization server, PDS, expiry and scope count. Access and refresh tokens are never displayed.
+- Share one confirmed sign-out flow between Settings and Session security. Signing out clears the local session, asks the server to revoke the grant, and never claims to delete the account.
+- Reuse the existing account lifecycle screen for export, deactivation and deletion guidance rather than duplicating provider-only copy.
+
 ## 0.11.0
 
 - Add System/Light/Dark and post text size controls in Appearance. Both are device-only choices; the resolved scheme now drives the palette, navigation chrome and status bar, and one shared scale sizes post and composer text.
