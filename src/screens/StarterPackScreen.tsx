@@ -4,6 +4,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -12,6 +13,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { Avatar } from '../components/Avatar';
 import { PersonRow } from '../components/PersonRow';
+import { isFeedSaved } from '../lib/feedPreferences';
+import { useFeeds } from '../lib/feedsContext';
+import {
+  isBlockedCreator,
+  starterPackShareUrl,
+} from '../lib/starterPackModel';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 function recordText(record: any, key: string): string {
@@ -26,11 +33,15 @@ export function StarterPackScreen({
   navigation: any;
 }) {
   const p = usePalette();
+  const { savedFeeds, saveFeed } = useFeeds();
   const uri = typeof route.params?.uri === 'string' ? route.params.uri : '';
   const [pack, setPack] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [shareError, setShareError] = useState<string | null>(null);
+  const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
+  const [savingFeed, setSavingFeed] = useState<string | null>(null);
 
   const load = useCallback(
     async (fresh: boolean) => {
@@ -42,6 +53,8 @@ export function StarterPackScreen({
       if (fresh) setRefreshing(true);
       else setLoading(true);
       setError(null);
+      setShareError(null);
+      setFeedErrors({});
       try {
         const response = await agent.app.bsky.graph.getStarterPack({
           starterPack: uri,
@@ -70,6 +83,32 @@ export function StarterPackScreen({
 
   function openProfile(did: string) {
     navigation.navigate('UserProfile', { actor: did });
+  }
+
+  async function sharePack(url: string) {
+    setShareError(null);
+    try {
+      await Share.share({ message: url, url });
+    } catch {
+      setShareError(
+        'Sharing could not open. The link below is selectable so you can copy it.'
+      );
+    }
+  }
+
+  async function addFeed(feedUri: string) {
+    setSavingFeed(feedUri);
+    setFeedErrors((current) => ({ ...current, [feedUri]: '' }));
+    try {
+      await saveFeed(feedUri, false);
+    } catch {
+      setFeedErrors((current) => ({
+        ...current,
+        [feedUri]: 'Could not save this feed. Try again.',
+      }));
+    } finally {
+      setSavingFeed(null);
+    }
   }
 
   if (loading && !pack) {
@@ -123,6 +162,9 @@ export function StarterPackScreen({
     pack.listItemCount ??
     members.length;
   const feeds = Array.isArray(pack.feeds) ? pack.feeds : [];
+  const blocked = isBlockedCreator(creator);
+  const shareUrl = blocked ? null : starterPackShareUrl(uri, creator);
+  const isOwner = !!creator.did && creator.did === agent.did;
   const sectionTitleStyle = {
     color: p.text,
     fontSize: 16,
@@ -197,6 +239,68 @@ export function StarterPackScreen({
               </Text>
             </Pressable>
           ) : null}
+
+          {blocked ? (
+            <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 10 }}>
+              This account is blocked, so Balla does not offer sharing here.
+            </Text>
+          ) : null}
+
+          {shareUrl ? (
+            <View style={{ marginTop: 12, gap: 8 }}>
+              <Pressable
+                onPress={() => void sharePack(shareUrl)}
+                accessibilityRole="button"
+                accessibilityLabel="Share starter pack"
+                style={({ pressed }) => [
+                  styles.action,
+                  { backgroundColor: p.accent, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Ionicons name="share-outline" size={18} color={p.onAccent} />
+                <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: 14 }}>
+                  Share starter pack
+                </Text>
+              </Pressable>
+              <Text
+                selectable
+                style={{ color: p.secondary, fontSize: 11, lineHeight: 16 }}
+                accessibilityLabel={`Starter pack link ${shareUrl}`}
+              >
+                {shareUrl}
+              </Text>
+            </View>
+          ) : blocked ? null : (
+            <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 10 }}>
+              This starter pack has no shareable address.
+            </Text>
+          )}
+
+          {shareError ? (
+            <Text
+              accessibilityRole="alert"
+              style={{ color: p.danger, fontSize: 12, lineHeight: 17, marginTop: 6 }}
+            >
+              {shareError}
+            </Text>
+          ) : null}
+
+          {isOwner ? (
+            <Pressable
+              onPress={() => navigation.navigate('StarterPackEdit', { uri })}
+              accessibilityRole="button"
+              accessibilityLabel="Edit starter pack"
+              style={({ pressed }) => [
+                styles.action,
+                { backgroundColor: p.soft, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons name="create-outline" size={18} color={p.text} />
+              <Text style={{ color: p.text, fontWeight: '700', fontSize: 14 }}>
+                Edit starter pack
+              </Text>
+            </Pressable>
+          ) : null}
         </View>
       </View>
 
@@ -209,33 +313,81 @@ export function StarterPackScreen({
           ]}
         >
           <Text style={sectionTitleStyle}>Feeds in this pack</Text>
-          {feeds.map((feed: any) => (
-            <Pressable
-              key={feed.uri}
-              onPress={() => navigation.navigate('FeedGenerator', { feed: feed.uri })}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${feed.displayName || 'recommended'} feed`}
-              style={({ pressed }) => [
-                styles.feedRow,
-                { borderTopColor: p.divider, opacity: pressed ? 0.6 : 1 },
-              ]}
-            >
-              <Avatar
-                avatar={feed.avatar}
-                displayName={feed.displayName}
-                size={38}
-              />
-              <View style={{ flex: 1, minWidth: 0 }}>
-                <Text style={{ color: p.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>
-                  {feed.displayName || 'Recommended feed'}
-                </Text>
-                <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
-                  Feed by @{feed.creator?.handle || 'unknown'}
-                </Text>
+          {feeds.map((feed: any) => {
+            const saved = isFeedSaved(savedFeeds, feed.uri);
+            const saving = savingFeed === feed.uri;
+            const feedError = feedErrors[feed.uri];
+            return (
+              <View key={feed.uri}>
+                <View
+                  style={[
+                    styles.feedRow,
+                    { borderTopColor: p.divider },
+                  ]}
+                >
+                  <Pressable
+                    onPress={() => navigation.navigate('FeedGenerator', { feed: feed.uri })}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Open ${feed.displayName || 'recommended'} feed`}
+                    style={({ pressed }) => [
+                      styles.feedIdentity,
+                      { opacity: pressed ? 0.6 : 1 },
+                    ]}
+                  >
+                    <Avatar
+                      avatar={feed.avatar}
+                      displayName={feed.displayName}
+                      size={38}
+                    />
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text style={{ color: p.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>
+                        {feed.displayName || 'Recommended feed'}
+                      </Text>
+                      <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
+                        Feed by @{feed.creator?.handle || 'unknown'}
+                      </Text>
+                    </View>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => void addFeed(feed.uri)}
+                    disabled={saved || saving}
+                    accessibilityRole="button"
+                    accessibilityLabel={
+                      saved
+                        ? `${feed.displayName || 'Recommended'} feed is saved`
+                        : `Add ${feed.displayName || 'recommended'} feed`
+                    }
+                    accessibilityState={{ disabled: saved || saving, busy: saving }}
+                    style={({ pressed }) => [
+                      styles.feedAction,
+                      {
+                        backgroundColor: saved ? p.soft : p.accent,
+                        opacity: saved || saving ? 0.7 : pressed ? 0.7 : 1,
+                      },
+                    ]}
+                  >
+                    <Text
+                      style={{
+                        color: saved ? p.text : p.onAccent,
+                        fontWeight: '700',
+                        fontSize: 13,
+                      }}
+                    >
+                      {saved ? 'Saved feed' : saving ? 'Saving…' : 'Add feed'}
+                    </Text>
+                  </Pressable>
+                </View>
+                {feedError ? (
+                  <Text
+                    accessibilityRole="alert"
+                    style={{ color: p.danger, fontSize: 12, lineHeight: 17, paddingBottom: 8 }}
+                  >
+                    {feedError}
+                  </Text>
+                ) : null}
               </View>
-              <Ionicons name="chevron-forward" size={17} color={p.secondary} />
-            </Pressable>
-          ))}
+            );
+          })}
         </View>
       ) : null}
 
@@ -307,6 +459,15 @@ const styles = StyleSheet.create({
     gap: 7,
     marginTop: 10,
   },
+  action: {
+    minHeight: 44,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
   card: {
     borderRadius: CARD_RADIUS,
     borderWidth: StyleSheet.hairlineWidth,
@@ -323,5 +484,21 @@ const styles = StyleSheet.create({
     gap: 10,
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingVertical: 8,
+  },
+  feedIdentity: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 44,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  feedAction: {
+    minHeight: 44,
+    minWidth: 96,
+    borderRadius: CARD_RADIUS,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 10,
   },
 });

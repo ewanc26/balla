@@ -152,7 +152,10 @@ postgate records. An unfinished post is kept locally with a Restore/Discard
 prompt, and posts you authored have an Interaction settings screen. Tapping a notification opens the thread
 it belongs to (follows stay inert). Lists support creation and editing,
 membership, list feeds, subscribe/block states and profile links; list reports
-are not implemented yet. There are no DMs. Saved and pinned custom feeds have
+are not implemented yet. Starter packs have search, landing pages, explicit
+follow and add-feed actions, official share links, and creation/editing for
+packs the signed-in account owns; writes use one narrow starter-pack repo scope
+and older sessions need to sign in again. There are no DMs. Saved and pinned custom feeds have
 their own Home tabs and a Feeds management screen, and Following stays first and
 chronological. Reply trees render nested branches
 under their parents, with

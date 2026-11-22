@@ -59,6 +59,7 @@ export const WEB_LINKING_CONFIG = {
     FeedGenerator: 'feed/:feed',
     Feeds: 'feeds',
     StarterPack: 'starter-pack/:uri',
+    StarterPackEdit: 'starter-pack-edit/:uri',
     Lists: 'lists',
     ListDetail: 'list/:uri',
     ListEdit: 'list/:uri/edit',

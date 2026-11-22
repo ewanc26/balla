@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.13.0
+
+- Add explicit feed-save and share actions to starter-pack landing pages. Recommended feeds keep their open action and gain a labelled “Add feed”/“Saved feed” button that writes Balla's existing saved-feed preferences. Share uses Bluesky's official `/start/{name}/{rkey}` link from the real pack URI and creator handle or DID, and is withheld for blocked creators with an honest note.
+- Add starter-pack creation and editing from the signed-in profile and from a pack Balla can prove you own. The editor picks people from the accounts you follow and feeds from your saved feeds, writes `app.bsky.graph.list`, `app.bsky.graph.listitem` and `app.bsky.graph.starterpack` records through real lexicons, and preserves the original `createdAt` when editing. It never offers edit for another account's pack.
+- Add exactly one narrow OAuth scope, `repo:app.bsky.graph.starterpack?action=create&action=update`. Sessions authorised before 0.13.0 need to sign in again before starter-pack writes are permitted. No account, chat or email scope was added.
+- Add deterministic model and wiring tests for URI parsing, share links, validation, record bodies, member diffs, the new screen path and the exact scope count. Offline preview fixtures cover the new editor without enabling mocks in production.
+
 ## 0.12.0
 
 - Add an Account and security screen with the identity Balla can read (handle, DID and PDS), a real birthday editor using `setPersonalDetails`, and an automation-label toggle using the existing profile self-label write. Email, password and handle changes stay on the provider and say so plainly.

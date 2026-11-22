@@ -82,7 +82,7 @@ test('session copy reads non-secret metadata and never renders token values', ()
 
 test('account and privacy settings do not widen the OAuth grant', () => {
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 61);
+  assert.equal(tokens.length, 62);
   assert.equal(
     tokens.some((token) => /com\.atproto\.server\.(requestEmailUpdate|updateEmail|createAppPassword|listAppPasswords|revokeAppPassword|deleteAccount|deactivateAccount)/.test(token)),
     false

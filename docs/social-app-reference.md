@@ -136,7 +136,7 @@ Reference paths: `src/view/com/composer/Composer.tsx`,
 - Saved and pinned feeds, reorder/remove, feed discovery and search.
 - Curated lists and moderation lists; list creation, membership, list feeds and
   subscription/blocked-list states.
-- Starter packs, starter-pack search and starter-pack editing/creation.
+- Starter-pack search, landing pages, explicit member/feed actions, official sharing, and creation/editing for the signed-in account's own packs through one narrow repo scope.
 - Feed generators and feed likes.
 
 Reference paths: `src/view/screens/Feeds.tsx`, `src/screens/SavedFeeds.tsx`,
