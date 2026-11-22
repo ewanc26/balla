@@ -106,7 +106,7 @@ test('hidden replies are a real threadgate write, never a local-only hide', () =
 });
 
 test('every Settings row now reaches real content or a real screen', () => {
-  assert.match(settings, /openInfo\('media', 'Media'\)/);
+  assert.match(settings, /navigation\.navigate\('ContentAndMediaSettings'\)/);
   assert.match(settings, /openInfo\('about', 'About Balla'\)/);
   assert.match(info, /media: \{/);
   assert.match(info, /about: \{/);
@@ -222,4 +222,47 @@ test('activity subscriptions are real AppView RPCs wired into the profile header
   assert.match(app, /<Stack\.Screen name="ActivityNotifications"/);
   assert.equal(WEB_LINKING_CONFIG.screens.ActivityNotifications, 'notification-settings/activity');
   assert.match(notificationSettingsScreen, /navigation\.navigate\('ActivityNotifications'\)/);
+});
+
+test('profile tabs use published author-feed filters and the actor-likes RPC', () => {
+  const tabsModel = read('../src/lib/profileTabsModel.ts');
+  assert.match(tabsModel, /posts_and_author_threads/);
+  assert.match(tabsModel, /posts_and_replies_only/);
+  assert.match(tabsModel, /posts_with_media/);
+  assert.match(tabsModel, /posts_with_video/);
+  assert.match(profileScreen, /getActorLikes/);
+  assert.match(profileScreen, /loadTabPosts/);
+  assert.match(profileScreen, /visibleProfileTabs/);
+  assert.match(profileScreen, /accessibilityRole="tab"/);
+  assert.match(mock, /getActorLikes/);
+  const tokens = oauthMetadata.scope.split(/\s+/);
+  assert.ok(
+    tokens.some((t) => t.startsWith('rpc:app.bsky.feed.getActorLikes?')),
+    'getActorLikes needs a real RPC scope'
+  );
+});
+
+test('feed likes are real like-record writes with a Liked by link', () => {
+  const objectLikes = read('../src/lib/objectLikes.ts');
+  assert.match(objectLikes, /app\.bsky\.feed\.like/);
+  assert.match(objectLikes, /agent\.like\(/);
+  assert.match(objectLikes, /agent\.deleteLike\(/);
+  assert.match(feedGenerator, /toggleObjectLike/);
+  assert.match(feedGenerator, /Liked by/);
+  assert.match(feedGenerator, /navigation\.navigate\('EngagementList'/);
+  assert.match(feedGenerator, /heart/);
+});
+
+test('labeler likes reuse the same strong-ref like records on the profile header', () => {
+  assert.match(profile, /toggleLabelerLike/);
+  assert.match(profile, /getServices/);
+  assert.match(profile, /Liked by/);
+  assert.match(profile, /Like labeler/);
+  assert.match(mock, /labeler\.getServices/);
+  assert.match(mock, /app\.bsky\.labeler\.service/);
+  const tokens = oauthMetadata.scope.split(/\s+/);
+  assert.ok(
+    tokens.some((t) => t.startsWith('rpc:app.bsky.labeler.getServices?')),
+    'getServices needs a real RPC scope'
+  );
 });

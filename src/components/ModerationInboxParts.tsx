@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
-  Linking,
   Modal,
   Platform,
   Pressable,
@@ -12,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
@@ -320,7 +320,7 @@ export function SubjectLink({
         </Pressable>
       ) : web ? (
         <Pressable
-          onPress={() => void Linking.openURL(web).catch(() => {})}
+          onPress={() => void openExternalUrl(web).catch(() => {})}
           accessibilityRole="link"
           accessibilityLabel={`Open ${label.toLowerCase()} on Bluesky`}
           style={({ pressed }) => [

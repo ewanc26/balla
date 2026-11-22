@@ -21,6 +21,12 @@ import { Avatar } from '../components/Avatar';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
 import { ReportListSheet } from '../components/ReportListSheet';
+import {
+  canLike,
+  isLiked,
+  nextLikeCount,
+  toggleObjectLike,
+} from '../lib/objectLikes';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 export function FeedGeneratorScreen({
@@ -52,6 +58,12 @@ export function FeedGeneratorScreen({
   const [savingFeed, setSavingFeed] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [reporting, setReporting] = useState(false);
+  const [likeState, setLikeState] = useState<{
+    uri: string | null;
+    count: number;
+  } | null>(null);
+  const [likeBusy, setLikeBusy] = useState(false);
+  const [likeError, setLikeError] = useState<string | null>(null);
   const requestId = useRef(0);
   const moreInFlight = useRef(false);
 
@@ -73,7 +85,9 @@ export function FeedGeneratorScreen({
           agent.app.bsky.feed.getFeed({ feed, limit: 30 }),
         ]);
         if (id !== requestId.current) return;
-        setGenerator(generatorResponse.data.view);
+        const view = generatorResponse.data.view;
+        setGenerator(view);
+        setLikeState({ uri: view.viewer?.like || null, count: view.likeCount || 0 });
         setIsOnline(generatorResponse.data.isOnline);
         setIsValid(generatorResponse.data.isValid);
         setPosts(
@@ -194,6 +208,34 @@ export function FeedGeneratorScreen({
     }
   }
 
+  async function toggleLike() {
+    if (!likeState || likeBusy) return;
+    const target = {
+      uri: generator.uri,
+      cid: generator.cid,
+      likeUri: likeState.uri,
+    };
+    if (!canLike(target)) return;
+    const wasLiked = isLiked(target);
+    const optimisticCount = nextLikeCount(
+      { ...target, likeCount: likeState.count },
+      !wasLiked
+    );
+    setLikeBusy(true);
+    setLikeError(null);
+    // Optimistic: flip the count and heart, roll back on failure.
+    setLikeState({ uri: wasLiked ? null : 'pending', count: optimisticCount });
+    try {
+      const result = await toggleObjectLike(target);
+      setLikeState({ uri: result.likeUri, count: optimisticCount });
+    } catch {
+      setLikeState({ uri: likeState.uri, count: likeState.count });
+      setLikeError('Could not update this like. Try again.');
+    } finally {
+      setLikeBusy(false);
+    }
+  }
+
   if (loading && !generator) {
     return (
       <View style={{ flex: 1, backgroundColor: p.bg, alignItems: 'center', justifyContent: 'center' }}>
@@ -279,6 +321,21 @@ export function FeedGeneratorScreen({
         </Text>
       ) : null}
 
+      {likeState && likeState.count > 0 ? (
+        <Pressable
+          onPress={() =>
+            navigation.navigate('EngagementList', { uri: generator.uri, mode: 'likes' })
+          }
+          accessibilityRole="button"
+          accessibilityLabel={`View users who like ${generator.displayName}`}
+          style={{ marginTop: 10 }}
+        >
+          <Text style={{ color: p.secondary, fontSize: 13, textDecorationLine: 'underline' }}>
+            Liked by {likeState.count} {likeState.count === 1 ? 'user' : 'users'}
+          </Text>
+        </Pressable>
+      ) : null}
+
       <View style={styles.feedActions}>
         <View
           style={[
@@ -303,6 +360,42 @@ export function FeedGeneratorScreen({
                   : 'Not saved'}
           </Text>
         </View>
+        {canLike(generator) ? (
+          <Pressable
+            onPress={() => void toggleLike()}
+            disabled={likeBusy}
+            accessibilityRole="button"
+            accessibilityLabel={
+              likeState?.uri && likeState.uri !== 'pending'
+                ? `Unlike ${generator.displayName}`
+                : `Like ${generator.displayName}`
+            }
+            style={({ pressed }) => [
+              styles.feedActionButton,
+              {
+                backgroundColor: p.bg,
+                borderColor: likeState?.uri && likeState.uri !== 'pending' ? p.danger : p.divider,
+                opacity: pressed || likeBusy ? 0.6 : 1,
+              },
+            ]}
+          >
+            <Ionicons
+              name={likeState?.uri && likeState.uri !== 'pending' ? 'heart' : 'heart-outline'}
+              size={16}
+              color={likeState?.uri && likeState.uri !== 'pending' ? p.danger : p.secondary}
+            />
+            <Text
+              style={{
+                color: likeState?.uri && likeState.uri !== 'pending' ? p.danger : p.secondary,
+                fontSize: 13,
+                fontWeight: '700',
+                marginLeft: 5,
+              }}
+            >
+              {likeState?.uri && likeState.uri !== 'pending' ? 'Liked' : 'Like'}
+            </Text>
+          </Pressable>
+        ) : null}
         <Pressable
           onPress={() => {
             if (savedFeed) navigation.navigate('Feeds');
@@ -340,6 +433,11 @@ export function FeedGeneratorScreen({
       {saveError ? (
         <Text style={{ color: p.danger, fontSize: 12, lineHeight: 17, marginTop: 7 }}>
           {saveError}
+        </Text>
+      ) : null}
+      {likeError ? (
+        <Text style={{ color: p.danger, fontSize: 12, lineHeight: 17, marginTop: 7 }}>
+          {likeError}
         </Text>
       ) : null}
 
@@ -490,6 +588,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     paddingHorizontal: 12,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },

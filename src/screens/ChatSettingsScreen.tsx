@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { useNavigation } from '@react-navigation/native';
 import { agent } from '../lib/agent';
 import { describeFailure } from '../lib/reliability';
@@ -87,7 +88,7 @@ export function ChatSettingsScreen() {
           {AUDIENCE_OPTIONS.map((option) => option.label).join(', ')}.
         </Text>
         <Pressable
-          onPress={() => void Linking.openURL(OFFICIAL_CHAT_SETTINGS)}
+          onPress={() => void openExternalUrl(OFFICIAL_CHAT_SETTINGS)}
           accessibilityRole="link"
           accessibilityLabel="Open Bluesky chat settings"
           style={({ pressed }) => [

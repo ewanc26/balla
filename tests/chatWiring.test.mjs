@@ -49,7 +49,7 @@ test('metadata declares exactly the chat RPCs Balla calls, all on the chat audie
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
   const chat = tokens.filter((token) => token.startsWith('rpc:chat.bsky.'));
-  assert.equal(tokens.length, 106);
+  assert.equal(tokens.length, 111);
   assert.equal(chat.length, CHAT_METHODS.length);
   const audience = '?aud=did:web:api.bsky.chat#bsky_chat';
   for (const method of CONVO_METHODS) {
@@ -64,6 +64,25 @@ test('metadata declares exactly the chat RPCs Balla calls, all on the chat audie
   assert.equal(tokens.some((token) => token.includes('include:chat.bsky')), false);
   assert.equal(tokens.some((token) => token.includes('rpc:chat.bsky.*')), false);
   assert.equal(tokens.some((token) => /chatAccount|chat:account/.test(token)), false);
+});
+
+test('share-via-chat sends the post as a record embed from the post menu', () => {
+  const model = read('../src/lib/shareViaChatModel.ts');
+  const sheet = read('../src/components/ShareViaChatSheet.tsx');
+  const postMenu = read('../src/components/PostMenu.tsx');
+  assert.match(model, /app\.bsky\.embed\.record/);
+  assert.match(model, /chat\.bsky\.convo\.defs#messageInput/);
+  assert.match(sheet, /getConvoForMembers/);
+  assert.match(sheet, /sendMessage/);
+  assert.match(sheet, /listConvos/);
+  assert.match(sheet, /buildShareMessage/);
+  assert.match(sheet, /recentConvos/);
+  assert.match(postMenu, /ShareViaChatSheet/);
+  assert.match(postMenu, /Send via direct message/);
+  assert.match(postMenu, /canShareViaChat/);
+  const tokens = JSON.parse(read('../oauth-client-metadata.json')).scope.split(/\s+/);
+  assert.ok(tokens.includes('rpc:chat.bsky.convo.getConvoForMembers?aud=did:web:api.bsky.chat#bsky_chat'));
+  assert.ok(tokens.includes('rpc:chat.bsky.convo.sendMessage?aud=did:web:api.bsky.chat#bsky_chat'));
 });
 
 test('the agent routes chat through the documented proxy helper', () => {
@@ -128,7 +147,7 @@ test('chat screens call the chat proxy, never log message content', () => {
   assert.match(notifications, /getPreferences\(/);
   assert.match(notifications, /putPreferences\(/);
   assert.match(settings, /CHAT_AUDIENCE/);
-  assert.match(settings, /Linking\.openURL/);
+  assert.match(settings, /openExternalUrl/);
 });
 
 test('chat has navigation entry points and explicit web paths', () => {

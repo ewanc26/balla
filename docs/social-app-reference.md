@@ -44,6 +44,11 @@ methods exist. The useful observations are:
 - The official app uses feature flags and analytics heavily. Balla should not
   import either; parity means the user-facing capability, not the experiment
   machinery.
+- The official App Icon screen pairs Light/Dark defaults with an internal
+  Bluesky+ set. Balla ships the Light/Dark choice with its own generated assets
+  and an Expo 58-compatible config plugin, and excludes the internal set. The
+  official web screen throws; Balla's web screen explains that icons need the
+  native app.
 
 ## Reference architecture
 
@@ -107,7 +112,7 @@ Reference paths: `src/screens/Notifications/index.tsx`,
 - Profile lists, authored feeds and starter packs.
 - Follow, unfollow, follow-back, block, unblock, mute and report.
 - Pinned post and profile links.
-- Posts, replies and media feed sections.
+- Posts, replies, media, videos and (on your own profile) likes feed tabs.
 
 Reference paths: `src/screens/Profile/`, `src/screens/ProfileList/`,
 `src/state/queries/profile-*.ts`, `src/state/queries/my-lists.ts`.
@@ -196,15 +201,15 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 | Home | Chronological Following first, a visible switcher for saved feeds, pagination and pull-to-refresh, plus opt-in Discover, video, hashtag and topic surfaces | Following stays unranked by design |
 | Posts | Text, one-to-ten photo uploads with alt text and legacy/gallery embeds, video/GIF posts with captions, record-with-media quotes, like, repost, bookmark, reply, delete, pin/unpin, thread mute, quote detach, interaction settings, show more/less like this through `sendInteractions`, device-local hide post/reply for me merged into moderation prefs, copy link/text, share sheet, translation with show-original and image viewing | None material |
 | Threads | Ancestors, nested replies, reply composer, threadgate/postgate rules, reply sorting, hidden replies from the threadgate `hiddenReplies` field with an expandable section, thread mute/unmute, and quote detach/reattach through postgate `detachedEmbeddingUris` | Hidden replies are managed by the root post author |
-| Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, authored lists, report/block/mute, verification and trusted-verifier badges (honouring the hide-badges preference), verifier-role issue/remove verification through `app.bsky.graph.verification`, temporary live status through `app.bsky.actor.status` with a LIVE profile indicator and link card, pinned post, and editing of name, bio, pronouns, links, avatar and banner | None material |
+| Profiles | Public profile with Posts/Replies/Media/Videos/Likes tabs backed by real author-feed filters and `getActorLikes`, follow/unfollow, follower/following/known-follower lists, likes/reposts/quotes lists, feed-generator and labeler likes, authored lists, report/block/mute, verification and trusted-verifier badges (honouring the hide-badges preference), verifier-role issue/remove verification through `app.bsky.graph.verification`, temporary live status through `app.bsky.actor.status` with a LIVE profile indicator and link card, pinned post, and editing of name, bio, pronouns, links, avatar and banner | None material |
 | Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed, starter-pack and list destinations; profile-scoped search from a profile's Search posts action | No global list-search endpoint |
 | Notifications | Tabs, grouping, unread count, mark-all-read and per-category in-app/push preferences with audience filters; per-account activity subscriptions through the published RPCs, with a profile bell and a management list | No device push registration (#36) |
 | Saved | Private bookmarks and remove-in-place | Custom feed management lives in Feeds |
 | Feeds/lists | Saved and pinned custom feeds; lists with create/edit, membership, list feeds, subscribe/block states, profile links and list/feed reports | No global list-search endpoint |
-| Messages | Inbox with unread and join-request counts, chat requests, paginated messages with replies and reactions, text/post embeds, group creation/members/invite links, conversation settings with lock/unlock, mark-all-read, mute/leave, report and block, and chat notification preferences through the chat proxy | Device push delivery remains blocked (#36) |
+| Messages | Inbox with unread and join-request counts, chat requests, paginated messages with replies and reactions, text/post embeds, "Send via direct message" from the post menu into recent or new 1:1 chats, group creation/members/invite links, conversation settings with lock/unlock, mark-all-read, mute/leave, report and block, and chat notification preferences through the chat proxy | Device push delivery remains blocked (#36) |
 | Moderation | Post/profile/list/feed report, block/mute, delete, labels with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox with reports, account standing, notices, actions and appeals | Inbox push delivery absent |
-| Settings | Settings shell with account/security, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real writes; session facts come from non-secret OAuth metadata; activity privacy writes the published `app.bsky.notification.declaration` record | Email, password, 2FA, app passwords and account lifecycle are provider-owned and linked to rather than faked; push delivery preferences remain |
-| Composer | Text, image/camera selection, up to ten compressed JPEGs, alt-text editor and enforcement preference, abortable uploads, retries, gallery previews, video/GIF with captions, link cards, languages, labels, reply/quote gates with a real list picker, drafts, multi-post threads and honest grapheme counting | Scheduling remains out of scope |
+| Settings | Settings shell with account/security, privacy/security, session, moderation, notifications, content-and-media (in-app browser choice and autoplay), content filters, appearance, accessibility, language, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real writes; session facts come from non-secret OAuth metadata; activity privacy writes the published `app.bsky.notification.declaration` record | Email, password, 2FA, app passwords, account lifecycle and provider trending toggles are provider-owned or credential-gated and linked to rather than faked; push delivery preferences remain |
+| Composer | Text, image/camera selection, up to ten compressed JPEGs, alt-text editor and enforcement preference, abortable uploads, retries, gallery previews, video/GIF with captions, link cards, languages, labels, reply/quote gates with a real list picker, local draft recovery plus account drafts in the official private AppView stash (`app.bsky.draft.*`) with reopen/update/delete and clear-on-publish, multi-post threads and honest grapheme counting | Scheduling remains out of scope |
 | Account lifecycle | OAuth sign-out; account/data screen with confirmation-gated export, deactivation and deletion guidance, and explicit PDS limits | No in-client account deletion, because that is a PDS operation |
 | Support/legal | In-app Help, Privacy, Terms, Guidelines, Copyright, Contact and About; matching site pages | Public contact is the issue tracker and private advisory form |
 
@@ -244,7 +249,8 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 
 1. Media composer with image upload, alt text, gallery, video/GIF and errors.
 2. Quote posts, link cards, languages, self-labels and threadgates.
-3. Drafts and multi-post threads.
+3. Local drafts, account drafts in the official private AppView stash
+   (`app.bsky.draft.*`) and multi-post threads are **done**.
 4. Followers, following, known followers, post engagement lists, profile
    editing, verification (display and trusted-verifier writes) and pinned posts are **done**.
 5. Likes/reposts/quotes lists on posts.

@@ -53,9 +53,16 @@ import {
 } from '../lib/postActions';
 import type { FeedbackKind } from '../lib/feedFeedbackModel';
 import { hidePostForMe } from '../lib/hiddenPosts';
+import { canSharePost } from '../lib/shareViaChatModel';
+import { ShareViaChatSheet } from './ShareViaChatSheet';
 
 type Mode = 'menu' | 'report' | 'confirm-block' | 'confirm-delete' | 'confirm-hide';
 type HideScope = 'post' | 'author';
+
+/** Share-via-chat needs a signed-in viewer and a post with a real strong ref. */
+export function canShareViaChat(post: any, did?: string): boolean {
+  return !!did && canSharePost(post);
+}
 
 interface PostMenuProps {
   post: any;
@@ -98,6 +105,7 @@ export function PostMenu({
   const [isPinned, setIsPinned] = useState(false);
   const [isThreadMuted, setIsThreadMuted] = useState(false);
   const [detached, setDetached] = useState(false);
+  const [shareChatOpen, setShareChatOpen] = useState(false);
   const containerRef = useRef<any>(null);
   const closeButtonRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -118,6 +126,7 @@ export function PostMenu({
     setNotice(null);
     setReportSent(false);
     setReplyIsHidden(false);
+    setShareChatOpen(false);
     setIsPinned(!!(post && post.viewer && post.viewer.pinned));
     setIsThreadMuted(!!(post && post.viewer && post.viewer.threadMuted));
     setDetached(isQuoteDetached(post && post.embed));
@@ -130,7 +139,17 @@ export function PostMenu({
     }
   }, [visible, post]);
 
-  if (!visible || !post) return null;
+  // The share sheet outlives the menu: choosing "Send via direct message"
+  // closes the menu, so keep rendering the sheet even while the menu is hidden.
+  if (!visible || !post) {
+    return shareChatOpen ? (
+      <ShareViaChatSheet
+        visible
+        post={post}
+        onClose={() => setShareChatOpen(false)}
+      />
+    ) : null;
+  }
 
   const author = post.author || {};
   const viewer = author.viewer || {};
@@ -662,6 +681,18 @@ export function PostMenu({
           onPress={() => void handleShare()}
           disabled={busy}
         />
+        {canShareViaChat(post, agent.did) ? (
+          <MenuRow
+            icon="paper-plane-outline"
+            label="Send via direct message"
+            detail="Share this post in a chat."
+            onPress={() => {
+              onClose();
+              setShareChatOpen(true);
+            }}
+            disabled={busy}
+          />
+        ) : null}
         <MenuRow
           icon="chatbox-ellipses-outline"
           label="Quote post"

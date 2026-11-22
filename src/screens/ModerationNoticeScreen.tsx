@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { Ionicons } from '@expo/vector-icons';
 import {
   describeInboxError,
@@ -138,7 +138,7 @@ export function ModerationNoticeScreen({
     }
     const web = subjectWebUrl(data?.subject);
     if (web) {
-      void Linking.openURL(web).catch(() => {});
+      void openExternalUrl(web).catch(() => {});
     }
   }
 
@@ -394,7 +394,7 @@ export function ModerationNoticeScreen({
         <InboxCard title="Action history">
           <ActionHistory
             actions={actions}
-            onOpenPolicy={(url) => void Linking.openURL(url).catch(() => {})}
+            onOpenPolicy={(url) => void openExternalUrl(url).catch(() => {})}
           />
           {cursor ? (
             <Pressable

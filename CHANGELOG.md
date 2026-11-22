@@ -52,16 +52,43 @@ Info.plist. Each release is tagged `vX.Y.Z` on `main`.
   `app.bsky.feed.sendInteractions` call, routed to the feed generator's
   `bsky_fg` proxy with the post's `feedContext` and `reqId` preserved. The
   chronological Following timeline never sends ranking feedback.
+- Profiles now have real tabbed feeds matching the official client: Posts,
+  Replies, Media, Videos and (on your own profile) Likes. Each tab uses a
+  published author-feed filter or the `getActorLikes` RPC; tab visibility
+  follows the official rules, an invalid deep-linked tab falls back to Posts,
+  and pinned posts appear only on the Posts tab.
+- Feed generators and labelers can now be liked and unliked through the same
+  `app.bsky.feed.like` record used for posts, with a "Liked by N users" link
+  into the real `getLikes` list. Labeler likes resolve the service view through
+  `getServices`; invalid strong refs are never written.
+- The post menu now offers "Send via direct message": pick a recent chat or a
+  person and the post is sent as an `app.bsky.embed.record` strong ref through
+  the real `getConvoForMembers` and `sendMessage` chat RPCs. New 1:1 chats are
+  resolved before sending; no message text is logged.
+- External links now share one opener: the first HTTP(S) link asks whether to
+  use the in-app browser or the system browser, remembers the choice in Content
+  and media, and always leaves mailto, tel and SMS links with the system handler.
+- Composer drafts can now be saved to the account's private Bluesky draft stash,
+  listed from the composer, reopened, updated and deleted through the real
+  `app.bsky.draft.*` AppView RPCs. Text, warnings, languages, interaction rules
+  and quote/link refs survive; photos and videos remain device-bound.
+- Settings now offers the official Light/Dark app icon choice. The selected
+  icon is read back from the OS, Android confirms the restart, and the web
+  screen explains that icon changes need the native app instead of throwing.
+  Generated Balla assets and an Expo config plugin bake the Dark variant; the
+  internal Bluesky+ icon set stays excluded.
 - Add deterministic model and wiring tests for the new preferences, gate
-  writes, hidden replies, feed feedback and navigation, and update the
-  compliance and reference docs to match. The release adds only eight narrow
-  permissions: repository scopes for threadgates, postgates, verification
-  records, live status and the activity-privacy declaration, AppView RPCs for
-  listing and writing activity subscriptions, and
-  `rpc:app.bsky.feed.sendInteractions?aud=*` for proxied generator feedback.
-  No new dependency was added, and sessions authorised before 0.19.0 need one
-  re-authorisation for those writes. Device push delivery remains blocked on
-  the self-hosted gateway (#36).
+  writes, hidden replies, feed feedback, navigation, profile tabs, object likes,
+  share-via-chat and app icons, and update the compliance and reference docs to
+  match. The release adds only narrow permissions: repository scopes for
+  threadgates, postgates, verification records, live status and the
+  activity-privacy declaration, AppView RPCs for listing/writing activity
+  subscriptions and `getActorLikes`, and
+  `rpc:app.bsky.feed.sendInteractions?aud=*` for proxied generator feedback. The
+  only new dependency is the Expo 58-compatible `expo-alternate-app-icons` native
+  module; sessions authorised before 0.19.0 need one re-authorisation for the
+  new scopes. Device push delivery remains blocked on the self-hosted gateway
+  (#36).
 
 ## 0.18.0
 

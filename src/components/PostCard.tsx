@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Linking,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -272,7 +272,7 @@ export function PostCard({
   function openFacet(segment: RichTextSegment) {
     if (segment.kind === 'link') {
       if (/^https?:\/\//i.test(segment.uri)) {
-        void Linking.openURL(segment.uri).catch(() => {});
+        void openExternalUrl(segment.uri).catch(() => {});
       }
       return;
     }
@@ -807,7 +807,7 @@ function LinkCard({ card }: { card: ExternalView }) {
   const p = usePalette();
   return (
     <Pressable
-      onPress={() => void Linking.openURL(card.uri).catch(() => {})}
+      onPress={() => void openExternalUrl(card.uri).catch(() => {})}
       accessibilityRole="link"
       accessibilityLabel={`Open ${card.title} on ${card.host}`}
       accessibilityHint="Opens this link in your browser"
@@ -861,6 +861,7 @@ function LinkCard({ card }: { card: ExternalView }) {
 /** Plays the AppView's HLS playlist with visible controls and its own alt text. */
 function VideoEmbed({ video }: { video: VideoViewData }) {
   const p = usePalette();
+  const { preferences } = usePreferences();
   const player = useVideoPlayer(
     { uri: video.playlist, contentType: 'hls' },
     (instance) => {
@@ -869,6 +870,21 @@ function VideoEmbed({ video }: { video: VideoViewData }) {
       instance.muted = video.presentation === 'gif';
     }
   );
+
+  // Honour the device-local "Autoplay videos and GIFs" preference. The
+  // official client stores it inverted as `disableAutoplay` and starts media
+  // only when it is off; GIFs still loop muted once playing.
+  useEffect(() => {
+    if (preferences.disableAutoplay) {
+      if (player.playing) player.pause();
+      return;
+    }
+    void player.play();
+    return () => {
+      if (player.playing) player.pause();
+    };
+  }, [player, preferences.disableAutoplay]);
+
   const ratio = video.aspectRatio
     ? Math.max(0.75, Math.min(1.91, video.aspectRatio.width / video.aspectRatio.height))
     : 16 / 9;

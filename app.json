@@ -45,7 +45,20 @@
           "cameraPermission": "Balla needs access to your camera so you can take a photo for a post."
         }
       ],
-      "expo-video"
+      "expo-video",
+      [
+        "expo-alternate-app-icons",
+        [
+          {
+            "name": "Dark",
+            "ios": "./assets/app-icons/ios_icon_legacy_dark.png",
+            "android": {
+              "foregroundImage": "./assets/app-icons/android_icon_legacy_dark.png",
+              "backgroundColor": "#0E1420"
+            }
+          }
+        ]
+      ]
     ],
     "experiments": {
       "baseUrl": "/app"

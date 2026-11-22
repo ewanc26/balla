@@ -28,6 +28,14 @@ const STORAGE_KEY = 'balla.preferences.v1';
 export type AppPreferences = {
   requireAltText: boolean;
   largerAltBadges: boolean;
+  /**
+   * undefined means "ask on the first link", matching the official client.
+   * true uses the in-app browser (expo-web-browser); false uses the system
+   * browser through Linking.
+   */
+  useInAppBrowser: boolean | undefined;
+  /** Stored inverted: true means autoplay is off, as in the official client. */
+  disableAutoplay: boolean;
   accent: AccentId;
   era: FacebookEraId;
   colourMode: ColourMode;
@@ -39,6 +47,8 @@ export type AppPreferences = {
 export const DEFAULT_PREFERENCES: AppPreferences = {
   requireAltText: false,
   largerAltBadges: false,
+  useInAppBrowser: undefined,
+  disableAutoplay: false,
   accent: 'facebook',
   era: 'newfacebook',
   colourMode: 'system',
@@ -51,6 +61,8 @@ type PreferencesContextValue = {
   preferences: AppPreferences;
   setRequireAltText: (value: boolean) => void;
   setLargerAltBadges: (value: boolean) => void;
+  setUseInAppBrowser: (value: boolean | undefined) => void;
+  setDisableAutoplay: (value: boolean) => void;
   setAccent: (value: AccentId) => void;
   setEra: (value: FacebookEraId) => void;
   setColourMode: (value: ColourMode) => void;
@@ -63,6 +75,8 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   preferences: DEFAULT_PREFERENCES,
   setRequireAltText: () => {},
   setLargerAltBadges: () => {},
+  setUseInAppBrowser: () => {},
+  setDisableAutoplay: () => {},
   setAccent: () => {},
   setEra: () => {},
   setColourMode: () => {},
@@ -85,6 +99,14 @@ function parseStored(value: string | null): AppPreferences {
         typeof parsed?.largerAltBadges === 'boolean'
           ? parsed.largerAltBadges
           : DEFAULT_PREFERENCES.largerAltBadges,
+      useInAppBrowser:
+        typeof parsed?.useInAppBrowser === 'boolean'
+          ? parsed.useInAppBrowser
+          : undefined,
+      disableAutoplay:
+        typeof parsed?.disableAutoplay === 'boolean'
+          ? parsed.disableAutoplay
+          : DEFAULT_PREFERENCES.disableAutoplay,
       accent: theme.accent,
       era: theme.era,
       colourMode: theme.colourMode,
@@ -146,6 +168,14 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     (value: boolean) => update({ largerAltBadges: value }),
     [update]
   );
+  const setUseInAppBrowser = useCallback(
+    (value: boolean | undefined) => update({ useInAppBrowser: value }),
+    [update]
+  );
+  const setDisableAutoplay = useCallback(
+    (value: boolean) => update({ disableAutoplay: value }),
+    [update]
+  );
   const setAccent = useCallback(
     (value: AccentId) => update({ accent: value }),
     [update]
@@ -176,6 +206,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       preferences,
       setRequireAltText,
       setLargerAltBadges,
+      setUseInAppBrowser,
+      setDisableAutoplay,
       setAccent,
       setEra,
       setColourMode,
@@ -187,6 +219,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       preferences,
       setRequireAltText,
       setLargerAltBadges,
+      setUseInAppBrowser,
+      setDisableAutoplay,
       setAccent,
       setEra,
       setColourMode,
