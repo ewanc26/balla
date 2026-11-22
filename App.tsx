@@ -44,6 +44,7 @@ import { ModerationNoticeScreen } from './src/screens/ModerationNoticeScreen';
 import { ReportReceiptsScreen } from './src/screens/ReportReceiptsScreen';
 import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
 import { FeedsScreen } from './src/screens/FeedsScreen';
+import { DiscoveryScreen } from './src/screens/DiscoveryScreen';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { AccessibilitySettingsScreen } from './src/screens/AccessibilitySettingsScreen';
 import { LanguageSettingsScreen } from './src/screens/LanguageSettingsScreen';
@@ -234,6 +235,10 @@ export default function App() {
       navigationRef.navigate('UserProfile', { actor: MOCK_OTHER_ACTOR });
     } else if (screen === 'Compose') {
       navigationRef.navigate('Compose');
+    } else if (screen === 'Hashtag') {
+      navigationRef.navigate('Hashtag', { tag: 'tea' });
+    } else if (screen === 'Topic') {
+      navigationRef.navigate('Topic', { topic: 'book fair' });
     } else if (screen !== 'Tabs') {
       navigationRef.navigate(screen as any);
     }
@@ -371,6 +376,10 @@ export default function App() {
                           <Stack.Screen name="ReportReceipts" component={ReportReceiptsScreen} />
                           <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
                           <Stack.Screen name="Feeds" component={FeedsScreen} />
+                          <Stack.Screen name="Hashtag" component={DiscoveryScreen} />
+                          <Stack.Screen name="Topic" component={DiscoveryScreen} />
+                          <Stack.Screen name="VideoFeed" component={DiscoveryScreen} />
+                          <Stack.Screen name="Discover" component={DiscoveryScreen} />
                           <Stack.Screen name="StarterPack" component={StarterPackScreen} />
                           <Stack.Screen name="StarterPackEdit" component={StarterPackEditScreen} />
                           <Stack.Screen name="Lists" component={ListsScreen} />
