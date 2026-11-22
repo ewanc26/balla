@@ -55,7 +55,7 @@ export function SessionSecurityScreen({ navigation }: { navigation: any }) {
         />
         <SettingValueRow
           label="Sign-out"
-          value="Clears the local session and asks the server to revoke the grant. Your account and posts stay on your PDS."
+          value="Clears every account on this device and asks those servers to revoke the grants. Your accounts and posts stay on your PDS."
         />
       </SettingSection>
 

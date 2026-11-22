@@ -23,7 +23,7 @@ image, video and GIF posts, lists and the moderation inbox are now shipped. This
 
 | Surface | Current state | Compliance note |
 | --- | --- | --- |
-| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo, AppView, video-service and caption-blob scopes | Sessions predating the video scopes must re-authorise; chat audience is intentionally absent until DMs exist |
+| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo, AppView, video-service and caption-blob scopes; multi-account sessions stored separately by DID with a DID/handle-only local registry and an account-keyed UI remount on switch | Sessions predating the video scopes must re-authorise; chat audience is intentionally absent until DMs exist |
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
 | Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
 | Threads | Ancestor chain, nested replies, reply composer, and reply/quote gates read from real threadgate and postgate records | Some moderation states remain |
@@ -231,7 +231,7 @@ privacy, block/mute, report and leave/delete flows.
 ### P2 — depth and federation
 
 1. ~~Starter packs.~~ Done: search, landing pages, explicit member/feed actions, official sharing and owner-only creation/editing with one narrow repo scope. Labeler subscriptions and custom labeler preferences remain.
-2. Drafts, scheduling-adjacent workflows and multi-account support where safe.
+2. ~~Multi-account support.~~ Done: separate OAuth sessions keyed by DID, labelled switch/add/remove flows, an account-keyed UI remount and honest handling of revoked grants. Drafts and scheduling-adjacent workflows remain.
 3. ~~Rich media (video, GIF, captions, aspect ratios).~~ Done: video-service upload, published video views, GIF presentation, WebVTT captions and real aspect ratios.
 4. ~~Web client with the web OAuth callback, or removal of the web redirect.~~
    Done: the Expo app is exported at `/app` and signs in with popup OAuth back

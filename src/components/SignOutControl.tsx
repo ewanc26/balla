@@ -40,8 +40,8 @@ export function SignOutControl() {
           Sign out of Balla?
         </Text>
         <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20, marginTop: 6 }}>
-          The local OAuth session will be removed and Balla will ask your server to
-          revoke it. Your posts and account stay on your PDS.
+          Every account on this device will be removed and Balla will ask those
+          servers to revoke the grants. Your posts and accounts stay on your PDS.
         </Text>
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
           <Pressable

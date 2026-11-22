@@ -37,6 +37,8 @@ export const WEB_LINKING_CONFIG = {
     UserProfile: 'profile/:actor',
     Compose: 'compose',
     Settings: 'settings',
+    Accounts: 'settings/accounts',
+    AddAccount: 'settings/accounts/add',
     Appearance: 'appearance',
     AccessibilitySettings: 'settings/accessibility',
     LanguageSettings: 'settings/languages',

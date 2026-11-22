@@ -137,7 +137,13 @@ alt-text requirement and larger description badges. Language settings choose a
 primary post/translation language and content languages; Following filters and
 thread reply order are saved through `app.bsky.actor` preferences and applied
 locally. Account and security settings show the identity Balla can read, a real
-birthday and automation-label write, and non-secret OAuth session facts;
+birthday and automation-label write, and non-secret OAuth session facts. A
+Settings → Accounts screen lists the accounts on this device with labelled
+switch, add and remove controls: each account keeps its own OAuth session in
+the on-device store keyed by DID, Balla remembers only the DID and any handle,
+and switching rebuilds the whole authenticated tree so no session or cached
+state crosses accounts; removing revokes that grant and leaves the others
+signed in;
 privacy settings include the logged-out visibility self-label and the real
 notification-preference editor. Email, password, 2FA, app passwords, activity
 privacy and account lifecycle are provider-owned, so Balla links to them rather
