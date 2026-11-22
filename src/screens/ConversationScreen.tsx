@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
   FlatList,
@@ -30,6 +30,14 @@ import {
   systemMessageCopy,
   validateMessageText,
 } from '../lib/chatModel';
+import {
+  buildReplyRef,
+  groupReactions,
+  messageActionable,
+  replyPreview,
+} from '../lib/chatGroupModel';
+import { MessageActionsSheet } from '../components/MessageActionsSheet';
+import { ChatReportSheet } from '../components/ChatReportSheet';
 
 const MESSAGE_PAGE_SIZE = 40;
 
@@ -61,6 +69,25 @@ export function ConversationScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<any>(null);
+  const [actionsMessage, setActionsMessage] = useState<any>(null);
+  const [reportMessage, setReportMessage] = useState<any>(null);
+  const [reportingConvo, setReportingConvo] = useState(false);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <Pressable
+          onPress={() => navigation.navigate('ConversationSettings', { convoId })}
+          accessibilityRole="button"
+          accessibilityLabel="Conversation settings"
+          style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.6 : 1 }]}
+        >
+          <Ionicons name="ellipsis-horizontal" size={22} color={p.chromeAction} />
+        </Pressable>
+      ),
+    });
+  }, [navigation, convoId, p.chromeAction]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -141,12 +168,14 @@ export function ConversationScreen() {
           $type: 'chat.bsky.convo.defs#messageInput',
           text: draft.trim(),
           ...(embed ? { embed } : {}),
-        },
+          ...(replyTo?.id ? { replyTo: buildReplyRef(replyTo.id) } : {}),
+        } as any,
       });
       setMessages((prev) => chronological([...prev, sent.data]));
       setDraft('');
       setPostUri('');
       setShowAttach(false);
+      setReplyTo(null);
       await getChatAgent().chat.bsky.convo
         .updateRead({ convoId, messageId: sent.data.id })
         .catch(() => {});
@@ -200,7 +229,7 @@ export function ConversationScreen() {
     }
   }
 
-  const viewerDid = agent.did;
+  const viewerDid = agent.did || '';
   const blocked = !canSendMessage(convo);
   const blockedCopy = sendBlockedCopy(convo);
 
@@ -319,6 +348,8 @@ export function ConversationScreen() {
             );
           }
           const mine = !!viewerDid && item?.sender?.did === viewerDid;
+          const reactions = groupReactions(item, viewerDid);
+          const replyText = replyPreview(item?.replyTo);
           return (
             <View style={[styles.bubbleRow, mine ? styles.mine : styles.theirs]}>
               <View
@@ -327,6 +358,18 @@ export function ConversationScreen() {
                   { backgroundColor: mine ? p.accent : p.card, borderColor: p.divider },
                 ]}
               >
+                {replyText ? (
+                  <Text
+                    style={{
+                      color: mine ? p.onAccent : p.secondary,
+                      fontSize: 11,
+                      fontStyle: 'italic',
+                      opacity: 0.85,
+                    }}
+                  >
+                    ↳ {replyText}
+                  </Text>
+                ) : null}
                 <Text style={{ color: mine ? p.onAccent : p.text, fontSize: 15 }}>
                   {String(item?.text || '')}
                 </Text>
@@ -352,16 +395,60 @@ export function ConversationScreen() {
                     </Text>
                   </Pressable>
                 ) : null}
-                <Text
-                  style={{
-                    color: mine ? p.onAccent : p.secondary,
-                    fontSize: 11,
-                    marginTop: 4,
-                    opacity: 0.8,
-                  }}
-                >
-                  {timeAgo(item?.sentAt)}
-                </Text>
+                {reactions.length > 0 ? (
+                  <View style={styles.reactions}>
+                    {reactions.map((reaction) => (
+                      <Pressable
+                        key={reaction.value}
+                        onPress={() =>
+                          setActionsMessage(messageActionable(item) ? item : null)
+                        }
+                        accessibilityRole="button"
+                        accessibilityLabel={`${reaction.value}, ${reaction.count} ${reaction.count === 1 ? 'reaction' : 'reactions'}${reaction.mine ? ', including yours' : ''}. Open message actions`}
+                        style={({ pressed }) => [
+                          styles.reaction,
+                          {
+                            borderColor: reaction.mine ? p.accent : p.divider,
+                            backgroundColor: reaction.mine ? p.accentSoft : p.bg,
+                            opacity: pressed ? 0.7 : 1,
+                          },
+                        ]}
+                      >
+                        <Text style={{ color: p.text, fontSize: 12 }}>
+                          {reaction.value} {reaction.count}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                ) : null}
+                <View style={styles.bubbleFooter}>
+                  <Text
+                    style={{
+                      color: mine ? p.onAccent : p.secondary,
+                      fontSize: 11,
+                      opacity: 0.8,
+                    }}
+                  >
+                    {timeAgo(item?.sentAt)}
+                  </Text>
+                  {messageActionable(item) ? (
+                    <Pressable
+                      onPress={() => setActionsMessage(item)}
+                      accessibilityRole="button"
+                      accessibilityLabel="Message actions: reply, react, report or delete"
+                      style={({ pressed }) => [
+                        styles.messageAction,
+                        { opacity: pressed ? 0.5 : 0.8 },
+                      ]}
+                    >
+                      <Ionicons
+                        name="ellipsis-horizontal"
+                        size={16}
+                        color={mine ? p.onAccent : p.secondary}
+                      />
+                    </Pressable>
+                  ) : null}
+                </View>
               </View>
             </View>
           );
@@ -374,6 +461,29 @@ export function ConversationScreen() {
           { backgroundColor: p.card, borderTopColor: p.divider },
         ]}
       >
+        {replyTo ? (
+          <View style={[styles.replyBanner, { borderColor: p.divider }]}>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ color: p.secondary, fontSize: 11, fontWeight: '700' }}>
+                Replying to {replyTo?.sender?.did === viewerDid ? 'your message' : 'a message'}
+              </Text>
+              <Text numberOfLines={1} style={{ color: p.text, fontSize: 13 }}>
+                {replyPreview(replyTo)}
+              </Text>
+            </View>
+            <Pressable
+              onPress={() => setReplyTo(null)}
+              accessibilityRole="button"
+              accessibilityLabel="Cancel reply"
+              style={({ pressed }) => [
+                styles.replyCancel,
+                { opacity: pressed ? 0.6 : 1 },
+              ]}
+            >
+              <Ionicons name="close" size={20} color={p.secondary} />
+            </Pressable>
+          </View>
+        ) : null}
         {showAttach ? (
           <TextInput
             value={postUri}
@@ -445,6 +555,15 @@ export function ConversationScreen() {
             </Text>
           </Pressable>
           <Pressable
+            onPress={() => setReportingConvo(true)}
+            disabled={!convo}
+            accessibilityRole="button"
+            accessibilityLabel="Report this conversation"
+            style={({ pressed }) => [styles.secondary, { opacity: pressed || !convo ? 0.6 : 1 }]}
+          >
+            <Text style={{ color: p.danger, fontSize: 13 }}>Report conversation</Text>
+          </Pressable>
+          <Pressable
             onPress={() => void leave()}
             disabled={busy || !convo}
             accessibilityRole="button"
@@ -455,6 +574,40 @@ export function ConversationScreen() {
           </Pressable>
         </ScrollView>
       </View>
+
+      {actionsMessage ? (
+        <MessageActionsSheet
+          convoId={convoId}
+          message={actionsMessage}
+          viewerDid={viewerDid}
+          onClose={() => setActionsMessage(null)}
+          onReply={(message) => setReplyTo(message)}
+          onReport={(message) => setReportMessage(message)}
+          onMessageUpdated={(message) => {
+            setMessages((prev) =>
+              prev.map((item) => (item?.id === message?.id ? message : item))
+            );
+          }}
+        />
+      ) : null}
+      {reportMessage ? (
+        <ChatReportSheet
+          target={{ kind: 'message', convoId, message: reportMessage, members: convo?.members }}
+          onClose={() => {
+            setReportMessage(null);
+            void load();
+          }}
+        />
+      ) : null}
+      {reportingConvo ? (
+        <ChatReportSheet
+          target={{ kind: 'convo', convoId, members: convo?.members }}
+          onClose={() => {
+            setReportingConvo(false);
+            void load();
+          }}
+        />
+      ) : null}
     </KeyboardAvoidingView>
   );
 }
@@ -509,4 +662,27 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
+  headerButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  reactions: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },
+  reaction: {
+    minHeight: 28,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bubbleFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
+  messageAction: { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center', marginHorizontal: -6 },
+  replyBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    borderWidth: 1,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    marginBottom: 8,
+  },
+  replyCancel: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });

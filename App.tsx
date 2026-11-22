@@ -55,6 +55,11 @@ import { StarterPackEditScreen } from './src/screens/StarterPackEditScreen';
 import { ChatScreen } from './src/screens/ChatScreen';
 import { ConversationScreen } from './src/screens/ConversationScreen';
 import { ChatSettingsScreen } from './src/screens/ChatSettingsScreen';
+import { ChatNotificationSettingsScreen } from './src/screens/ChatNotificationSettingsScreen';
+import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
+import { JoinGroupScreen } from './src/screens/JoinGroupScreen';
+import { JoinRequestsScreen } from './src/screens/JoinRequestsScreen';
+import { ConversationSettingsScreen } from './src/screens/ConversationSettingsScreen';
 import { ListsScreen } from './src/screens/ListsScreen';
 import { ListDetailScreen } from './src/screens/ListDetailScreen';
 import { ListEditScreen } from './src/screens/ListEditScreen';
@@ -82,6 +87,7 @@ import {
   MOCK_OTHER_ACTOR,
   MOCK_THREAD_URI,
   MOCK_CONVO_ID,
+  MOCK_GROUP_CONVO_ID,
   installMockAgent,
   mockInitialScreen,
   mockInitialTab,
@@ -245,6 +251,8 @@ export default function App() {
       navigationRef.navigate('Compose');
     } else if (screen === 'Conversation') {
       navigationRef.navigate('Conversation', { convoId: MOCK_CONVO_ID });
+    } else if (screen === 'ConversationSettings' || screen === 'JoinRequests') {
+      navigationRef.navigate(screen, { convoId: MOCK_GROUP_CONVO_ID });
     } else if (screen === 'Hashtag') {
       navigationRef.navigate('Hashtag', { tag: 'tea' });
     } else if (screen === 'Topic') {
@@ -404,6 +412,17 @@ export default function App() {
                             name="ChatSettings"
                             component={ChatSettingsScreen}
                             options={{ title: 'Chat settings' }}
+                          />
+                          <Stack.Screen
+                            name="ChatNotificationSettings"
+                            component={ChatNotificationSettingsScreen}
+                          />
+                          <Stack.Screen name="CreateGroup" component={CreateGroupScreen} />
+                          <Stack.Screen name="JoinGroup" component={JoinGroupScreen} />
+                          <Stack.Screen name="JoinRequests" component={JoinRequestsScreen} />
+                          <Stack.Screen
+                            name="ConversationSettings"
+                            component={ConversationSettingsScreen}
                           />
                         </Stack.Navigator>
                       </View>

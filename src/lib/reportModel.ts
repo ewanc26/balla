@@ -37,7 +37,12 @@ export const REPORT_REASONS = [
 ] as const;
 
 export type ReportReason = (typeof REPORT_REASONS)[number]['value'];
-export type ReportSubjectKind = 'post' | 'profile' | 'list';
+export type ReportSubjectKind =
+  | 'post'
+  | 'profile'
+  | 'list'
+  | 'chat-message'
+  | 'chat-convo';
 
 /** A local-only reminder of a report the moderation service accepted. */
 export type ReportReceipt = {
@@ -54,7 +59,13 @@ export const REPORT_RECEIPT_KEY = 'balla.report.receipts.v1';
 /** Receipts are a convenience, not a moderation archive; keep them bounded. */
 export const MAX_REPORT_RECEIPTS = 50;
 
-const SUBJECT_KINDS: ReportSubjectKind[] = ['post', 'profile', 'list'];
+const SUBJECT_KINDS: ReportSubjectKind[] = [
+  'post',
+  'profile',
+  'list',
+  'chat-message',
+  'chat-convo',
+];
 
 export function reasonLabel(reasonType: string): string {
   return (

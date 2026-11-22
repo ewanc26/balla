@@ -4,7 +4,7 @@ Last updated: **22 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **74 tokens**. Chat is a separate service with its own
+the scope currently has **98 tokens**. Chat is a separate service with its own
 audience, documented below.
 
 ## Repository writes
@@ -117,6 +117,30 @@ permission set or wildcard is requested:
 | `chat.bsky.convo.muteConvo` | Muting a conversation |
 | `chat.bsky.convo.unmuteConvo` | Unmuting a conversation |
 | `chat.bsky.convo.leaveConvo` | Leaving a conversation |
+| `chat.bsky.convo.getConvoMembers` | Full member list for owner checks and member management |
+| `chat.bsky.convo.lockConvo` | Locking a group owner controls |
+| `chat.bsky.convo.unlockConvo` | Unlocking a group owner controls |
+| `chat.bsky.convo.addReaction` | Adding a message reaction |
+| `chat.bsky.convo.removeReaction` | Removing your own message reaction |
+| `chat.bsky.convo.deleteMessageForSelf` | Deleting a message from your own view |
+| `chat.bsky.convo.updateAllRead` | Marking all conversations and requests read |
+| `chat.bsky.group.createGroup` | Creating a group conversation |
+| `chat.bsky.group.addMembers` | Adding members to a group |
+| `chat.bsky.group.removeMembers` | Removing members from a group |
+| `chat.bsky.group.editGroup` | Editing a group name |
+| `chat.bsky.group.createJoinLink` | Creating a group invite link |
+| `chat.bsky.group.editJoinLink` | Editing invite-link rules |
+| `chat.bsky.group.enableJoinLink` | Enabling a group invite link |
+| `chat.bsky.group.disableJoinLink` | Disabling a group invite link |
+| `chat.bsky.group.listJoinRequests` | Reviewing pending join requests |
+| `chat.bsky.group.approveJoinRequest` | Approving a join request |
+| `chat.bsky.group.rejectJoinRequest` | Rejecting a join request |
+| `chat.bsky.group.updateJoinRequestsRead` | Marking join requests read |
+| `chat.bsky.group.requestJoin` | Joining by invite code |
+| `chat.bsky.group.withdrawJoinRequest` | Withdrawing a pending join request |
+| `chat.bsky.group.getJoinLinkPreviews` | Previewing a group before asking to join |
+| `chat.bsky.notification.getPreferences` | Reading chat notification preferences |
+| `chat.bsky.notification.putPreferences` | Saving chat notification preferences |
 
 Resolving a shared post's CID uses the already-authorised AppView
 `app.bsky.feed.getPostThread` call; no extra scope is needed for post embeds.
@@ -163,7 +187,7 @@ database.
   generators or threadgates. Starter packs now have their own narrow write
   scope above.
 - A broad `include:chat.bsky.authFullClient` permission set — chat uses only the
-  twelve narrow RPCs above, never the full-client grant.
+  thirty-six narrow RPCs above, never the full-client grant.
 - `transition:*` and broad wildcards.
 
 ## Re-authorisation
@@ -171,7 +195,7 @@ database.
 The client metadata has widened over time for profile editing, saved feeds and
 the moderation inbox while staying granular. Sessions authorised before any of
 those changes keep their old grant and must re-authorise before the new
-profile/link/blob, list, saved-feed, inbox or starter-pack scopes are available.
+profile/link/blob, list, saved-feed, inbox, starter-pack or chat-group scopes are available.
 Signing out and back in requests the current scope. Sessions authorised before
 0.13.0 need that re-authorisation before starter-pack creation or editing works;
 the editor says so rather than hiding the failure. Sessions authorised before

@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.17.0
+
+- Extend Messages to the full group, embed and moderation surface. Create groups with named members, add/remove members, manage invite links with real join rules, preview a group before asking to join, and review approve/reject join requests with honest counts.
+- Add replies and reactions to messages, delete-for-self, and post embeds alongside text. Conversation settings expose group name editing, membership, lock/unlock where the service allows it, and leave/mute controls; owner checks use the full member list and moderation-locked groups hide the lock toggle.
+- Report a conversation or message to Bluesky's labeler through the open end of the `createReport` subject union — ids only, never message text — and block the actor from the same labelled sheet. Chat notification preferences are read and written through the chat service, separate from AppView alerts.
+- Add `chat.bsky.convo.*`, `chat.bsky.group.*` and `chat.bsky.notification.*` RPCs as narrow scopes on the chat-service audience (36 chat RPCs, 98 tokens total). No broad chat set, wildcard or new dependency was added; sessions authorised before 0.17.0 need to sign in again for chat groups and preferences. Message content is never stored by Balla or written to a log.
+- Add deterministic group/model and wiring tests, preview fixtures for every new screen, explicit web paths, and update the compliance, scope, reference, README, site copy and AGENTS state to match.
+
 ## 0.16.0
 
 - Add private messages through Bluesky's chat service. The inbox lists conversations, real unread counts and chat requests; a conversation pages through message history, sends text and post embeds, and offers labelled mark-read, mute/unmute, accept-request and leave controls.

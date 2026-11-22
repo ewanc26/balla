@@ -51,3 +51,17 @@ test('new receipts go first and the local history stays bounded', () => {
   assert.equal(next[0].subjectKind, 'post');
   assert.ok(!next.some((item) => item.id === MAX_REPORT_RECEIPTS - 1));
 });
+
+test('chat report kinds are accepted and normalised like any other receipt', () => {
+  for (const kind of ['chat-message', 'chat-convo']) {
+    const stored = normaliseReceipts([receipt(10, kind)]);
+    assert.equal(stored.length, 1);
+    assert.equal(stored[0].subjectKind, kind);
+    assert.ok(!('text' in stored[0]));
+  }
+  const mixed = normaliseReceipts([
+    receipt(11, 'chat-message'),
+    receipt(12, 'chat-convo'),
+  ]);
+  assert.deepEqual(mixed.map((item) => item.subjectKind), ['chat-message', 'chat-convo']);
+});

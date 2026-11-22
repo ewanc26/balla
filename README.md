@@ -84,9 +84,13 @@ a moderation inbox for reports, decisions, notices, account standing and appeals
 and a web client at <https://balla.croft.click/app>. The shell follows Facebook's current
 white chrome, grey canvas, 8px cards and responsive three-column desktop
 layout; the research and mapping are in
-[docs/facebook-ui.md](docs/facebook-ui.md). DMs are still on the roadmap. The
-list model, routes and deliberate gaps are documented in
-[docs/lists.md](docs/lists.md).
+[docs/facebook-ui.md](docs/facebook-ui.md). Messages cover conversations with
+real unread counts, chat requests, group creation, members and invite links,
+join requests, replies and reactions, conversation settings with lock/unlock,
+chat reporting and actor blocking, and chat notification preferences. Message
+content stays with Bluesky and is never stored or logged. Device push for chat
+remains blocked (#36). The list model, routes and deliberate gaps are
+documented in [docs/lists.md](docs/lists.md).
 
 CI runs the typecheck, dependency audit and icon sync on every push, so a green
 check is a real claim about the commit it ran on. The research and gap analysis

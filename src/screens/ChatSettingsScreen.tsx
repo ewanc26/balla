@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { agent } from '../lib/agent';
 import { describeFailure } from '../lib/reliability';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
@@ -18,6 +19,7 @@ const OFFICIAL_CHAT_SETTINGS = 'https://bsky.app/settings/chat';
  */
 export function ChatSettingsScreen() {
   const p = usePalette();
+  const navigation = useNavigation<any>();
   const [allowIncoming, setAllowIncoming] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -95,6 +97,36 @@ export function ChatSettingsScreen() {
         >
           <Text style={{ color: p.accent, fontSize: 14, fontWeight: '600' }}>
             Change in Bluesky settings
+          </Text>
+          <IoniconsChevron color={p.accent} />
+        </Pressable>
+      </View>
+
+      <View
+        style={[
+          styles.card,
+          { backgroundColor: p.card, borderColor: p.divider, marginTop: 12 },
+          cardShadow,
+        ]}
+      >
+        <Text style={{ color: p.text, fontSize: 17, fontWeight: '700' }}>
+          Notification preferences
+        </Text>
+        <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, marginTop: 6 }}>
+          Chat and chat-request notifications are separate from post alerts.
+          Choose who can notify you and whether push is on for each.
+        </Text>
+        <Pressable
+          onPress={() => navigation.navigate('ChatNotificationSettings')}
+          accessibilityRole="button"
+          accessibilityLabel="Edit chat notification preferences"
+          style={({ pressed }) => [
+            styles.link,
+            { borderColor: p.divider, opacity: pressed ? 0.6 : 1 },
+          ]}
+        >
+          <Text style={{ color: p.accent, fontSize: 14, fontWeight: '600' }}>
+            Edit chat notifications
           </Text>
           <IoniconsChevron color={p.accent} />
         </Pressable>
