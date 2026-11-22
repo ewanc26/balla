@@ -16,6 +16,10 @@ import { agent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useModeration } from '../lib/moderationContext';
+import {
+  notificationTarget,
+  notificationTargetAction,
+} from '../lib/notificationModel';
 import { timeAgo } from '../lib/time';
 import { Avatar } from '../components/Avatar';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
@@ -58,14 +62,6 @@ function reasonBadge(reason: string): { icon: any; green?: boolean } {
   if (reason === 'quote') return { icon: 'chatbox-ellipses' };
   if (reason.startsWith('follow')) return { icon: 'person-add', green: true };
   return { icon: 'notifications' };
-}
-
-// Tapping a notification lands you inside the conversation it came from.
-function threadUri(item: any): string | undefined {
-  const reason = String(item.reason || '');
-  if (reason === 'reply' || reason === 'mention' || reason === 'quote') return item.uri;
-  if (reason.startsWith('like') || reason.startsWith('repost')) return item.reasonSubject;
-  return undefined;
 }
 
 function matchesFilter(item: any, filter: Filter, following: Set<string>): boolean {
@@ -340,16 +336,23 @@ export function NotificationsScreen() {
       renderItem={({ item: group }) => {
         const first = group.items[0];
         const author = group.actors[0] || first.author || {};
-        const uri = threadUri(first);
+        const target = notificationTarget(first, author);
         const badge = reasonBadge(String(group.reason || ''));
         return (
           <Pressable
-            disabled={!uri}
-            onPress={() => navigation.navigate('Thread', { uri })}
-            accessibilityRole={uri ? 'button' : undefined}
+            disabled={!target}
+            onPress={() => {
+              if (!target) return;
+              if (target.kind === 'profile') {
+                navigation.navigate('UserProfile', { actor: target.did });
+              } else {
+                navigation.navigate('Thread', { uri: target.uri });
+              }
+            }}
+            accessibilityRole={target ? 'button' : undefined}
             accessibilityLabel={
-              uri
-                ? `${actorNames(group.actors)} ${reasonText(group.reason)}`
+              target
+                ? `${actorNames(group.actors)} ${reasonText(group.reason)}.${notificationTargetAction(target)}`
                 : undefined
             }
             style={({ pressed }) => [

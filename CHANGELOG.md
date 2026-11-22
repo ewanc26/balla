@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.18.0
+
+- Tapping a notification now opens the destination it belongs to: replies, mentions, quotes, likes and reposts still open the post's thread, and a follow now opens the actor's public profile instead of leaving the row inert. The target is chosen from ids only, by a deterministic model shared with new tests; unmapped reasons stay inert rather than inventing a link.
+- Add deterministic notification target and wiring tests and update the README and AGENTS state to match. No OAuth scope, dependency or message-content handling changed. Device push delivery remains blocked on the self-hosted gateway and its credentials (#36).
+
 ## 0.17.0
 
 - Extend Messages to the full group, embed and moderation surface. Create groups with named members, add/remove members, manage invite links with real join rules, preview a group before asking to join, and review approve/reject join requests with honest counts.
