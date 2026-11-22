@@ -45,6 +45,9 @@ account. A list block is an `app.bsky.graph.listblock` record.
   for the AppView to reflect the change before returning to the list surface.
 - **Deletion:** deleting a list also removes its `listitem` records from the
   PDS before deleting the list record.
+- **Reports:** list and feed-generator reports use the published
+  `com.atproto.moderation.createReport` strong-ref path, with the same
+  categories and local-only receipt as post and account reports.
 
 ## OAuth scopes
 
@@ -70,7 +73,6 @@ available.
 - The AppView exposes lists by actor, not a global full-text list search. Balla
   offers local filtering and profile lists rather than inventing an endpoint.
 - List avatars are not uploaded yet.
-- List and feed reports are not implemented; post and account reporting are.
 - Reference lists are displayed if encountered, but only curation and moderation
   lists can be created.
 - List feeds are not pinned to the feed switcher. That needs saved-feed support for list
