@@ -159,8 +159,7 @@ alt text, MP4/GIF video with optional WebVTT captions and honest processing
 states, link cards, quotes, self-applied content warnings, up to three post
 languages per post, and reply and quote controls written to real threadgate and
 postgate records. An unfinished post is kept locally with a Restore/Discard
-prompt, and posts you authored have an Interaction settings screen. Tapping a notification opens the thread
-it belongs to (follows stay inert). Lists support creation and editing,
+prompt, and posts you authored have an Interaction settings screen. Tapping a notification opens the thread it belongs to; a follow opens the actor's public profile. Lists support creation and editing,
 membership, list feeds, subscribe/block states and profile links; list reports
 are not implemented yet. Starter packs have search, landing pages, explicit
 follow and add-feed actions, official share links, and creation/editing for

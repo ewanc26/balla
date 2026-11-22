@@ -61,7 +61,7 @@ button to read the conversation, including nested reply branches, and reply
 from a composer at the bottom; a full-screen image viewer — tap any post image
 for the
 fullsize render with visible close and step buttons, and the alt text printed
-under it; notifications that open the conversation they belong to when tapped;
+under it; notifications that open the thread they belong to, or a follower's public profile, when tapped;
 public profiles — tap any author to view their profile, follow or unfollow, and
 see their posts, followers and following, plus known followers and liked-by,
 reposted-by and quote lists, verification and labeler badges with the verifiers
