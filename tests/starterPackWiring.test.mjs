@@ -77,5 +77,5 @@ test('documentation and version copy state the re-authorisation requirement', ()
   assert.match(changelog, /starter pack/i);
   assert.match(readme, /starter[-\s]+pack/i);
   assert.match(site, /starter pack/i);
-  assert.equal(JSON.parse(read('../package.json')).version, '0.14.0');
+  assert.equal(JSON.parse(read('../package.json')).version, '0.15.0');
 });

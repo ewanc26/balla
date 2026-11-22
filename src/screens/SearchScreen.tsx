@@ -678,6 +678,30 @@ export function SearchScreen({ route }: { route?: any }) {
           </View>
 
           <Pressable
+            onPress={() => navigation.navigate('Discover')}
+            accessibilityRole="button"
+            accessibilityLabel="Open Discover"
+            accessibilityHint="Optional suggested posts, ranked by Bluesky and kept out of Following"
+            style={({ pressed }) => [
+              styles.listsRow,
+              {
+                backgroundColor: p.accentSoft,
+                borderColor: p.accent,
+                opacity: pressed ? 0.65 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="sparkles-outline" size={17} color={p.accent} />
+            <Text style={{ color: p.accent, fontSize: 13, fontWeight: '600' }}>
+              Discover
+            </Text>
+            <Text style={{ color: p.secondary, fontSize: 11, flex: 1 }} numberOfLines={1}>
+              Optional · suggested, ranked, never in Following
+            </Text>
+            <Ionicons name="chevron-forward" size={15} color={p.accent} />
+          </Pressable>
+
+          <Pressable
             onPress={() => navigation.navigate('Lists')}
             accessibilityRole="button"
             accessibilityLabel="Open lists"

@@ -154,8 +154,9 @@ Bluesky’s client surface includes:
 - saved and pinned custom feeds, feed discovery and feed generators;
 - lists (curation, moderation and block lists), list feeds and list management;
 - starter packs;
-- trending/Discover surfaces only as explicit user choices, not silently
-  injected into the Following feed;
+- hashtag, topic and video pages plus an opt-in Discover surface, all explicit
+  user choices and never injected into the Following feed; only Discover is
+  ranked, and it says so on the page;
 - search results for posts, people, feeds and starter packs;
 - language and reply/repost/quote filters.
 
@@ -216,7 +217,8 @@ privacy, block/mute, report and leave/delete flows.
 4. Notification preferences route (tabs, grouping and seen state are shipped).
 5. Lists, list feeds and list management. Curation and moderation lists,
    membership, list feeds, subscribe/block states and profile links are shipped;
-   list/feed reports remain. Saved/custom feeds and discovery are shipped.
+   list/feed reports remain. Saved/custom feeds, hashtag/topic/video pages and
+   the opt-in Discover surface are shipped; Following stays chronological.
 6. Settings preference editors for content, language, appearance, privacy and
    account. Content filtering, labelers, adult content and muted words are
    shipped, along with System/Light/Dark, post text size, description badges,

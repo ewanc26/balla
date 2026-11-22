@@ -136,7 +136,11 @@ the device and keep Following chronological. Accessibility settings cover the
 alt-text requirement and larger description badges. Language settings choose a
 primary post/translation language and content languages; Following filters and
 thread reply order are saved through `app.bsky.actor` preferences and applied
-locally. Account and security settings show the identity Balla can read, a real
+locally. Hashtags in posts open their own newest-first page; Search also offers
+explicit topic and video pages and an opt-in Discover surface. All four use the
+already-authorized `searchPostsV2` call, paginate, and never enter Following;
+only Discover is ranked, and its page says so. Account and security settings
+show the identity Balla can read, a real
 birthday and automation-label write, and non-secret OAuth session facts. A
 Settings → Accounts screen lists the accounts on this device with labelled
 switch, add and remove controls: each account keeps its own OAuth session in

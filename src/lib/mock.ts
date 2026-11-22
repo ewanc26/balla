@@ -837,6 +837,10 @@ export function mockInitialScreen(): string {
     'SessionSecurity',
     'StarterPack',
     'StarterPackEdit',
+    'Hashtag',
+    'Topic',
+    'VideoFeed',
+    'Discover',
   ].includes(requested)
     ? requested
     : 'Tabs';

@@ -258,15 +258,9 @@ export function PostCard({
       return;
     }
     if (segment.kind === 'tag' && segment.tag) {
-      navigation.navigate('Tabs', {
-        screen: 'Search',
-        params: {
-          searchRequest: {
-            q: `#${segment.tag}`,
-            nonce: Date.now(),
-          },
-        },
-      });
+      // Hashtags have their own newest-first page; they no longer land in the
+      // ranked search tab, which keeps discovery out of the Following feed.
+      navigation.navigate('Hashtag', { tag: segment.tag });
     }
   }
 

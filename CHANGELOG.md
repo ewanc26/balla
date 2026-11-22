@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.15.0
+
+- Add explicit discovery surfaces without touching Following. Hashtag, topic and video pages use the already-authorized `app.bsky.feed.searchPostsV2` call with `hashtags`, `query` and `hasVideo` filters, sorted newest first and paginated; no new OAuth scope or dependency was added.
+- Add an opt-in Discover page, reachable only from Search, that uses the same call with `sort: 'top'`. It is clearly labelled “Suggested · Ranked”, states that it is not based on who you follow, and never inserts anything into the chronological Following feed.
+- Hashtags in posts now open their own newest-first page instead of the ranked search tab. All four pages have explicit web paths, back navigation, refresh, pagination, hidden-post cleanup and honest empty/error states.
+- Add deterministic model and wiring tests covering param building, ranking labels, scope usage and navigation. Update the compliance doc, README, site copy and AGENTS state to match.
+
 ## 0.14.0
 
 - Add multi-account support. Each account keeps its own OAuth session and DPoP keys in the on-device store, keyed by DID; Balla's local registry holds only the DID and any handle it was given.
