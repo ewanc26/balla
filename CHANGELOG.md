@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.14.0
+
+- Add multi-account support. Each account keeps its own OAuth session and DPoP keys in the on-device store, keyed by DID; Balla's local registry holds only the DID and any handle it was given.
+- Add an Accounts screen under Settings with a labelled switch, add and remove flow. Switching restores the chosen DID into a fresh Agent and rebuilds the whole authenticated tree, so no cached post, feed, preference or session state carries over.
+- Removing an account revokes its grant and deletes its tokens, leaves the other accounts signed in, and moves to a neighbour if the removed account was active. A grant that cannot be restored is removed from the list with an honest message instead of silently reusing a stale session. Signing out clears every account.
+- Add model and wiring tests for registry parsing, handle validation, display labels, removal selection and the account-keyed remount. No new OAuth scope or dependency was added.
+
 ## 0.13.0
 
 - Add explicit feed-save and share actions to starter-pack landing pages. Recommended feeds keep their open action and gain a labelled “Add feed”/“Saved feed” button that writes Balla's existing saved-feed preferences. Share uses Bluesky's official `/start/{name}/{rkey}` link from the real pack URI and creator handle or DID, and is withheld for blocked creators with an honest note.

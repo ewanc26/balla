@@ -89,6 +89,12 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
 
       <Section title="Account">
         <Row
+          icon="people-outline"
+          label="Accounts"
+          detail="Switch, add or remove accounts on this device"
+          onPress={() => navigation.navigate('Accounts')}
+        />
+        <Row
           icon="person-outline"
           label="Your profile"
           detail="Posts, replies and account information"

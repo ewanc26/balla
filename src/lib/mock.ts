@@ -825,6 +825,7 @@ export function mockInitialScreen(): string {
     'Compose',
     'UserProfile',
     'Settings',
+    'Accounts',
     'Appearance',
     'AccessibilitySettings',
     'LanguageSettings',

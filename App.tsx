@@ -26,6 +26,8 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ThreadScreen } from './src/screens/ThreadScreen';
 import { ComposeScreen } from './src/screens/ComposeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { AccountsScreen } from './src/screens/AccountsScreen';
+import { AddAccountScreen } from './src/screens/AddAccountScreen';
 import { InfoScreen } from './src/screens/InfoScreen';
 import { PeopleListScreen } from './src/screens/PeopleListScreen';
 import { EngagementListScreen } from './src/screens/EngagementListScreen';
@@ -61,7 +63,7 @@ import { ModerationProvider } from './src/lib/moderationContext';
 import { FeedsProvider } from './src/lib/feedsContext';
 import { PreferencesProvider } from './src/lib/preferences';
 import { ViewPreferencesProvider } from './src/lib/viewPreferences';
-import { restore, setOnLoggedOut } from './src/lib/agent';
+import { restore, setOnAccountChanged, setOnLoggedOut } from './src/lib/agent';
 import { installWebAccessibility } from './src/lib/accessibility';
 import { webLinking } from './src/lib/webLinking';
 import { PREVIEW_WARNING, usePalette, useResolvedScheme } from './src/theme';
@@ -155,6 +157,9 @@ export default function App() {
   const initialTab = (MOCK_MODE ? mockInitialTab() : 'Home') as TabName;
   const [ready, setReady] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  // Keying the authenticated tree by account forces every provider, screen and
+  // cached list to be rebuilt on a switch, so no session data crosses accounts.
+  const [activeDid, setActiveDid] = useState<string | null>(MOCK_MODE ? 'mock' : null);
   const [activeTab, setActiveTab] = useState<TabName>(initialTab);
   const [routeName, setRouteName] = useState<string>(initialTab);
 
@@ -170,6 +175,15 @@ export default function App() {
 
   useEffect(() => {
     setOnLoggedOut(() => setLoggedIn(false));
+    setOnAccountChanged((did) => {
+      if (did) {
+        setLoggedIn(true);
+        setActiveDid(did);
+      } else {
+        setLoggedIn(false);
+        setActiveDid(null);
+      }
+    });
     if (MOCK_MODE) {
       installMockAgent();
       setLoggedIn(true);
@@ -260,7 +274,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <PreferencesProvider>
+      <PreferencesProvider key={activeDid ?? 'none'}>
         <ViewerProvider>
           <ViewPreferencesProvider>
             <ModerationProvider>
@@ -334,6 +348,8 @@ export default function App() {
                           <Stack.Screen name="Compose" component={ComposeScreen} />
                           <Stack.Screen name="UserProfile" component={ProfileScreen} />
                           <Stack.Screen name="Settings" component={SettingsScreen} />
+                          <Stack.Screen name="Accounts" component={AccountsScreen} />
+                          <Stack.Screen name="AddAccount" component={AddAccountScreen} />
                           <Stack.Screen name="Appearance" component={AppearanceScreen} />
                           <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} />
                           <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
