@@ -53,7 +53,9 @@ test('the screen uses the OS icon state and stays safe on web', () => {
   assert.match(screen, /The app will be restarted\./);
   assert.match(screen, /native iOS or Android app/);
   assert.doesNotMatch(screen, /core_[a-z_]+/);
-  assert.match(wrapper, /Platform\.OS !== 'web'/);
+  assert.match(wrapper, /Platform\.OS === 'web'/);
+  assert.match(wrapper, /require\('expo-alternate-app-icons'\)/);
+  assert.doesNotMatch(wrapper, /^import .*expo-alternate-app-icons/m);
   assert.match(wrapper, /setAlternateAppIcon\(nativeNameForChoice\(choice\)\)/);
   assert.doesNotMatch(wrapper, /throw new Error/);
 });
