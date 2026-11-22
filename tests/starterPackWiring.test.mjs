@@ -7,7 +7,7 @@ const metadata = JSON.parse(read('../oauth-client-metadata.json'));
 
 test('starter-pack writes add exactly one evidence-based repository scope', () => {
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 106);
+  assert.equal(tokens.length, 111);
   assert.equal(
     tokens.filter((token) => token.startsWith('repo:app.bsky.graph.starterpack')).length,
     1
@@ -70,7 +70,7 @@ test('documentation and version copy state the re-authorisation requirement', ()
   const readme = read('../README.md');
   const site = read('../site/features.html');
 
-  assert.match(scopes, /\*\*106 tokens\*\*/);
+  assert.match(scopes, /\*\*111 tokens\*\*/);
   assert.match(scopes, /repo:app\.bsky\.graph\.starterpack\?action=create&action=update/);
   assert.match(scopes, /re-authorise/i);
   assert.match(changelog, /## 0\.13\.0/);

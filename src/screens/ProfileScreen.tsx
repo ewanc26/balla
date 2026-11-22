@@ -2,12 +2,12 @@ import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
-  Linking,
   Pressable,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { moderateProfile } from '@atproto/api';
@@ -55,6 +55,12 @@ import {
   visibleProfileTabs,
   type ProfileFeedTab,
 } from '../lib/profileTabsModel';
+import {
+  canLike,
+  isLiked,
+  nextLikeCount,
+  toggleObjectLike,
+} from '../lib/objectLikes';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 /** Load a profile tab from the published author-feed filters or actor-likes RPC. */
@@ -94,6 +100,13 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const [subscribeOpen, setSubscribeOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<ProfileFeedTab>('posts');
   const [tabLoading, setTabLoading] = useState(false);
+  const [labelerLike, setLabelerLike] = useState<{
+    uri: string;
+    cid: string;
+    likeUri: string | null;
+    count: number;
+  } | null>(null);
+  const [labelerLikeBusy, setLabelerLikeBusy] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -215,6 +228,35 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
     };
   }, [actor, activeTab, reloadToken, failed]);
 
+  // A labeler's like button needs the service view's uri/cid. Load it as an
+  // optional extra: a failed lookup simply hides the like control.
+  useEffect(() => {
+    let active = true;
+    if (!profile?.associated?.labeler || !profile.did) {
+      setLabelerLike(null);
+      return () => { active = false; };
+    }
+    agent.app.bsky.labeler
+      .getServices({ dids: [profile.did], detailed: true })
+      .then((res: any) => {
+        const view = (res.data.views || []).find(
+          (item: any) => item.creator?.did === profile.did || item.did === profile.did
+        );
+        if (active && view?.uri && view?.cid) {
+          setLabelerLike({
+            uri: view.uri,
+            cid: view.cid,
+            likeUri: view.viewer?.like || null,
+            count: view.likeCount || 0,
+          });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [profile?.did, profile?.associated?.labeler, reloadToken]);
+
   useEffect(() => {
     return subscribeActorHidden((did) => {
       setPosts((prev) => prev.filter((item: any) => item.author.did !== did));
@@ -288,6 +330,32 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
   function reloadProfile() {
     setReloadToken((value) => value + 1);
+  }
+
+  async function toggleLabelerLike() {
+    if (!labelerLike || labelerLikeBusy) return;
+    const target = {
+      uri: labelerLike.uri,
+      cid: labelerLike.cid,
+      likeUri: labelerLike.likeUri,
+    };
+    if (!canLike(target)) return;
+    const wasLiked = isLiked(target);
+    const optimisticCount = nextLikeCount(
+      { ...target, likeCount: labelerLike.count },
+      !wasLiked
+    );
+    setLabelerLikeBusy(true);
+    // Optimistic: flip the heart and count, roll back on failure.
+    setLabelerLike({ ...labelerLike, likeUri: wasLiked ? null : 'pending', count: optimisticCount });
+    try {
+      const result = await toggleObjectLike(target);
+      setLabelerLike({ ...labelerLike, likeUri: result.likeUri, count: optimisticCount });
+    } catch {
+      setLabelerLike({ ...labelerLike, likeUri: labelerLike.likeUri, count: labelerLike.count });
+    } finally {
+      setLabelerLikeBusy(false);
+    }
   }
 
   function hidePost(post: any, scope: 'post' | 'author') {
@@ -496,7 +564,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             {liveActive ? (
               <Pressable
                 onPress={() => {
-                  if (liveLink) void Linking.openURL(liveLink);
+                  if (liveLink) void openExternalUrl(liveLink);
                   else setMenuOpen(true);
                 }}
                 accessibilityRole="button"
@@ -664,7 +732,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                   <Pressable
                     key={link.uri || link.url}
                     onPress={() => {
-                      void Linking.openURL(link.url).catch(() => {});
+                      void openExternalUrl(link.url).catch(() => {});
                     }}
                     accessibilityRole="link"
                     accessibilityLabel={profileLinkLabel(link)}
@@ -690,6 +758,85 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                     </Text>
                   </Pressable>
                 ))}
+              </View>
+            ) : null}
+
+            {isLabeler && labelerLike && !showProfileWarning ? (
+              <View style={{ marginTop: 12 }}>
+                <Pressable
+                  onPress={() => void toggleLabelerLike()}
+                  disabled={labelerLikeBusy}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    labelerLike.likeUri && labelerLike.likeUri !== 'pending'
+                      ? `Unlike @${profile.handle}`
+                      : `Like @${profile.handle}`
+                  }
+                  style={({ pressed }) => [
+                    styles.labelerLikeButton,
+                    {
+                      backgroundColor: p.bg,
+                      borderColor:
+                        labelerLike.likeUri && labelerLike.likeUri !== 'pending'
+                          ? p.danger
+                          : p.divider,
+                      opacity: pressed || labelerLikeBusy ? 0.6 : 1,
+                    },
+                  ]}
+                >
+                  <Ionicons
+                    name={
+                      labelerLike.likeUri && labelerLike.likeUri !== 'pending'
+                        ? 'heart'
+                        : 'heart-outline'
+                    }
+                    size={16}
+                    color={
+                      labelerLike.likeUri && labelerLike.likeUri !== 'pending'
+                        ? p.danger
+                        : p.secondary
+                    }
+                  />
+                  <Text
+                    style={{
+                      color:
+                        labelerLike.likeUri && labelerLike.likeUri !== 'pending'
+                          ? p.danger
+                          : p.secondary,
+                      fontSize: 13,
+                      fontWeight: '700',
+                      marginLeft: 5,
+                    }}
+                  >
+                    {labelerLike.likeUri && labelerLike.likeUri !== 'pending'
+                      ? 'Liked'
+                      : 'Like labeler'}
+                  </Text>
+                </Pressable>
+                {labelerLike.count > 0 ? (
+                  <Pressable
+                    onPress={() =>
+                      navigation.navigate('EngagementList', {
+                        uri: labelerLike.uri,
+                        mode: 'likes',
+                      })
+                    }
+                    accessibilityRole="button"
+                    accessibilityLabel={`View users who like this labeler`}
+                    style={{ marginTop: 8 }}
+                  >
+                    <Text
+                      style={{
+                        color: p.secondary,
+                        fontSize: 13,
+                        textDecorationLine: 'underline',
+                      }}
+                    >
+                      Liked by {labelerLike.count}{' '}
+                      {labelerLike.count === 1 ? 'user' : 'users'}
+                    </Text>
+                  </Pressable>
+                ) : null}
               </View>
             ) : null}
 
@@ -1045,29 +1192,57 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             marginBottom: 8,
           }}
         >
-          <View
-            style={{
-              alignSelf: 'flex-start',
-              marginLeft: 16,
-              paddingVertical: 14,
-              borderBottomWidth: 3,
-              borderBottomColor: p.accent,
-            }}
-          >
-            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>Posts</Text>
+          <View style={{ flexDirection: 'row' }}>
+            {visibleProfileTabs({
+              isSelf,
+              isLabeler,
+              hasSession: !!agent.did,
+            }).map((tab) => {
+              const selected = tab === activeTab;
+              return (
+                <Pressable
+                  key={tab}
+                  onPress={() => setActiveTab(tab)}
+                  accessibilityRole="tab"
+                  accessibilityLabel={tabLabel(tab)}
+                  accessibilityState={{ selected }}
+                  style={{
+                    paddingHorizontal: 16,
+                    paddingVertical: 14,
+                    borderBottomWidth: selected ? 3 : 0,
+                    borderBottomColor: p.accent,
+                  }}
+                >
+                  <Text
+                    style={{
+                      color: selected ? p.accent : p.secondary,
+                      fontSize: 15,
+                      fontWeight: selected ? '700' : '500',
+                    }}
+                  >
+                    {tabLabel(tab)}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
         </View>
       </View>
     );
   }
 
-  // The pinned post appears once: in its natural place if it is in the feed,
-  // or at the top if it is older than the posts we fetched.
+  // The pinned post belongs to the Posts tab only; other author-feed filters
+  // and the Likes RPC must not be polluted with it.
+  const showPinned = activeTab === 'posts';
   const feedItems: Array<{ post: any; pinned: boolean }> = posts.map((post) => ({
     post,
-    pinned: !!pinnedPost && post.uri === pinnedPost.uri,
+    pinned: showPinned && !!pinnedPost && post.uri === pinnedPost.uri,
   }));
-  if (pinnedPost && !feedItems.some((item) => item.post.uri === pinnedPost.uri)) {
+  if (
+    showPinned &&
+    pinnedPost &&
+    !feedItems.some((item) => item.post.uri === pinnedPost.uri)
+  ) {
     feedItems.unshift({ post: pinnedPost, pinned: true });
   }
 
@@ -1106,9 +1281,17 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
         contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
         ListHeaderComponent={Header}
         ListEmptyComponent={
-          <Text style={{ color: p.secondary, textAlign: 'center', marginTop: 32 }}>
-            {isBlocked ? 'Posts are hidden while this account is blocked.' : 'No posts here yet.'}
-          </Text>
+          tabLoading ? (
+            <ActivityIndicator style={{ marginTop: 32 }} color={p.accent} />
+          ) : (
+            <Text style={{ color: p.secondary, textAlign: 'center', marginTop: 32 }}>
+              {isBlocked
+                ? 'Posts are hidden while this account is blocked.'
+                : activeTab === 'likes'
+                  ? 'No likes yet.'
+                  : `No ${tabLabel(activeTab).toLowerCase()} here yet.`}
+            </Text>
+          )
         }
       />
       <ProfileMenu
@@ -1300,6 +1483,16 @@ const styles = StyleSheet.create({
     minHeight: 20,
     borderRadius: 10,
     paddingHorizontal: 7,
+    justifyContent: 'center',
+  },
+  labelerLikeButton: {
+    minHeight: 40,
+    borderRadius: 20,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignSelf: 'flex-start',
+    alignItems: 'center',
     justifyContent: 'center',
   },
   searchPostsRow: {

@@ -29,6 +29,17 @@ import {
 } from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
 import {
+  createServerDraft,
+  deleteServerDraft,
+  updateServerDraft,
+  type ServerDraft,
+} from '../lib/serverDrafts';
+import {
+  draftViewToChoices,
+  type DraftChoiceState,
+} from '../lib/serverDraftsModel.ts';
+import { ServerDraftsSheet } from '../components/ServerDraftsSheet';
+import {
   buildCaptionTracks,
   buildVideoEmbed,
   captionSelectionError,
@@ -316,6 +327,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [altAction, setAltAction] = useState<'send' | 'add'>('send');
   const [recoverDraft, setRecoverDraft] = useState<StoredDraft | null>(null);
   const [draftChecked, setDraftChecked] = useState(false);
+  const [draftsOpen, setDraftsOpen] = useState(false);
+  const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
+  const [savingDraft, setSavingDraft] = useState(false);
   const editorRef = useRef<any>(null);
   const appliedPrimaryLanguage = useRef(preferences.primaryLanguage);
 
@@ -325,8 +339,26 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const videoAbortRef = useRef<AbortController | null>(null);
 
   useLayoutEffect(() => {
-    navigation.setOptions({ title: 'Create post' });
-  }, [navigation]);
+    navigation.setOptions({
+      title: 'Create post',
+      headerRight: () => (
+        <Pressable
+          onPress={() => setDraftsOpen(true)}
+          accessibilityRole="button"
+          accessibilityLabel="Open your saved drafts"
+          style={({ pressed }) => ({
+            paddingHorizontal: 10,
+            paddingVertical: 8,
+            opacity: pressed ? 0.6 : 1,
+          })}
+        >
+          <Text style={{ color: p.accent, fontSize: 14, fontWeight: '700' }}>
+            Drafts
+          </Text>
+        </Pressable>
+      ),
+    });
+  }, [navigation, p.accent]);
 
   useEffect(() => {
     // Device preferences load after the first render. Wait for the draft
@@ -843,6 +875,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setEditingKey(null);
     setConfirmWithoutAlt(false);
     setNotice(null);
+    setActiveDraftId(null);
   }
 
   function recoverStoredDraft() {
@@ -891,6 +924,72 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     appliedPrimaryLanguage.current = preferences.primaryLanguage;
     setGates(normaliseGates(draft.gates));
     setEditingKey(null);
+    editorRef.current?.focus();
+  }
+
+  /** The part of the current editor that the published draft lexicon stores. */
+  function currentDraftChoices(): DraftChoiceState {
+    return {
+      text,
+      selfLabels,
+      languages,
+      gates,
+      externalUri: linkCard && typeof linkCard.uri === 'string' ? linkCard.uri : undefined,
+      quote:
+        quote && typeof quote.uri === 'string' && typeof quote.cid === 'string'
+          ? { uri: quote.uri, cid: quote.cid }
+          : undefined,
+    };
+  }
+
+  async function saveServerDraft() {
+    if (savingDraft || sending) return;
+    setSavingDraft(true);
+    setError(null);
+    try {
+      const choices = currentDraftChoices();
+      if (activeDraftId) {
+        // Saving again updates the same stash entry rather than piling up
+        // duplicates; opening a draft sets its id as the active one.
+        await updateServerDraft(activeDraftId, choices);
+      } else {
+        const id = await createServerDraft(choices);
+        setActiveDraftId(id);
+      }
+      setNotice(
+        'Draft saved to your Bluesky account. Photos and videos need adding again when you reopen it.'
+      );
+    } catch (err) {
+      setError(describeFailure(err, 'Could not save the draft. Try again.'));
+    } finally {
+      setSavingDraft(false);
+    }
+  }
+
+  function openServerDraft(view: ServerDraft) {
+    const choices = draftViewToChoices(view);
+    setText(choices.text);
+    setSelfLabels(choices.selfLabels);
+    setLanguages(
+      choices.languages.length ? choices.languages : [preferences.primaryLanguage]
+    );
+    appliedPrimaryLanguage.current = preferences.primaryLanguage;
+    setGates(choices.gates);
+    // A restored quote/external is a strong ref or URI only, not a resolved
+    // view; the composer's quote and link cards are rebuilt from these when the
+    // post is published, so show an honest note rather than a fake preview.
+    setQuote(null);
+    setLinkCard(null);
+    setImages([]);
+    setVideo(null);
+    setCaptions([]);
+    videoBlobRef.current = null;
+    setVideoStatus(null);
+    setActiveDraftId(view.id);
+    setEditingKey(null);
+    setNotice(
+      'Draft opened. Photos, videos, quotes and link cards need adding again.'
+    );
     editorRef.current?.focus();
   }
 
@@ -987,6 +1086,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
     const drafts = [...pending, snapshot()];
     const total = drafts.length;
+    // Capture the stash id before resetEditor() clears it: once the post is
+    // live the saved draft should leave the account, as in the official client.
+    const publishedDraftId = activeDraftId;
     setConfirmWithoutAlt(false);
     setError(null);
     setNotice(null);
@@ -1081,6 +1183,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
       // The post is already live, so keep its local draft cleared even if a
       // gate write fails. A retry here would publish the post a second time.
       void clearStoredDraft();
+      if (publishedDraftId) {
+        void deleteServerDraft(publishedDraftId).catch(() => {});
+      }
       setPublishedDone(true);
 
       let gateFailed = false;
@@ -1601,6 +1706,58 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
             </Pressable>
           </View>
 
+          <View
+            style={[
+              styles.optionsRow,
+              { borderTopColor: p.divider, borderBottomColor: p.divider },
+            ]}
+          >
+            <Pressable
+              onPress={() => void saveServerDraft()}
+              disabled={savingDraft || sending}
+              accessibilityRole="button"
+              accessibilityLabel={activeDraftId ? 'Update saved draft' : 'Save draft'}
+              accessibilityHint="Saves this post to your Bluesky account so you can return to it"
+              accessibilityState={{ disabled: savingDraft || sending }}
+              style={({ pressed }) => [
+                styles.optionsButton,
+                { opacity: savingDraft || sending ? 0.5 : pressed ? 0.7 : 1 },
+              ]}
+            >
+              {savingDraft ? (
+                <ActivityIndicator size="small" color={p.accent} />
+              ) : (
+                <Ionicons
+                  name={activeDraftId ? 'save' : 'save-outline'}
+                  size={18}
+                  color={p.accent}
+                />
+              )}
+              <Text numberOfLines={1} style={{ color: p.accent, fontSize: 13, fontWeight: '600', marginLeft: 6 }}>
+                {savingDraft ? 'Saving…' : activeDraftId ? 'Update draft' : 'Save draft'}
+              </Text>
+            </Pressable>
+            <View style={[styles.optionsDivider, { backgroundColor: p.divider }]} />
+            <Pressable
+              onPress={() => setDraftsOpen(true)}
+              disabled={sending}
+              accessibilityRole="button"
+              accessibilityLabel="Open saved drafts"
+              accessibilityHint="Shows drafts saved to your Bluesky account"
+              accessibilityState={{ disabled: sending }}
+              style={({ pressed }) => [
+                styles.optionsButton,
+                { opacity: sending ? 0.5 : pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons name="folder-open-outline" size={18} color={p.secondary} />
+              <Text numberOfLines={1} style={{ color: p.secondary, fontSize: 13, fontWeight: '500', marginLeft: 6 }}>
+                Drafts
+              </Text>
+              <Ionicons name="chevron-forward" size={15} color={p.secondary} style={{ marginLeft: 2 }} />
+            </Pressable>
+          </View>
+
           {linkCard ? (
             <View
               style={[
@@ -1980,6 +2137,13 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           onDiscard={discardStoredDraft}
         />
       ) : null}
+
+      <ServerDraftsSheet
+        visible={draftsOpen}
+        activeId={activeDraftId}
+        onClose={() => setDraftsOpen(false)}
+        onLoad={openServerDraft}
+      />
     </KeyboardAvoidingView>
   );
 }

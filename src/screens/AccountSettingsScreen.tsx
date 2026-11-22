@@ -1,11 +1,11 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import {
-  Linking,
   ScrollView,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { agent } from '../lib/agent';
 import { useViewer } from '../lib/viewer';
 import { useSessionSummary } from '../lib/sessionInfo';
@@ -64,7 +64,7 @@ export function AccountSettingsScreen({ navigation }: { navigation: any }) {
   const handle = profile?.handle ? `@${profile.handle}` : 'Not loaded';
 
   function openProviderSettings() {
-    void Linking.openURL(BLUESKY_ACCOUNT_SETTINGS).catch(() => {
+    void openExternalUrl(BLUESKY_ACCOUNT_SETTINGS).catch(() => {
       setLoadError('Could not open account settings. Visit bsky.app/settings/account in a browser.');
     });
   }

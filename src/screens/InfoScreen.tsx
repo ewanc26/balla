@@ -1,12 +1,12 @@
 import React, { useLayoutEffect } from 'react';
 import {
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { APP_VERSION } from '../lib/version';
@@ -159,7 +159,7 @@ const TOPICS: Record<string, Topic> = {
     title: 'Media',
     paragraphs: [
       'A post can carry up to 10 photos or one video. Every image and video can have a description; Balla marks media without one and will ask for confirmation before posting it.',
-      'Photos open full-screen with swipe navigation. Videos and GIFs use the player built into your device: playback starts when you press play, never automatically, so there is no autoplay setting to change.',
+      'Photos open full-screen with swipe navigation. Videos and GIFs use the player built into your device. Autoplay is on by default and can be turned off in Settings → Content and media; when it is off, playback starts when you press play.',
       'Balla uploads media to your own PDS through the published blob and video APIs and writes the standard embed records. There is no separate media server and no analytics attached to viewing media.',
     ],
   },
@@ -231,7 +231,7 @@ export function InfoScreen({ route, navigation }: { route: any; navigation: any 
         {topic.link ? (
           <Pressable
             onPress={() => {
-              void Linking.openURL(topic.link!.url).catch(() => {});
+              void openExternalUrl(topic.link!.url).catch(() => {});
             }}
             accessibilityRole="button"
             accessibilityLabel={topic.link.label}
@@ -250,7 +250,7 @@ export function InfoScreen({ route, navigation }: { route: any; navigation: any 
           <Pressable
             key={link.label}
             onPress={() => {
-              void Linking.openURL(link.url).catch(() => {});
+              void openExternalUrl(link.url).catch(() => {});
             }}
             accessibilityRole="button"
             accessibilityLabel={link.label}

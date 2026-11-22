@@ -4,7 +4,7 @@ Last updated: **22 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **106 tokens**. Chat is a separate service with its own
+the scope currently has **111 tokens**. Chat is a separate service with its own
 audience, documented below.
 
 ## Repository writes
@@ -68,11 +68,16 @@ All of these use:
 | `app.bsky.bookmark.createBookmark` | Saving a post |
 | `app.bsky.bookmark.deleteBookmark` | Removing a saved post |
 | `app.bsky.bookmark.getBookmarks` | Saved screen |
-| `app.bsky.feed.getAuthorFeed` | Profile posts |
+| `app.bsky.draft.createDraft` | Saving a new composer draft |
+| `app.bsky.draft.deleteDraft` | Deleting a saved draft |
+| `app.bsky.draft.getDrafts` | Listing saved drafts |
+| `app.bsky.draft.updateDraft` | Updating a saved draft |
+| `app.bsky.feed.getAuthorFeed` | Profile Posts, Replies, Media and Videos tabs |
+| `app.bsky.feed.getActorLikes` | Likes tab on your own profile |
 | `app.bsky.feed.getFeed` | Custom feed posts, including feeds chosen from Switch feed |
-| `app.bsky.feed.getFeedGenerator` | Custom feed metadata |
+| `app.bsky.feed.getFeedGenerator` | Custom feed metadata and feed-generator like state |
 | `app.bsky.feed.getFeedGenerators` | Batched metadata for saved feeds |
-| `app.bsky.feed.getLikes` | Liked-by list for a post |
+| `app.bsky.feed.getLikes` | Liked-by list for posts, feed generators and labelers |
 | `app.bsky.feed.getListFeed` | Posts from a curation list’s members |
 | `app.bsky.feed.getPostThread` | Thread screen |
 | `app.bsky.feed.getQuotes` | Quote-post list for a post |
@@ -92,7 +97,7 @@ All of these use:
 | `app.bsky.graph.searchStarterPacksV2` | Starter-pack search |
 | `app.bsky.graph.unmuteActor` | Unmuting an account |
 | `app.bsky.graph.unmuteActorList` | Unsubscribing from a list |
-| `app.bsky.labeler.getServices` | Custom label definitions |
+| `app.bsky.labeler.getServices` | Custom label definitions and labeler like state |
 | `app.bsky.notification.getPreferences` | Per-category notification settings |
 | `app.bsky.notification.listActivitySubscriptions` | Listing accounts whose activity you follow |
 | `app.bsky.notification.listNotifications` | Notifications |
@@ -217,8 +222,8 @@ the moderation inbox while staying granular. Sessions authorised before any of
 those changes keep their old grant and must re-authorise before the new
 profile/link/blob, list, saved-feed, inbox, starter-pack or chat-group scopes are available.
 Sessions authorised before 0.19.0 need that re-authorisation before threadgate,
-postgate, verification, live-status, activity-privacy, activity-subscription or
-generator-feedback calls are accepted.
+postgate, verification, live-status, activity-privacy, activity-subscription,
+generator-feedback or account-draft (`app.bsky.draft.*`) calls are accepted.
 Signing out and back in requests the current scope. Sessions authorised before
 0.13.0 need that re-authorisation before starter-pack creation or editing works;
 the editor says so rather than hiding the failure. Sessions authorised before

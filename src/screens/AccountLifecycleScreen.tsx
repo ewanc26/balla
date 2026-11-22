@@ -1,7 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -9,6 +8,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { Ionicons } from '@expo/vector-icons';
 import { useViewer } from '../lib/viewer';
 import {
@@ -52,7 +52,7 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
     setOpening(true);
     setError(null);
     try {
-      await Linking.openURL(ACCOUNT_SETTINGS);
+      await openExternalUrl(ACCOUNT_SETTINGS);
       setConfirm(null);
     } catch {
       setError(

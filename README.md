@@ -66,17 +66,20 @@ public profiles — tap any author to view their profile, follow or unfollow, an
 see their posts, followers and following, plus known followers and liked-by,
 reposted-by and quote lists, verification and labeler badges with the verifiers
 Bluesky reports, label warnings, a pinned post, authored lists, feeds and starter
-packs, and account-scoped post search; photo posts with up to ten images, per-photo alt
+packs, profile tabs for Posts, Replies, Media, Videos and Likes, likeable feeds and labelers with a real liked-by list, and account-scoped post search; photo posts with up to ten images, per-photo alt
 text, an optional requirement to describe every image, cancellable uploads and
 retries; MP4 video and animated GIF posts with visible processing states, a
 100 MB / 10-minute Balla limit, optional WebVTT captions and Bluesky's own GIF
 presentation in the feed; content warnings from the Bluesky self-label
-vocabulary and up to three post languages per post; local draft recovery with a Restore or Discard prompt;
+vocabulary and up to three post languages per post; local draft recovery with a Restore or Discard prompt plus account drafts saved to your private Bluesky stash through the real `app.bsky.draft.*` RPCs (reopen, update, delete and clear-on-publish);
 reply and quote controls written to Bluesky's real threadgate and postgate
 records, editable from any post you authored; profile editing for name, bio, pronouns, links,
 avatar and banner; a Search tab with Top, Latest, People, Feeds and Starter
-Packs, structured filters and local history; starter-pack landing pages with explicit follow, add-feed and share actions, plus creation and editing for packs you own using a narrow `repo:app.bsky.graph.starterpack` scope (sessions authorised before 0.13.0 need to sign in again); a Feeds screen for saved and pinned custom feeds, with discovery, search, pin/unpin, reorder and removal; hashtag, topic and video pages plus an opt-in Discover surface, each an explicit destination that never enters Following, with newest-first pages and a clearly ranked Discover; lists with create/edit, membership, list feeds, subscribe/block states and profile links; appearance settings with System/Light/Dark, post text size, four Facebook-era chrome presets and nine solid accent colours; accessibility settings for the alt-text requirement and larger description badges; language settings for a primary post/translation language and content-language filters; Following filters for replies, reposts and quote posts, and thread reply ordering, saved through Bluesky's `app.bsky.actor` preferences; a Saved tab for private bookmarks; temporary live status on your own profile through `app.bsky.actor.status` with a LIVE badge on active profiles; per-account activity notifications with a profile bell and a management list, plus account activity privacy, both stored in published records; per-post copy link, copy text, share sheet and
-translation with a show-original toggle; labeler subscriptions with per-label
+Packs, structured filters and local history; starter-pack landing pages with explicit follow, add-feed and share actions, plus creation and editing for packs you own using a narrow `repo:app.bsky.graph.starterpack` scope (sessions authorised before 0.13.0 need to sign in again); a Feeds screen for saved and pinned custom feeds, with discovery, search, pin/unpin, reorder and removal; hashtag, topic and video pages plus an opt-in Discover surface, each an explicit destination that never enters Following, with newest-first pages and a clearly ranked Discover; lists with create/edit, membership, list feeds, subscribe/block states and profile links; appearance settings with System/Light/Dark, post text size, four Facebook-era chrome presets and nine solid accent colours; accessibility settings for the alt-text requirement and larger description badges; language settings for a primary post/translation language and content-language filters; Following filters for replies, reposts and quote posts, and thread reply ordering, saved through Bluesky's `app.bsky.actor` preferences; a Saved tab for private bookmarks; temporary live status on your own profile through `app.bsky.actor.status` with a LIVE badge on active profiles; per-account activity notifications with a profile bell and a management list, plus account activity privacy, both stored in published records; per-post copy link, copy text, share sheet, send via direct message and
+translation with a show-original toggle; Content and media settings for the
+in-app browser choice and autoplay, with external links opening through one
+opener that always leaves mailto, tel and SMS links with the system handler;
+labeler subscriptions with per-label
 filters, an adult-content gate and muted words; per-category notification
 preferences; a generated icon set;
 multi-account support with a labelled Accounts screen to switch, add and remove OAuth sessions, each kept separate by DID with no shared tokens or carried-over state; account and security settings for the identity Balla can read, birthday and automation-label self-labels, privacy controls and non-secret OAuth session facts, with provider links for email, password, 2FA, app passwords and account lifecycle; account export, deactivation and deletion guidance that links to the PDS controls;
@@ -148,12 +151,15 @@ session to the tab that opened it.
 
 ## Icon
 
-The app icon, the Android adaptive foreground, the splash mark and the favicon
-are all generated by `scripts/gen-icons.py` — the white brick on the brand
-blue is a wall, which is the name. Visual identity changes go through that
-script rather than editing assets by hand, and once the assets are committed,
-CI fails the build if the committed files and the script disagree
-(`python3 scripts/gen-icons.py --check` locally).
+The app icon, the Android adaptive foreground, the splash mark, the favicon and
+both Light/Dark alternate-icon assets are all generated by
+`scripts/gen-icons.py` — the white brick on the brand blue is a wall, which is
+the name. Visual identity changes go through that script rather than editing
+assets by hand, and once the assets are committed, CI fails the build if the
+committed files and the script disagree (`python3 scripts/gen-icons.py --check`
+locally). The Dark variant is baked into native builds by the
+`expo-alternate-app-icons` config plugin and chosen through Settings → App Icon;
+the official Bluesky+ icon set is internal and is not copied.
 
 ## Trademarks
 

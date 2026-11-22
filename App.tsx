@@ -32,6 +32,7 @@ import { InfoScreen } from './src/screens/InfoScreen';
 import { PeopleListScreen } from './src/screens/PeopleListScreen';
 import { EngagementListScreen } from './src/screens/EngagementListScreen';
 import { ContentFiltersScreen } from './src/screens/ContentFiltersScreen';
+import { ContentAndMediaSettingsScreen } from './src/screens/ContentAndMediaSettingsScreen';
 import { AccountLifecycleScreen } from './src/screens/AccountLifecycleScreen';
 import { AccountSettingsScreen } from './src/screens/AccountSettingsScreen';
 import { PrivacySecurityScreen } from './src/screens/PrivacySecurityScreen';
@@ -49,6 +50,7 @@ import { FeedsScreen } from './src/screens/FeedsScreen';
 import { DiscoveryScreen } from './src/screens/DiscoveryScreen';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { AccessibilitySettingsScreen } from './src/screens/AccessibilitySettingsScreen';
+import { AppIconSettingsScreen } from './src/screens/AppIconSettingsScreen';
 import { LanguageSettingsScreen } from './src/screens/LanguageSettingsScreen';
 import { FeedPreferencesScreen } from './src/screens/FeedPreferencesScreen';
 import { ThreadPreferencesScreen } from './src/screens/ThreadPreferencesScreen';
@@ -77,6 +79,7 @@ import { ViewerProvider } from './src/lib/viewer';
 import { ModerationProvider } from './src/lib/moderationContext';
 import { FeedsProvider } from './src/lib/feedsContext';
 import { PreferencesProvider } from './src/lib/preferences';
+import { OpenLinkProvider } from './src/lib/openLink';
 import { ViewPreferencesProvider } from './src/lib/viewPreferences';
 import { AccountPreferencesProvider } from './src/lib/accountPreferences';
 import { restore, setOnAccountChanged, setOnLoggedOut } from './src/lib/agent';
@@ -305,6 +308,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <PreferencesProvider key={activeDid ?? 'none'}>
+        <OpenLinkProvider>
         <ViewerProvider>
           <ViewPreferencesProvider>
             <AccountPreferencesProvider>
@@ -401,6 +405,7 @@ export default function App() {
                           <Stack.Screen name="AddAccount" component={AddAccountScreen} />
                           <Stack.Screen name="Appearance" component={AppearanceScreen} />
                           <Stack.Screen name="AccessibilitySettings" component={AccessibilitySettingsScreen} />
+                          <Stack.Screen name="AppIconSettings" component={AppIconSettingsScreen} />
                           <Stack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
                           <Stack.Screen name="FeedPreferences" component={FeedPreferencesScreen} />
                           <Stack.Screen name="ThreadPreferences" component={ThreadPreferencesScreen} />
@@ -408,6 +413,7 @@ export default function App() {
                           <Stack.Screen name="PeopleList" component={PeopleListScreen} />
                           <Stack.Screen name="EngagementList" component={EngagementListScreen} />
                           <Stack.Screen name="ContentFilters" component={ContentFiltersScreen} />
+                          <Stack.Screen name="ContentAndMediaSettings" component={ContentAndMediaSettingsScreen} />
                           <Stack.Screen name="AccountLifecycle" component={AccountLifecycleScreen} />
                           <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
                           <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
@@ -461,6 +467,7 @@ export default function App() {
             </AccountPreferencesProvider>
           </ViewPreferencesProvider>
         </ViewerProvider>
+        </OpenLinkProvider>
       </PreferencesProvider>
     </SafeAreaProvider>
   );

@@ -1,13 +1,13 @@
 import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import {
   ActivityIndicator,
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { Ionicons } from '@expo/vector-icons';
 import {
   describeInboxError,
@@ -99,7 +99,7 @@ export function ModerationReportScreen({
     }
     const web = subjectWebUrl(subject);
     if (web) {
-      void Linking.openURL(web).catch(() => {
+      void openExternalUrl(web).catch(() => {
         // Leave the report readable if the browser cannot open.
       });
     }
@@ -304,7 +304,7 @@ export function ModerationReportScreen({
         </Text>
         <Pressable
           onPress={() =>
-            void Linking.openURL(COMMUNITY_GUIDELINES).catch(() => {})
+            void openExternalUrl(COMMUNITY_GUIDELINES).catch(() => {})
           }
           accessibilityRole="link"
           accessibilityLabel="Read the Bluesky Community Guidelines"

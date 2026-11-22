@@ -333,9 +333,56 @@ export function installMockAgent() {
   mock.getProfile = async ({ actor }: { actor?: string }) => ({
     data: profileFor(actor),
   });
-  mock.getAuthorFeed = async ({ actor }: { actor?: string }) => ({
-    data: { feed: postsFor(actor).map((post) => ({ post })), cursor: undefined },
+  mock.getAuthorFeed = async ({
+    actor,
+    filter,
+  }: {
+    actor?: string;
+    filter?: string;
+  } = {}) => {
+    let feed = postsFor(actor);
+    if (filter === 'posts_no_replies') {
+      feed = feed.filter((post: any) => !post.reply);
+    } else if (filter === 'posts_and_author_threads') {
+      feed = feed.filter((post: any) => !post.reply || post.author.did === actor);
+    } else if (filter === 'posts_with_media') {
+      feed = feed.filter(
+        (post: any) => post.embed?.images || post.embed?.video || post.embed?.media
+      );
+    } else if (filter === 'posts_with_video') {
+      feed = feed.filter((post: any) => post.embed?.video);
+    }
+    return { data: { feed: feed.map((post: any) => ({ post })), cursor: undefined } };
+  };
+  mock.getActorLikes = async () => ({
+    data: { feed: posts.slice(0, 2).map((post) => ({ post })), cursor: undefined },
   });
+  // Labeler service view for the profile like control. Mirrors the official
+  // client's getServices lookup used to build the like strong ref.
+  const mockLabelerLikes = new Map<string, string>();
+  mock.app.bsky.labeler.getServices = async ({
+    dids,
+  }: {
+    dids?: string[];
+  } = {}) => {
+    const views = (dids || [])
+      .map((did) => {
+        const profile: any = profileFor(did);
+        if (!profile || !profile.associated?.labeler) return null;
+        const likeUri = mockLabelerLikes.get(did);
+        return {
+          uri: `at://${did}/app.bsky.labeler.service/self`,
+          cid: `mock-labeler-${did}`,
+          creator: profile,
+          did,
+          likeCount: 2 + (likeUri ? 1 : 0),
+          viewer: likeUri ? { like: likeUri } : undefined,
+          indexedAt: new Date().toISOString(),
+        };
+      })
+      .filter(Boolean);
+    return { data: { views } };
+  };
   mock.listNotifications = async () => ({
     data: { notifications, cursor: undefined },
   });
@@ -369,6 +416,41 @@ export function installMockAgent() {
       mockActivitySubscriptions.delete(did);
     }
     return { data: { subject: did, activitySubscription } };
+  };
+
+  // Server-side drafts behave like the AppView stash: a TID id, the draft body
+  // and created/updated timestamps, with full create/update/list/delete support.
+  const mockServerDrafts = new Map<string, any>();
+  let mockDraftSequence = 0;
+  mock.app.bsky.draft.getDrafts = async () => ({
+    data: {
+      drafts: [...mockServerDrafts.values()].sort(
+        (a, b) => Date.parse(b.updatedAt) - Date.parse(a.updatedAt)
+      ),
+      cursor: undefined,
+    },
+  });
+  mock.app.bsky.draft.createDraft = async ({ draft }: { draft?: any } = {}) => {
+    mockDraftSequence += 1;
+    const id = `draft-${mockDraftSequence}`;
+    const now = new Date().toISOString();
+    mockServerDrafts.set(id, { id, draft, createdAt: now, updatedAt: now });
+    return { data: { id } };
+  };
+  mock.app.bsky.draft.updateDraft = async ({ draft }: { draft?: any } = {}) => {
+    const id = draft?.id;
+    const existing = mockServerDrafts.get(id) || { createdAt: new Date().toISOString() };
+    mockServerDrafts.set(id, {
+      id,
+      draft: draft?.draft,
+      createdAt: existing.createdAt,
+      updatedAt: new Date().toISOString(),
+    });
+    return { data: {} };
+  };
+  mock.app.bsky.draft.deleteDraft = async ({ id }: { id?: string } = {}) => {
+    mockServerDrafts.delete(id || '');
+    return { data: {} };
   };
   mock.getFollows = async () => ({
     data: { follows: [mum, ailsa], cursor: undefined },
@@ -875,10 +957,23 @@ export function installMockAgent() {
   mock.app.bsky.graph.muteActor = async () => ({ data: {} });
   mock.app.bsky.graph.unmuteActor = async () => ({ data: {} });
 
-  mock.like = async () => ({
-    uri: 'at://did:plc:mockviewer/app.bsky.feed.like/new',
-  });
-  mock.deleteLike = async () => ({});
+  mock.like = async (uri?: string) => {
+    // A labeler service like is keyed by the service did so the profile header
+    // like control reflects the toggle in preview mode.
+    const labelerMatch = uri?.match(/^at:\/\/([^/]+)\/app\.bsky\.labeler\.service\//);
+    if (labelerMatch) {
+      const likeUri = `at://did:plc:mockviewer/app.bsky.feed.like/labeler-${Date.now()}`;
+      mockLabelerLikes.set(labelerMatch[1], likeUri);
+      return { uri: likeUri };
+    }
+    return { uri: 'at://did:plc:mockviewer/app.bsky.feed.like/new' };
+  };
+  mock.deleteLike = async (likeUri?: string) => {
+    for (const [did, uri] of mockLabelerLikes.entries()) {
+      if (uri === likeUri) mockLabelerLikes.delete(did);
+    }
+    return {};
+  };
   mock.repost = async () => ({
     uri: 'at://did:plc:mockviewer/app.bsky.feed.repost/new',
   });

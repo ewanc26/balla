@@ -97,7 +97,7 @@ test('the list feature adds exact OAuth scopes and no wildcards', () => {
     'rpc:app.bsky.graph.muteActorList?aud=did:web:api.bsky.app#bsky_appview',
     'rpc:app.bsky.graph.unmuteActorList?aud=did:web:api.bsky.app#bsky_appview',
   ];
-  assert.equal(tokens.length, 106);
+  assert.equal(tokens.length, 111);
   for (const scope of required) assert.ok(tokens.includes(scope), scope);
   assert.equal(/repo:\*|rpc:\*|blob:\*/.test(metadata.scope), false);
 });

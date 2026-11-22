@@ -1,12 +1,12 @@
 import React, { useLayoutEffect } from 'react';
 import {
-  Linking,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { Ionicons } from '@expo/vector-icons';
 import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
@@ -44,7 +44,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
   }
 
   function openUrl(url: string) {
-    void Linking.openURL(url).catch(() => {
+    void openExternalUrl(url).catch(() => {
       // If the platform cannot open the link, leave the settings screen intact.
     });
   }
@@ -214,16 +214,16 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
 
       <Section title="Content and media">
         <Row
+          icon="options-outline"
+          label="Content and media"
+          detail="Saved feeds, thread and Following preferences, interests, links and autoplay"
+          onPress={() => navigation.navigate('ContentAndMediaSettings')}
+        />
+        <Row
           icon="eye-off-outline"
           label="Content filters"
           detail="Labelers, adult content, label behaviour and muted words"
           onPress={() => navigation.navigate('ContentFilters')}
-        />
-        <Row
-          icon="images-outline"
-          label="Media"
-          detail="Post up to 10 photos with descriptions; images open full-screen"
-          onPress={() => openInfo('media', 'Media')}
         />
       </Section>
 
@@ -256,6 +256,12 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           label="Accessibility"
           detail="Description badges, alt text requirements and motion"
           onPress={() => navigation.navigate('AccessibilitySettings')}
+        />
+        <Row
+          icon="apps-outline"
+          label="App Icon"
+          detail="Choose the default or dark app icon on this device"
+          onPress={() => navigation.navigate('AppIconSettings')}
         />
       </Section>
 

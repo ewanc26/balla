@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { Linking, ScrollView, Text } from 'react-native';
+import { ScrollView, Text } from 'react-native';
+import { openExternalUrl } from '../lib/openLink';
 import { useSessionSummary } from '../lib/sessionInfo';
 import { useProfileSelfLabel } from '../lib/profileSelfLabel';
 import {
@@ -28,13 +29,13 @@ export function PrivacySecurityScreen({ navigation }: { navigation: any }) {
   }, [navigation]);
 
   function openPrivacySettings() {
-    void Linking.openURL(BLUESKY_PRIVACY_SETTINGS).catch(() => {
+    void openExternalUrl(BLUESKY_PRIVACY_SETTINGS).catch(() => {
       setLinkError('Could not open privacy settings. Visit bsky.app/settings/privacy-and-security in a browser.');
     });
   }
 
   function openAppPasswords() {
-    void Linking.openURL(BLUESKY_APP_PASSWORDS).catch(() => {
+    void openExternalUrl(BLUESKY_APP_PASSWORDS).catch(() => {
       setLinkError('Could not open app passwords. Visit bsky.app/settings/app-passwords in a browser.');
     });
   }
