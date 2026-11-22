@@ -4,7 +4,7 @@ Last updated: **21 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **58 tokens**.
+the scope currently has **61 tokens**.
 
 ## Repository writes
 
@@ -30,11 +30,17 @@ generator, starter-pack or chat scope.
 | Scope | Used by |
 | --- | --- |
 | `blob:image/jpeg` | Profile and post image uploads after the client crops and compresses them to JPEG |
+| `blob:text/vtt` | Optional WebVTT caption files for video posts |
+| `rpc:com.atproto.repo.uploadBlob?aud=*` | Uploading processed images, captions and video blobs to the account's PDS |
+| `rpc:app.bsky.video.getUploadLimits?aud=did:web:video.bsky.app` | Reading the video service's current upload limits before a post video is accepted |
 
 The PDS enforces a 1 MB limit for profile pictures and banners and a 2 MB limit
 for post images. Balla checks the relevant size before uploading. A failed
 profile image keeps the existing picture; a failed post upload keeps the draft
-and resumes successfully uploaded photos on retry.
+and resumes successfully uploaded photos on retry. Video and GIF files are
+checked against Balla's stated 100 MB and 10-minute limits, then uploaded to
+Bluesky's video service; the post is only publishable once the job reports a
+completed blob.
 
 ## AppView RPCs
 
@@ -113,10 +119,11 @@ database.
 
 ## Deliberately absent
 
-- `blob:*/*` — only the JPEG MIME type is requested. Profile and post photos
-  are converted to JPEG. Video and GIF uploads are not implemented.
-- Account and app-password scopes — account lifecycle is a PDS operation and
-  Balla links to the server controls instead.
+- `blob:*/*` — only `image/jpeg` and `text/vtt` are requested. Profile and post
+  photos are converted to JPEG; captions are WebVTT files.
+- Account, email, 2FA and app-password scopes — account lifecycle and security
+  are PDS/provider operations. Balla links to the provider controls instead of
+  showing inert toggles.
 - Feed-generator, starter-pack and threadgate repo scopes — Balla reads custom
   feeds and writes saved-feed preferences through the AppView; it does not
   create generators, starter packs or threadgates.

@@ -1,6 +1,6 @@
 # Bluesky client compliance
 
-Research date: **20 November 2026**. Implementation update: **21 November 2026**.
+Research date: **20 November 2026**. Implementation update: **22 November 2026**.
 
 This is an engineering research note, not a claim of certification. Bluesky does
 not run a general client certification programme. “Fully compliant” here means
@@ -37,7 +37,7 @@ image, video and GIF posts, lists and the moderation inbox are now shipped. This
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
 | Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; the AppView has no global list-search endpoint |
 | DMs | None | Missing `chat.bsky.convo`, group chat and chat moderation |
-| Settings | Settings shell with account, privacy, moderation, notifications, content filters, appearance, accessibility, language, feed/thread, help, legal, about and sign-out routes | Account/security controls are PDS-owned; push delivery preferences remain |
+| Settings | Settings shell with account, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, feed/thread, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real profile/personal-details writes; session facts are read from non-secret OAuth metadata | Email, password, 2FA, app passwords, activity privacy, account lifecycle and push delivery remain provider-owned or ungranted, and are linked to rather than faked |
 | Support/legal | In-app Help, privacy, terms, community guidelines, copyright, contact and about pages; matching public site pages | Monitored public contact is the GitHub issue tracker and private advisory form |
 | Web | Expo web client at `/app`; popup OAuth returns to the same URL | Browser sessions use IndexedDB; the same client metadata covers native and web redirects |
 
@@ -220,10 +220,11 @@ privacy, block/mute, report and leave/delete flows.
 6. Settings preference editors for content, language, appearance, privacy and
    account. Content filtering, labelers, adult content and muted words are
    shipped, along with System/Light/Dark, post text size, description badges,
-   primary/content languages, Following filters and thread reply order. UI
-   translation is not shipped (the interface is English only), haptics are not
-   emitted so no toggle is offered, and account/security controls stay on the
-   PDS.
+   primary/content languages, Following filters, thread reply order, birthday,
+   automation and logged-out visibility self-labels, and non-secret session
+   facts. UI translation is not shipped (the interface is English only),
+   haptics are not emitted so no toggle is offered, and provider-owned account
+   security controls stay on the PDS behind honest links.
 7. In-app post deletion and sign-out cleanup.
 8. DMs and chat moderation.
 

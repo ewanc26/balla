@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { touchTargetStyle } from '../lib/accessibility';
@@ -101,6 +101,82 @@ export function SettingSwitch({
   );
 }
 
+export function SettingLinkRow({
+  icon,
+  label,
+  detail,
+  value,
+  onPress,
+  danger = false,
+  external = false,
+}: {
+  icon: any;
+  label: string;
+  detail?: string;
+  value?: string;
+  onPress: () => void;
+  danger?: boolean;
+  external?: boolean;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={value ? `${label}, ${value}` : label}
+      accessibilityHint={detail}
+      style={({ pressed }) => [
+        styles.linkRow,
+        {
+          borderBottomColor: p.divider,
+          backgroundColor: pressed ? p.bg : 'transparent',
+        },
+      ]}
+    >
+      <View style={[styles.iconBubble, { backgroundColor: p.accentSoft }]}>
+        <Ionicons name={icon} size={20} color={danger ? p.danger : p.accent} />
+      </View>
+      <View style={{ flex: 1, minWidth: 0 }}>
+        <Text style={{ color: danger ? p.danger : p.text, fontSize: 15, fontWeight: '700' }}>
+          {label}
+        </Text>
+        {detail ? (
+          <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 2 }}>
+            {detail}
+          </Text>
+        ) : null}
+        {value ? (
+          <Text style={{ color: p.secondary, fontSize: 12, marginTop: 2 }} numberOfLines={1}>
+            {value}
+          </Text>
+        ) : null}
+      </View>
+      <Ionicons
+        name={external ? 'open-outline' : 'chevron-forward'}
+        size={17}
+        color={p.secondary}
+      />
+    </Pressable>
+  );
+}
+
+export function SettingValueRow({ label, value }: { label: string; value: string }) {
+  const p = usePalette();
+  return (
+    <View style={styles.valueRow}>
+      <Text style={{ color: p.text, fontSize: 14, fontWeight: '600', minWidth: 128 }}>
+        {label}
+      </Text>
+      <Text
+        selectable
+        style={{ color: p.secondary, fontSize: 12, lineHeight: 18, flex: 1, minWidth: 0 }}
+      >
+        {value || 'Not available'}
+      </Text>
+    </View>
+  );
+}
+
 export type ChoiceOption<T extends string> = {
   value: T;
   label: string;
@@ -173,6 +249,43 @@ export function SettingChoice<T extends string>({
   );
 }
 
+export function SettingButton({
+  label,
+  onPress,
+  busy = false,
+  disabled = false,
+}: {
+  label: string;
+  onPress: () => void;
+  busy?: boolean;
+  disabled?: boolean;
+}) {
+  const p = usePalette();
+  return (
+    <Pressable
+      onPress={onPress}
+      disabled={busy || disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [
+        styles.button,
+        {
+          backgroundColor: p.accent,
+          opacity: pressed || busy || disabled ? 0.6 : 1,
+        },
+      ]}
+    >
+      {busy ? (
+        <ActivityIndicator size="small" color={p.onAccent} />
+      ) : (
+        <Text style={{ color: p.onAccent, fontSize: 15, fontWeight: '700' }}>
+          {label}
+        </Text>
+      )}
+    </Pressable>
+  );
+}
+
 export function SettingNote({ children }: { children: React.ReactNode }) {
   const p = usePalette();
   return (
@@ -197,6 +310,38 @@ const styles = StyleSheet.create({
     minHeight: 64,
     paddingHorizontal: 14,
     paddingVertical: 10,
+  },
+  linkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 64,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  valueRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    minHeight: 48,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: 'transparent',
+  },
+  iconBubble: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  button: {
+    ...touchTargetStyle,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   switch: {
     ...touchTargetStyle,

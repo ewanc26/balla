@@ -79,7 +79,7 @@ Packs, structured filters and local history; a Feeds screen for saved and pinned
 translation with a show-original toggle; labeler subscriptions with per-label
 filters, an adult-content gate and muted words; per-category notification
 preferences; a generated icon set;
-account export, deactivation and deletion guidance that links to the PDS controls;
+account and security settings for the identity Balla can read, birthday and automation-label self-labels, privacy controls and non-secret OAuth session facts, with provider links for email, password, 2FA, app passwords and account lifecycle; account export, deactivation and deletion guidance that links to the PDS controls;
 a moderation inbox for reports, decisions, notices, account standing and appeals;
 and a web client at <https://balla.croft.click/app>. The shell follows Facebook's current
 white chrome, grey canvas, 8px cards and responsive three-column desktop

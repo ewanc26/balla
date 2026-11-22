@@ -338,6 +338,7 @@ export function installMockAgent() {
   let mockSavedFeedItems: any[] = [];
   let mockFeedViewPref: any = {};
   let mockThreadSort = 'oldest';
+  let mockBirthDate: Date | undefined;
   mock.setFeedViewPrefs = async (feed: string, pref: any) => {
     if (feed === 'home') mockFeedViewPref = { ...mockFeedViewPref, ...pref };
   };
@@ -358,13 +359,32 @@ export function installMockAgent() {
       mutedWords: [],
       hiddenPosts: [],
     },
-    birthDate: undefined,
+    birthDate: mockBirthDate,
     interests: { tags: [] },
     bskyAppState: { queuedNudges: [], activeProgressGuide: undefined, nuxs: [] },
     postInteractionSettings: {},
     verificationPrefs: { hideBadges: false },
     liveEventPreferences: { hiddenFeedIds: [], hideAllFeeds: false },
   });
+  mock.setPersonalDetails = async ({ birthDate }: { birthDate?: string | Date }) => {
+    mockBirthDate = birthDate ? new Date(birthDate) : undefined;
+  };
+  mock.upsertProfile = async (update: (existing: any) => any) => {
+    const record = {
+      $type: 'app.bsky.actor.profile',
+      displayName: viewerProfile.displayName,
+      description: viewerProfile.description,
+    };
+    const next = update(record);
+    const values = Array.isArray(next?.labels?.values) ? next.labels.values : [];
+    (viewerProfile as any).labels = values.map((item: any) => ({
+      ...item,
+      src: viewer.did,
+    }));
+    const index = profiles.indexOf(viewerProfile);
+    if (index >= 0) profiles[index] = viewerProfile;
+    return { data: { uri: '', cid: '' } };
+  };
   mock.getLabelDefinitions = async () => ({});
   const mockGateRecords = new Map<string, any>();
   const gateKey = (collection: string, rkey: string) => `${collection}:${rkey}`;
@@ -683,6 +703,10 @@ export function mockInitialScreen(): string {
     'LanguageSettings',
     'FeedPreferences',
     'ThreadPreferences',
+    'AccountLifecycle',
+    'AccountSettings',
+    'PrivacySecurity',
+    'SessionSecurity',
   ].includes(requested)
     ? requested
     : 'Tabs';

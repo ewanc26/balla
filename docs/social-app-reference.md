@@ -203,7 +203,7 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 | Feeds/lists | Saved and pinned custom feeds; lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; no global list-search endpoint |
 | Messages | None | Chat, requests, groups and chat moderation all absent |
 | Moderation | Post/profile report, block/mute, delete, labels with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox with reports, account standing, notices, actions and appeals | List/feed reports and inbox push delivery absent |
-| Settings | Settings shell with account, privacy, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes | Other preference editors and account lifecycle controls remain |
+| Settings | Settings shell with account/security, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real writes; session facts come from non-secret OAuth metadata | Email, password, 2FA, app passwords, activity privacy and account lifecycle are provider-owned and linked to rather than faked; push delivery preferences remain |
 | Composer | Text, image/camera selection, up to ten compressed JPEGs, alt-text editor and enforcement preference, abortable uploads, retries, gallery previews, quotes and grapheme counter | Video, GIF, link cards, languages, labels, threadgates, drafts and threads absent |
 | Account lifecycle | OAuth sign-out; account/data screen with confirmation-gated export, deactivation and deletion guidance, and explicit PDS limits | No in-client account deletion, because that is a PDS operation |
 | Support/legal | In-app Help, Privacy, Terms, Guidelines, Copyright, Contact and About; matching site pages | Public contact is the issue tracker and private advisory form |
@@ -226,8 +226,11 @@ text**, **Share**, **Translate post**, **Mute account**, **Block account**,
 5. **Done:** labels and content warnings are applied before rendering, including
    `!hide`, `!warn`, media, avatar and display-name labels. See
    `docs/moderation.md`.
-6. **Done:** Settings shell with Account, Privacy, Moderation, Notifications,
-   Content and media, Appearance, Accessibility, Languages, About and Sign out.
+6. **Done:** Settings shell with Account and security, Privacy and security,
+   Session security, Moderation, Notifications, Content and media, Appearance,
+   Accessibility, Languages, About and Sign out. Account and privacy screens use
+   real birthday, automation and logged-out visibility writes plus provider
+   links; session security reads non-secret OAuth facts only.
 7. **Done:** in-app Help, Privacy, Terms, Community Guidelines, Copyright and
    report-handling pages, with public site equivalents. The monitored contact
    route is the issue tracker and private advisory form.
@@ -259,7 +262,7 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 2. Conversation list, requests, messages, group settings and reporting.
 3. Moderation inbox is **done**; verification settings remain.
 4. Video feed, hashtags, topics and Atmosphere surfaces.
-5. Account export/deactivation/deletion guidance.
+5. Account export/deactivation/deletion guidance is **done**; the controls stay on the PDS and Balla links to them with explicit limits.
 
 ## Protocol notes for Balla
 
