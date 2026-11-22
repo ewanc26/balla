@@ -141,6 +141,34 @@ export function NotificationSettingsScreen({ navigation }: { navigation: any }) 
         </Text>
       ) : null}
 
+      <Pressable
+        onPress={() => navigation.navigate('ActivityNotifications')}
+        accessibilityRole="button"
+        accessibilityLabel="Manage activity notifications"
+        accessibilityHint="See and edit the accounts whose posts and replies notify you"
+        style={({ pressed }) => [
+          styles.manageRow,
+          {
+            backgroundColor: p.card,
+            borderColor: p.divider,
+            opacity: pressed ? 0.7 : 1,
+          },
+        ]}
+      >
+        <View style={[styles.iconBubble, { backgroundColor: p.accentSoft }]}>
+          <Ionicons name="notifications-outline" size={19} color={p.accent} />
+        </View>
+        <View style={{ flex: 1, marginLeft: 10, minWidth: 0 }}>
+          <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+            Accounts you follow closely
+          </Text>
+          <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 1 }}>
+            Manage whose posts and replies notify you.
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={p.secondary} />
+      </Pressable>
+
       <View style={[styles.note, { backgroundColor: p.card, borderColor: p.divider }]}>
         <Ionicons name="information-circle-outline" size={18} color={p.secondary} />
         <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, marginLeft: 8, flex: 1 }}>
@@ -299,6 +327,17 @@ function SwitchRow({
 }
 
 const styles = StyleSheet.create({
+  manageRow: {
+    minHeight: 66,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: CARD_RADIUS,
+    marginHorizontal: 8,
+    marginBottom: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
   note: {
     flexDirection: 'row',
     alignItems: 'flex-start',

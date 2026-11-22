@@ -16,6 +16,7 @@ import {
 } from '@atproto/api';
 import { agent } from './agent';
 import { BSKY_LABELER_DID } from './moderation';
+import { currentHiddenPosts, loadHiddenPosts, subscribeHiddenPosts } from './hiddenPosts';
 
 // This is deliberately the same preference shape the official client feeds
 // into @atproto/api. The API's moderation helpers understand the built-in
@@ -50,6 +51,21 @@ export function ModerationProvider({ children }: { children: React.ReactNode }) 
   const [ready, setReady] = useState(false);
   const [version, setVersion] = useState(0);
   const [labelers, setLabelers] = useState<Record<string, string>>({});
+  const [hiddenPosts, setHiddenPosts] = useState<string[]>(currentHiddenPosts());
+
+  useEffect(() => {
+    let active = true;
+    void loadHiddenPosts().then((uris) => {
+      if (active) setHiddenPosts(uris);
+    });
+    const unsubscribe = subscribeHiddenPosts((uris) => {
+      if (active) setHiddenPosts(uris);
+    });
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const did = agent.did;
@@ -117,8 +133,20 @@ export function ModerationProvider({ children }: { children: React.ReactNode }) 
 
   const reload = useCallback(() => setVersion((value) => value + 1), []);
 
+  // The official client keeps hidden posts in device-local storage and merges
+  // them into the moderation prefs. @atproto/api then filters any post whose
+  // URI (or quoted URI) is hidden, so the hide applies in every feed, thread,
+  // profile and search surface without per-screen bookkeeping.
+  const effectiveOpts = useMemo<ModerationOpts>(
+    () => ({
+      ...opts,
+      prefs: { ...opts.prefs, hiddenPosts },
+    }),
+    [opts, hiddenPosts]
+  );
+
   return (
-    <ModerationContext.Provider value={{ opts, ready, reload, labelers }}>
+    <ModerationContext.Provider value={{ opts: effectiveOpts, ready, reload, labelers }}>
       {children}
     </ModerationContext.Provider>
   );

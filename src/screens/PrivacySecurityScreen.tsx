@@ -106,10 +106,8 @@ export function PrivacySecurityScreen({ navigation }: { navigation: any }) {
         <SettingLinkRow
           icon="people-outline"
           label="Activity privacy"
-          detail="Who may be notified when you interact with posts is a provider declaration outside Balla’s OAuth grant."
-          value="Provider-controlled"
-          onPress={openPrivacySettings}
-          external
+          detail="Choose who may opt in to notifications for your activity."
+          onPress={() => navigation.navigate('ActivityPrivacy')}
         />
         <SettingLinkRow
           icon="sparkles-outline"

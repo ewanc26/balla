@@ -174,8 +174,26 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
         <Row
           icon="ban-outline"
           label="Blocked and muted accounts"
-          detail="Manage accounts from their profile menus"
-          onPress={() => openInfo('accounts', 'Blocked and muted accounts')}
+          detail="Review and remove blocked or muted accounts"
+          onPress={() => navigation.navigate('BlockedAccounts')}
+        />
+        <Row
+          icon="options-outline"
+          label="Default interaction settings"
+          detail="Who can reply and quote your new posts"
+          onPress={() => navigation.navigate('DefaultInteractionSettings')}
+        />
+        <Row
+          icon="shield-checkmark-outline"
+          label="Verification settings"
+          detail="Choose whether verification badges appear"
+          onPress={() => navigation.navigate('VerificationSettings')}
+        />
+        <Row
+          icon="bulb-outline"
+          label="Your interests"
+          detail="Topics that help Bluesky choose what to show you"
+          onPress={() => navigation.navigate('InterestsSettings')}
         />
       </Section>
 
@@ -205,6 +223,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           icon="images-outline"
           label="Media"
           detail="Post up to 10 photos with descriptions; images open full-screen"
+          onPress={() => openInfo('media', 'Media')}
         />
       </Section>
 
@@ -313,7 +332,12 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
       </Section>
 
       <Section title="About">
-        <Row icon="information-circle-outline" label="About Balla" value={`Version ${APP_VERSION}`} />
+        <Row
+          icon="information-circle-outline"
+          label="About Balla"
+          value={`Version ${APP_VERSION}`}
+          onPress={() => openInfo('about', 'About Balla')}
+        />
         <Row
           icon="code-slash-outline"
           label="Source code"

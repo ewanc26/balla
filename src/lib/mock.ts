@@ -1,6 +1,12 @@
 import { Platform } from 'react-native';
 import { agent } from './agent';
 import { externalHost } from './embedModel';
+import {
+  LIVE_STATUS,
+  STATUS_COLLECTION,
+  STATUS_RKEY,
+  expiresAtFor,
+} from './liveStatusModel';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -333,6 +339,37 @@ export function installMockAgent() {
   mock.listNotifications = async () => ({
     data: { notifications, cursor: undefined },
   });
+  const mockActivitySubscriptions = new Map<string, any>();
+  mock.app.bsky.notification.listActivitySubscriptions = async () => ({
+    data: {
+      subscriptions: [...mockActivitySubscriptions.entries()]
+        .map(([did, activitySubscription]) => {
+          const profile = profileFor(did);
+          if (!profile) return profile;
+          return {
+            ...profile,
+            viewer: { ...(profile.viewer || {}), activitySubscription },
+          };
+        })
+        .filter(Boolean),
+      cursor: undefined,
+    },
+  });
+  mock.app.bsky.notification.putActivitySubscription = async ({
+    subject,
+    activitySubscription,
+  }: {
+    subject?: string;
+    activitySubscription?: any;
+  } = {}) => {
+    const did = subject || '';
+    if (activitySubscription?.post || activitySubscription?.reply) {
+      mockActivitySubscriptions.set(did, activitySubscription);
+    } else {
+      mockActivitySubscriptions.delete(did);
+    }
+    return { data: { subject: did, activitySubscription } };
+  };
   mock.getFollows = async () => ({
     data: { follows: [mum, ailsa], cursor: undefined },
   });
@@ -341,11 +378,23 @@ export function installMockAgent() {
   let mockFeedViewPref: any = {};
   let mockThreadSort = 'oldest';
   let mockBirthDate: Date | undefined;
+  let mockVerificationPrefs: any = { hideBadges: false };
+  let mockInterests: string[] = [];
+  let mockPostInteractionSettings: any = {};
   mock.setFeedViewPrefs = async (feed: string, pref: any) => {
     if (feed === 'home') mockFeedViewPref = { ...mockFeedViewPref, ...pref };
   };
   mock.setThreadViewPrefs = async (pref: any) => {
     if (typeof pref?.sort === 'string') mockThreadSort = pref.sort;
+  };
+  mock.setVerificationPrefs = async (pref: any) => {
+    mockVerificationPrefs = { ...mockVerificationPrefs, ...pref };
+  };
+  mock.setInterestsPref = async (pref: any) => {
+    if (Array.isArray(pref?.tags)) mockInterests = [...pref.tags];
+  };
+  mock.setPostInteractionSettings = async (settings: any) => {
+    mockPostInteractionSettings = { ...settings };
   };
   mock.getPreferences = async () => ({
     feeds: { saved: undefined, pinned: undefined },
@@ -362,10 +411,10 @@ export function installMockAgent() {
       hiddenPosts: [],
     },
     birthDate: mockBirthDate,
-    interests: { tags: [] },
+    interests: { tags: [...mockInterests] },
     bskyAppState: { queuedNudges: [], activeProgressGuide: undefined, nuxs: [] },
-    postInteractionSettings: {},
-    verificationPrefs: { hideBadges: false },
+    postInteractionSettings: { ...mockPostInteractionSettings },
+    verificationPrefs: { ...mockVerificationPrefs },
     liveEventPreferences: { hiddenFeedIds: [], hideAllFeeds: false },
   });
   mock.setPersonalDetails = async ({ birthDate }: { birthDate?: string | Date }) => {
@@ -426,6 +475,21 @@ export function installMockAgent() {
     record?: any;
   } = {}) => {
     mockGateRecords.set(gateKey(collection || '', rkey || ''), record);
+    // Keep the mock profile's live badge in step with a published status so
+    // preview mode behaves like the AppView-attached statusView.
+    if (collection === STATUS_COLLECTION && rkey === STATUS_RKEY && record) {
+      (viewerProfile as any).status = {
+        $type: 'app.bsky.actor.defs#statusView',
+        status: record.status || LIVE_STATUS,
+        createdAt: record.createdAt,
+        expiresAt: new Date(
+          expiresAtFor(record.createdAt, record.durationMinutes)
+        ).toISOString(),
+        record,
+        embed: record.embed,
+        isDisabled: false,
+      };
+    }
     return { data: { uri: '', cid: '' } };
   };
   mock.getPosts = async ({ uris }: { uris?: string[] }) => ({
@@ -567,6 +631,7 @@ export function installMockAgent() {
       cursor: undefined,
     },
   });
+  mock.app.bsky.feed.sendInteractions = async () => ({ data: {} });
   mock.app.bsky.graph.getStarterPack = async ({
     starterPack,
   }: {
@@ -765,7 +830,19 @@ export function installMockAgent() {
       cid: 'bafy-block',
     },
   });
-  mock.com.atproto.repo.deleteRecord = async () => ({ data: {} });
+  mock.com.atproto.repo.deleteRecord = async ({
+    collection,
+    rkey,
+  }: {
+    collection?: string;
+    rkey?: string;
+  } = {}) => {
+    mockGateRecords.delete(gateKey(collection || '', rkey || ''));
+    if (collection === STATUS_COLLECTION && rkey === STATUS_RKEY) {
+      delete (viewerProfile as any).status;
+    }
+    return { data: {} };
+  };
   mock.com.atproto.moderation.createReport = async () => ({
     data: {
       id: 1,
@@ -789,6 +866,12 @@ export function installMockAgent() {
       },
     };
   };
+  mock.app.bsky.graph.getBlocks = async () => ({
+    data: { blocks: [], cursor: undefined },
+  });
+  mock.app.bsky.graph.getMutes = async () => ({
+    data: { mutes: [], cursor: undefined },
+  });
   mock.app.bsky.graph.muteActor = async () => ({ data: {} });
   mock.app.bsky.graph.unmuteActor = async () => ({ data: {} });
 

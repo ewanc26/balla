@@ -20,6 +20,7 @@ import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
+import { ReportListSheet } from '../components/ReportListSheet';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 export function FeedGeneratorScreen({
@@ -50,6 +51,7 @@ export function FeedGeneratorScreen({
   const [moreError, setMoreError] = useState<string | null>(null);
   const [savingFeed, setSavingFeed] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [reporting, setReporting] = useState(false);
   const requestId = useRef(0);
   const moreInFlight = useRef(false);
 
@@ -112,8 +114,21 @@ export function FeedGeneratorScreen({
   useLayoutEffect(() => {
     navigation.setOptions({
       title: generator?.displayName || 'Feed',
+      headerRight: generator
+        ? () => (
+            <Pressable
+              onPress={() => setReporting(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Report this feed"
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 8 })}
+            >
+              <Ionicons name="flag-outline" size={22} color={p.text} />
+            </Pressable>
+          )
+        : undefined,
     });
-  }, [navigation, generator]);
+  }, [navigation, generator, p.text]);
 
   async function loadMore() {
     if (!feed || !cursor || moreInFlight.current || loading) return;
@@ -378,6 +393,7 @@ export function FeedGeneratorScreen({
   );
 
   return (
+    <>
     <FlatList
       style={{ flex: 1, backgroundColor: p.bg }}
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 28 }}
@@ -389,6 +405,7 @@ export function FeedGeneratorScreen({
           onOpenThread={openThread}
           onOpenProfile={openProfile}
           onPostHidden={hidePost}
+          feedbackFeed={{ uri: feed, generator }}
         />
       )}
       ListHeaderComponent={Header}
@@ -423,6 +440,10 @@ export function FeedGeneratorScreen({
       }}
       onEndReachedThreshold={0.6}
     />
+    {reporting && generator ? (
+      <ReportListSheet feed={generator} onClose={() => setReporting(false)} />
+    ) : null}
+    </>
   );
 }
 

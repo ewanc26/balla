@@ -75,7 +75,7 @@ const TOPICS: Record<string, Topic> = {
     paragraphs: [
       'Balla does not keep a separate local block list. The server’s viewer state is the source of truth.',
       'Open a profile’s overflow menu to block, unblock, mute or unmute that account. Blocked profiles cannot be followed from Balla.',
-      'A dedicated list for reviewing every blocked and muted account is still to come; until then, manage them from their profiles.',
+      'Settings → Blocked and muted accounts lists both sets from the published graph endpoints. Unblocking deletes the real app.bsky.graph.block record; unmuting uses the graph unmute endpoint.',
     ],
   },
   notifications: {
@@ -154,6 +154,14 @@ const TOPICS: Record<string, Topic> = {
       'Balla is independent software. References to Bluesky identify the network Balla connects to; they do not imply affiliation, endorsement, official status or partnership. Facebook-era styling is a visual reference only. Balla is not affiliated with Bluesky Social PBC or Meta Platforms, Inc.',
     ],
     link: { label: 'Open the issue tracker', url: ISSUES },
+  },
+  media: {
+    title: 'Media',
+    paragraphs: [
+      'A post can carry up to 10 photos or one video. Every image and video can have a description; Balla marks media without one and will ask for confirmation before posting it.',
+      'Photos open full-screen with swipe navigation. Videos and GIFs use the player built into your device: playback starts when you press play, never automatically, so there is no autoplay setting to change.',
+      'Balla uploads media to your own PDS through the published blob and video APIs and writes the standard embed records. There is no separate media server and no analytics attached to viewing media.',
+    ],
   },
   about: {
     title: 'About Balla',

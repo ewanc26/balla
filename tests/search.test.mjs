@@ -195,7 +195,7 @@ test('search scopes are exact, include every destination RPC and omit the v1 sea
   );
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
   const audience = 'aud=did:web:api.bsky.app#bsky_appview';
-  assert.equal(tokens.length, 98);
+  assert.equal(tokens.length, 106);
   assert.equal(/repo:\*|rpc:\*|blob:\*/.test(metadata.scope), false);
 
   for (const method of [

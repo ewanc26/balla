@@ -41,6 +41,7 @@ export function FeedScreen() {
   const [activeFeed, setActiveFeed] = useState<string | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [reqId, setReqId] = useState<string | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [moreLoading, setMoreLoading] = useState(false);
@@ -71,6 +72,7 @@ export function FeedScreen() {
         const feed = res.data.feed || [];
         setPosts((prev) => (fresh ? feed : prev.concat(feed)));
         setCursor(res.data.cursor);
+        setReqId((res.data as any).reqId);
       } catch (err) {
         if (id === requestId.current) {
           setError(
@@ -96,6 +98,7 @@ export function FeedScreen() {
   useEffect(() => {
     setPosts([]);
     setCursor(undefined);
+    setReqId(undefined);
     setError(null);
     setLoading(true);
     void load(true);
@@ -295,6 +298,12 @@ export function FeedScreen() {
             onOpenThread={openThread}
             onOpenProfile={openProfile}
             onPostHidden={hidePost}
+            feedbackFeed={{
+              uri: activeFeed || undefined,
+              generator: activeGenerator,
+              feedContext: item.feedContext,
+              reqId,
+            }}
           />
         )}
         // FlashList v2 measures items itself; estimatedItemSize is gone.

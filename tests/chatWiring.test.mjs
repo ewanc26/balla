@@ -49,7 +49,7 @@ test('metadata declares exactly the chat RPCs Balla calls, all on the chat audie
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
   const chat = tokens.filter((token) => token.startsWith('rpc:chat.bsky.'));
-  assert.equal(tokens.length, 98);
+  assert.equal(tokens.length, 106);
   assert.equal(chat.length, CHAT_METHODS.length);
   const audience = '?aud=did:web:api.bsky.chat#bsky_chat';
   for (const method of CONVO_METHODS) {

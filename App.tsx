@@ -35,8 +35,10 @@ import { ContentFiltersScreen } from './src/screens/ContentFiltersScreen';
 import { AccountLifecycleScreen } from './src/screens/AccountLifecycleScreen';
 import { AccountSettingsScreen } from './src/screens/AccountSettingsScreen';
 import { PrivacySecurityScreen } from './src/screens/PrivacySecurityScreen';
+import { ActivityPrivacyScreen } from './src/screens/ActivityPrivacyScreen';
 import { SessionSecurityScreen } from './src/screens/SessionSecurityScreen';
 import { NotificationSettingsScreen } from './src/screens/NotificationSettingsScreen';
+import { ActivityNotificationsScreen } from './src/screens/ActivityNotificationsScreen';
 import { EditProfileScreen } from './src/screens/EditProfileScreen';
 import { ModerationInboxScreen } from './src/screens/ModerationInboxScreen';
 import { ModerationReportScreen } from './src/screens/ModerationReportScreen';
@@ -65,6 +67,10 @@ import { ListDetailScreen } from './src/screens/ListDetailScreen';
 import { ListEditScreen } from './src/screens/ListEditScreen';
 import { ListMembersScreen } from './src/screens/ListMembersScreen';
 import { InteractionSettingsScreen } from './src/screens/InteractionSettingsScreen';
+import { VerificationSettingsScreen } from './src/screens/VerificationSettingsScreen';
+import { InterestsSettingsScreen } from './src/screens/InterestsSettingsScreen';
+import { DefaultInteractionSettingsScreen } from './src/screens/DefaultInteractionSettingsScreen';
+import { BlockedAccountsScreen } from './src/screens/BlockedAccountsScreen';
 import { AppHeader, type TabName } from './src/components/AppHeader';
 import { LeftRail, RightRail } from './src/components/AppRail';
 import { ViewerProvider } from './src/lib/viewer';
@@ -72,6 +78,7 @@ import { ModerationProvider } from './src/lib/moderationContext';
 import { FeedsProvider } from './src/lib/feedsContext';
 import { PreferencesProvider } from './src/lib/preferences';
 import { ViewPreferencesProvider } from './src/lib/viewPreferences';
+import { AccountPreferencesProvider } from './src/lib/accountPreferences';
 import { restore, setOnAccountChanged, setOnLoggedOut } from './src/lib/agent';
 import { installWebAccessibility } from './src/lib/accessibility';
 import { webLinking } from './src/lib/webLinking';
@@ -300,9 +307,10 @@ export default function App() {
       <PreferencesProvider key={activeDid ?? 'none'}>
         <ViewerProvider>
           <ViewPreferencesProvider>
-            <ModerationProvider>
-              <FeedsProvider>
-                <NavigationContainer
+            <AccountPreferencesProvider>
+              <ModerationProvider>
+                <FeedsProvider>
+                  <NavigationContainer
                   ref={navigationRef}
                   linking={Platform.OS === 'web' ? webLinking : undefined}
                   theme={customNavTheme as any}
@@ -370,6 +378,22 @@ export default function App() {
                             name="InteractionSettings"
                             component={InteractionSettingsScreen}
                           />
+                          <Stack.Screen
+                            name="VerificationSettings"
+                            component={VerificationSettingsScreen}
+                          />
+                          <Stack.Screen
+                            name="InterestsSettings"
+                            component={InterestsSettingsScreen}
+                          />
+                          <Stack.Screen
+                            name="DefaultInteractionSettings"
+                            component={DefaultInteractionSettingsScreen}
+                          />
+                          <Stack.Screen
+                            name="BlockedAccounts"
+                            component={BlockedAccountsScreen}
+                          />
                           <Stack.Screen name="Compose" component={ComposeScreen} />
                           <Stack.Screen name="UserProfile" component={ProfileScreen} />
                           <Stack.Screen name="Settings" component={SettingsScreen} />
@@ -387,8 +411,10 @@ export default function App() {
                           <Stack.Screen name="AccountLifecycle" component={AccountLifecycleScreen} />
                           <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
                           <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
+                          <Stack.Screen name="ActivityPrivacy" component={ActivityPrivacyScreen} />
                           <Stack.Screen name="SessionSecurity" component={SessionSecurityScreen} />
                           <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+                          <Stack.Screen name="ActivityNotifications" component={ActivityNotificationsScreen} />
                           <Stack.Screen name="EditProfile" component={EditProfileScreen} />
                           <Stack.Screen name="ModerationInbox" component={ModerationInboxScreen} />
                           <Stack.Screen name="ModerationReport" component={ModerationReportScreen} />
@@ -429,9 +455,10 @@ export default function App() {
                       {showChrome && showRight ? <RightRail onNavigate={navigateToTab} /> : null}
                     </View>
                   </View>
-                </NavigationContainer>
-              </FeedsProvider>
-            </ModerationProvider>
+                  </NavigationContainer>
+                </FeedsProvider>
+              </ModerationProvider>
+            </AccountPreferencesProvider>
           </ViewPreferencesProvider>
         </ViewerProvider>
       </PreferencesProvider>

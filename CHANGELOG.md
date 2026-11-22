@@ -3,6 +3,66 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.19.0
+
+- Add account-level moderation and preference parity. Settings now reaches a
+  blocked/muted-account manager backed by the published graph endpoints,
+  default reply/quote settings, verification badge display and interests
+  editors backed by real account preferences, and working Media and About
+  pages. Verification badges now honour the stored hide preference and new
+  posts start from the saved interaction defaults.
+- Composer reply rules can now target a real list, chosen from the account's
+  own `app.bsky.graph.list` records; an invalid or invented URI is never
+  written. Hidden replies use the published threadgate `hiddenReplies` field:
+  the root post author can hide or unhide a reply, the existing allow rules are
+  preserved, and hidden replies render in an expandable section. No local-only
+  hide is used.
+- Feed generators can now be reported from their detail screen through the
+  published `com.atproto.moderation.createReport` strong-ref path, using the
+  same categories and local receipt flow as list reports.
+- The post menu now exposes pin/unpin (a real strong ref on the profile record),
+  thread mute/unmute through the graph service, and quote detach/reattach through
+  the postgate `detachedEmbeddingUris` field. Detach preserves existing quote
+  rules and only appears when the viewer owns the quoted post. No action stores
+  a local-only state.
+- Profiles now support temporary live status through the published
+  `app.bsky.actor.status` record at rkey `self`: go live, edit the link and
+  duration, and end it, with an optimistic-concurrency `swapRecord` write. An
+  active status appears as a LIVE badge and link card on the profile, and the
+  narrow repo write scope is included in the OAuth grant.
+- Activity privacy is now a real account control: choose who may opt in to
+  notifications for your activity (followers, mutuals or no one), stored in the
+  published `app.bsky.notification.declaration` record at rkey `self` with its
+  narrow OAuth write scope. It is reachable from Privacy and Security.
+- Per-account activity notifications now match the official client: a bell on
+  each profile opens a dialog to opt in to its posts and optionally its replies
+  (replies never without posts), backed by the real `putActivitySubscription`
+  RPC. Notification Settings lists and manages subscriptions through
+  `listActivitySubscriptions`, with narrow AppView RPC scopes.
+- Trusted verifiers can now issue and remove verification records from another
+  account's menu through the published `app.bsky.graph.verification` lexicon,
+  writing to and deleting from their own repo. The actions only appear for a
+  verifier viewing someone else and update the profile on success.
+- The post menu now offers "Hide post for me" and "Hide reply for me", stored
+  in device-local persistence and merged into moderation prefs so the hide is
+  applied by `@atproto/api` on every feed, thread, profile and search surface,
+  including quoted posts. No report or server write is sent.
+- The post menu now offers "Show more/less like this" for custom feeds that
+  accept interactions. Feedback is sent through the published
+  `app.bsky.feed.sendInteractions` call, routed to the feed generator's
+  `bsky_fg` proxy with the post's `feedContext` and `reqId` preserved. The
+  chronological Following timeline never sends ranking feedback.
+- Add deterministic model and wiring tests for the new preferences, gate
+  writes, hidden replies, feed feedback and navigation, and update the
+  compliance and reference docs to match. The release adds only eight narrow
+  permissions: repository scopes for threadgates, postgates, verification
+  records, live status and the activity-privacy declaration, AppView RPCs for
+  listing and writing activity subscriptions, and
+  `rpc:app.bsky.feed.sendInteractions?aud=*` for proxied generator feedback.
+  No new dependency was added, and sessions authorised before 0.19.0 need one
+  re-authorisation for those writes. Device push delivery remains blocked on
+  the self-hosted gateway (#36).
+
 ## 0.18.0
 
 - Tapping a notification now opens the destination it belongs to: replies, mentions, quotes, likes and reposts still open the post's thread, and a follow now opens the actor's public profile instead of leaving the row inert. The target is chosen from ids only, by a deterministic model shared with new tests; unmapped reasons stay inert rather than inventing a link.

@@ -25,21 +25,21 @@ to close the rest.
 
 | Surface | Current state | Compliance note |
 | --- | --- | --- |
-| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo, AppView, video-service, caption-blob and chat-service RPC scopes; multi-account sessions stored separately by DID with a DID/handle-only local registry and an account-keyed UI remount on switch | Sessions predating the video or chat scopes must re-authorise |
+| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo, AppView, video-service, caption-blob and chat-service RPC scopes; multi-account sessions stored separately by DID with a DID/handle-only local registry and an account-keyed UI remount on switch | Sessions predating the video, chat or 0.19.0 scopes must re-authorise |
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
-| Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
-| Threads | Ancestor chain, nested replies, reply composer, and reply/quote gates read from real threadgate and postgate records | Some moderation states remain |
-| Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, authored lists/feeds/starter packs, label warnings, verification and trusted-verifier badges with their AppView records, pinned post, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner. Starter packs have explicit follow, add-feed and share actions, plus creation/editing for packs the signed-in account owns | Verification is display-only — Balla never issues verifications; starter-pack writes need one narrow scope and re-authorisation for older sessions |
+| Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination, pull-to-refresh, and "show more/less like this" feedback sent to custom generators through `app.bsky.feed.sendInteractions` on the `bsky_fg` proxy with `feedContext` and `reqId` preserved | Following stays unranked; custom generator order is labelled and never injected |
+| Threads | Ancestor chain, nested replies, reply composer, reply/quote gates read from real threadgate and postgate records, hidden replies in an expandable section driven by the threadgate `hiddenReplies` field, thread mute/unmute through the graph service, quote detach/reattach through the postgate `detachedEmbeddingUris` field, and device-local "hide post/reply for me" merged into moderation prefs | The root author can hide/unhide a reply for everyone; only that author sees the hidden section |
+| Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, authored lists/feeds/starter packs, label warnings, verification and trusted-verifier badges with their AppView records, pin/unpin from the post menu, verifier-role issue/remove verification writes through `app.bsky.graph.verification`, temporary live status through the `app.bsky.actor.status` record at rkey `self` with a LIVE profile indicator, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner. Starter packs have explicit follow, add-feed and share actions, plus creation/editing for packs the signed-in account owns | Verification writes are limited to trusted verifiers acting on another account; starter-pack writes need one narrow scope and re-authorisation for older sessions |
 | Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history, in-app feed/starter-pack destinations, and account-scoped post search from a profile | Scoped search uses the same `searchPostsV2.authors` filter as structured `from` |
-| Notifications | Tabs, grouped activity, unread count, mark-all-read and a real per-category settings route with in-app/push switches and audience filters | No device push registration yet (#36) |
+| Notifications | Tabs, grouped activity, unread count, mark-all-read and a real per-category settings route with in-app/push switches and audience filters; per-account activity subscriptions through the published `listActivitySubscriptions` and `putActivitySubscription` RPCs, with a bell on profiles and a management list in settings | No device push registration yet (#36) |
 | Saved | Private Bluesky bookmarks, remove in place | Uses AppView bookmark stash; good privacy model |
 | Media | Profile photo/banner upload; post photos with up to 10 images, alt text, previews, compression, retries, full-screen viewer, record-with-media quotes and label warnings; MP4/GIF video posts through `video.bsky.app`, published video views and WebVTT captions | Balla's 100 MB / 10-minute local limits are shown before upload; Bluesky's service limits still apply |
-| Composer | Multi-post threads, link cards, quotes, per-photo and per-video alt text, self-applied content warnings from the Bluesky vocabulary, up to three post languages, local draft recovery, and reply/quote gate records written after publishing | List-based gate rules remain (#16) |
-| Moderation | Post/profile report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox for reports, decisions, notices, account standing, action history and appeals | Missing list/feed reports and device push for inbox outcomes (#36) |
+| Composer | Multi-post threads, link cards, quotes, per-photo and per-video alt text, self-applied content warnings from the Bluesky vocabulary, up to three post languages, local draft recovery, reply/quote gate records written after publishing, and list rules chosen from a real list picker | Older OAuth sessions need one re-authorisation for the list scope |
+| Moderation | Post/profile/list/feed report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, a moderation inbox for reports, decisions, notices, account standing, action history and appeals, a blocked/muted-account manager, and hidden replies through the threadgate field | Device push for inbox outcomes remains blocked (#36) |
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
-| Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; the AppView has no global list-search endpoint |
+| Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states, profile links and list/feed reports | The AppView has no global list-search endpoint |
 | DMs | Inbox, real unread counts and join-request counts, chat requests, paginated messages with replies and reactions, text and post-embed sends, group creation, members, invite links and join requests, conversation settings with lock/unlock, mark-all-read, mute/unmute and leave, report/message and actor block, plus chat notification preferences, all through the chat-service proxy | Built on narrow `chat.bsky.convo.*`, `chat.bsky.group.*` and `chat.bsky.notification.*` RPCs; device push delivery remains blocked (#36) |
-| Settings | Settings shell with account, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, feed/thread, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real profile/personal-details writes; session facts are read from non-secret OAuth metadata | Email, password, 2FA, app passwords, activity privacy, account lifecycle and push delivery remain provider-owned or ungranted, and are linked to rather than faked |
+| Settings | Settings shell with account, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, feed/thread, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real profile/personal-details writes; session facts are read from non-secret OAuth metadata. Verification badges, default post interaction settings and interests edit real account preferences; blocked/muted accounts are managed from a dedicated screen. Activity privacy writes the published `app.bsky.notification.declaration` record | Email, password, 2FA, app passwords, account lifecycle and push delivery remain provider-owned or ungranted, and are linked to rather than faked |
 | Support/legal | In-app Help, privacy, terms, community guidelines, copyright, contact and about pages; matching public site pages | Monitored public contact is the GitHub issue tracker and private advisory form |
 | Web | Expo web client at `/app`; popup OAuth returns to the same URL | Browser sessions use IndexedDB; the same client metadata covers native and web redirects |
 
@@ -147,8 +147,9 @@ To match Bluesky’s composer, Balla eventually needs:
   Discard prompt; photos and quotes are not persisted and the prompt says so;
 - **Done:** honest grapheme counting and posting errors.
 
-List-based gate rules are deliberately absent: a published list URI needs a
-real picker, and a made-up one would be a protocol lie.
+List-based gate rules are written from a real list picker: `ReplyListPicker`
+loads the account's actual `app.bsky.graph.list` records and an invalid or
+invented URI falls back to open replies rather than being written.
 
 ### Feeds, lists and discovery
 
@@ -228,9 +229,9 @@ Balla and is never logged. Device push delivery remains blocked (#36).
    followers and per-post engagement lists are shipped.
 4. Notification preferences route (tabs, grouping and seen state are shipped).
 5. Lists, list feeds and list management. Curation and moderation lists,
-   membership, list feeds, subscribe/block states and profile links are shipped;
-   list/feed reports remain. Saved/custom feeds, hashtag/topic/video pages and
-   the opt-in Discover surface are shipped; Following stays chronological.
+   membership, list feeds, subscribe/block states, profile links and list/feed
+   reports are shipped. Saved/custom feeds, hashtag/topic/video pages and the
+   opt-in Discover surface are shipped; Following stays chronological.
 6. Settings preference editors for content, language, appearance, privacy and
    account. Content filtering, labelers, adult content and muted words are
    shipped, along with System/Light/Dark, post text size, description badges,
@@ -240,11 +241,11 @@ Balla and is never logged. Device push delivery remains blocked (#36).
    haptics are not emitted so no toggle is offered, and provider-owned account
    security controls stay on the PDS behind honest links.
 7. In-app post deletion and sign-out cleanup.
-8. ~~DMs.~~ Done: inbox, unread counts, requests, messages, text/post embeds and conversation controls. Chat moderation and group creation remain.
+8. ~~DMs.~~ Done: inbox, unread counts, requests, messages, text/post embeds, reactions, group creation, conversation settings, message/conversation reporting and chat notification preferences. Device push delivery remains blocked (#36).
 
 ### P2 — depth and federation
 
-1. ~~Starter packs.~~ Done: search, landing pages, explicit member/feed actions, official sharing and owner-only creation/editing with one narrow repo scope. Labeler subscriptions and custom labeler preferences remain.
+1. ~~Starter packs.~~ Done: search, landing pages, explicit member/feed actions, official sharing and owner-only creation/editing with one narrow repo scope. Labeler subscriptions, unsubscribe and per-label preferences are written through `app.bsky.actor.putPreferences`.
 2. ~~Multi-account support.~~ Done: separate OAuth sessions keyed by DID, labelled switch/add/remove flows, an account-keyed UI remount and honest handling of revoked grants. Drafts and scheduling-adjacent workflows remain.
 3. ~~Rich media (video, GIF, captions, aspect ratios).~~ Done: video-service upload, published video views, GIF presentation, WebVTT captions and real aspect ratios.
 4. ~~Web client with the web OAuth callback, or removal of the web redirect.~~

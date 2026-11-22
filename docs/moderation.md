@@ -1,6 +1,6 @@
 # Moderation model
 
-Last updated: **21 November 2026**.
+Last updated: **22 November 2026**.
 
 Balla renders moderation before content reaches the user. It does not strip
 labels after the fact or rely on a local block list.
@@ -46,9 +46,8 @@ labels after the fact or rely on a local block list.
 - Warning cards name the labeler that supplied each label. The default Bluesky
   labeler is always subscribed and is not removable from Balla; additional
   labelers can be added by handle or DID and removed again.
-- Custom feed pages render post labels through the shared PostCard, but
-  generator-level labels and list feeds are not implemented. Lists and list
-  feeds must use the same moderation helpers when issue #19 lands.
+- Custom feed pages and list feeds render post labels through the shared
+  PostCard. Generator-level labels are not rendered yet.
 
 ## Reports and enforcement
 
@@ -59,8 +58,9 @@ labels after the fact or rely on a local block list.
   affected author from the current timeline, search, saved posts, profile and
   notification lists. A refresh still relies on the AppView enforcing the
   server state.
-- Blocking a profile disables Follow in Balla. Messaging is not implemented yet;
-  when chat lands it must enforce block and muted-conversation state.
+- Blocking a profile disables Follow in Balla and writes the AppView block
+  record. Chat reports use the same block record, and the chat service enforces
+  it; conversation mute state is read from the service.
 - The OAuth metadata requests the Bluesky labeler report audience. Sessions
   authorised before 21 November 2026 need one fresh sign-in before reporting.
 

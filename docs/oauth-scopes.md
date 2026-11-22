@@ -4,7 +4,7 @@ Last updated: **22 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **98 tokens**. Chat is a separate service with its own
+the scope currently has **106 tokens**. Chat is a separate service with its own
 audience, documented below.
 
 ## Repository writes
@@ -22,12 +22,19 @@ audience, documented below.
 | `repo:app.bsky.graph.listitem?action=create&action=delete` | Adding and removing list members |
 | `repo:app.bsky.graph.listblock?action=create&action=delete` | Blocking and unblocking a list |
 | `repo:app.bsky.graph.starterpack?action=create&action=update` | Creating and editing starter packs, using the official `app.bsky.graph.starterpack` record and a reference list |
+| `repo:app.bsky.feed.threadgate?action=create&action=update&action=delete` | Reply gates and hiding replies for everyone (`hiddenReplies`) |
+| `repo:app.bsky.feed.postgate?action=create&action=update&action=delete` | Quote/embedding gates and quote detach/reattach |
+| `repo:app.bsky.graph.verification?action=create&action=delete` | Trusted verifiers issuing and removing verification records |
+| `repo:app.bsky.actor.status?action=create&action=update&action=delete` | Temporary live status at rkey `self` |
+| `repo:app.bsky.notification.declaration?action=create&action=update` | Activity privacy (who may subscribe to your activity) at rkey `self` |
 
-Balla adds `update` only for the profile, link, list and starter-pack records it
-can edit. It does not update posts or any other record type. There is no
-threadgate or feed-generator scope. Starter packs are written through the
-same PDS record API used by Bluesky's reference client; the installed generated
-lexicon declares `app.bsky.graph.starterpack`.
+Balla requests a narrow `repo:` scope for every collection it writes, including
+threadgates, postgates, statuses and the notification declaration: because granular grants are honoured, a
+write to an unlisted collection is rejected by a real OAuth PDS even though the
+local mock accepts it. `update` is requested only for records Balla can edit.
+Starter packs and every other record are written through the same PDS record API
+used by Bluesky's reference client; the installed generated lexicon declares
+`app.bsky.graph.starterpack`.
 
 ## Blob uploads
 
@@ -87,10 +94,22 @@ All of these use:
 | `app.bsky.graph.unmuteActorList` | Unsubscribing from a list |
 | `app.bsky.labeler.getServices` | Custom label definitions |
 | `app.bsky.notification.getPreferences` | Per-category notification settings |
+| `app.bsky.notification.listActivitySubscriptions` | Listing accounts whose activity you follow |
 | `app.bsky.notification.listNotifications` | Notifications |
+| `app.bsky.notification.putActivitySubscription` | Subscribing to or unsubscribing from an account's posts/replies |
 | `app.bsky.notification.putPreferencesV2` | Saving notification settings |
 | `app.bsky.notification.updateSeen` | Mark all read |
 | `app.bsky.unspecced.getPopularFeedGenerators` | Feed discovery in search and the Feeds screen |
+
+## Feed-generator audience
+
+`rpc:app.bsky.feed.sendInteractions?aud=*`
+
+“Show more/less like this” is sent to the generator that produced the post
+through the `bsky_fg` proxy service. The generator DID is not known at sign-in,
+so this one method uses the published wildcard-audience form; the method itself
+is exact, not `rpc:*`. The chronological Following timeline has no generator and
+never sends feedback.
 
 ## Chat service audience
 
@@ -182,10 +201,11 @@ database.
 - Account, email, 2FA and app-password scopes — account lifecycle and security
   are PDS/provider operations. Balla links to the provider controls instead of
   showing inert toggles.
-- Feed-generator and threadgate repo scopes — Balla reads custom feeds and
-  writes saved-feed preferences through the AppView; it does not create
-  generators or threadgates. Starter packs now have their own narrow write
-  scope above.
+- Feed-generator creation and editing scopes — Balla reads custom feeds and
+  writes saved-feed preferences through the AppView, and only sends feedback to
+  an existing generator through `sendInteractions`; it does not create or edit
+  generators. Threadgate, postgate, verification, live-status and
+  activity-privacy writes use their own narrow repository scopes above.
 - A broad `include:chat.bsky.authFullClient` permission set — chat uses only the
   thirty-six narrow RPCs above, never the full-client grant.
 - `transition:*` and broad wildcards.
@@ -196,6 +216,9 @@ The client metadata has widened over time for profile editing, saved feeds and
 the moderation inbox while staying granular. Sessions authorised before any of
 those changes keep their old grant and must re-authorise before the new
 profile/link/blob, list, saved-feed, inbox, starter-pack or chat-group scopes are available.
+Sessions authorised before 0.19.0 need that re-authorisation before threadgate,
+postgate, verification, live-status, activity-privacy, activity-subscription or
+generator-feedback calls are accepted.
 Signing out and back in requests the current scope. Sessions authorised before
 0.13.0 need that re-authorisation before starter-pack creation or editing works;
 the editor says so rather than hiding the failure. Sessions authorised before

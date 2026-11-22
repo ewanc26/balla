@@ -148,10 +148,15 @@ the on-device store keyed by DID, Balla remembers only the DID and any handle,
 and switching rebuilds the whole authenticated tree so no session or cached
 state crosses accounts; removing revokes that grant and leaves the others
 signed in;
-privacy settings include the logged-out visibility self-label and the real
-notification-preference editor. Email, password, 2FA, app passwords, activity
-privacy and account lifecycle are provider-owned, so Balla links to them rather
-than showing fake controls. Tapping any post image opens a full-screen
+privacy settings include the logged-out visibility self-label, the real
+notification-preference editor and activity privacy through the published
+`app.bsky.notification.declaration` record. Notification Settings lists and
+manages per-account activity subscriptions through the real RPCs, and every
+profile has a bell for opting in to an account's posts and replies. Email,
+password, 2FA, app passwords and account lifecycle are provider-owned, so Balla
+links to them rather than showing fake controls. Profiles support temporary live
+status through `app.bsky.actor.status` with a LIVE badge, and trusted verifiers
+can issue and remove verification records. Tapping any post image opens a full-screen
 viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
 keep the text rather than eating it. The composer supports threads, photos with
@@ -160,8 +165,8 @@ states, link cards, quotes, self-applied content warnings, up to three post
 languages per post, and reply and quote controls written to real threadgate and
 postgate records. An unfinished post is kept locally with a Restore/Discard
 prompt, and posts you authored have an Interaction settings screen. Tapping a notification opens the thread it belongs to; a follow opens the actor's public profile. Lists support creation and editing,
-membership, list feeds, subscribe/block states and profile links; list reports
-are not implemented yet. Starter packs have search, landing pages, explicit
+membership, list feeds, subscribe/block states and profile links; list and feed
+reports are implemented through real strong-ref report writes. Starter packs have search, landing pages, explicit
 follow and add-feed actions, official share links, and creation/editing for
 packs the signed-in account owns; writes use one narrow starter-pack repo scope
 and older sessions need to sign in again. Private messages are available through a Messages entry point: an inbox with real unread and join-request counts, chat requests, and conversations that page through history, send text and post embeds with replies and reactions. Groups can be created and managed with members, invite links and join requests; conversations expose settings with lock/unlock where allowed, mark-all-read, mute/unmute, leave, chat reporting and actor blocking, and separate chat notification preferences. Chat calls use the chat-service proxy and thirty-six narrow `rpc:chat.bsky.convo.*`, `rpc:chat.bsky.group.*` and `rpc:chat.bsky.notification.*` scopes; message content is not stored by Balla or logged, and older sessions need to sign in again for chat. Saved and pinned custom feeds have

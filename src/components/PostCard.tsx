@@ -20,6 +20,11 @@ import { touchTargetStyle } from '../lib/accessibilityModel';
 import { Avatar } from './Avatar';
 import { ImageViewer } from './ImageViewer';
 import { PostMenu } from './PostMenu';
+import {
+  feedbackEnabled,
+  sendFeedFeedback,
+} from '../lib/feedFeedback';
+import type { FeedbackKind } from '../lib/feedFeedbackModel';
 import { usePostModeration } from '../lib/moderationContext';
 import { accountLabelCauses, warnedByLabel } from '../lib/labelVisibility';
 import { ContentWarning } from './ContentWarning';
@@ -47,6 +52,9 @@ interface PostCardProps {
   onOpenProfile?: (did: string) => void;
   onBookmarkChange?: (bookmarked: boolean, post: any) => void;
   onPostHidden?: (post: any, scope: 'post' | 'author') => void;
+  onHiddenReplyChange?: (post: any, hidden: boolean) => void;
+  /** The active custom feed, when it can receive ranking feedback. */
+  feedbackFeed?: { uri?: string; generator?: any; feedContext?: string; reqId?: string };
   highlight?: boolean;
 }
 
@@ -56,12 +64,27 @@ export function PostCard({
   onOpenProfile,
   onBookmarkChange,
   onPostHidden,
+  onHiddenReplyChange,
+  feedbackFeed,
   highlight,
 }: PostCardProps) {
   const p = usePalette();
   const font = useFontScale();
   const { preferences } = usePreferences();
   const navigation = useNavigation<any>();
+  const canFeedback = feedbackEnabled(feedbackFeed?.generator, !!agent.did);
+  const onFeedback = canFeedback
+    ? (kind: FeedbackKind) => {
+        void sendFeedFeedback({
+          feedUri: feedbackFeed!.uri,
+          serviceDid: feedbackFeed!.generator.did,
+          postUri: post.uri,
+          kind,
+          feedContext: feedbackFeed!.feedContext,
+          reqId: feedbackFeed!.reqId,
+        }).catch(() => {});
+      }
+    : undefined;
   const moderation = usePostModeration(post);
   const author = post && post.author ? post.author : {};
   const record = post && post.record ? post.record : {};
@@ -654,10 +677,12 @@ export function PostCard({
           setHidden(true);
           if (onPostHidden) onPostHidden(hiddenPost, scope);
         }}
+        onHiddenReplyChange={onHiddenReplyChange}
         onTranslate={() => void translatePost()}
         hasTranslation={!!translation}
         translationVisible={translationVisible}
         translationBusy={translating}
+        onFeedback={onFeedback}
       />
     </>
   );
