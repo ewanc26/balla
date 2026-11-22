@@ -20,6 +20,7 @@ const SUBJECT_LABEL: Record<ReportReceipt['subjectKind'], string> = {
   post: 'Post',
   profile: 'Account',
   list: 'List',
+  feed: 'Feed',
   'chat-message': 'Chat message',
   'chat-convo': 'Conversation',
 };

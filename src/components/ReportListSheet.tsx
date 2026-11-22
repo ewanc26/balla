@@ -19,23 +19,30 @@ import {
 } from '../lib/accessibility';
 import { describeFailure } from '../lib/reliability';
 import { REPORT_REASONS, type ReportReason } from '../lib/reportModel';
-import { reportList } from '../lib/moderation';
+import { reportFeed, reportList } from '../lib/moderation';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 /**
- * List reports use the same categories as posts and profiles. The sheet is
- * separate from the post/profile menus because lists are reported from their
- * detail screen, but it shares the categories and the submission path.
+ * List and feed reports use the same categories as posts and profiles. Both
+ * are records reported by strong ref, so one sheet serves the two detail
+ * screens while keeping the submission path shared.
  */
 export function ReportListSheet({
   list,
+  feed,
   onClose,
 }: {
-  list: any;
+  list?: any;
+  feed?: any;
   onClose: () => void;
 }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
+  const isFeed = !!feed && !list;
+  const subject = feed || list;
+  const noun = isFeed ? 'feed' : 'list';
+  const submitReport = isFeed ? reportFeed : reportList;
+  const title = `Report this ${noun}`;
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState('');
   const [busy, setBusy] = useState(false);
@@ -56,7 +63,7 @@ export function ReportListSheet({
     setBusy(true);
     setError(null);
     try {
-      const response = await reportList(list, reason, details);
+      const response = await submitReport(subject, reason, details);
       setReceiptId(response.data.id);
     } catch (err) {
       // Never imply a report was sent when the API refused it.
@@ -88,7 +95,7 @@ export function ReportListSheet({
         />
         <View
           ref={containerRef}
-          {...dialogAccessibilityProps('Report this list')}
+          {...dialogAccessibilityProps(title)}
           accessibilityViewIsModal
           style={[
             styles.sheet,
@@ -100,13 +107,13 @@ export function ReportListSheet({
         >
           <View style={styles.header}>
             <Text style={{ color: p.text, fontSize: 18, fontWeight: '700' }}>
-              {receiptId !== null ? 'Report sent' : 'Report this list'}
+              {receiptId !== null ? 'Report sent' : title}
             </Text>
             <Pressable
               ref={closeRef}
               onPress={onClose}
               accessibilityRole="button"
-              accessibilityLabel="Close list report"
+              accessibilityLabel={`Close ${noun} report`}
               style={({ pressed }) => [
                 styles.close,
                 { backgroundColor: pressed ? p.bg : 'transparent' },
@@ -127,8 +134,8 @@ export function ReportListSheet({
                   marginTop: 10,
                 }}
               >
-                Bluesky’s moderation service will review this list. The creator
-                will not be told who reported it.
+                Bluesky’s moderation service will review this {noun}. The
+                creator will not be told who reported it.
               </Text>
               <Text
                 style={{
@@ -247,7 +254,7 @@ export function ReportListSheet({
                 <Pressable
                   onPress={onClose}
                   accessibilityRole="button"
-                  accessibilityLabel="Cancel list report"
+                  accessibilityLabel={`Cancel ${noun} report`}
                   disabled={busy}
                   accessibilityState={{ disabled: busy }}
                   style={({ pressed }) => [
@@ -264,7 +271,7 @@ export function ReportListSheet({
                 <Pressable
                   onPress={() => void send()}
                   accessibilityRole="button"
-                  accessibilityLabel="Send list report"
+                  accessibilityLabel={`Send ${noun} report`}
                   disabled={!reason || busy}
                   accessibilityState={{ disabled: !reason || busy, busy }}
                   style={({ pressed }) => [

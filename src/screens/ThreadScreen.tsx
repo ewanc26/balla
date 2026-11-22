@@ -22,6 +22,7 @@ import { useViewer } from '../lib/viewer';
 import { replyIndent } from '../lib/layout';
 import { useViewPreferences } from '../lib/viewPreferences';
 import { sortReplies, type ThreadSort } from '../lib/viewPreferencesModel';
+import { isThreadRootAuthor, loadHiddenReplyUris } from '../lib/hiddenReplies';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 // Navigation over the threadViewPost tree: the ancestor chain, the highlighted
@@ -49,6 +50,31 @@ function countReplies(nodes: any[]): number {
     (total, node) => total + 1 + countReplies((node.replies || []).filter(isThreadViewPost)),
     0
   );
+}
+
+/**
+ * Split a reply tree using the root post's threadgate `hiddenReplies` list.
+ * Hidden replies (and their branches) leave the normal thread and are shown in
+ * one expandable section, matching the official client. The gate is the source
+ * of truth; nothing is hidden from a local-only list.
+ */
+function partitionHiddenReplies(
+  nodes: any[],
+  hidden: Set<string>
+): { visible: any[]; hidden: any[] } {
+  const visible: any[] = [];
+  const hiddenNodes: any[] = [];
+  for (const node of nodes) {
+    const children = partitionHiddenReplies(
+      (node.replies || []).filter(isThreadViewPost),
+      hidden
+    );
+    const pruned = { ...node, replies: children.visible };
+    if (hidden.has(node.post && node.post.uri)) hiddenNodes.push(pruned);
+    else visible.push(pruned);
+    hiddenNodes.push(...children.hidden);
+  }
+  return { visible, hidden: hiddenNodes };
 }
 
 function removePost(
@@ -112,6 +138,7 @@ function ReplyBranch({
   onOpenThread,
   onOpenProfile,
   onPostHidden,
+  onHiddenReplyChange,
   sort,
 }: {
   node: any;
@@ -119,6 +146,7 @@ function ReplyBranch({
   onOpenThread?: (uri: string) => void;
   onOpenProfile: (did: string) => void;
   onPostHidden?: (post: any, scope: 'post' | 'author') => void;
+  onHiddenReplyChange?: (post: any, hidden: boolean) => void;
   sort: ThreadSort;
 }) {
   const p = usePalette();
@@ -157,6 +185,7 @@ function ReplyBranch({
         onOpenThread={onOpenThread}
         onOpenProfile={onOpenProfile}
         onPostHidden={onPostHidden}
+        onHiddenReplyChange={onHiddenReplyChange}
       />
       {replies.map((child: any) => (
         <ReplyBranch
@@ -166,6 +195,7 @@ function ReplyBranch({
           onOpenThread={onOpenThread}
           onOpenProfile={onOpenProfile}
           onPostHidden={onPostHidden}
+          onHiddenReplyChange={onHiddenReplyChange}
           sort={sort}
         />
       ))}
@@ -184,11 +214,19 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   const [failureMessage, setFailureMessage] = useState<string | null>(null);
   const [replyError, setReplyError] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [hiddenUris, setHiddenUris] = useState<string[]>([]);
+  const [hiddenOpen, setHiddenOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const replyInput = React.useRef<React.ComponentRef<typeof TextInput>>(null);
 
   function openProfile(did: string) {
     navigation.navigate('UserProfile', { actor: did });
+  }
+
+  function onHiddenReplyChange(_post: any, _hidden: boolean) {
+    // The threadgate is the source of truth. Refetch both the tree and its
+    // hidden-reply list so the expander, counts and menu labels stay in sync.
+    void load();
   }
 
   function hidePost(post: any, scope: 'post' | 'author') {
@@ -221,7 +259,15 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
       );
       const t = res.data.thread;
       if (isThreadViewPost(t)) {
-        setThread(flattenThread(t));
+        const flat = flattenThread(t);
+        setThread(flat);
+        if (isThreadRootAuthor(flat.post)) {
+          loadHiddenReplyUris(flat.post)
+            .then(setHiddenUris)
+            .catch(() => setHiddenUris([]));
+        } else {
+          setHiddenUris([]);
+        }
       } else {
         setFailed(true);
         setFailureMessage('This post is no longer available.');
@@ -323,7 +369,11 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
     );
   }
 
-  const replyCount = countReplies(thread.replies);
+  const hiddenSet = new Set(hiddenUris);
+  const partitioned = partitionHiddenReplies(thread.replies, hiddenSet);
+  const replyCount = countReplies(partitioned.visible);
+  const hiddenCount = countReplies(partitioned.hidden);
+  const canManageHidden = isThreadRootAuthor(thread.post);
 
   return (
     <KeyboardAvoidingView
@@ -387,7 +437,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             {replyCount === 1 ? '1 reply' : replyCount + ' replies'}
           </Text>
         )}
-        {sortReplies(thread.replies, threadSort).map((r: any) => (
+        {sortReplies(partitioned.visible, threadSort).map((r: any) => (
           <ReplyBranch
             key={r.post.uri}
             node={r}
@@ -395,9 +445,59 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             onOpenThread={(replyUri: string) => navigation.push('Thread', { uri: replyUri })}
             onOpenProfile={openProfile}
             onPostHidden={hidePost}
+            onHiddenReplyChange={onHiddenReplyChange}
             sort={threadSort}
           />
         ))}
+        {hiddenCount > 0 ? (
+          <View style={{ marginTop: 12 }}>
+            <Pressable
+              onPress={() => setHiddenOpen((v) => !v)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                hiddenOpen ? 'Hide the hidden replies section' : 'Show hidden replies'
+              }
+              accessibilityState={{ expanded: hiddenOpen }}
+              style={({ pressed }) => [
+                styles.hiddenToggle,
+                { borderColor: p.divider, backgroundColor: p.card, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons name="eye-off-outline" size={18} color={p.secondary} />
+              <View style={{ flex: 1, marginLeft: 8 }}>
+                <Text style={{ color: p.text, fontSize: 14, fontWeight: '600' }}>
+                  {hiddenCount === 1 ? '1 hidden reply' : `${hiddenCount} hidden replies`}
+                </Text>
+                <Text style={{ color: p.secondary, fontSize: 12, marginTop: 1 }}>
+                  {canManageHidden
+                    ? 'You hid these from everyone in this thread.'
+                    : 'Hidden by the author of this thread.'}
+                </Text>
+              </View>
+              <Ionicons
+                name={hiddenOpen ? 'chevron-up' : 'chevron-down'}
+                size={20}
+                color={p.secondary}
+              />
+            </Pressable>
+            {hiddenOpen
+              ? sortReplies(partitioned.hidden, threadSort).map((r: any) => (
+                  <ReplyBranch
+                    key={r.post.uri}
+                    node={r}
+                    depth={0}
+                    onOpenThread={(replyUri: string) =>
+                      navigation.push('Thread', { uri: replyUri })
+                    }
+                    onOpenProfile={openProfile}
+                    onPostHidden={hidePost}
+                    onHiddenReplyChange={onHiddenReplyChange}
+                    sort={threadSort}
+                  />
+                ))
+              : null}
+          </View>
+        ) : null}
       </ScrollView>
 
       {replyError ? (
@@ -486,6 +586,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 6,
     paddingBottom: 2,
+  },
+  hiddenToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginHorizontal: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
   },
   roleDot: {
     width: 6,

@@ -31,8 +31,34 @@ import {
   unmuteActor,
 } from '../lib/moderation';
 import type { ReportReason } from '../lib/moderation';
+import { agent } from '../lib/agent';
+import { useViewer } from '../lib/viewer';
+import {
+  canVerifyProfile,
+  issuedVerificationUris,
+  issueVerificationAsViewer,
+  removeMyVerification,
+} from '../lib/verificationActions';
+import {
+  DEFAULT_DURATION_MINUTES,
+  DURATION_MINUTES,
+  displayDuration,
+  endLiveStatus,
+  liveLinkFromStatus,
+  loadMyLiveStatus,
+  normaliseLiveLink,
+  statusIsActive,
+  upsertLiveStatus,
+} from '../lib/liveStatus';
 
-type Mode = 'menu' | 'report' | 'confirm-block';
+type Mode =
+  | 'menu'
+  | 'report'
+  | 'confirm-block'
+  | 'confirm-verify'
+  | 'confirm-remove-verification'
+  | 'live-form'
+  | 'live-confirm-end';
 
 interface ProfileMenuProps {
   profile: any;
@@ -52,12 +78,16 @@ export function ProfileMenu({
   const p = usePalette();
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const { profile: viewerProfile } = useViewer();
   const [mode, setMode] = useState<Mode>('menu');
   const [reason, setReason] = useState<ReportReason | null>(null);
   const [details, setDetails] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [reportSent, setReportSent] = useState(false);
+  const [liveActive, setLiveActive] = useState(false);
+  const [liveLink, setLiveLink] = useState('');
+  const [liveDuration, setLiveDuration] = useState(DEFAULT_DURATION_MINUTES);
   const containerRef = useRef<any>(null);
   const closeButtonRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -76,7 +106,22 @@ export function ProfileMenu({
     setBusy(false);
     setError(null);
     setReportSent(false);
-  }, [visible]);
+    if (agent.did && profile?.did === agent.did) {
+      void loadMyLiveStatus()
+        .then((stored) => {
+          const status = stored?.value;
+          const active = statusIsActive(status);
+          setLiveActive(active);
+          setLiveLink(liveLinkFromStatus(status) || '');
+          if (typeof status?.record?.durationMinutes === 'number') {
+            setLiveDuration(status.record.durationMinutes);
+          }
+        })
+        .catch(() => setLiveActive(false));
+    } else {
+      setLiveActive(false);
+    }
+  }, [visible, profile?.did]);
 
   if (!visible || !profile) return null;
 
@@ -85,6 +130,11 @@ export function ProfileMenu({
   const blockingUri =
     typeof viewer.blocking === 'string' ? viewer.blocking : undefined;
   const handle = profile.handle || 'this account';
+  const viewerDid = viewerProfile?.did || agent.did;
+  const isOwn = !!viewerDid && viewerDid === profile.did;
+  const canVerify = canVerifyProfile(viewerProfile, profile.did);
+  const hasIssued =
+    !!viewerDid && issuedVerificationUris(profile, viewerDid).length > 0;
 
   const title =
     mode === 'report'
@@ -93,7 +143,17 @@ export function ProfileMenu({
         ? blockingUri
           ? 'Unblock account'
           : 'Block account'
-        : 'Account options';
+        : mode === 'confirm-verify'
+          ? 'Verify account'
+          : mode === 'confirm-remove-verification'
+            ? 'Remove verification'
+            : mode === 'live-form'
+              ? liveActive
+                ? 'Edit live status'
+                : 'Go live'
+              : mode === 'live-confirm-end'
+                ? 'End live status'
+                : 'Account options';
 
   function close() {
     if (!busy) onClose();
@@ -146,6 +206,73 @@ export function ProfileMenu({
       setError(
         `Could not ${blockingUri ? 'unblock' : 'block'} @${handle}. Try again.`
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleIssueVerification() {
+    if (!canVerify || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await issueVerificationAsViewer(viewerProfile, profile);
+      onReload();
+      close();
+    } catch {
+      setError(`Could not verify @${handle}. Try again.`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleRemoveVerification() {
+    if (!hasIssued || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await removeMyVerification(profile);
+      onReload();
+      close();
+    } catch {
+      setError(`Could not remove your verification of @${handle}. Try again.`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleGoLive() {
+    if (busy) return;
+    const link = normaliseLiveLink(liveLink);
+    if (liveLink.trim() && !link) {
+      setError('Enter a valid http(s) link, or leave it blank.');
+      return;
+    }
+    setBusy(true);
+    setError(null);
+    try {
+      await upsertLiveStatus(link || undefined, liveDuration);
+      setLiveActive(true);
+      onReload();
+      close();
+    } catch {
+      setError('Could not update your live status. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleEndLive() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await endLiveStatus();
+      setLiveActive(false);
+      onReload();
+      close();
+    } catch {
+      setError('Could not end your live status. Try again.');
     } finally {
       setBusy(false);
     }
@@ -311,39 +438,222 @@ export function ProfileMenu({
         </View>
       </>
     );
+  } else if (mode === 'confirm-verify') {
+    content = (
+      <>
+        <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20 }}>
+          Verify @{handle}? This publishes a verification record in your account and
+          can be undone at any time.
+        </Text>
+        {error ? <ErrorNote message={error} /> : null}
+        <View style={styles.footerRow}>
+          <SheetButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => openMode('menu')}
+            disabled={busy}
+          />
+          <SheetButton
+            label="Verify"
+            onPress={() => void handleIssueVerification()}
+            disabled={busy}
+            busy={busy}
+          />
+        </View>
+      </>
+    );
+  } else if (mode === 'confirm-remove-verification') {
+    content = (
+      <>
+        <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20 }}>
+          Remove your verification of @{handle}? This deletes the verification
+          record from your account.
+        </Text>
+        {error ? <ErrorNote message={error} /> : null}
+        <View style={styles.footerRow}>
+          <SheetButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => openMode('menu')}
+            disabled={busy}
+          />
+          <SheetButton
+            label="Remove"
+            variant="danger"
+            onPress={() => void handleRemoveVerification()}
+            disabled={busy}
+            busy={busy}
+          />
+        </View>
+      </>
+    );
+  } else if (mode === 'live-form') {
+    content = (
+      <>
+        <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20 }}>
+          Add a temporary live status to your profile. People who open your
+          profile will see it until it expires.
+        </Text>
+        <TextInput
+          value={liveLink}
+          onChangeText={setLiveLink}
+          placeholder="https://twitch.tv/your-stream (optional)"
+          placeholderTextColor={p.secondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          keyboardType="url"
+          accessibilityLabel="Live link"
+          style={[
+            styles.input,
+            { color: p.text, borderColor: p.divider, backgroundColor: p.bg },
+          ]}
+        />
+        <Text style={{ color: p.secondary, fontSize: 13, fontWeight: '600' }}>
+          Duration: {displayDuration(liveDuration)}
+        </Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {DURATION_MINUTES.map((minutes) => (
+            <Pressable
+              key={minutes}
+              onPress={() => setLiveDuration(minutes)}
+              accessibilityRole="button"
+              accessibilityLabel={`Duration ${displayDuration(minutes)}`}
+              accessibilityState={{ selected: minutes === liveDuration }}
+              style={[
+                styles.durationChip,
+                {
+                  borderColor: minutes === liveDuration ? p.accent : p.divider,
+                  backgroundColor: minutes === liveDuration ? p.accent : p.bg,
+                },
+              ]}
+            >
+              <Text
+                style={{
+                  color: minutes === liveDuration ? p.onAccent : p.text,
+                  fontSize: 13,
+                  fontWeight: '600',
+                }}
+              >
+                {displayDuration(minutes)}
+              </Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+        {error ? <ErrorNote message={error} /> : null}
+        <View style={styles.footerRow}>
+          <SheetButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => openMode('menu')}
+            disabled={busy}
+          />
+          <SheetButton
+            label={liveActive ? 'Update' : 'Go live'}
+            onPress={() => void handleGoLive()}
+            disabled={busy}
+            busy={busy}
+          />
+        </View>
+      </>
+    );
+  } else if (mode === 'live-confirm-end') {
+    content = (
+      <>
+        <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20 }}>
+          End your live status now? The status record is removed from your
+          account.
+        </Text>
+        {error ? <ErrorNote message={error} /> : null}
+        <View style={styles.footerRow}>
+          <SheetButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => openMode('menu')}
+            disabled={busy}
+          />
+          <SheetButton
+            label="End live"
+            variant="danger"
+            onPress={() => void handleEndLive()}
+            disabled={busy}
+            busy={busy}
+          />
+        </View>
+      </>
+    );
   } else {
     content = (
       <>
-        <MenuRow
-          icon="flag-outline"
-          label="Report account"
-          detail="Send this account to Bluesky moderation."
-          onPress={() => openMode('report')}
-          disabled={busy}
-        />
-        <MenuRow
-          icon={isMuted ? 'volume-high-outline' : 'volume-mute-outline'}
-          label={isMuted ? 'Unmute account' : 'Mute account'}
-          detail={
-            isMuted
-              ? 'Show this account in your feeds again.'
-              : 'Hide this account without blocking it.'
-          }
-          onPress={() => void handleMute()}
-          disabled={busy}
-        />
-        <MenuRow
-          icon={blockingUri ? 'person-add-outline' : 'ban-outline'}
-          label={blockingUri ? 'Unblock account' : 'Block account'}
-          detail={
-            blockingUri
-              ? 'Allow this account to interact with you again.'
-              : 'Stop this account from seeing or interacting with you.'
-          }
-          danger={!blockingUri}
-          onPress={() => openMode('confirm-block')}
-          disabled={busy}
-        />
+        {isOwn ? (
+          <MenuRow
+            icon="radio-outline"
+            label={liveActive ? 'Edit live status' : 'Go live'}
+            detail={
+              liveActive
+                ? 'Update your current live status.'
+                : 'Add a temporary live status to your profile.'
+            }
+            onPress={() => openMode('live-form')}
+            disabled={busy}
+          />
+        ) : null}
+        {isOwn && liveActive ? (
+          <MenuRow
+            icon="radio-button-off-outline"
+            label="End live status"
+            detail="Remove your live status now."
+            danger
+            onPress={() => openMode('live-confirm-end')}
+            disabled={busy}
+          />
+        ) : null}
+        {canVerify ? (
+          <MenuRow
+            icon={hasIssued ? 'checkmark-circle-outline' : 'checkmark-circle-outline'}
+            label={hasIssued ? 'Remove verification' : 'Verify account'}
+            detail={
+              hasIssued
+                ? 'Withdraw the verification record you issued to this account.'
+                : 'Publish a verification record for this account.'
+            }
+            onPress={() => openMode(hasIssued ? 'confirm-remove-verification' : 'confirm-verify')}
+            disabled={busy}
+          />
+        ) : null}
+        {isOwn ? null : (
+          <>
+            <MenuRow
+              icon="flag-outline"
+              label="Report account"
+              detail="Send this account to Bluesky moderation."
+              onPress={() => openMode('report')}
+              disabled={busy}
+            />
+            <MenuRow
+              icon={isMuted ? 'volume-high-outline' : 'volume-mute-outline'}
+              label={isMuted ? 'Unmute account' : 'Mute account'}
+              detail={
+                isMuted
+                  ? 'Show this account in your feeds again.'
+                  : 'Hide this account without blocking it.'
+              }
+              onPress={() => void handleMute()}
+              disabled={busy}
+            />
+            <MenuRow
+              icon={blockingUri ? 'person-add-outline' : 'ban-outline'}
+              label={blockingUri ? 'Unblock account' : 'Block account'}
+              detail={
+                blockingUri
+                  ? 'Allow this account to interact with you again.'
+                  : 'Stop this account from seeing or interacting with you.'
+              }
+              danger={!blockingUri}
+              onPress={() => openMode('confirm-block')}
+              disabled={busy}
+            />
+          </>
+        )}
         {error ? <ErrorNote message={error} /> : null}
         {busy ? <ActivityIndicator color={p.accent} style={{ marginTop: 8 }} /> : null}
         <Pressable
@@ -625,6 +935,23 @@ const styles = StyleSheet.create({
     lineHeight: 19,
     textAlignVertical: 'top',
     marginTop: 2,
+  },
+  input: {
+    minHeight: 46,
+    borderWidth: 1,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 12,
+    fontSize: 14,
+    marginTop: 2,
+  },
+  durationChip: {
+    minHeight: 36,
+    paddingHorizontal: 12,
+    marginRight: 8,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   footerRow: {
     flexDirection: 'row',

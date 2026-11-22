@@ -39,8 +39,22 @@ import {
 import type { ReportReason } from '../lib/moderation';
 import { usePreferences } from '../lib/preferences';
 import { languageSummary } from '../lib/postOptions';
+import {
+  isThreadRootAuthor,
+  loadHiddenReplyUris,
+  setReplyHidden,
+} from '../lib/hiddenReplies';
+import {
+  canDetachQuote,
+  isQuoteDetached,
+  setPostPinned,
+  setQuoteDetached,
+  setThreadMuted,
+} from '../lib/postActions';
+import type { FeedbackKind } from '../lib/feedFeedbackModel';
+import { hidePostForMe } from '../lib/hiddenPosts';
 
-type Mode = 'menu' | 'report' | 'confirm-block' | 'confirm-delete';
+type Mode = 'menu' | 'report' | 'confirm-block' | 'confirm-delete' | 'confirm-hide';
 type HideScope = 'post' | 'author';
 
 interface PostMenuProps {
@@ -48,10 +62,12 @@ interface PostMenuProps {
   visible: boolean;
   onClose: () => void;
   onHidden?: (post: any, scope: HideScope) => void;
+  onHiddenReplyChange?: (post: any, hidden: boolean) => void;
   onTranslate?: () => void;
   hasTranslation?: boolean;
   translationVisible?: boolean;
   translationBusy?: boolean;
+  onFeedback?: (kind: FeedbackKind) => void;
 }
 
 export function PostMenu({
@@ -59,10 +75,12 @@ export function PostMenu({
   visible,
   onClose,
   onHidden,
+  onHiddenReplyChange,
   onTranslate,
   hasTranslation = false,
   translationVisible = false,
   translationBusy = false,
+  onFeedback,
 }: PostMenuProps) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
@@ -76,6 +94,10 @@ export function PostMenu({
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [reportSent, setReportSent] = useState(false);
+  const [replyIsHidden, setReplyIsHidden] = useState(false);
+  const [isPinned, setIsPinned] = useState(false);
+  const [isThreadMuted, setIsThreadMuted] = useState(false);
+  const [detached, setDetached] = useState(false);
   const containerRef = useRef<any>(null);
   const closeButtonRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -95,13 +117,26 @@ export function PostMenu({
     setError(null);
     setNotice(null);
     setReportSent(false);
-  }, [visible]);
+    setReplyIsHidden(false);
+    setIsPinned(!!(post && post.viewer && post.viewer.pinned));
+    setIsThreadMuted(!!(post && post.viewer && post.viewer.threadMuted));
+    setDetached(isQuoteDetached(post && post.embed));
+    if (visible && post && post.record && post.record.reply && isThreadRootAuthor(post)) {
+      // Only the root post author can read/write this threadgate, and the
+      // record lives in their own repo at the root post's rkey.
+      void loadHiddenReplyUris(post)
+        .then((uris) => setReplyIsHidden(uris.includes(post.uri)))
+        .catch(() => setReplyIsHidden(false));
+    }
+  }, [visible, post]);
 
   if (!visible || !post) return null;
 
   const author = post.author || {};
   const viewer = author.viewer || {};
   const isOwn = !!author.did && author.did === agent.did;
+  const isReply = !!(post.record && post.record.reply && post.record.reply.parent);
+  const canHideForEveryone = isReply && !isOwn && isThreadRootAuthor(post);
   const isMuted = !!viewer.muted;
   const blockingUri =
     typeof viewer.blocking === 'string' ? viewer.blocking : undefined;
@@ -121,7 +156,11 @@ export function PostMenu({
           : 'Block account'
         : mode === 'confirm-delete'
           ? 'Delete post'
-          : 'Post options';
+          : mode === 'confirm-hide'
+            ? isReply
+              ? 'Hide reply for me'
+              : 'Hide post for me'
+            : 'Post options';
 
   function close() {
     if (!busy) onClose();
@@ -188,6 +227,95 @@ export function PostMenu({
     if (busy) return;
     onClose();
     navigation.navigate('Compose', { quote: post });
+  }
+
+  async function handleToggleReplyHidden() {
+    if (!canHideForEveryone || busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const hide = !replyIsHidden;
+    try {
+      await setReplyHidden(post, post.uri, hide);
+      setReplyIsHidden(hide);
+      setNotice(
+        hide
+          ? 'Reply hidden for everyone. Only you can still see it in this thread.'
+          : 'Reply is visible to everyone again.'
+      );
+      onHiddenReplyChange?.(post, hide);
+    } catch (err) {
+      setError(
+        describeFailure(err, 'Could not change this reply’s visibility. Try again.')
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleTogglePin() {
+    if (!isOwn || busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const pin = !isPinned;
+    try {
+      await setPostPinned(post, pin);
+      setIsPinned(pin);
+      setNotice(pin ? 'Post pinned to your profile.' : 'Post unpinned from your profile.');
+    } catch (err) {
+      setError(describeFailure(err, 'Could not change the pinned post. Try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleToggleThreadMute() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const mute = !isThreadMuted;
+    try {
+      await setThreadMuted(post, mute);
+      setIsThreadMuted(mute);
+      setNotice(
+        mute
+          ? 'Thread muted. Its replies will be hidden from your feeds.'
+          : 'Thread unmuted. Its replies will appear again.'
+      );
+    } catch (err) {
+      setError(describeFailure(err, 'Could not change this thread’s mute. Try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleToggleQuoteDetach() {
+    if (busy || !canDetachQuote(post)) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    const detach = !detached;
+    try {
+      await setQuoteDetached(post, detach);
+      setDetached(detach);
+      setNotice(
+        detach
+          ? 'Your quoted post has been detached.'
+          : 'Your quoted post is attached again.'
+      );
+    } catch (err) {
+      setError(describeFailure(err, 'Could not change the quote attachment. Try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function handleFeedback(kind: FeedbackKind) {
+    if (!onFeedback || busy) return;
+    onFeedback(kind);
+    setNotice('Feedback sent to the feed operator.');
   }
 
   async function handleMute() {
@@ -257,6 +385,23 @@ export function PostMenu({
     } catch (err) {
       // The post is still there: say so, and leave Delete available to retry.
       setError(describeFailure(err, 'Could not delete this post. It is still there; try again.'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleHideForMe() {
+    if (!post.uri || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      // Device-local only: no report, no server write. The moderation context
+      // subscribes to this store and filters the post on every surface.
+      await hidePostForMe(post.uri);
+      onHidden?.(post, 'post');
+      close();
+    } catch {
+      setError('Could not hide this post. Try again.');
     } finally {
       setBusy(false);
     }
@@ -445,6 +590,32 @@ export function PostMenu({
         </View>
       </>
     );
+  } else if (mode === 'confirm-hide') {
+    content = (
+      <>
+        <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 20 }}>
+          {isReply
+            ? 'Hide this reply from your feeds and threads on this device. This cannot be undone here.'
+            : 'Hide this post from your feeds and threads on this device. This cannot be undone here.'}
+        </Text>
+        {error ? <ErrorNote message={error} /> : null}
+        <View style={styles.footerRow}>
+          <SheetButton
+            label="Cancel"
+            variant="secondary"
+            onPress={() => openMode('menu')}
+            disabled={busy}
+          />
+          <SheetButton
+            label="Hide"
+            variant="danger"
+            onPress={() => void handleHideForMe()}
+            disabled={busy}
+            busy={busy}
+          />
+        </View>
+      </>
+    );
   } else {
     content = (
       <>
@@ -499,16 +670,71 @@ export function PostMenu({
           disabled={busy}
         />
         {isOwn ? (
+          <>
+            <MenuRow
+              icon={isPinned ? 'pin-outline' : 'bookmark-outline'}
+              label={isPinned ? 'Unpin from profile' : 'Pin to profile'}
+              detail={
+                isPinned
+                  ? 'Remove this post from the top of your profile.'
+                  : 'Feature this post at the top of your profile.'
+              }
+              onPress={() => void handleTogglePin()}
+              disabled={busy}
+            />
+            <MenuRow
+              icon="options-outline"
+              label="Interaction settings"
+              detail="Choose who can reply and whether this post can be quoted."
+              onPress={() => {
+                onClose();
+                navigation.navigate('InteractionSettings', { uri: post.uri });
+              }}
+              disabled={busy}
+            />
+          </>
+        ) : null}
+        {canDetachQuote(post) ? (
           <MenuRow
-            icon="options-outline"
-            label="Interaction settings"
-            detail="Choose who can reply and whether this post can be quoted."
-            onPress={() => {
-              onClose();
-              navigation.navigate('InteractionSettings', { uri: post.uri });
-            }}
+            icon="chatbox-outline"
+            label={detached ? 'Reattach quote' : 'Detach quote'}
+            detail={
+              detached
+                ? 'Attach your quoted post to this post again.'
+                : 'Remove your quoted post from this post.'
+            }
+            onPress={() => void handleToggleQuoteDetach()}
             disabled={busy}
           />
+        ) : null}
+        <MenuRow
+          icon={isThreadMuted ? 'volume-high-outline' : 'volume-mute-outline'}
+          label={isThreadMuted ? 'Unmute thread' : 'Mute thread'}
+          detail={
+            isThreadMuted
+              ? 'Show replies in this thread in your feeds again.'
+              : 'Hide this thread and its replies from your feeds.'
+          }
+          onPress={() => void handleToggleThreadMute()}
+          disabled={busy}
+        />
+        {onFeedback ? (
+          <>
+            <MenuRow
+              icon="happy-outline"
+              label="Show more like this"
+              detail="Tell this feed's operator you want more posts like this."
+              onPress={() => handleFeedback('more')}
+              disabled={busy}
+            />
+            <MenuRow
+              icon="sad-outline"
+              label="Show less like this"
+              detail="Tell this feed's operator you want fewer posts like this."
+              onPress={() => handleFeedback('less')}
+              disabled={busy}
+            />
+          </>
         ) : null}
         {isOwn ? (
           <MenuRow
@@ -551,6 +777,26 @@ export function PostMenu({
               onPress={() => openMode('confirm-block')}
               disabled={busy}
             />
+            <MenuRow
+              icon="eye-off-outline"
+              label={isReply ? 'Hide reply for me' : 'Hide post for me'}
+              detail="Hide this from your feeds and threads on this device only."
+              onPress={() => openMode('confirm-hide')}
+              disabled={busy}
+            />
+            {canHideForEveryone ? (
+              <MenuRow
+                icon={replyIsHidden ? 'eye-outline' : 'eye-off-outline'}
+                label={replyIsHidden ? 'Unhide reply for everyone' : 'Hide reply for everyone'}
+                detail={
+                  replyIsHidden
+                    ? 'Show this reply to everyone in your thread again.'
+                    : 'Hide this reply from everyone in your thread. Only you will still see it.'
+                }
+                onPress={() => void handleToggleReplyHidden()}
+                disabled={busy}
+              />
+            ) : null}
           </>
         )}
         {notice ? (

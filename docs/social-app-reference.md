@@ -181,8 +181,8 @@ pages.
 
 Account settings include email, password, handle, birthday, automation label,
 data export, deactivation and permanent account deletion. Privacy settings
-include 2FA, app passwords, activity privacy and post notification
-preferences.
+include 2FA, app passwords, post notification preferences and activity privacy
+(the published `app.bsky.notification.declaration` record at rkey `self`).
 
 Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 `src/routes.ts`, `src/view/screens/PrivacyPolicy.tsx`,
@@ -192,19 +192,19 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 
 | Surface | Balla now | Gap |
 | --- | --- | --- |
-| Auth | OAuth-only, DPoP, native and web callback, granular collection and AppView scope | No multi-account; existing sessions need one re-authorisation for the narrower scope |
-| Home | Chronological Following first, a visible switcher for saved feeds, pagination and pull-to-refresh | No Discover, video, hashtag or topic surfaces |
-| Posts | Text, one-to-ten photo uploads with alt text and legacy/gallery embeds, record-with-media quotes, like, repost, bookmark, reply, delete, copy link/text, share sheet, translation with show-original and image viewing | No video, GIF, pin or edit interaction settings |
-| Threads | Ancestors, nested replies, reply composer | No threadgate, hidden replies, reply sorting or tree preference |
-| Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, authored lists, report/block/mute, and editing of name, bio, pronouns, links, avatar and banner | No verification or pinned post |
-| Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed, starter-pack and list destinations | Profile-scoped search (#25); no global list-search endpoint |
-| Notifications | Tabs, grouping, unread count, mark-all-read and per-category in-app/push preferences with audience filters | No device push registration (#36) |
+| Auth | OAuth-only, DPoP, native and web callback, granular collection/AppView/video/chat scopes, and separate sessions per DID with a labelled switch/add/remove flow | Older sessions need one re-authorisation for the narrower scopes |
+| Home | Chronological Following first, a visible switcher for saved feeds, pagination and pull-to-refresh, plus opt-in Discover, video, hashtag and topic surfaces | Following stays unranked by design |
+| Posts | Text, one-to-ten photo uploads with alt text and legacy/gallery embeds, video/GIF posts with captions, record-with-media quotes, like, repost, bookmark, reply, delete, pin/unpin, thread mute, quote detach, interaction settings, show more/less like this through `sendInteractions`, device-local hide post/reply for me merged into moderation prefs, copy link/text, share sheet, translation with show-original and image viewing | None material |
+| Threads | Ancestors, nested replies, reply composer, threadgate/postgate rules, reply sorting, hidden replies from the threadgate `hiddenReplies` field with an expandable section, thread mute/unmute, and quote detach/reattach through postgate `detachedEmbeddingUris` | Hidden replies are managed by the root post author |
+| Profiles | Public profile, follow/unfollow, posts, follower/following/known-follower lists, likes/reposts/quotes lists, authored lists, report/block/mute, verification and trusted-verifier badges (honouring the hide-badges preference), verifier-role issue/remove verification through `app.bsky.graph.verification`, temporary live status through `app.bsky.actor.status` with a LIVE profile indicator and link card, pinned post, and editing of name, bio, pronouns, links, avatar and banner | None material |
+| Search | Top, Latest, People, Feeds and Starter Packs; structured include/exclude filters; persisted device history; tappable hashtags, mentions and links; feed, starter-pack and list destinations; profile-scoped search from a profile's Search posts action | No global list-search endpoint |
+| Notifications | Tabs, grouping, unread count, mark-all-read and per-category in-app/push preferences with audience filters; per-account activity subscriptions through the published RPCs, with a profile bell and a management list | No device push registration (#36) |
 | Saved | Private bookmarks and remove-in-place | Custom feed management lives in Feeds |
-| Feeds/lists | Saved and pinned custom feeds; lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; no global list-search endpoint |
+| Feeds/lists | Saved and pinned custom feeds; lists with create/edit, membership, list feeds, subscribe/block states, profile links and list/feed reports | No global list-search endpoint |
 | Messages | Inbox with unread and join-request counts, chat requests, paginated messages with replies and reactions, text/post embeds, group creation/members/invite links, conversation settings with lock/unlock, mark-all-read, mute/leave, report and block, and chat notification preferences through the chat proxy | Device push delivery remains blocked (#36) |
-| Moderation | Post/profile report, block/mute, delete, labels with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox with reports, account standing, notices, actions and appeals | List/feed reports and inbox push delivery absent |
-| Settings | Settings shell with account/security, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real writes; session facts come from non-secret OAuth metadata | Email, password, 2FA, app passwords, activity privacy and account lifecycle are provider-owned and linked to rather than faked; push delivery preferences remain |
-| Composer | Text, image/camera selection, up to ten compressed JPEGs, alt-text editor and enforcement preference, abortable uploads, retries, gallery previews, quotes and grapheme counter | Video, GIF, link cards, languages, labels, threadgates, drafts and threads absent |
+| Moderation | Post/profile/list/feed report, block/mute, delete, labels with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox with reports, account standing, notices, actions and appeals | Inbox push delivery absent |
+| Settings | Settings shell with account/security, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real writes; session facts come from non-secret OAuth metadata; activity privacy writes the published `app.bsky.notification.declaration` record | Email, password, 2FA, app passwords and account lifecycle are provider-owned and linked to rather than faked; push delivery preferences remain |
+| Composer | Text, image/camera selection, up to ten compressed JPEGs, alt-text editor and enforcement preference, abortable uploads, retries, gallery previews, video/GIF with captions, link cards, languages, labels, reply/quote gates with a real list picker, drafts, multi-post threads and honest grapheme counting | Scheduling remains out of scope |
 | Account lifecycle | OAuth sign-out; account/data screen with confirmation-gated export, deactivation and deletion guidance, and explicit PDS limits | No in-client account deletion, because that is a PDS operation |
 | Support/legal | In-app Help, Privacy, Terms, Guidelines, Copyright, Contact and About; matching site pages | Public contact is the issue tracker and private advisory form |
 
@@ -220,7 +220,8 @@ text**, **Share**, **Translate post**, **Mute account**, **Block account**,
 2. **Done:** profile report/block/mute actions, with blocked profiles unable to
    be followed. Followers/following entry points remain.
 3. **Done:** report categories and `com.atproto.moderation.createReport` to the
-   configured labeler. A local report receipt is still missing.
+   configured labeler for posts, profiles, lists and feeds, with a local receipt
+   that is explicitly not presented as an official moderation status.
 4. **Done:** post and profile block/mute through the AppView, filtering feeds,
    search, saved posts, threads and notifications.
 5. **Done:** labels and content warnings are applied before rendering, including
@@ -244,8 +245,8 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 1. Media composer with image upload, alt text, gallery, video/GIF and errors.
 2. Quote posts, link cards, languages, self-labels and threadgates.
 3. Drafts and multi-post threads.
-4. Followers, following, known followers, post engagement lists and profile
-   editing are **done**. Verification and pinned posts remain.
+4. Followers, following, known followers, post engagement lists, profile
+   editing, verification (display and trusted-verifier writes) and pinned posts are **done**.
 5. Likes/reposts/quotes lists on posts.
 
 ### Slice 3 — discovery and curation
@@ -259,8 +260,8 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 ### Slice 4 — chat and depth
 
 1. Chat service proxy and OAuth scope are **done**.
-2. Conversation list, requests, messages and post embeds are **done**; group settings and reporting remain.
-3. Moderation inbox is **done**; verification settings remain.
+2. Conversation list, requests, messages, post embeds, group creation/settings and reporting are **done**.
+3. Moderation inbox and verification settings are **done**.
 4. Video feed, hashtags, topics and Atmosphere surfaces.
 5. Account export/deactivation/deletion guidance is **done**; the controls stay on the PDS and Balla links to them with explicit limits.
 

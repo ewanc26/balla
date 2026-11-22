@@ -82,7 +82,31 @@ test('session copy reads non-secret metadata and never renders token values', ()
 
 test('account and privacy settings do not widen the OAuth grant', () => {
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 98);
+  assert.equal(tokens.length, 106);
+  // Every repo collection Balla writes must be covered by a narrow repo scope,
+  // otherwise real OAuth sessions reject the write even though the mock accepts it.
+  for (const collection of [
+    'app.bsky.feed.post',
+    'app.bsky.feed.threadgate',
+    'app.bsky.feed.postgate',
+    'app.bsky.graph.verification',
+    'app.bsky.actor.status',
+    'app.bsky.notification.declaration',
+    'app.bsky.graph.list',
+    'app.bsky.graph.listitem',
+    'app.bsky.graph.listblock',
+    'app.bsky.graph.block',
+    'app.bsky.graph.follow',
+    'app.bsky.actor.profile',
+  ]) {
+    assert.ok(
+      tokens.some((token) => token.startsWith(`repo:${collection}?`)),
+      `${collection} has a write scope`
+    );
+  }
+  // Proxied generator feedback needs an rpc permission for the upstream
+  // aud, which is not known at sign-in; only this exact method uses aud=*.
+  assert.ok(tokens.includes('rpc:app.bsky.feed.sendInteractions?aud=*'));
   assert.equal(
     tokens.some((token) => /com\.atproto\.server\.(requestEmailUpdate|updateEmail|createAppPassword|listAppPasswords|revokeAppPassword|deleteAccount|deactivateAccount)/.test(token)),
     false

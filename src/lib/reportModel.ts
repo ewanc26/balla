@@ -41,6 +41,7 @@ export type ReportSubjectKind =
   | 'post'
   | 'profile'
   | 'list'
+  | 'feed'
   | 'chat-message'
   | 'chat-convo';
 
@@ -63,6 +64,7 @@ const SUBJECT_KINDS: ReportSubjectKind[] = [
   'post',
   'profile',
   'list',
+  'feed',
   'chat-message',
   'chat-convo',
 ];

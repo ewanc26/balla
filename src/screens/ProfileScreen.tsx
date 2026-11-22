@@ -20,6 +20,7 @@ import { ContentWarning } from '../components/ContentWarning';
 import { useModeration } from '../lib/moderationContext';
 import { accountLabelCauses, hiddenByLabel } from '../lib/labelVisibility';
 import { useViewer } from '../lib/viewer';
+import { useAccountPreferences } from '../lib/accountPreferences';
 import { profileLinkHost, profileLinkLabel } from '../lib/profileLinks';
 import {
   listMemberCount,
@@ -28,6 +29,12 @@ import {
 } from '../lib/listModel';
 import { subscribeActorHidden } from '../lib/moderation';
 import { VerificationSheet } from '../components/VerificationSheet';
+import { SubscribeProfileSheet } from '../components/SubscribeProfileSheet';
+import {
+  isSubscribed,
+  parseActivitySubscription,
+  subscriptionSummary,
+} from '../lib/activitySubscriptions';
 import {
   profileAssociatedCounts,
   profileIsLabeler,
@@ -36,12 +43,37 @@ import {
   verificationBadgeLabel,
   type VerificationSummary,
 } from '../lib/profileModel';
+import {
+  liveLinkFromStatus,
+  statusIsActive,
+} from '../lib/liveStatus';
+import {
+  filterForTab,
+  normaliseTab,
+  tabLabel,
+  usesActorLikes,
+  visibleProfileTabs,
+  type ProfileFeedTab,
+} from '../lib/profileTabsModel';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
+
+/** Load a profile tab from the published author-feed filters or actor-likes RPC. */
+async function loadTabPosts(actor: string, tab: ProfileFeedTab): Promise<any[]> {
+  if (usesActorLikes(tab)) {
+    const res = await agent.getActorLikes({ actor, limit: 30 });
+    return (res.data.feed || []).map((item: any) => item.post);
+  }
+  const filter = filterForTab(tab) || undefined;
+  const res = await agent.getAuthorFeed({ actor, limit: 30, filter });
+  return (res.data.feed || []).map((item: any) => item.post);
+}
 
 export function ProfileScreen({ route, navigation }: { route?: any; navigation: any }) {
   const p = usePalette();
   const { opts } = useModeration();
   const { profile: viewerProfile } = useViewer();
+  const { settings: accountSettings } = useAccountPreferences();
+  const hideBadges = accountSettings.hideVerificationBadges;
   const actor = (route && route.params && route.params.actor) || agent.did;
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
@@ -59,6 +91,9 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const [starterPacks, setStarterPacks] = useState<any[]>([]);
   const [pinnedPost, setPinnedPost] = useState<any>(null);
   const [verificationOpen, setVerificationOpen] = useState(false);
+  const [subscribeOpen, setSubscribeOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<ProfileFeedTab>('posts');
+  const [tabLoading, setTabLoading] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -86,17 +121,22 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
     (async () => {
       try {
-        const [prof, feed] = await readWithRetry(() =>
-          Promise.all([
-            agent.getProfile({ actor }),
-            agent.getAuthorFeed({ actor, limit: 30 }),
-          ])
-        );
+        const prof = await readWithRetry(() => agent.getProfile({ actor }));
         if (!active) return;
         const detail = prof.data;
         setProfile(detail);
         setFollowingUri(detail.viewer && detail.viewer.following);
-        setPosts((feed.data.feed || []).map((item: any) => item.post));
+
+        // A deep link can leave a tab that is invalid for this profile (e.g.
+        // Likes on someone else's, or Media on a labeler). Fall back to Posts.
+        setActiveTab((tab) => {
+          const visible = visibleProfileTabs({
+            isSelf: detail.did === agent.did,
+            isLabeler: !!detail.associated?.labeler,
+            hasSession: !!agent.did,
+          });
+          return normaliseTab(tab, visible);
+        });
 
         // The sections below are additive: a missing optional AppView endpoint
         // must never hide the profile or its posts.
@@ -153,6 +193,27 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
       active = false;
     };
   }, [actor, reloadToken]);
+
+  // Each tab is a real published RPC. A tab failure empties only the tab, never
+  // the profile header, so a missing optional filter cannot break navigation.
+  useEffect(() => {
+    let active = true;
+    if (!actor || failed) return () => { active = false; };
+    setTabLoading(true);
+    loadTabPosts(actor, activeTab)
+      .then((list) => {
+        if (active) setPosts(list);
+      })
+      .catch(() => {
+        if (active) setPosts([]);
+      })
+      .finally(() => {
+        if (active) setTabLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [actor, activeTab, reloadToken, failed]);
 
   useEffect(() => {
     return subscribeActorHidden((did) => {
@@ -290,9 +351,16 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   }
 
   const isSelf = profile.did === agent.did;
+  const activitySubscription = parseActivitySubscription(profile.viewer?.activitySubscription);
+  const subscribed = isSubscribed(profile.viewer?.activitySubscription);
+  const liveActive = statusIsActive(profile.status);
+  const liveLink = liveActive ? liveLinkFromStatus(profile.status) : null;
+  const liveExpires = profile.status?.expiresAt;
   const isBlocked = !!(profile.viewer?.blocking || profile.viewer?.blockedBy);
   const verification: VerificationSummary = profileVerification(profile);
-  const badgeLabel = verificationBadgeLabel(verification);
+  // The official client's verification preference hides locally rendered
+  // badges. Verified status itself still comes from Bluesky's records.
+  const badgeLabel = hideBadges ? '' : verificationBadgeLabel(verification);
   const isLabeler = profileIsLabeler(profile);
   const associatedCounts = profileAssociatedCounts(profile);
   const profileDecision = moderateProfile(profile, opts);
@@ -401,7 +469,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 style={{
                   borderRadius: 60,
                   borderWidth: 4,
-                  borderColor: p.card,
+                  borderColor: liveActive ? p.danger : p.card,
                   backgroundColor: p.card,
                 }}
               >
@@ -410,8 +478,54 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                   displayName={profile.displayName || profile.handle}
                   size={104}
                 />
+                {liveActive ? (
+                  <View
+                    accessibilityLabel={`${profile.handle} is live now`}
+                    style={[
+                      styles.liveBadge,
+                      { backgroundColor: p.danger, borderColor: p.card },
+                    ]}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>
+                      LIVE
+                    </Text>
+                  </View>
+                ) : null}
               </View>
             </View>
+            {liveActive ? (
+              <Pressable
+                onPress={() => {
+                  if (liveLink) void Linking.openURL(liveLink);
+                  else setMenuOpen(true);
+                }}
+                accessibilityRole="button"
+                accessibilityLabel={liveLink ? 'Open live stream' : 'Show live status'}
+                style={({ pressed }) => [
+                  styles.liveCard,
+                  {
+                    backgroundColor: p.accentSoft,
+                    borderColor: p.danger,
+                    opacity: pressed ? 0.7 : 1,
+                  },
+                ]}
+              >
+                <Ionicons name="radio-outline" size={18} color={p.danger} />
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={{ color: p.text, fontSize: 14, fontWeight: '700' }}>
+                    Live now
+                  </Text>
+                  {liveExpires ? (
+                    <Text style={{ color: p.secondary, fontSize: 12 }}>
+                      Until {new Date(liveExpires).toLocaleTimeString()}
+                    </Text>
+                  ) : null}
+                </View>
+                {liveLink ? (
+                  <Ionicons name="open-outline" size={16} color={p.secondary} />
+                ) : null}
+              </Pressable>
+            ) : null}
 
             <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
               <View style={{ flex: 1, minWidth: 0 }}>
@@ -472,12 +586,30 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                   ) : null}
                 </View>
               </View>
-              {!isSelf ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+                {!isSelf && !isBlocked ? (
+                  <Pressable
+                    onPress={() => setSubscribeOpen(true)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Activity notifications for @${profile.handle}`}
+                    accessibilityHint={`Currently ${subscriptionSummary(activitySubscription).toLowerCase()}. Choose what to be notified about.`}
+                    style={({ pressed }) => [
+                      styles.menuButton,
+                      { backgroundColor: pressed ? p.bg : 'transparent' },
+                    ]}
+                  >
+                    <Ionicons
+                      name={subscribed ? 'notifications' : 'notifications-outline'}
+                      size={20}
+                      color={subscribed ? p.accent : p.secondary}
+                    />
+                  </Pressable>
+                ) : null}
                 <Pressable
                   onPress={() => setMenuOpen(true)}
                   accessibilityRole="button"
                   accessibilityLabel="Account options"
-                  accessibilityHint="Report, mute, block or unblock this account"
+                  accessibilityHint={isSelf ? 'Go live or end your live status' : 'Report, mute, block or unblock this account'}
                   style={({ pressed }) => [
                     styles.menuButton,
                     { backgroundColor: pressed ? p.bg : 'transparent' },
@@ -485,7 +617,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 >
                   <Ionicons name="ellipsis-horizontal" size={21} color={p.secondary} />
                 </Pressable>
-              ) : null}
+              </View>
             </View>
 
             {showProfileWarning ? (
@@ -992,6 +1124,21 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
         summary={verification}
         onClose={() => setVerificationOpen(false)}
       />
+      <SubscribeProfileSheet
+        visible={subscribeOpen}
+        did={profile.did}
+        handle={profile.handle}
+        current={profile.viewer?.activitySubscription}
+        onClose={() => setSubscribeOpen(false)}
+        onSaved={(value) =>
+          updateViewer({
+            activitySubscription: {
+              $type: 'app.bsky.notification.defs#activitySubscription',
+              ...value,
+            },
+          })
+        }
+      />
     </>
   );
 }
@@ -1130,6 +1277,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: -8,
+  },
+  liveBadge: {
+    position: 'absolute',
+    bottom: -4,
+    left: -4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 2,
+  },
+  liveCard: {
+    minHeight: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 12,
+    marginTop: 14,
   },
   labelerChip: {
     minHeight: 20,

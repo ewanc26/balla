@@ -52,6 +52,13 @@ test('new receipts go first and the local history stays bounded', () => {
   assert.ok(!next.some((item) => item.id === MAX_REPORT_RECEIPTS - 1));
 });
 
+test('feed receipts are accepted with the same strong-ref rules as list receipts', () => {
+  const stored = normaliseReceipts([receipt(11, 'feed')]);
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0].subjectKind, 'feed');
+  assert.deepEqual(normaliseReceipts([{ ...receipt(12), subjectKind: 'feed-generator' }]), []);
+});
+
 test('chat report kinds are accepted and normalised like any other receipt', () => {
   for (const kind of ['chat-message', 'chat-convo']) {
     const stored = normaliseReceipts([receipt(10, kind)]);

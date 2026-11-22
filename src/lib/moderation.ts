@@ -171,6 +171,30 @@ export async function reportList(
   );
 }
 
+/** Feed generators are records, so they are reported by strong ref like lists. */
+export async function reportFeed(
+  feed: any,
+  reasonType: ReportReason,
+  details: string
+) {
+  const name =
+    typeof feed?.displayName === 'string' && feed.displayName.trim()
+      ? feed.displayName.trim()
+      : 'Unnamed feed';
+  return submitReport(
+    {
+      $type: 'com.atproto.repo.strongRef',
+      uri: feed.uri,
+      cid: feed.cid,
+    },
+    'feed',
+    `Feed “${name}”`,
+    feed.uri,
+    reasonType,
+    details
+  );
+}
+
 export async function muteActor(did: string) {
   return agent.app.bsky.graph.muteActor({ actor: did });
 }

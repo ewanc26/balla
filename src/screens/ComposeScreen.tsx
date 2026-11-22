@@ -52,6 +52,7 @@ import { resolveExternalLink } from '../lib/externalLink';
 import { Avatar } from '../components/Avatar';
 import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
+import { useAccountPreferences } from '../lib/accountPreferences';
 import { base64ToBytes, formatBytes } from '../lib/imageBytes';
 import {
   MAX_ALT_TEXT,
@@ -81,28 +82,15 @@ import {
   postgateWrite,
   threadgateWrite,
   type InteractionGates,
-  type QuoteAccess,
-  type ReplyAccess,
 } from '../lib/interactionGates';
 import { CARD_RADIUS, cardShadow, useFontScale, usePalette, webInputReset } from '../theme';
+import { REPLY_OPTIONS, QUOTE_OPTIONS } from '../lib/gateOptions';
+import { ReplyListPicker } from '../components/ReplyListPicker';
 
 // Bluesky caps posts at 300 graphemes; the counter is honest and always
 // visible rather than a colour shift you have to notice.
 const LIMIT = 300;
 const MAX_LONG_EDGE = 2048;
-
-const REPLY_OPTIONS: Array<{ value: ReplyAccess; label: string; detail: string }> = [
-  { value: 'everyone', label: 'Everyone', detail: 'Anyone on Bluesky can reply' },
-  { value: 'mentioned', label: 'Mentioned accounts', detail: 'Only people named in the post' },
-  { value: 'following', label: 'People you follow', detail: 'Anyone in your following list' },
-  { value: 'followers', label: 'People who follow you', detail: 'Anyone following your account' },
-  { value: 'nobody', label: 'Nobody', detail: 'Close replies on this post' },
-];
-
-const QUOTE_OPTIONS: Array<{ value: QuoteAccess; label: string; detail: string }> = [
-  { value: 'everyone', label: 'Anyone', detail: 'This post can be quoted' },
-  { value: 'nobody', label: 'Nobody', detail: 'Disable quotes of this post' },
-];
 
 type ComposerImage = {
   key: string;
@@ -289,6 +277,8 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const font = useFontScale();
   const { profile } = useViewer();
   const { preferences } = usePreferences();
+  const { settings: accountSettings, loading: accountLoading } = useAccountPreferences();
+  const appliedDefaultGates = useRef(false);
   const [quote, setQuote] = useState(
     route && route.params ? route.params.quote : null
   );
@@ -351,6 +341,14 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         : current
     );
   }, [preferences.primaryLanguage, draftChecked, recoverDraft]);
+
+  useEffect(() => {
+    // Account defaults load after the first render. Apply them once, only to a
+    // fresh post: a recovered or loaded draft keeps the gates it was saved with.
+    if (accountLoading || !draftChecked || recoverDraft || appliedDefaultGates.current) return;
+    appliedDefaultGates.current = true;
+    setGates(normaliseGates(accountSettings.defaultGates));
+  }, [accountLoading, draftChecked, recoverDraft, accountSettings.defaultGates]);
 
   useEffect(() => {
     let active = true;
@@ -2860,6 +2858,12 @@ function PostOptionsSheet({
                 onPress={() => onChangeGates({ ...gates, reply: option.value })}
               />
             ))}
+            {gates.reply === 'list' ? (
+              <ReplyListPicker
+                selected={gates.listUri || null}
+                onSelect={(listUri) => onChangeGates({ ...gates, listUri })}
+              />
+            ) : null}
 
             <View
               style={[
