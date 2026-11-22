@@ -52,6 +52,9 @@ import { FeedPreferencesScreen } from './src/screens/FeedPreferencesScreen';
 import { ThreadPreferencesScreen } from './src/screens/ThreadPreferencesScreen';
 import { StarterPackScreen } from './src/screens/StarterPackScreen';
 import { StarterPackEditScreen } from './src/screens/StarterPackEditScreen';
+import { ChatScreen } from './src/screens/ChatScreen';
+import { ConversationScreen } from './src/screens/ConversationScreen';
+import { ChatSettingsScreen } from './src/screens/ChatSettingsScreen';
 import { ListsScreen } from './src/screens/ListsScreen';
 import { ListDetailScreen } from './src/screens/ListDetailScreen';
 import { ListEditScreen } from './src/screens/ListEditScreen';
@@ -78,6 +81,7 @@ import {
   MOCK_MODE,
   MOCK_OTHER_ACTOR,
   MOCK_THREAD_URI,
+  MOCK_CONVO_ID,
   installMockAgent,
   mockInitialScreen,
   mockInitialTab,
@@ -216,6 +220,10 @@ export default function App() {
     if (navigationRef.isReady()) navigationRef.navigate('Feeds');
   }, []);
 
+  const openMessages = useCallback(() => {
+    if (navigationRef.isReady()) navigationRef.navigate('Chat');
+  }, []);
+
   const syncActiveTab = useCallback(() => {
     const name = navigationRef.getCurrentRoute()?.name || 'Home';
     setRouteName(name);
@@ -235,6 +243,8 @@ export default function App() {
       navigationRef.navigate('UserProfile', { actor: MOCK_OTHER_ACTOR });
     } else if (screen === 'Compose') {
       navigationRef.navigate('Compose');
+    } else if (screen === 'Conversation') {
+      navigationRef.navigate('Conversation', { convoId: MOCK_CONVO_ID });
     } else if (screen === 'Hashtag') {
       navigationRef.navigate('Hashtag', { tag: 'tea' });
     } else if (screen === 'Topic') {
@@ -300,6 +310,7 @@ export default function App() {
                         onOpenSettings={openSettings}
                         onOpenLists={openLists}
                         onOpenFeeds={openFeeds}
+                        onOpenMessages={openMessages}
                       />
                     ) : null}
                     {MOCK_MODE ? (
@@ -323,6 +334,7 @@ export default function App() {
                           onOpenSettings={openSettings}
                           onOpenLists={openLists}
                           onOpenFeeds={openFeeds}
+                          onOpenMessages={openMessages}
                         />
                       ) : null}
                       <View style={{ flex: 1, maxWidth: READING_COLUMN_MAX_WIDTH }}>
@@ -386,6 +398,13 @@ export default function App() {
                           <Stack.Screen name="ListDetail" component={ListDetailScreen} />
                           <Stack.Screen name="ListEdit" component={ListEditScreen} />
                           <Stack.Screen name="ListMembers" component={ListMembersScreen} />
+                          <Stack.Screen name="Chat" component={ChatScreen} />
+                          <Stack.Screen name="Conversation" component={ConversationScreen} />
+                          <Stack.Screen
+                            name="ChatSettings"
+                            component={ChatSettingsScreen}
+                            options={{ title: 'Chat settings' }}
+                          />
                         </Stack.Navigator>
                       </View>
                       {showChrome && showRight ? <RightRail onNavigate={navigateToTab} /> : null}

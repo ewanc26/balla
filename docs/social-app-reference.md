@@ -201,7 +201,7 @@ Reference paths: `src/screens/Settings/`, `src/screens/Settings/components/`,
 | Notifications | Tabs, grouping, unread count, mark-all-read and per-category in-app/push preferences with audience filters | No device push registration (#36) |
 | Saved | Private bookmarks and remove-in-place | Custom feed management lives in Feeds |
 | Feeds/lists | Saved and pinned custom feeds; lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; no global list-search endpoint |
-| Messages | None | Chat, requests, groups and chat moderation all absent |
+| Messages | Inbox, unread counts, chat requests, paginated messages, text/post embeds and mute/leave controls through the chat proxy | Group creation and chat moderation remain |
 | Moderation | Post/profile report, block/mute, delete, labels with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox with reports, account standing, notices, actions and appeals | List/feed reports and inbox push delivery absent |
 | Settings | Settings shell with account/security, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real writes; session facts come from non-secret OAuth metadata | Email, password, 2FA, app passwords, activity privacy and account lifecycle are provider-owned and linked to rather than faked; push delivery preferences remain |
 | Composer | Text, image/camera selection, up to ten compressed JPEGs, alt-text editor and enforcement preference, abortable uploads, retries, gallery previews, quotes and grapheme counter | Video, GIF, link cards, languages, labels, threadgates, drafts and threads absent |
@@ -258,8 +258,8 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 
 ### Slice 4 — chat and depth
 
-1. Chat service proxy and OAuth scope.
-2. Conversation list, requests, messages, group settings and reporting.
+1. Chat service proxy and OAuth scope are **done**.
+2. Conversation list, requests, messages and post embeds are **done**; group settings and reporting remain.
 3. Moderation inbox is **done**; verification settings remain.
 4. Video feed, hashtags, topics and Atmosphere surfaces.
 5. Account export/deactivation/deletion guidance is **done**; the controls stay on the PDS and Balla links to them with explicit limits.
@@ -268,8 +268,9 @@ Useful reference files: `PostMenuItems.tsx`, `ReportDialog`,
 
 - Keep `agent.ts` as the only session/agent module. Do not create screen-local
   `Agent` instances.
-- Chat calls need the chat service audience and `atproto-proxy`; they are not
-  AppView calls.
+- Chat calls need the chat service audience and `atproto-proxy` — Balla uses
+  `getChatAgent()` with `withProxy('bsky_chat', 'did:web:api.bsky.chat')`. They are
+  not AppView calls.
 - Reports need the labeler service DID and the correct audience in the OAuth
   scope. A report that only writes locally is not a report.
 - The AppView only hydrates labels from labelers the client requests. Sending

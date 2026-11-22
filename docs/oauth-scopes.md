@@ -4,7 +4,8 @@ Last updated: **22 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **62 tokens**.
+the scope currently has **74 tokens**. Chat is a separate service with its own
+audience, documented below.
 
 ## Repository writes
 
@@ -24,7 +25,7 @@ the scope currently has **62 tokens**.
 
 Balla adds `update` only for the profile, link, list and starter-pack records it
 can edit. It does not update posts or any other record type. There is no
-threadgate, feed generator or chat scope. Starter packs are written through the
+threadgate or feed-generator scope. Starter packs are written through the
 same PDS record API used by Bluesky's reference client; the installed generated
 lexicon declares `app.bsky.graph.starterpack`.
 
@@ -91,6 +92,36 @@ All of these use:
 | `app.bsky.notification.updateSeen` | Mark all read |
 | `app.bsky.unspecced.getPopularFeedGenerators` | Feed discovery in search and the Feeds screen |
 
+## Chat service audience
+
+Chat is served by Bluesky's chat service, not the AppView. Every chat call uses:
+
+`aud=did:web:api.bsky.chat#bsky_chat`
+
+`src/lib/agent.ts` returns a cloned agent with `withProxy('bsky_chat',
+'did:web:api.bsky.chat')`, which sends the documented `atproto-proxy` header.
+The narrow RPCs below are the only chat methods Balla calls. No broad chat
+permission set or wildcard is requested:
+
+| Method | Used by |
+| --- | --- |
+| `chat.bsky.convo.listConvos` | Message inbox, with pagination |
+| `chat.bsky.convo.listConvoRequests` | Request inbox, including group join requests |
+| `chat.bsky.convo.getUnreadCounts` | Real unread conversation counts |
+| `chat.bsky.convo.getConvo` | Conversation header and state |
+| `chat.bsky.convo.getConvoForMembers` | Starting a conversation |
+| `chat.bsky.convo.getMessages` | Message history, with pagination |
+| `chat.bsky.convo.sendMessage` | Sending text and post embeds |
+| `chat.bsky.convo.updateRead` | Marking a conversation read |
+| `chat.bsky.convo.acceptConvo` | Accepting a chat request |
+| `chat.bsky.convo.muteConvo` | Muting a conversation |
+| `chat.bsky.convo.unmuteConvo` | Unmuting a conversation |
+| `chat.bsky.convo.leaveConvo` | Leaving a conversation |
+
+Resolving a shared post's CID uses the already-authorised AppView
+`app.bsky.feed.getPostThread` call; no extra scope is needed for post embeds.
+Balla does not store message content and does not log it.
+
 ## Labeler report audience
 
 `rpc:com.atproto.moderation.createReport?aud=did:plc:ar7c4by46qjdydhdevvrndac#atproto_labeler`
@@ -131,8 +162,8 @@ database.
   writes saved-feed preferences through the AppView; it does not create
   generators or threadgates. Starter packs now have their own narrow write
   scope above.
-- `chat.bsky.*` — DMs are not implemented. A chat audience must be added before
-  shipping them.
+- A broad `include:chat.bsky.authFullClient` permission set — chat uses only the
+  twelve narrow RPCs above, never the full-client grant.
 - `transition:*` and broad wildcards.
 
 ## Re-authorisation
@@ -143,7 +174,9 @@ those changes keep their old grant and must re-authorise before the new
 profile/link/blob, list, saved-feed, inbox or starter-pack scopes are available.
 Signing out and back in requests the current scope. Sessions authorised before
 0.13.0 need that re-authorisation before starter-pack creation or editing works;
-the editor says so rather than hiding the failure. The consent screen should
+the editor says so rather than hiding the failure. Sessions authorised before
+chat was added need to re-authorise before messages work, because the chat
+service is a different audience from the AppView. The consent screen should
 show the collection and RPC list above, not “access to nearly everything”.
 
 ## Caveat

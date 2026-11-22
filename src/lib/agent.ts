@@ -7,6 +7,7 @@ import {
   type OAuthSession,
 } from '@atproto/oauth-client-expo';
 import clientMetadata from '../../oauth-client-metadata.json';
+import { CHAT_SERVICE_DID, CHAT_SERVICE_TYPE } from './chatModel';
 import {
   ACCOUNTS_KEY,
   handleFromInput,
@@ -77,6 +78,20 @@ function createAgent(source: any): Agent {
 }
 
 export let agent: Agent = createAgent(DEFAULT_SERVICE);
+
+/**
+ * Chat RPCs are served by the chat service, not the AppView. A cloned agent
+ * with the `bsky_chat` proxy sends `atproto-proxy: did:web:api.bsky.chat#bsky_chat`,
+ * which is the documented route for chat.bsky.* calls. The mock agent has chat
+ * methods patched directly and no withProxy, so it is returned unchanged.
+ */
+export function getChatAgent(): Agent {
+  const candidate = agent as unknown as { withProxy?: (type: string, did: string) => Agent };
+  if (typeof candidate.withProxy === 'function') {
+    return candidate.withProxy(CHAT_SERVICE_TYPE, CHAT_SERVICE_DID);
+  }
+  return agent;
+}
 
 export function setOnLoggedOut(cb: (() => void) | null) {
   loggedOutCb = cb;

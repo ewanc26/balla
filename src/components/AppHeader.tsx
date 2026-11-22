@@ -14,12 +14,14 @@ export function AppHeader({
   onOpenSettings,
   onOpenLists,
   onOpenFeeds,
+  onOpenMessages,
 }: {
   wide: boolean;
   onNavigate: (tab: TabName) => void;
   onOpenSettings: () => void;
   onOpenLists: () => void;
   onOpenFeeds: () => void;
+  onOpenMessages: () => void;
 }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
@@ -84,6 +86,17 @@ export function AppHeader({
         <View style={styles.right}>
           {!wide ? (
             <>
+              <Pressable
+                onPress={onOpenMessages}
+                accessibilityRole="button"
+                accessibilityLabel="Messages"
+                style={({ pressed }) => [
+                  styles.iconButton,
+                  { backgroundColor: pressed ? pressedBackground : 'transparent' },
+                ]}
+              >
+                <Ionicons name="chatbubble-outline" size={22} color={p.chromeMuted} />
+              </Pressable>
               <Pressable
                 onPress={onOpenFeeds}
                 accessibilityRole="button"

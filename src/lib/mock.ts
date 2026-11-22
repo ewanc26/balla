@@ -298,6 +298,7 @@ const thread = {
 
 export const MOCK_THREAD_URI = posts[1].uri;
 export const MOCK_OTHER_ACTOR = mum.did;
+export const MOCK_CONVO_ID = '3lmockconvo0000000000000000';
 
 function profileFor(actor: string | undefined) {
   if (!actor) return viewerProfile;
@@ -806,6 +807,105 @@ export function installMockAgent() {
     uri: 'at://did:plc:mockviewer/app.bsky.feed.post/new',
     cid: 'bafy-new',
   });
+
+  // Chat fixtures. These live only in the opt-in preview build and never touch
+  // a real account. The shapes follow chat.bsky.convo / chat.bsky.group.
+  const chatConvo = {
+    $type: 'chat.bsky.convo.defs#convoView',
+    id: MOCK_CONVO_ID,
+    rev: 'r1',
+    members: [mum, viewer],
+    muted: false,
+    status: 'accepted',
+    unreadCount: 2,
+    kind: { $type: 'chat.bsky.convo.defs#directConvo' },
+    lastMessage: {
+      $type: 'chat.bsky.convo.defs#messageView',
+      id: 'm2',
+      rev: 'r2',
+      text: 'See you at the book fair!',
+      sender: { did: mum.did },
+      sentAt: minutesAgo(6),
+    },
+  };
+  const chatRequest = {
+    $type: 'chat.bsky.convo.defs#convoView',
+    id: '3lmockrequest000000000000000',
+    rev: 'r1',
+    members: [ailsa, viewer],
+    muted: false,
+    status: 'request',
+    unreadCount: 1,
+    kind: { $type: 'chat.bsky.convo.defs#directConvo' },
+    lastMessage: {
+      $type: 'chat.bsky.convo.defs#messageView',
+      id: 'r1',
+      rev: 'r1',
+      text: 'Hello from the preview',
+      sender: { did: ailsa.did },
+      sentAt: minutesAgo(45),
+    },
+  };
+  const chatMessages: any[] = [
+    {
+      $type: 'chat.bsky.convo.defs#messageView',
+      id: 'm1',
+      rev: 'r1',
+      text: 'Are you going to the book fair?',
+      sender: { did: mum.did },
+      sentAt: minutesAgo(20),
+    },
+    chatConvo.lastMessage,
+  ];
+  // getChatAgent() normally clones via withProxy(); in the preview the mock
+  // methods live on this agent, so return it unchanged instead of cloning away
+  // the patched chat namespace.
+  mock.withProxy = () => mock;
+  mock.chat = { bsky: { convo: {} } };
+  const convo = mock.chat.bsky.convo;
+  convo.listConvos = async () => ({ data: { convos: [chatConvo] } });
+  convo.listConvoRequests = async () => ({ data: { requests: [chatRequest] } });
+  convo.getUnreadCounts = async () => ({
+    data: { unreadAcceptedConvos: 1, unreadRequestConvos: 1 },
+  });
+  convo.getConvo = async ({ convoId }: { convoId?: string } = {}) => ({
+    data: {
+      convo:
+        convoId === chatRequest.id
+          ? chatRequest
+          : convoId === MOCK_CONVO_ID
+            ? chatConvo
+            : chatConvo,
+    },
+  });
+  convo.getConvoForMembers = async () => ({ data: { convo: chatConvo } });
+  convo.getMessages = async () => ({ data: { messages: chatMessages, relatedProfiles: [] } });
+  convo.sendMessage = async ({ message }: { message?: any } = {}) => {
+    const sent = {
+      $type: 'chat.bsky.convo.defs#messageView',
+      id: `m${chatMessages.length + 1}`,
+      rev: `r${chatMessages.length + 1}`,
+      text: String(message?.text || ''),
+      embed: message?.embed,
+      sender: { did: viewer.did },
+      sentAt: new Date().toISOString(),
+    };
+    chatMessages.push(sent);
+    return { data: sent };
+  };
+  convo.updateRead = async () => ({ data: { convo: chatConvo } });
+  convo.acceptConvo = async () => ({ data: { rev: 'r2' } });
+  convo.muteConvo = async () => {
+    chatConvo.muted = true;
+    return { data: { convo: chatConvo } };
+  };
+  convo.unmuteConvo = async () => {
+    chatConvo.muted = false;
+    return { data: { convo: chatConvo } };
+  };
+  convo.leaveConvo = async ({ convoId }: { convoId?: string } = {}) => ({
+    data: { convoId: convoId || MOCK_CONVO_ID, rev: 'r2' },
+  });
 }
 
 export function mockInitialTab(): string {
@@ -823,6 +923,9 @@ export function mockInitialScreen(): string {
     'Tabs',
     'Thread',
     'Compose',
+    'Chat',
+    'Conversation',
+    'ChatSettings',
     'UserProfile',
     'Settings',
     'Accounts',
