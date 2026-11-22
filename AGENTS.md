@@ -165,7 +165,7 @@ membership, list feeds, subscribe/block states and profile links; list reports
 are not implemented yet. Starter packs have search, landing pages, explicit
 follow and add-feed actions, official share links, and creation/editing for
 packs the signed-in account owns; writes use one narrow starter-pack repo scope
-and older sessions need to sign in again. There are no DMs. Saved and pinned custom feeds have
+and older sessions need to sign in again. Private messages are available through a Messages entry point: an inbox of conversations, real unread counts and chat requests, and conversations that page through history, send text and post embeds, and offer labelled mark-read, mute, accept-request and leave controls. Chat calls use the chat-service proxy and twelve narrow `rpc:chat.bsky.convo.*` scopes; message content is not stored by Balla or logged, and older sessions need to sign in again for chat. Saved and pinned custom feeds have
 their own Home tabs and a Feeds management screen, and Following stays first and
 chronological. Reply trees render nested branches
 under their parents, with

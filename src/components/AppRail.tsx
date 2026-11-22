@@ -20,12 +20,14 @@ export function LeftRail({
   onOpenSettings,
   onOpenLists,
   onOpenFeeds,
+  onOpenMessages,
 }: {
   activeTab: TabName;
   onNavigate: (tab: TabName) => void;
   onOpenSettings: () => void;
   onOpenLists: () => void;
   onOpenFeeds: () => void;
+  onOpenMessages: () => void;
 }) {
   const p = usePalette();
   const { profile } = useViewer();
@@ -97,6 +99,30 @@ export function LeftRail({
           </Pressable>
         );
       })}
+
+      <Pressable
+        onPress={onOpenMessages}
+        accessibilityRole="button"
+        accessibilityLabel="Messages"
+        style={({ pressed }) => [
+          styles.navRow,
+          { backgroundColor: pressed ? p.bg : 'transparent' },
+        ]}
+      >
+        <View style={[styles.iconBubble, { backgroundColor: p.soft }]}>
+          <Ionicons name="chatbubble-outline" size={20} color={p.text} />
+        </View>
+        <Text
+          style={{
+            color: p.text,
+            fontSize: 15,
+            fontWeight: '600',
+            marginLeft: 12,
+          }}
+        >
+          Messages
+        </Text>
+      </Pressable>
 
       <Pressable
         onPress={onOpenFeeds}

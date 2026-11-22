@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.16.0
+
+- Add private messages through Bluesky's chat service. The inbox lists conversations, real unread counts and chat requests; a conversation pages through message history, sends text and post embeds, and offers labelled mark-read, mute/unmute, accept-request and leave controls.
+- Handle blocked people, disabled chat, locked/request conversations and group join requests with honest, content-free copy. The chat settings screen reports the real proxy audience and the "who can message you" value Bluesky exposes, and links to the provider control rather than faking a write.
+- Route chat through `withProxy('bsky_chat', 'did:web:api.bsky.chat')` and add twelve narrow `rpc:chat.bsky.convo.*` scopes against the chat-service audience. No broad chat permission set, wildcard or new dependency was added. Sessions authorised before 0.16.0 need to sign in again once for chat.
+- Message content is never stored by Balla and never written to a log. Add deterministic model and wiring tests; update the compliance, scope, reference, README, site copy and AGENTS state to match.
+
 ## 0.15.0
 
 - Add explicit discovery surfaces without touching Following. Hashtag, topic and video pages use the already-authorized `app.bsky.feed.searchPostsV2` call with `hashtags`, `query` and `hasVideo` filters, sorted newest first and paginated; no new OAuth scope or dependency was added.

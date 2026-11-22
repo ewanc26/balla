@@ -15,15 +15,17 @@ three separate things that can each be tested:
    account/content deletion, store policies and accessibility.
 
 Balla is not yet fully compliant. The gap is not primarily visual: the remaining
-pieces are list/feed reporting and label handling on feed surfaces, DMs and the
-remaining settings. Post-level reporting, muting, blocking, deletion, quoting,
-image, video and GIF posts, lists and the moderation inbox are now shipped. This document records the bar and the order in which to close the rest.
+pieces are list/feed reporting, label handling on feed surfaces, chat moderation
+and the remaining settings. Post-level reporting, muting, blocking, deletion,
+quoting, image, video and GIF posts, lists, the moderation inbox and private
+messages are now shipped. This document records the bar and the order in which
+to close the rest.
 
 ## Current Balla coverage
 
 | Surface | Current state | Compliance note |
 | --- | --- | --- |
-| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo, AppView, video-service and caption-blob scopes; multi-account sessions stored separately by DID with a DID/handle-only local registry and an account-keyed UI remount on switch | Sessions predating the video scopes must re-authorise; chat audience is intentionally absent until DMs exist |
+| OAuth | OAuth-only login through `@atproto/oauth-client-expo`; DPoP-bound tokens; no app passwords; granular repo, AppView, video-service, caption-blob and chat-service RPC scopes; multi-account sessions stored separately by DID with a DID/handle-only local registry and an account-keyed UI remount on switch | Sessions predating the video or chat scopes must re-authorise |
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
 | Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
 | Threads | Ancestor chain, nested replies, reply composer, and reply/quote gates read from real threadgate and postgate records | Some moderation states remain |
@@ -36,7 +38,7 @@ image, video and GIF posts, lists and the moderation inbox are now shipped. This
 | Moderation | Post/profile report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox for reports, decisions, notices, account standing, action history and appeals | Missing list/feed reports and device push for inbox outcomes (#36) |
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
 | Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; the AppView has no global list-search endpoint |
-| DMs | None | Missing `chat.bsky.convo`, group chat and chat moderation |
+| DMs | Inbox, real unread counts, chat requests, paginated messages, text and post-embed sends, mark-read, mute/unmute, accept-request and leave, through the chat-service proxy | Built on `chat.bsky.convo.*`; chat moderation and group creation remain out of scope |
 | Settings | Settings shell with account, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, feed/thread, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real profile/personal-details writes; session facts are read from non-secret OAuth metadata | Email, password, 2FA, app passwords, activity privacy, account lifecycle and push delivery remain provider-owned or ungranted, and are linked to rather than faked |
 | Support/legal | In-app Help, privacy, terms, community guidelines, copyright, contact and about pages; matching public site pages | Monitored public contact is the GitHub issue tracker and private advisory form |
 | Web | Expo web client at `/app`; popup OAuth returns to the same URL | Browser sessions use IndexedDB; the same client metadata covers native and web redirects |
@@ -79,10 +81,10 @@ and refresh. The metadata must keep:
 The scope is now least-privilege rather than a wildcard: seven repository
 collections (`post`, `like`, `repost`, `follow`, `block`, `profile`, `link`) with
 only the actions Balla uses, explicit AppView RPC methods, a separate audience
-for `com.atproto.moderation.createReport`, and only `blob:image/jpeg` for the
-profile photo and banner upload path. There is no `repo:*`, no `rpc:*`, no
-`blob:*/*` and no chat scope. `docs/oauth-scopes.md` is the source of truth. DMs
-will need the chat service audience added in the same change that ships them.
+for `com.atproto.moderation.createReport`, narrow `rpc:chat.bsky.convo.*` scopes
+against the chat-service audience, and only `blob:image/jpeg` for the profile
+photo and banner upload path. There is no `repo:*`, no `rpc:*`, no `blob:*/*` and
+no broad chat permission set. `docs/oauth-scopes.md` is the source of truth.
 
 ### Labels and moderation
 
@@ -166,9 +168,12 @@ feeds are opt-in destinations, never a replacement algorithm.
 ### DMs
 
 The chat lexicons (`chat.bsky.convo`, group and moderation namespaces) are
-separate from the AppView. Authenticated chat requests must be proxied to the
-chat service, and the OAuth scope must include that audience. DMs need their own
-privacy, block/mute, report and leave/delete flows.
+separate from the AppView. Balla proxies authenticated chat calls to the chat
+service with `withProxy('bsky_chat', 'did:web:api.bsky.chat')` and declares only
+the `chat.bsky.convo.*` RPCs it calls. The inbox and conversation honour unread
+state, request status, muted and locked conversations and block/disabled-chat
+errors. Message content is not stored by Balla and is never logged. Chat
+moderation and group creation are not implemented.
 
 ## Prioritised roadmap
 
@@ -228,7 +233,7 @@ privacy, block/mute, report and leave/delete flows.
    haptics are not emitted so no toggle is offered, and provider-owned account
    security controls stay on the PDS behind honest links.
 7. In-app post deletion and sign-out cleanup.
-8. DMs and chat moderation.
+8. ~~DMs.~~ Done: inbox, unread counts, requests, messages, text/post embeds and conversation controls. Chat moderation and group creation remain.
 
 ### P2 — depth and federation
 
@@ -258,8 +263,9 @@ privacy, block/mute, report and leave/delete flows.
   tracker/advisory routes and `docs/report-handling.md`.
 - The OAuth consent screen shows a scope no broader than the features the app
   exposes. Done for the current surface: granular collection actions, AppView
-  RPCs and moderation-inbox RPCs are declared, with no wildcards, no chat scope
-  and only the JPEG blob scope needed for profile and post images.
+  RPCs, moderation-inbox RPCs and narrow chat-service RPCs are declared, with no
+  wildcards, no broad chat permission set and only the JPEG blob scope needed for
+  profile and post images.
 - No analytics, ad or tracking SDK is present.
 - The web client at `https://balla.croft.click/app` completes a popup login and
   restores the session after a reload.

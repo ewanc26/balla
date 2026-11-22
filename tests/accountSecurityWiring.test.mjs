@@ -82,10 +82,18 @@ test('session copy reads non-secret metadata and never renders token values', ()
 
 test('account and privacy settings do not widen the OAuth grant', () => {
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 62);
+  assert.equal(tokens.length, 74);
   assert.equal(
     tokens.some((token) => /com\.atproto\.server\.(requestEmailUpdate|updateEmail|createAppPassword|listAppPasswords|revokeAppPassword|deleteAccount|deactivateAccount)/.test(token)),
     false
   );
-  assert.equal(tokens.some((token) => /chat\.bsky/.test(token)), false);
+  // Chat is allowed, but only as narrow RPCs against the chat service. No
+  // wildcard permission set or broad chat grant is requested.
+  assert.equal(
+    tokens.filter((token) => token.startsWith('rpc:chat.bsky.')).every((token) =>
+      token.endsWith('?aud=did:web:api.bsky.chat#bsky_chat')
+    ),
+    true
+  );
+  assert.equal(tokens.some((token) => token.includes('include:chat.bsky')), false);
 });

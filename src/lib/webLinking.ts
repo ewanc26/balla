@@ -70,6 +70,9 @@ export const WEB_LINKING_CONFIG = {
     ListDetail: 'list/:uri',
     ListEdit: 'list/:uri/edit',
     ListMembers: 'list/:uri/members',
+    Chat: 'messages',
+    Conversation: 'messages/:convoId',
+    ChatSettings: 'messages/settings',
   },
 };
 
