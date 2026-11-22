@@ -38,7 +38,7 @@ to close the rest.
 | Moderation | Post/profile report, block/unblock, mute/unmute, label warnings with labeler attribution, labeler subscriptions, per-label filters, adult-content gate, muted words, and a moderation inbox for reports, decisions, notices, account standing, action history and appeals | Missing list/feed reports and device push for inbox outcomes (#36) |
 | Deletion | Post deletion from the overflow menu; account/data screen explains export, deactivation and permanent deletion and links to the PDS controls | Account-level actions are PDS operations and stay outside the client |
 | Lists/feeds | Saved and pinned custom feeds; curation and moderation lists with create/edit, membership, list feeds, subscribe/block states and profile links | List/feed reports remain; the AppView has no global list-search endpoint |
-| DMs | Inbox, real unread counts, chat requests, paginated messages, text and post-embed sends, mark-read, mute/unmute, accept-request and leave, through the chat-service proxy | Built on `chat.bsky.convo.*`; chat moderation and group creation remain out of scope |
+| DMs | Inbox, real unread counts and join-request counts, chat requests, paginated messages with replies and reactions, text and post-embed sends, group creation, members, invite links and join requests, conversation settings with lock/unlock, mark-all-read, mute/unmute and leave, report/message and actor block, plus chat notification preferences, all through the chat-service proxy | Built on narrow `chat.bsky.convo.*`, `chat.bsky.group.*` and `chat.bsky.notification.*` RPCs; device push delivery remains blocked (#36) |
 | Settings | Settings shell with account, privacy/security, session, moderation, notifications, content filters, appearance, accessibility, language, feed/thread, help, legal, about and sign-out routes. Birthday, automation and logged-out visibility use real profile/personal-details writes; session facts are read from non-secret OAuth metadata | Email, password, 2FA, app passwords, activity privacy, account lifecycle and push delivery remain provider-owned or ungranted, and are linked to rather than faked |
 | Support/legal | In-app Help, privacy, terms, community guidelines, copyright, contact and about pages; matching public site pages | Monitored public contact is the GitHub issue tracker and private advisory form |
 | Web | Expo web client at `/app`; popup OAuth returns to the same URL | Browser sessions use IndexedDB; the same client metadata covers native and web redirects |
@@ -81,8 +81,9 @@ and refresh. The metadata must keep:
 The scope is now least-privilege rather than a wildcard: seven repository
 collections (`post`, `like`, `repost`, `follow`, `block`, `profile`, `link`) with
 only the actions Balla uses, explicit AppView RPC methods, a separate audience
-for `com.atproto.moderation.createReport`, narrow `rpc:chat.bsky.convo.*` scopes
-against the chat-service audience, and only `blob:image/jpeg` for the profile
+for `com.atproto.moderation.createReport`, narrow `rpc:chat.bsky.convo.*`,
+`rpc:chat.bsky.group.*` and `rpc:chat.bsky.notification.*` scopes against the
+chat-service audience, and only `blob:image/jpeg` for the profile
 photo and banner upload path. There is no `repo:*`, no `rpc:*`, no `blob:*/*` and
 no broad chat permission set. `docs/oauth-scopes.md` is the source of truth.
 
@@ -167,13 +168,19 @@ feeds are opt-in destinations, never a replacement algorithm.
 
 ### DMs
 
-The chat lexicons (`chat.bsky.convo`, group and moderation namespaces) are
-separate from the AppView. Balla proxies authenticated chat calls to the chat
-service with `withProxy('bsky_chat', 'did:web:api.bsky.chat')` and declares only
-the `chat.bsky.convo.*` RPCs it calls. The inbox and conversation honour unread
-state, request status, muted and locked conversations and block/disabled-chat
-errors. Message content is not stored by Balla and is never logged. Chat
-moderation and group creation are not implemented.
+The chat lexicons (`chat.bsky.convo`, `chat.bsky.group` and
+`chat.bsky.notification`) are separate from the AppView. Balla proxies
+authenticated chat calls to the chat service with
+`withProxy('bsky_chat', 'did:web:api.bsky.chat')` and declares only the narrow
+chat RPCs it calls. The inbox and conversation honour unread and join-request
+counts, request status, muted and locked conversations and block/disabled-chat
+errors. Groups use the real member/join-link methods; owner checks use the full
+member list, and owner lock controls hide when moderation or a permanent lock
+forbids the change. Chat reports go to the labeler through the open end of the
+`createReport` subject union and carry ids only — never message text. Chat
+notification preferences are read and written through the chat service and are
+separate from AppView notification settings. Message content is not stored by
+Balla and is never logged. Device push delivery remains blocked (#36).
 
 ## Prioritised roadmap
 

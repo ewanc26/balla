@@ -5,6 +5,10 @@ import {
   type ReportReason,
   type ReportSubjectKind,
 } from './reportModel';
+import {
+  buildConvoReportSubject,
+  buildMessageReportSubject,
+} from './chatGroupModel';
 
 export { REPORT_REASONS, type ReportReason } from './reportModel';
 
@@ -44,7 +48,9 @@ function recordKey(uri: string): string {
  */
 type ReportSubject =
   | { $type: 'com.atproto.repo.strongRef'; uri: string; cid: string }
-  | { $type: 'com.atproto.admin.defs#repoRef'; did: string };
+  | { $type: 'com.atproto.admin.defs#repoRef'; did: string }
+  // The createReport union is open; chat refs are carried in its unlisted arm.
+  | { $type: string; [key: string]: unknown };
 
 async function submitReport(
   subject: ReportSubject,
@@ -99,6 +105,43 @@ export async function reportProfile(
     { $type: 'com.atproto.admin.defs#repoRef', did: profile.did },
     'profile',
     `@${profile.handle || 'unknown account'}`,
+    undefined,
+    reasonType,
+    details
+  );
+}
+
+/**
+ * Chat reports use the open end of the createReport subject union. The subject
+ * carries ids only — never message text. Reports still go to the labeler
+ * service, not to the chat service.
+ */
+export async function reportChatMessage(
+  convoId: string,
+  message: any,
+  reasonType: ReportReason,
+  details: string
+) {
+  return submitReport(
+    buildMessageReportSubject(convoId, message),
+    'chat-message',
+    'Chat message',
+    undefined,
+    reasonType,
+    details
+  );
+}
+
+export async function reportChatConversation(
+  convoId: string,
+  members: any[] | undefined,
+  reasonType: ReportReason,
+  details: string
+) {
+  return submitReport(
+    buildConvoReportSubject(convoId, members),
+    'chat-convo',
+    'Conversation',
     undefined,
     reasonType,
     details

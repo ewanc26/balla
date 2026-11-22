@@ -4,6 +4,7 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
+  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -43,6 +44,7 @@ export function ChatScreen() {
   const [requestCursor, setRequestCursor] = useState<string | undefined>();
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const load = useCallback(async () => {
@@ -78,6 +80,23 @@ export function ChatScreen() {
       void load();
     }, [load])
   );
+
+  async function markAllRead() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const chat = getChatAgent();
+      await Promise.all([
+        chat.chat.bsky.convo.updateAllRead({ status: 'accepted' }).catch(() => null),
+        chat.chat.bsky.convo.updateAllRead({ status: 'request' }).catch(() => null),
+      ]);
+      await load();
+    } catch (err) {
+      setError(describeFailure(err, 'Could not mark everything as read. Try again.'));
+    }
+    setBusy(false);
+  }
 
   async function loadMore() {
     if (loadingMore) return;
@@ -162,6 +181,50 @@ export function ChatScreen() {
               <Ionicons name="settings-outline" size={22} color={p.chromeMuted} />
             </Pressable>
           </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={{ marginTop: 10 }}
+          >
+            <Pressable
+              onPress={() => navigation.navigate('CreateGroup')}
+              accessibilityRole="button"
+              accessibilityLabel="Create a group conversation"
+              style={({ pressed }) => [
+                styles.action,
+                { borderColor: p.divider, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons name="people-outline" size={17} color={p.accent} />
+              <Text style={{ color: p.accent, fontWeight: '600', marginLeft: 6 }}>New group</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => navigation.navigate('JoinGroup')}
+              accessibilityRole="button"
+              accessibilityLabel="Join a group with an invite code"
+              style={({ pressed }) => [
+                styles.action,
+                { borderColor: p.divider, opacity: pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons name="add-circle-outline" size={17} color={p.accent} />
+              <Text style={{ color: p.accent, fontWeight: '600', marginLeft: 6 }}>Join with code</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => void markAllRead()}
+              disabled={busy}
+              accessibilityRole="button"
+              accessibilityLabel="Mark all conversations and requests as read"
+              style={({ pressed }) => [
+                styles.action,
+                { borderColor: p.divider, opacity: pressed || busy ? 0.6 : 1 },
+              ]}
+            >
+              <Ionicons name="checkmark-done-outline" size={17} color={p.accent} />
+              <Text style={{ color: p.accent, fontWeight: '600', marginLeft: 6 }}>Mark all read</Text>
+            </Pressable>
+          </ScrollView>
 
           <View style={{ flexDirection: 'row', marginTop: 8 }}>
             <Pressable
@@ -344,6 +407,15 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  action: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 44,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: CARD_RADIUS,
+    paddingHorizontal: 12,
+    marginRight: 8,
   },
   unread: {
     minWidth: 24,

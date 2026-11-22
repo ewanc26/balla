@@ -20,6 +20,8 @@ const SUBJECT_LABEL: Record<ReportReceipt['subjectKind'], string> = {
   post: 'Post',
   profile: 'Account',
   list: 'List',
+  'chat-message': 'Chat message',
+  'chat-convo': 'Conversation',
 };
 
 /** A local reminder, deliberately not presented as a moderation status. */

@@ -299,6 +299,7 @@ const thread = {
 export const MOCK_THREAD_URI = posts[1].uri;
 export const MOCK_OTHER_ACTOR = mum.did;
 export const MOCK_CONVO_ID = '3lmockconvo0000000000000000';
+export const MOCK_GROUP_CONVO_ID = '3lmockgroupconvo0000000000000';
 
 function profileFor(actor: string | undefined) {
   if (!actor) return viewerProfile;
@@ -828,6 +829,55 @@ export function installMockAgent() {
       sentAt: minutesAgo(6),
     },
   };
+  const groupOwner = viewer;
+  const mockGroupMembers = [
+    { ...groupOwner, kind: { $type: 'chat.bsky.convo.defs#groupConvoMember', role: 'owner' } },
+    { ...mum, kind: { $type: 'chat.bsky.convo.defs#groupConvoMember', role: 'standard' } },
+    { ...ailsa, kind: { $type: 'chat.bsky.convo.defs#groupConvoMember', role: 'standard' } },
+  ];
+  let mockJoinLink = {
+    $type: 'chat.bsky.group.defs#joinLinkView',
+    code: 'mock-join-code',
+    enabledStatus: 'enabled',
+    requireApproval: true,
+    joinRule: 'anyone',
+    createdAt: minutesAgo(1440),
+  };
+  let mockJoinRequests: any[] = [
+    {
+      $type: 'chat.bsky.group.defs#joinRequestView',
+      requestedBy: balla,
+      requestedAt: minutesAgo(30),
+    },
+  ];
+  const chatGroup = {
+    $type: 'chat.bsky.convo.defs#convoView',
+    id: MOCK_GROUP_CONVO_ID,
+    rev: 'r1',
+    members: mockGroupMembers,
+    muted: false,
+    status: 'accepted',
+    unreadCount: 0,
+    kind: {
+      $type: 'chat.bsky.convo.defs#groupConvo',
+      name: 'Book fair neighbours',
+      memberCount: 3,
+      memberLimit: 100,
+      lockStatus: 'unlocked',
+      lockStatusModerationOverride: false,
+      joinRequestCount: 1,
+      unreadJoinRequestCount: 1,
+      joinLink: mockJoinLink,
+    },
+    lastMessage: {
+      $type: 'chat.bsky.convo.defs#messageView',
+      id: 'g1',
+      rev: 'r1',
+      text: 'See you all on Saturday.',
+      sender: { did: mum.did },
+      sentAt: minutesAgo(90),
+    },
+  };
   const chatRequest = {
     $type: 'chat.bsky.convo.defs#convoView',
     id: '3lmockrequest000000000000000',
@@ -857,13 +907,33 @@ export function installMockAgent() {
     },
     chatConvo.lastMessage,
   ];
+  const chatGroupMessages: any[] = [
+    {
+      $type: 'chat.bsky.convo.defs#messageView',
+      id: 'g0',
+      rev: 'r0',
+      text: 'Who is bringing the raffle prizes?',
+      sender: { did: ailsa.did },
+      sentAt: minutesAgo(120),
+      reactions: [
+        {
+          $type: 'chat.bsky.convo.defs#reactionView',
+          value: '👍',
+          sender: { did: viewer.did },
+        },
+      ],
+    },
+    chatGroup.lastMessage,
+  ];
   // getChatAgent() normally clones via withProxy(); in the preview the mock
   // methods live on this agent, so return it unchanged instead of cloning away
   // the patched chat namespace.
   mock.withProxy = () => mock;
-  mock.chat = { bsky: { convo: {} } };
+  mock.chat = { bsky: { convo: {}, group: {}, notification: {} } };
   const convo = mock.chat.bsky.convo;
-  convo.listConvos = async () => ({ data: { convos: [chatConvo] } });
+  const group = mock.chat.bsky.group;
+  const chatNotification = mock.chat.bsky.notification;
+  convo.listConvos = async () => ({ data: { convos: [chatConvo, chatGroup] } });
   convo.listConvoRequests = async () => ({ data: { requests: [chatRequest] } });
   convo.getUnreadCounts = async () => ({
     data: { unreadAcceptedConvos: 1, unreadRequestConvos: 1 },
@@ -873,13 +943,18 @@ export function installMockAgent() {
       convo:
         convoId === chatRequest.id
           ? chatRequest
-          : convoId === MOCK_CONVO_ID
-            ? chatConvo
+          : convoId === MOCK_GROUP_CONVO_ID
+            ? chatGroup
             : chatConvo,
     },
   });
   convo.getConvoForMembers = async () => ({ data: { convo: chatConvo } });
-  convo.getMessages = async () => ({ data: { messages: chatMessages, relatedProfiles: [] } });
+  convo.getMessages = async ({ convoId }: { convoId?: string } = {}) => ({
+    data: {
+      messages: convoId === MOCK_GROUP_CONVO_ID ? chatGroupMessages : chatMessages,
+      relatedProfiles: [],
+    },
+  });
   convo.sendMessage = async ({ message }: { message?: any } = {}) => {
     const sent = {
       $type: 'chat.bsky.convo.defs#messageView',
@@ -906,6 +981,111 @@ export function installMockAgent() {
   convo.leaveConvo = async ({ convoId }: { convoId?: string } = {}) => ({
     data: { convoId: convoId || MOCK_CONVO_ID, rev: 'r2' },
   });
+  convo.getConvoMembers = async ({ convoId }: { convoId?: string } = {}) => ({
+    data: {
+      members:
+        convoId === chatGroup.id ? mockGroupMembers : [mum, viewer],
+      cursor: undefined,
+    },
+  });
+  convo.lockConvo = async () => ({ data: { convo: chatGroup } });
+  convo.unlockConvo = async () => ({ data: { convo: chatGroup } });
+  convo.addReaction = async ({ messageId, value }: any = {}) => {
+    const target = chatMessages.find((item) => item.id === messageId) || chatConvo.lastMessage;
+    target.reactions = [
+      ...(target.reactions || []),
+      { $type: 'chat.bsky.convo.defs#reactionView', value, sender: { did: viewer.did } },
+    ];
+    return { data: target };
+  };
+  convo.removeReaction = async ({ messageId, value }: any = {}) => {
+    const target = chatMessages.find((item) => item.id === messageId) || chatConvo.lastMessage;
+    target.reactions = (target.reactions || []).filter(
+      (item: any) => !(item.value === value && item.sender?.did === viewer.did)
+    );
+    return { data: target };
+  };
+  convo.deleteMessageForSelf = async ({ messageId }: { messageId?: string } = {}) => {
+    const index = chatMessages.findIndex((item) => item.id === messageId);
+    if (index >= 0) chatMessages.splice(index, 1);
+    return { data: { $type: 'chat.bsky.convo.defs#deletedMessageView', id: messageId } };
+  };
+  convo.updateAllRead = async () => ({ data: { updatedCount: 2 } });
+
+  group.createGroup = async ({ name, members }: any = {}) => {
+    const created = {
+      ...chatGroup,
+      id: `3lmockgroup${Date.now()}`,
+      kind: { ...chatGroup.kind, name: String(name || 'New group'), memberCount: (members || []).length + 1 },
+    };
+    return { data: { convo: created } };
+  };
+  group.addMembers = async ({ members }: any = {}) => ({
+    data: {
+      convo: chatGroup,
+      addedMembers: (members || []).map((did: string) => profileFor(did)),
+    },
+  });
+  group.removeMembers = async () => ({ data: { convo: chatGroup } });
+  group.editGroup = async ({ name }: any = {}) => ({
+    data: { convo: { ...chatGroup, kind: { ...chatGroup.kind, name: String(name || '') } } },
+  });
+  group.createJoinLink = async () => ({ data: { joinLink: mockJoinLink } });
+  group.editJoinLink = async ({ joinRule, requireApproval }: any = {}) => {
+    mockJoinLink = {
+      ...mockJoinLink,
+      ...(joinRule ? { joinRule } : {}),
+      ...(typeof requireApproval === 'boolean' ? { requireApproval } : {}),
+    };
+    return { data: { joinLink: mockJoinLink } };
+  };
+  group.enableJoinLink = async () => {
+    mockJoinLink = { ...mockJoinLink, enabledStatus: 'enabled' };
+    return { data: { joinLink: mockJoinLink } };
+  };
+  group.disableJoinLink = async () => {
+    mockJoinLink = { ...mockJoinLink, enabledStatus: 'disabled' };
+    return { data: { joinLink: mockJoinLink } };
+  };
+  group.listJoinRequests = async () => ({ data: { requests: mockJoinRequests, cursor: undefined } });
+  group.approveJoinRequest = async ({ member }: any = {}) => {
+    mockJoinRequests = mockJoinRequests.filter((item) => item?.requestedBy?.did !== member);
+    return { data: { convo: chatGroup } };
+  };
+  group.rejectJoinRequest = async ({ member }: any = {}) => {
+    mockJoinRequests = mockJoinRequests.filter((item) => item?.requestedBy?.did !== member);
+    return { data: {} };
+  };
+  group.updateJoinRequestsRead = async () => ({ data: {} });
+  group.requestJoin = async () => ({ data: { status: 'pending' } });
+  group.withdrawJoinRequest = async () => ({ data: {} });
+  group.getJoinLinkPreviews = async ({ codes }: any = {}) => ({
+    data: {
+      joinLinkPreviews: (codes || []).map(() => ({
+        $type: 'chat.bsky.group.defs#joinLinkPreviewView',
+        convoId: chatGroup.id,
+        code: mockJoinLink.code,
+        name: chatGroup.kind.name,
+        owner: balla,
+        memberCount: 3,
+        memberLimit: 100,
+      })),
+    },
+  });
+  let mockChatPrefs = {
+    $type: 'chat.bsky.notification.defs#preferences',
+    chat: { $type: 'chat.bsky.notification.defs#chatPreference', include: 'all', push: true },
+    chatRequest: { $type: 'chat.bsky.notification.defs#chatPreference', include: 'follows', push: false },
+  };
+  chatNotification.getPreferences = async () => ({ data: { preferences: mockChatPrefs } });
+  chatNotification.putPreferences = async (input: any = {}) => {
+    mockChatPrefs = {
+      ...mockChatPrefs,
+      ...(input.chat ? { chat: input.chat } : {}),
+      ...(input.chatRequest ? { chatRequest: input.chatRequest } : {}),
+    };
+    return { data: { preferences: mockChatPrefs } };
+  };
 }
 
 export function mockInitialTab(): string {
@@ -926,6 +1106,11 @@ export function mockInitialScreen(): string {
     'Chat',
     'Conversation',
     'ChatSettings',
+    'ChatNotificationSettings',
+    'CreateGroup',
+    'JoinGroup',
+    'JoinRequests',
+    'ConversationSettings',
     'UserProfile',
     'Settings',
     'Accounts',

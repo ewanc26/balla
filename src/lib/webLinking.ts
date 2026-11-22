@@ -73,6 +73,11 @@ export const WEB_LINKING_CONFIG = {
     Chat: 'messages',
     Conversation: 'messages/:convoId',
     ChatSettings: 'messages/settings',
+    ChatNotificationSettings: 'messages/settings/notifications',
+    CreateGroup: 'messages/new-group',
+    JoinGroup: 'messages/join',
+    JoinRequests: 'messages/:convoId/requests',
+    ConversationSettings: 'messages/:convoId/settings',
   },
 };
 

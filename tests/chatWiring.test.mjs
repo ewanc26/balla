@@ -4,7 +4,7 @@ import { readFileSync } from 'node:fs';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 
-const CHAT_METHODS = [
+const CONVO_METHODS = [
   'listConvos',
   'listConvoRequests',
   'getUnreadCounts',
@@ -17,19 +17,53 @@ const CHAT_METHODS = [
   'muteConvo',
   'unmuteConvo',
   'leaveConvo',
+  'getConvoMembers',
+  'lockConvo',
+  'unlockConvo',
+  'addReaction',
+  'removeReaction',
+  'deleteMessageForSelf',
+  'updateAllRead',
 ];
+const GROUP_METHODS = [
+  'createGroup',
+  'addMembers',
+  'removeMembers',
+  'editGroup',
+  'createJoinLink',
+  'editJoinLink',
+  'enableJoinLink',
+  'disableJoinLink',
+  'listJoinRequests',
+  'approveJoinRequest',
+  'rejectJoinRequest',
+  'updateJoinRequestsRead',
+  'requestJoin',
+  'withdrawJoinRequest',
+  'getJoinLinkPreviews',
+];
+const NOTIFICATION_METHODS = ['getPreferences', 'putPreferences'];
+const CHAT_METHODS = [...CONVO_METHODS, ...GROUP_METHODS, ...NOTIFICATION_METHODS];
 
 test('metadata declares exactly the chat RPCs Balla calls, all on the chat audience', () => {
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
   const chat = tokens.filter((token) => token.startsWith('rpc:chat.bsky.'));
+  assert.equal(tokens.length, 98);
   assert.equal(chat.length, CHAT_METHODS.length);
   const audience = '?aud=did:web:api.bsky.chat#bsky_chat';
-  for (const method of CHAT_METHODS) {
+  for (const method of CONVO_METHODS) {
     assert.ok(chat.includes(`rpc:chat.bsky.convo.${method}${audience}`), method);
+  }
+  for (const method of GROUP_METHODS) {
+    assert.ok(chat.includes(`rpc:chat.bsky.group.${method}${audience}`), method);
+  }
+  for (const method of NOTIFICATION_METHODS) {
+    assert.ok(chat.includes(`rpc:chat.bsky.notification.${method}${audience}`), method);
   }
   assert.equal(tokens.some((token) => token.includes('include:chat.bsky')), false);
   assert.equal(tokens.some((token) => token.includes('rpc:chat.bsky.*')), false);
+  assert.equal(tokens.some((token) => /chatAccount|chat:account/.test(token)), false);
 });
 
 test('the agent routes chat through the documented proxy helper', () => {
@@ -46,13 +80,28 @@ test('chat screens call the chat proxy, never log message content', () => {
   const inbox = read('../src/screens/ChatScreen.tsx');
   const convo = read('../src/screens/ConversationScreen.tsx');
   const settings = read('../src/screens/ChatSettingsScreen.tsx');
-  for (const file of [inbox, convo]) {
+  const convoSettings = read('../src/screens/ConversationSettingsScreen.tsx');
+  const joinGroup = read('../src/screens/JoinGroupScreen.tsx');
+  const createGroup = read('../src/screens/CreateGroupScreen.tsx');
+  const joinRequests = read('../src/screens/JoinRequestsScreen.tsx');
+  const notifications = read('../src/screens/ChatNotificationSettingsScreen.tsx');
+  for (const file of [
+    inbox,
+    convo,
+    convoSettings,
+    joinGroup,
+    createGroup,
+    joinRequests,
+    notifications,
+  ]) {
     assert.match(file, /getChatAgent\(\)/);
     assert.doesNotMatch(file, /console\.(log|debug|info)/);
   }
+  assert.doesNotMatch(settings, /console\.(log|debug|info)/);
   assert.match(inbox, /listConvos\(/);
   assert.match(inbox, /listConvoRequests\(/);
   assert.match(inbox, /getUnreadCounts\(/);
+  assert.match(inbox, /updateAllRead\(/);
   assert.match(convo, /getMessages\(/);
   assert.match(convo, /sendMessage\(/);
   assert.match(convo, /updateRead\(/);
@@ -61,6 +110,23 @@ test('chat screens call the chat proxy, never log message content', () => {
   assert.match(convo, /unmuteConvo\(/);
   assert.match(convo, /leaveConvo\(/);
   assert.match(convo, /buildPostEmbed/);
+  assert.match(convo, /buildReplyRef/);
+  assert.match(convo, /groupReactions/);
+  assert.match(convo, /MessageActionsSheet/);
+  assert.match(convoSettings, /getConvoMembers\(/);
+  assert.match(convoSettings, /editGroup\(/);
+  assert.match(convoSettings, /removeMembers\(/);
+  assert.match(convoSettings, /lockConvo\(/);
+  assert.match(convoSettings, /unlockConvo\(/);
+  assert.match(convoSettings, /canOwnerChangeLock/);
+  assert.match(createGroup, /createGroup\(/);
+  assert.match(joinGroup, /getJoinLinkPreviews\(/);
+  assert.match(joinGroup, /requestJoin\(/);
+  assert.match(joinRequests, /listJoinRequests\(/);
+  assert.match(joinRequests, /approveJoinRequest\(/);
+  assert.match(joinRequests, /rejectJoinRequest\(/);
+  assert.match(notifications, /getPreferences\(/);
+  assert.match(notifications, /putPreferences\(/);
   assert.match(settings, /CHAT_AUDIENCE/);
   assert.match(settings, /Linking\.openURL/);
 });
@@ -80,6 +146,11 @@ test('chat has navigation entry points and explicit web paths', () => {
   assert.match(linking, /Chat: 'messages'/);
   assert.match(linking, /Conversation: 'messages\/:convoId'/);
   assert.match(linking, /ChatSettings: 'messages\/settings'/);
+  assert.match(linking, /ChatNotificationSettings: 'messages\/settings\/notifications'/);
+  assert.match(linking, /CreateGroup: 'messages\/new-group'/);
+  assert.match(linking, /JoinGroup: 'messages\/join'/);
+  assert.match(linking, /JoinRequests: 'messages\/:convoId\/requests'/);
+  assert.match(linking, /ConversationSettings: 'messages\/:convoId\/settings'/);
 });
 
 test('web linking gives every Stack screen a path', () => {
@@ -89,4 +160,16 @@ test('web linking gives every Stack screen a path', () => {
   for (const name of names) {
     assert.match(linking, new RegExp(`\\b${name}:`), `${name} has a web path`);
   }
+});
+
+test('chat report subjects carry ids only, never message text', () => {
+  const moderation = read('../src/lib/moderation.ts');
+  const model = read('../src/lib/chatGroupModel.ts');
+  assert.match(model, /chat\.bsky\.convo\.defs#messageRef/);
+  assert.match(model, /chat\.bsky\.convo\.defs#convoRef/);
+  assert.match(moderation, /reportChatMessage/);
+  assert.match(moderation, /reportChatConversation/);
+  assert.match(moderation, /buildMessageReportSubject/);
+  assert.match(moderation, /buildConvoReportSubject/);
+  assert.doesNotMatch(model, /message\.text|item\.text/);
 });
