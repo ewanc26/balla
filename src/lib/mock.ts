@@ -455,18 +455,36 @@ export function installMockAgent() {
     likeCount: 12,
     indexedAt: minutesAgo(1440),
   };
+  const mockStarterPackListUri =
+    'at://did:plc:mockviewer/app.bsky.graph.list/starter-neighbours';
+  let mockStarterPackRecord: any = {
+    $type: 'app.bsky.graph.starterpack',
+    name: 'Balla neighbours',
+    description: 'The people and feeds in this little corner of Bluesky.',
+    feeds: [{ $type: 'app.bsky.graph.starterpack#feedItem', uri: mockFeed.uri }],
+    createdAt: minutesAgo(2880),
+  };
+  let mockStarterPackListRecord: any = {
+    $type: 'app.bsky.graph.list',
+    purpose: 'app.bsky.graph.defs#referencelist',
+    name: 'Balla neighbours',
+    description: 'The people and feeds in this little corner of Bluesky.',
+    createdAt: minutesAgo(2880),
+  };
+  let mockStarterPackItems: any[] = profiles.slice(1).map((subject, index) => ({
+    uri: `at://did:plc:mockviewer/app.bsky.graph.listitem/starter-${index + 1}`,
+    subject,
+  }));
   const mockPack = {
-    uri: 'at://did:plc:mockballa/app.bsky.graph.starterpack/neighbours',
+    uri: 'at://did:plc:mockviewer/app.bsky.graph.starterpack/neighbours',
     cid: 'bafy-mock-pack',
-    record: {
-      $type: 'app.bsky.graph.starterpack',
-      name: 'Balla neighbours',
-      description: 'The people and feeds in this little corner of Bluesky.',
-      createdAt: minutesAgo(2880),
+    record: mockStarterPackRecord,
+    creator: viewerProfile,
+    list: {
+      uri: mockStarterPackListUri,
+      listItemCount: mockStarterPackItems.length,
     },
-    creator: balla,
-    list: { listItemCount: 3 },
-    listItemsSample: profiles.slice(1).map((subject) => ({ subject })),
+    listItemsSample: mockStarterPackItems,
     feeds: [mockFeed],
     joinedWeekCount: 4,
     indexedAt: minutesAgo(2880),
@@ -547,11 +565,27 @@ export function installMockAgent() {
       cursor: undefined,
     },
   });
-  mock.app.bsky.graph.getStarterPack = async () => ({
-    data: { starterPack: mockPack },
+  mock.app.bsky.graph.getStarterPack = async ({
+    starterPack,
+  }: {
+    starterPack?: string;
+  } = {}) => ({
+    data: {
+      starterPack: {
+        ...mockPack,
+        uri: starterPack || mockPack.uri,
+        record: mockStarterPackRecord,
+        list: {
+          uri: mockStarterPackListUri,
+          listItemCount: mockStarterPackItems.length,
+        },
+        listItemsSample: mockStarterPackItems,
+        feeds: [mockFeed],
+      },
+    },
   });
   const authoredByBalla = (actor?: string) =>
-    actor === balla.did || actor === balla.handle;
+    actor === viewer.did || actor === viewer.handle;
   mock.app.bsky.feed.getActorFeeds = async ({ actor }: { actor?: string }) => ({
     data: { feeds: authoredByBalla(actor) ? [mockFeed] : [], cursor: undefined },
   });
@@ -600,13 +634,106 @@ export function installMockAgent() {
       cursor: undefined,
     },
   });
-  mock.app.bsky.graph.getList = async ({ list }: { list: string }) => ({
-    data: {
-      list: list === mockModList.uri ? mockModList : mockList,
-      items: list === mockModList.uri ? mockListItems.slice(0, 2) : mockListItems,
-      cursor: undefined,
-    },
+  mock.app.bsky.graph.getList = async ({ list }: { list: string }) => {
+    if (list === mockStarterPackListUri) {
+      return {
+        data: {
+          list: { ...mockStarterPackListRecord, uri: list },
+          items: mockStarterPackItems,
+          cursor: undefined,
+        },
+      };
+    }
+    return {
+      data: {
+        list: list === mockModList.uri ? mockModList : mockList,
+        items:
+          list === mockModList.uri ? mockListItems.slice(0, 2) : mockListItems,
+        cursor: undefined,
+      },
+    };
+  };
+  mock.app.bsky.graph.getFollows = async () => ({
+    data: { follows: [mum, ailsa, balla], cursor: undefined },
   });
+  mock.app.bsky.graph.list.get = async ({
+    rkey,
+  }: {
+    rkey?: string;
+  } = {}) => {
+    if (rkey === 'starter-neighbours') {
+      return {
+        uri: mockStarterPackListUri,
+        cid: 'bafy-mock-starter-list',
+        value: mockStarterPackListRecord,
+      };
+    }
+    throw new Error('Record not found');
+  };
+  mock.app.bsky.graph.list.create = async (
+    _params: unknown,
+    record: any
+  ) => {
+    mockStarterPackListRecord = record;
+    return { uri: mockStarterPackListUri, cid: 'bafy-mock-starter-list' };
+  };
+  mock.app.bsky.graph.list.put = async (
+    _params: unknown,
+    record: any
+  ) => {
+    mockStarterPackListRecord = record;
+    return { uri: mockStarterPackListUri, cid: 'bafy-mock-starter-list' };
+  };
+  mock.app.bsky.graph.listitem.create = async (
+    _params: unknown,
+    record: any
+  ) => {
+    const uri = `at://did:plc:mockviewer/app.bsky.graph.listitem/starter-${
+      mockStarterPackItems.length + 1
+    }`;
+    mockStarterPackItems.push({
+      uri,
+      subject: profileFor(record.subject),
+    });
+    return { uri, cid: 'bafy-mock-listitem' };
+  };
+  mock.app.bsky.graph.listitem.delete = async ({
+    rkey,
+  }: {
+    rkey?: string;
+  } = {}) => {
+    mockStarterPackItems = mockStarterPackItems.filter(
+      (item) => item.uri.split('/').pop() !== rkey
+    );
+  };
+  mock.app.bsky.graph.starterpack.get = async ({
+    rkey,
+  }: {
+    rkey?: string;
+  } = {}) => {
+    if (!rkey || rkey === 'neighbours') {
+      return {
+        uri: mockPack.uri,
+        cid: mockPack.cid,
+        value: mockStarterPackRecord,
+      };
+    }
+    throw new Error('Record not found');
+  };
+  mock.app.bsky.graph.starterpack.create = async (
+    _params: unknown,
+    record: any
+  ) => {
+    mockStarterPackRecord = record;
+    return { uri: mockPack.uri, cid: mockPack.cid };
+  };
+  mock.app.bsky.graph.starterpack.put = async (
+    _params: unknown,
+    record: any
+  ) => {
+    mockStarterPackRecord = record;
+    return { uri: mockPack.uri, cid: mockPack.cid };
+  };
   mock.app.bsky.graph.getListMutes = async () => ({
     data: { lists: [mockModList], cursor: undefined },
   });
@@ -707,6 +834,8 @@ export function mockInitialScreen(): string {
     'AccountSettings',
     'PrivacySecurity',
     'SessionSecurity',
+    'StarterPack',
+    'StarterPackEdit',
   ].includes(requested)
     ? requested
     : 'Tabs';

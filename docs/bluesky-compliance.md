@@ -27,7 +27,7 @@ image, video and GIF posts, lists and the moderation inbox are now shipped. This
 | Client identity | `oauth-client-metadata.json`; native callback `click.croft.balla:/oauth-callback`; site deployment | Metadata must resolve at the exact `client_id` URL |
 | Home feed | Chronological Following first, a visible feed switcher for saved feeds, pagination and pull-to-refresh | Following stays unranked; custom generator order is labelled and never injected |
 | Threads | Ancestor chain, nested replies, reply composer, and reply/quote gates read from real threadgate and postgate records | Some moderation states remain |
-| Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, authored lists/feeds/starter packs, label warnings, verification and trusted-verifier badges with their AppView records, pinned post, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner | Verification is display-only — Balla never issues verifications |
+| Profiles | Public profile view, follow/unfollow, counts, follower/following/known-follower lists, post likes/reposts/quotes lists, authored lists/feeds/starter packs, label warnings, verification and trusted-verifier badges with their AppView records, pinned post, report/block/mute actions, and editing of name, bio, pronouns, links, avatar and banner. Starter packs have explicit follow, add-feed and share actions, plus creation/editing for packs the signed-in account owns | Verification is display-only — Balla never issues verifications; starter-pack writes need one narrow scope and re-authorisation for older sessions |
 | Search | Top/Latest/People/Feeds/Starter Packs, structured include/exclude filters, persisted local history, in-app feed/starter-pack destinations, and account-scoped post search from a profile | Scoped search uses the same `searchPostsV2.authors` filter as structured `from` |
 | Notifications | Tabs, grouped activity, unread count, mark-all-read and a real per-category settings route with in-app/push switches and audience filters | No device push registration yet (#36) |
 | Saved | Private Bluesky bookmarks, remove in place | Uses AppView bookmark stash; good privacy model |
@@ -230,7 +230,7 @@ privacy, block/mute, report and leave/delete flows.
 
 ### P2 — depth and federation
 
-1. Starter packs, labeler subscriptions and custom labeler preferences.
+1. ~~Starter packs.~~ Done: search, landing pages, explicit member/feed actions, official sharing and owner-only creation/editing with one narrow repo scope. Labeler subscriptions and custom labeler preferences remain.
 2. Drafts, scheduling-adjacent workflows and multi-account support where safe.
 3. ~~Rich media (video, GIF, captions, aspect ratios).~~ Done: video-service upload, published video views, GIF presentation, WebVTT captions and real aspect ratios.
 4. ~~Web client with the web OAuth callback, or removal of the web redirect.~~

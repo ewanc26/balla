@@ -48,6 +48,7 @@ import { LanguageSettingsScreen } from './src/screens/LanguageSettingsScreen';
 import { FeedPreferencesScreen } from './src/screens/FeedPreferencesScreen';
 import { ThreadPreferencesScreen } from './src/screens/ThreadPreferencesScreen';
 import { StarterPackScreen } from './src/screens/StarterPackScreen';
+import { StarterPackEditScreen } from './src/screens/StarterPackEditScreen';
 import { ListsScreen } from './src/screens/ListsScreen';
 import { ListDetailScreen } from './src/screens/ListDetailScreen';
 import { ListEditScreen } from './src/screens/ListEditScreen';
@@ -355,6 +356,7 @@ export default function App() {
                           <Stack.Screen name="FeedGenerator" component={FeedGeneratorScreen} />
                           <Stack.Screen name="Feeds" component={FeedsScreen} />
                           <Stack.Screen name="StarterPack" component={StarterPackScreen} />
+                          <Stack.Screen name="StarterPackEdit" component={StarterPackEditScreen} />
                           <Stack.Screen name="Lists" component={ListsScreen} />
                           <Stack.Screen name="ListDetail" component={ListDetailScreen} />
                           <Stack.Screen name="ListEdit" component={ListEditScreen} />

@@ -1,10 +1,10 @@
 # OAuth scope inventory
 
-Last updated: **21 November 2026**.
+Last updated: **22 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **61 tokens**.
+the scope currently has **62 tokens**.
 
 ## Repository writes
 
@@ -20,10 +20,13 @@ the scope currently has **61 tokens**.
 | `repo:app.bsky.graph.list?action=create&action=update&action=delete` | Creating, editing and deleting curation and moderation lists |
 | `repo:app.bsky.graph.listitem?action=create&action=delete` | Adding and removing list members |
 | `repo:app.bsky.graph.listblock?action=create&action=delete` | Blocking and unblocking a list |
+| `repo:app.bsky.graph.starterpack?action=create&action=update` | Creating and editing starter packs, using the official `app.bsky.graph.starterpack` record and a reference list |
 
-Balla adds `update` only for the profile, link and list records it can edit. It
-does not update posts or any other record type. There is no threadgate, feed
-generator, starter-pack or chat scope.
+Balla adds `update` only for the profile, link, list and starter-pack records it
+can edit. It does not update posts or any other record type. There is no
+threadgate, feed generator or chat scope. Starter packs are written through the
+same PDS record API used by Bluesky's reference client; the installed generated
+lexicon declares `app.bsky.graph.starterpack`.
 
 ## Blob uploads
 
@@ -124,9 +127,10 @@ database.
 - Account, email, 2FA and app-password scopes — account lifecycle and security
   are PDS/provider operations. Balla links to the provider controls instead of
   showing inert toggles.
-- Feed-generator, starter-pack and threadgate repo scopes — Balla reads custom
-  feeds and writes saved-feed preferences through the AppView; it does not
-  create generators, starter packs or threadgates.
+- Feed-generator and threadgate repo scopes — Balla reads custom feeds and
+  writes saved-feed preferences through the AppView; it does not create
+  generators or threadgates. Starter packs now have their own narrow write
+  scope above.
 - `chat.bsky.*` — DMs are not implemented. A chat audience must be added before
   shipping them.
 - `transition:*` and broad wildcards.
@@ -136,9 +140,11 @@ database.
 The client metadata has widened over time for profile editing, saved feeds and
 the moderation inbox while staying granular. Sessions authorised before any of
 those changes keep their old grant and must re-authorise before the new
-profile/link/blob, list, saved-feed or inbox scopes are available. Signing out and back
-in requests the current scope. The consent screen should show the collection and
-RPC list above, not “access to nearly everything”.
+profile/link/blob, list, saved-feed, inbox or starter-pack scopes are available.
+Signing out and back in requests the current scope. Sessions authorised before
+0.13.0 need that re-authorisation before starter-pack creation or editing works;
+the editor says so rather than hiding the failure. The consent screen should
+show the collection and RPC list above, not “access to nearly everything”.
 
 ## Caveat
 

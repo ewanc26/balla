@@ -874,6 +874,33 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 ))}
               </View>
             ) : null}
+
+            {isSelf ? (
+              <Pressable
+                onPress={() => navigation.navigate('StarterPackEdit', { uri: 'new' })}
+                accessibilityRole="button"
+                accessibilityLabel="Create starter pack"
+                style={({ pressed }) => [
+                  styles.searchPostsRow,
+                  { borderTopColor: p.divider, opacity: pressed ? 0.6 : 1 },
+                ]}
+              >
+                <Ionicons name="add-circle-outline" size={18} color={p.accent} />
+                <Text
+                  style={{
+                    color: p.accent,
+                    fontSize: 14,
+                    fontWeight: '600',
+                    marginLeft: 10,
+                    flex: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  Create starter pack
+                </Text>
+                <Ionicons name="chevron-forward" size={16} color={p.accent} />
+              </Pressable>
+            ) : null}
           </View>
         </View>
 
