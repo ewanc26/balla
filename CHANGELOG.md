@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.54.0
+
+- **Balla now names its author, in the app and on the site (#162).** A single `CreatorByline` renders "Balla by Ewan Croft" and `@ewancroft.uk` in About, the Settings footer, the desktop rail and every marketing page. The handle resolves live and opens the author's profile inside Balla; the web profile is the fallback when resolution fails, so nothing is pinned to a DID or a PDS host.
+- **The Supporters card is the only place Balla asks for support (#163).** It sits in About, links to ewancroft.uk/support and stops there. There is no support ask in a feed, thread, notification or chat, no analytics and no second copy of the URL: the support link lives once in `serviceHosts.ts`. The site footers carry the same static block beside the AGPL-3.0 licence line.
+- No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.53.0
 
 - **Image and video fallbacks now honour the configured did:plc directory (#97, partial).** When a post image or video has to be read straight from its author's PDS, Balla first resolves the author's DID document. That read still called the agent's default Bluesky `resolveDid` endpoint, so a saved directory host was ignored on the media path even after v0.50.0–v0.52.0 fixed the other public reads.
