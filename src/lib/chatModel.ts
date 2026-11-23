@@ -188,7 +188,7 @@ export function chatErrorCopy(err: unknown): string {
     case 'locked':
       return 'This conversation is locked. New messages cannot be sent.';
     case 'rate-limited':
-      return 'Bluesky is limiting requests just now. Try again in a moment.';
+      return 'The service is limiting requests just now. Try again in a moment.';
     case 'offline':
       return 'You appear to be offline. Check your connection and try again.';
     default:

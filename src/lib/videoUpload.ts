@@ -75,10 +75,10 @@ async function readError(response: Response, fallback: string): Promise<string> 
     if (response.status === 409 && error === 'already_exists') {
       return body?.blob
         ? 'This video was uploaded before. Balla is using its existing result.'
-        : 'Bluesky saw this video before but did not return its result, so it cannot be reused.';
+        : 'The video service saw this video before but did not return its result, so it cannot be reused.';
     }
     if (error === 'unconfirmed_email' || message.includes('unconfirmed email')) {
-      return 'Bluesky needs a verified email address before this account can upload video.';
+      return 'The video service needs a verified email address before this account can upload video.';
     }
     const detail = `${error} ${message}`.toLowerCase();
     if (
@@ -154,7 +154,7 @@ function parseJobStatus(body: unknown): VideoJobStatus {
   const result = AppBskyVideoDefs.validateJobStatus(candidate);
   if (!result.success) {
     throw new VideoUploadError(
-      'Bluesky returned a video job status Balla cannot read.'
+      'The video service returned a video job status Balla cannot read.'
     );
   }
   return result.value as VideoJobStatus;
@@ -172,7 +172,7 @@ async function fetchJson(
     throw new VideoUploadError(
       describeFailure(
         err,
-        'Could not reach Bluesky’s video service. Video upload may not work in this browser.'
+        'Could not reach the video service. Video upload may not work in this browser.'
       )
     );
   }
@@ -197,14 +197,14 @@ export async function uploadComposerVideo({
   );
   if (!limitsResponse.ok) {
     throw new VideoUploadError(
-      `Bluesky’s video service could not check your quota. ${serviceStatusDetail(limitsResponse.status)}`
+      `The video service could not check your quota. ${serviceStatusDetail(limitsResponse.status)}`
     );
   }
   const limits = await limitsResponse.json().catch(() => null);
   const quota = normaliseVideoQuota(limits);
   if (!quota) {
     throw new VideoUploadError(
-      'Bluesky’s video service returned no usable canUpload quota.'
+      'The video service returned no usable canUpload quota.'
     );
   }
   const quotaProblem = videoQuotaProblem(video.byteSize, quota);
@@ -239,7 +239,7 @@ export async function uploadComposerVideo({
   const reused = videoStatusFromUpload(uploadBody);
   if (!uploadResponse.ok && !reused) {
     throw new VideoUploadError(
-      await readError(uploadResponse, 'Bluesky could not accept this video.')
+      await readError(uploadResponse, 'The video service could not accept this video.')
     );
   }
 
@@ -253,7 +253,7 @@ export async function uploadComposerVideo({
 
   if (!videoJobDone(status) && !videoJobFailed(status) && !status.jobId) {
     throw new VideoUploadError(
-      'Bluesky accepted the file but did not return a job to follow.'
+      'The video service accepted the file but did not return a job to follow.'
     );
   }
 
@@ -272,7 +272,7 @@ export async function uploadComposerVideo({
     );
     if (!response.ok) {
       throw new VideoUploadError(
-        await readError(response, 'Bluesky did not return this video’s progress.')
+        await readError(response, 'The video service did not return this video’s progress.')
       );
     }
     status = parseJobStatus(await response.json().catch(() => null));
@@ -284,7 +284,7 @@ export async function uploadComposerVideo({
       status.message ||
         status.error ||
         status.failureCode ||
-        'Bluesky could not process this video.'
+        'The video service could not process this video.'
     );
   }
   if (!videoJobDone(status)) {

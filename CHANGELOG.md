@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.49.0
+
+- **Corrected an overclaim in the previous release.** v0.48.0's public copy said "Failure messages name no provider," but the shared error helper was only one of many failure paths; search, chat, moderation, video, feeds, link previews and the text-cap validation still named Bluesky as the culprit. Those technical failures now use fixed service-neutral labels across 24 strings in twelve modules. Factual provider references that say where data is stored or who made a moderation decision stay, because those are true and useful.
+- **Why this matters beyond wording.** A failure attributed to "Bluesky" is wrong when the failing host is one the user configured, which is exactly the direction of #97/#99/#100. Service-neutral labels stay true regardless of which host answered. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.48.0
 
 - **Failure messages no longer promise a wait the client will not honour.** A `Retry-After: 30` used to show "Try again in about 30 seconds" while `readWithRetry` actually retried after the 8-second cap. Now, when a service advertises a wait longer than the automatic backoff cap, the read stops and surfaces the error instead of retrying early. A short advertised wait is still honoured exactly (<a href="https://github.com/ewanc26/balla/issues/34">issue #34</a>).

@@ -195,7 +195,7 @@ export function describeVideoJob(status: VideoJobStatus | null | undefined): str
   if (videoJobDone(status)) return 'Ready to post';
   if (videoJobFailed(status)) {
     const reason = status.message || status.error || status.failureCode;
-    return reason ? `Bluesky could not process this file: ${reason}` : 'Bluesky could not process this file.';
+    return reason ? `The video service could not process this file: ${reason}` : 'The video service could not process this file.';
   }
   if (state === 'JOB_STATE_ENCODING') {
     const percent = Math.round((status.progress || 0) * 100);

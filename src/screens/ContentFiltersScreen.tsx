@@ -234,7 +234,7 @@ export function ContentFiltersScreen({
         ? raw
         : (await agent.getProfile({ actor: raw })).data.did;
       if (did === BSKY_LABELER_DID) {
-        throw new Error('Bluesky moderation is already subscribed.');
+        throw new Error('The moderation service is already subscribed.');
       }
       if (prefs.moderationPrefs.labelers.some((labeler: any) => labeler.did === did)) {
         throw new Error('That labeler is already subscribed.');

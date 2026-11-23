@@ -41,7 +41,7 @@ test('emoji can fit the grapheme cap but exceed the byte cap', () => {
   assert.equal(measured.graphemeOver, 0);
   assert.equal(measured.byteOver, 2000);
   assert.equal(measured.over, true);
-  assert.match(measured.message, /2000 UTF-8 bytes over Bluesky's 3,000-byte text cap/);
+  assert.match(measured.message, /2000 UTF-8 bytes over the 3,000-byte text cap/);
 });
 
 test('the byte boundary is exact', () => {

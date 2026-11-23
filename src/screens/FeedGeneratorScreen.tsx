@@ -460,7 +460,7 @@ export function FeedGeneratorScreen({
         <View style={[styles.notice, { backgroundColor: p.bg }]}>
           <Ionicons name="warning-outline" size={17} color={p.danger} />
           <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, flex: 1 }}>
-            Bluesky says this generator does not match its record declaration.
+            The service says this generator does not match its record declaration.
             Treat its ordering and contents with caution.
           </Text>
         </View>

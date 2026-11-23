@@ -128,7 +128,7 @@ export function describeInboxError(err: unknown, fallback: string): string {
     return 'Your session needs renewing before it can read the moderation inbox. Sign out, sign in again, and retry.';
   }
   if (/network|fetch|offline|connection/i.test(message)) {
-    return 'Could not reach Bluesky moderation. Check your connection and try again.';
+    return 'Could not reach the moderation service. Check your connection and try again.';
   }
   if (/not.?found/i.test(message)) {
     return 'That moderation record is no longer available.';

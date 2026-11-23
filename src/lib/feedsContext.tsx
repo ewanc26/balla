@@ -101,7 +101,7 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
         const missing = feedUris.filter((uri) => !map[uri]).length;
         if (missing > 0) {
           messages.push(
-            `Bluesky returned no details for ${missing} saved ${
+            `The service returned no details for ${missing} saved ${
               missing === 1 ? 'feed' : 'feeds'
             }.`
           );
@@ -140,7 +140,7 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
       setLists(map);
       if (failed > 0) {
         messages.push(
-          `Bluesky returned no details for ${failed} saved list ${
+          `The service returned no details for ${failed} saved list ${
             failed === 1 ? 'feed' : 'feeds'
           }.`
         );

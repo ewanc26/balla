@@ -25,7 +25,7 @@ export async function resolveExternalLink(rawUrl: string): Promise<ExternalView>
     : null;
   if (!card || (!card.title && !card.description)) {
     throw new Error(
-      'Bluesky could not build a preview for that link. You can still post the link as text.'
+      'The service could not build a preview for that link. You can still post the link as text.'
     );
   }
   return card;
