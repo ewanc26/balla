@@ -36,3 +36,26 @@ test('every profile stat renders in the same 44pt centred frame', () => {
     /statFrame: \{\s*minHeight: 44,\s*justifyContent: 'center',\s*\},/
   );
 });
+
+test('a stats row that would overflow the screen fuzzes its widest count', () => {
+  // The Header asks the model for all three counts at once with the live
+  // window width: exact figures stay while the row fits, and the widest
+  // count fuzzes first (1.2M-style) once it would spill off the screen.
+  assert.match(
+    profileScreen,
+    /import \{ statCountsForRow \} from '..\/lib\/statCountModel';/
+  );
+  assert.match(
+    profileScreen,
+    /const \{ width: windowWidth \} = useWindowDimensions\(\);/
+  );
+  assert.match(profileScreen, /const statCounts = statCountsForRow\(/);
+  assert.match(profileScreen, /<Stat\s+count=\{statCounts\.posts\}/);
+  assert.match(profileScreen, /count=\{statCounts\.following\}/);
+  assert.match(profileScreen, /count=\{statCounts\.followers\}/);
+  // Fuzzing is visual only; the screen reader label keeps the exact figure.
+  assert.match(
+    profileScreen,
+    /accessibilityLabel=\{`View \$\{value\} \$\{label\}`\}/
+  );
+});
