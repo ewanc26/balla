@@ -50,6 +50,8 @@ export type AppPreferences = {
   contentLanguages: string[];
   /** Whether the subtle teal.fm recent-plays strip appears on profiles. */
   showMusicActivity: boolean;
+  /** Whether the desktop right-rail Recent activity card is shown. */
+  showRecentActivity: boolean;
   /** Device-local media origin choice; "pds-first" reads blobs from the PDS. */
   blobOriginStrategy: BlobOriginStrategy;
 };
@@ -67,6 +69,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   primaryLanguage: 'en',
   contentLanguages: [],
   showMusicActivity: true,
+  showRecentActivity: true,
   blobOriginStrategy: 'follow-url',
 };
 
@@ -84,6 +87,7 @@ type PreferencesContextValue = {
   setPrimaryLanguage: (value: string) => void;
   setContentLanguages: (value: string[]) => void;
   setShowMusicActivity: (value: boolean) => void;
+  setShowRecentActivity: (value: boolean) => void;
   setBlobOriginStrategy: (value: BlobOriginStrategy) => void;
 };
 
@@ -101,6 +105,7 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   setPrimaryLanguage: () => {},
   setContentLanguages: () => {},
   setShowMusicActivity: () => {},
+  setShowRecentActivity: () => {},
   setBlobOriginStrategy: () => {},
 });
 
@@ -137,6 +142,10 @@ function parseStored(value: string | null): AppPreferences {
         typeof parsed?.showMusicActivity === 'boolean'
           ? parsed.showMusicActivity
           : DEFAULT_PREFERENCES.showMusicActivity,
+      showRecentActivity:
+        typeof parsed?.showRecentActivity === 'boolean'
+          ? parsed.showRecentActivity
+          : DEFAULT_PREFERENCES.showRecentActivity,
       blobOriginStrategy: normaliseBlobOriginStrategy(parsed?.blobOriginStrategy),
     };
   } catch {
@@ -234,6 +243,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     (value: boolean) => update({ showMusicActivity: value }),
     [update]
   );
+  const setShowRecentActivity = useCallback(
+    (value: boolean) => update({ showRecentActivity: value }),
+    [update]
+  );
   const setBlobOriginStrategy = useCallback(
     (value: BlobOriginStrategy) => update({ blobOriginStrategy: value }),
     [update]
@@ -254,6 +267,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setPrimaryLanguage,
       setContentLanguages,
       setShowMusicActivity,
+      setShowRecentActivity,
       setBlobOriginStrategy,
     }),
     [
@@ -270,6 +284,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setPrimaryLanguage,
       setContentLanguages,
       setShowMusicActivity,
+      setShowRecentActivity,
       setBlobOriginStrategy,
     ]
   );

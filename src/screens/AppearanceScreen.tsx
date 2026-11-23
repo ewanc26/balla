@@ -38,6 +38,7 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
     setDarkTheme,
     setFontScale,
     setShowMusicActivity,
+    setShowRecentActivity,
   } = usePreferences();
   const scheme: ColorScheme = useResolvedScheme();
   const selectedEra = eraFor(preferences.era);
@@ -121,6 +122,15 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
           detail="A compact strip from public teal.fm records in a profile’s repository. Nothing is written or stored by Balla."
           value={preferences.showMusicActivity}
           onChange={setShowMusicActivity}
+        />
+      </SettingSection>
+
+      <SettingSection title="Desktop right rail" detail="Wide screens">
+        <SettingSwitch
+          label="Show Recent activity"
+          detail="Replies and reposts from people you follow, built from the timeline already loaded. No extra requests; this preference stays on this device."
+          value={preferences.showRecentActivity}
+          onChange={setShowRecentActivity}
         />
       </SettingSection>
 

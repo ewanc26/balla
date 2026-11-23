@@ -1,9 +1,10 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { Avatar } from './Avatar';
 import { CreatorByline } from './CreatorByline';
+import { RecentActivityCard } from './RecentActivityCard';
 import { useViewer } from '../lib/viewer';
 import type { TabName } from './AppHeader';
 
@@ -219,11 +220,21 @@ export function LeftRail({
   );
 }
 
-export function RightRail({ onNavigate }: { onNavigate: (tab: TabName) => void }) {
+export function RightRail({
+  onNavigate,
+  onOpenThread,
+}: {
+  onNavigate: (tab: TabName) => void;
+  onOpenThread: (uri: string) => void;
+}) {
   const p = usePalette();
 
   return (
-    <View style={[styles.right, { borderLeftColor: p.divider }]}>
+    <ScrollView
+      style={[styles.right, { borderLeftColor: p.divider }]}
+      contentContainerStyle={styles.rightContent}
+      showsVerticalScrollIndicator={false}
+    >
       <View
         style={[
           styles.card,
@@ -238,6 +249,8 @@ export function RightRail({ onNavigate }: { onNavigate: (tab: TabName) => void }
         <RailFact icon="shield-checkmark-outline" text="No ranking or ads" />
         <RailFact icon="people-outline" text="Only people you follow" />
       </View>
+
+      <RecentActivityCard onOpenThread={onOpenThread} />
 
       <Pressable
         onPress={() => onNavigate('Saved')}
@@ -265,7 +278,7 @@ export function RightRail({ onNavigate }: { onNavigate: (tab: TabName) => void }
       <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, paddingHorizontal: 8 }}>
         Balla is independent software. Facebook-era styling is a design reference, not a claim; not affiliated with Bluesky or Meta.
       </Text>
-    </View>
+    </ScrollView>
   );
 }
 
@@ -317,6 +330,8 @@ const styles = StyleSheet.create({
     width: 300,
     alignSelf: 'stretch',
     borderLeftWidth: StyleSheet.hairlineWidth,
+  },
+  rightContent: {
     paddingHorizontal: 8,
     paddingTop: 12,
     paddingBottom: 16,

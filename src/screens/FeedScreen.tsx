@@ -26,6 +26,8 @@ import {
 } from '../lib/viewPreferencesModel';
 import { filterSnoozedItems } from '../lib/snoozeModel';
 import { useSnoozedAccounts } from '../lib/snooze';
+import { buildRecentActivity } from '../lib/recentActivityModel';
+import { setRecentActivity } from '../lib/recentActivity';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { FeedSwitcherSheet } from '../components/FeedSwitcherSheet';
@@ -159,6 +161,23 @@ export function FeedScreen() {
       )
     );
   }
+
+  // The right rail describes the Following timeline only. Custom and list
+  // feeds clear it rather than presenting their generator order as "people you
+  // follow". This derives from the same in-memory page set as the feed.
+  useEffect(() => {
+    setRecentActivity(
+      activeFeed
+        ? []
+        : buildRecentActivity(posts, {
+            viewerDid: me?.did,
+            snoozes: snoozedAccounts,
+            now: Date.now(),
+          })
+    );
+  }, [activeFeed, me?.did, posts, snoozedAccounts]);
+
+  useEffect(() => () => setRecentActivity([]), []);
 
   // Only Following is filtered here. Custom and list feeds keep the order
   // their service returns; filters are the home feedViewPref, not a global rule.
