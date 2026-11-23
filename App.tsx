@@ -59,6 +59,7 @@ import { AccessibilitySettingsScreen } from './src/screens/AccessibilitySettings
 import { AppIconSettingsScreen } from './src/screens/AppIconSettingsScreen';
 import { LanguageSettingsScreen } from './src/screens/LanguageSettingsScreen';
 import { FeedPreferencesScreen } from './src/screens/FeedPreferencesScreen';
+import { MemoriesScreen } from './src/screens/MemoriesScreen';
 import { ThreadPreferencesScreen } from './src/screens/ThreadPreferencesScreen';
 import { StarterPackScreen } from './src/screens/StarterPackScreen';
 import { StarterPackEditScreen } from './src/screens/StarterPackEditScreen';
@@ -405,6 +406,7 @@ export default function App() {
                             options={{ headerShown: false }}
                           />
                           <Stack.Screen name="Thread" component={ThreadScreen} />
+                          <Stack.Screen name="Memories" component={MemoriesScreen} />
                           <Stack.Screen name="StandardSite" component={StandardSiteScreen} />
                           <Stack.Screen
                             name="InteractionSettings"

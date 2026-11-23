@@ -8,6 +8,8 @@ import {
   View,
 } from 'react-native';
 import { useViewPreferences } from '../lib/viewPreferences';
+import { usePreferences } from '../lib/preferences';
+import { useViewer } from '../lib/viewer';
 import { endSnooze, useSnoozedAccounts } from '../lib/snooze';
 import { activeSnoozes, snoozeRemainingLabel } from '../lib/snoozeModel';
 import {
@@ -21,6 +23,11 @@ import { usePalette } from '../theme';
 export function FeedPreferencesScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
   const { feedFilters, loading, error, saveFeedFilters } = useViewPreferences();
+  const { preferences, setMemoriesEnabled } = usePreferences();
+  const { profile } = useViewer();
+  const memoriesPreference = profile?.did
+    ? preferences.memories[profile.did]
+    : undefined;
   const snoozedAccounts = useSnoozedAccounts();
   const snoozedList = activeSnoozes(snoozedAccounts, Date.now());
   const [busy, setBusy] = useState<string | null>(null);
@@ -82,6 +89,20 @@ export function FeedPreferencesScreen({ navigation }: { navigation: any }) {
           value={feedFilters.hideQuotePosts}
           onChange={(value) => void change('hideQuotePosts', value)}
           busy={busy === 'hideQuotePosts'}
+        />
+      </SettingSection>
+
+      <SettingSection
+        title="Memories"
+        detail="Off by default, and stored on this device for this account. This is not a Bluesky preference."
+      >
+        <SettingSwitch
+          label="On this day"
+          detail="Show your own posts from this date in past years. Only public records in your repository are read, and only while this is on. No notifications, badges or engagement counts."
+          value={!!memoriesPreference?.enabled}
+          onChange={(value) => {
+            if (profile?.did) setMemoriesEnabled(profile.did, value);
+          }}
         />
       </SettingSection>
 
