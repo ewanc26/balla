@@ -1,5 +1,6 @@
 import React, { useLayoutEffect, useState } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
@@ -32,6 +33,11 @@ import { replyIndent } from '../lib/layout';
 import { useViewPreferences } from '../lib/viewPreferences';
 import { sortReplies, type ThreadSort } from '../lib/viewPreferencesModel';
 import { isThreadRootAuthor, loadHiddenReplyUris } from '../lib/hiddenReplies';
+import {
+  buildWallToWall,
+  wallToWallName,
+} from '../lib/wallToWallModel';
+import { ThreadMenuSheet } from '../components/ThreadMenuSheet';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 // Navigation over the threadViewPost tree: the ancestor chain, the highlighted
@@ -227,7 +233,10 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   const [hiddenUris, setHiddenUris] = useState<string[]>([]);
   const [hiddenOpen, setHiddenOpen] = useState(false);
   const [sending, setSending] = useState(false);
+  const [lensDid, setLensDid] = useState<string | null>(null);
+  const [threadMenuOpen, setThreadMenuOpen] = useState(false);
   const replyInput = React.useRef<React.ComponentRef<typeof TextInput>>(null);
+  const scrollRef = React.useRef<any>(null);
   const {
     activeMention: replyActiveMention,
     query: replyMentionQuery,
@@ -319,9 +328,87 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
     });
   }, []);
 
+  // A pure lens over the visible thread. The hidden-reply gate is already
+  // applied before the model sees the tree, so wall-to-wall cannot reveal a
+  // reply the full thread keeps hidden.
+  const wallToWall = React.useMemo(() => {
+    if (!thread) return null;
+    const partitioned = partitionHiddenReplies(
+      thread.replies,
+      new Set(hiddenUris)
+    );
+    return buildWallToWall(
+      {
+        ancestors: thread.ancestors,
+        post: thread.post,
+        replies: partitioned.visible,
+      },
+      { viewerDid: me?.did, sort: threadSort }
+    );
+  }, [hiddenUris, me?.did, thread, threadSort]);
+
+  const activeLens = lensDid
+    ? wallToWall?.partners.find((partner) => partner.did === lensDid) || null
+    : null;
+  const lensName = activeLens ? wallToWallName(activeLens) : '';
+  const lensAnnouncement = activeLens
+    ? `Showing only you and ${lensName}`
+    : '';
+  const partnerCount = wallToWall?.partners.length || 0;
+
+  React.useEffect(() => {
+    if (lensDid && wallToWall && !activeLens) setLensDid(null);
+  }, [activeLens, lensDid, wallToWall]);
+
+  React.useEffect(() => {
+    if (!partnerCount) setThreadMenuOpen(false);
+  }, [partnerCount]);
+
+  React.useEffect(() => {
+    if (!activeLens || Platform.OS === 'web') return;
+    AccessibilityInfo.announceForAccessibility(lensAnnouncement);
+  }, [activeLens, lensAnnouncement]);
+
   useLayoutEffect(() => {
-    navigation.setOptions({ title: 'Thread' });
-  }, [navigation]);
+    navigation.setOptions({
+      title: 'Thread',
+      headerRight: partnerCount
+        ? () => (
+            <Pressable
+              onPress={() => setThreadMenuOpen(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Thread menu"
+              accessibilityHint="Open the wall-to-wall view"
+              style={({ pressed }) => ({
+                width: 44,
+                height: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.65 : 1,
+              })}
+            >
+              <Ionicons
+                name="ellipsis-horizontal"
+                size={22}
+                color={p.text}
+              />
+            </Pressable>
+          )
+        : undefined,
+    });
+  }, [navigation, partnerCount, p.text]);
+
+  function openWallToWall(did: string) {
+    setLensDid(did);
+    setThreadMenuOpen(false);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }
+
+  function viewFullThread() {
+    setLensDid(null);
+    setThreadMenuOpen(false);
+    scrollRef.current?.scrollTo({ y: 0, animated: false });
+  }
 
   function chooseReplyMention(actor: MentionActor) {
     if (!replyActiveMention || !actor.handle) return;
@@ -410,7 +497,160 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
       style={{ flex: 1, backgroundColor: p.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}>
+      <ScrollView
+        ref={scrollRef}
+        contentContainerStyle={{ paddingTop: 8, paddingBottom: 24 }}
+      >
+        {activeLens ? (
+          <>
+            <View
+              style={[
+                styles.lensHeader,
+                { backgroundColor: p.card, borderColor: p.divider },
+              ]}
+            >
+              <View
+                accessibilityRole="header"
+                accessibilityLabel={lensAnnouncement}
+                accessibilityLiveRegion={
+                  Platform.OS === 'web' ? 'polite' : undefined
+                }
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="people-outline" size={18} color={p.accent} />
+                  <Text
+                    style={{
+                      color: p.text,
+                      fontSize: 16,
+                      fontWeight: '700',
+                      marginLeft: 8,
+                    }}
+                  >
+                    Wall-to-wall
+                  </Text>
+                </View>
+                <Text
+                  style={{
+                    color: p.text,
+                    fontSize: 14,
+                    fontWeight: '600',
+                    marginTop: 6,
+                  }}
+                >
+                  {lensAnnouncement}
+                </Text>
+                <Text
+                  style={{
+                    color: p.secondary,
+                    fontSize: 12,
+                    lineHeight: 17,
+                    marginTop: 3,
+                  }}
+                >
+                  Third-party replies are left out by author, not by ranking.
+                  Your replies here are still public.
+                </Text>
+              </View>
+              <Pressable
+                onPress={viewFullThread}
+                accessibilityRole="button"
+                accessibilityLabel="View full thread"
+                accessibilityHint="Leaves wall-to-wall and shows everyone"
+                style={({ pressed }) => [
+                  styles.viewFullButton,
+                  {
+                    borderColor: p.divider,
+                    backgroundColor: pressed ? p.bg : 'transparent',
+                  },
+                ]}
+              >
+                <Ionicons name="arrow-back-outline" size={17} color={p.accent} />
+                <Text
+                  style={{
+                    color: p.accent,
+                    fontSize: 13,
+                    fontWeight: '700',
+                    marginLeft: 7,
+                  }}
+                >
+                  View full thread
+                </Text>
+              </Pressable>
+            </View>
+
+            {activeLens.items.length === 0 ? (
+              <View
+                style={[
+                  styles.lensEmpty,
+                  { backgroundColor: p.card, borderColor: p.divider },
+                ]}
+              >
+                <Ionicons name="people-outline" size={22} color={p.secondary} />
+                <Text
+                  style={{
+                    color: p.text,
+                    fontSize: 14,
+                    fontWeight: '600',
+                    marginTop: 8,
+                    textAlign: 'center',
+                  }}
+                >
+                  No two-person exchange in this thread yet.
+                </Text>
+                <Text
+                  style={{
+                    color: p.secondary,
+                    fontSize: 12,
+                    lineHeight: 17,
+                    marginTop: 3,
+                    textAlign: 'center',
+                  }}
+                >
+                  View the full thread to see everyone.
+                </Text>
+              </View>
+            ) : (
+              activeLens.items.map((item) => (
+                <View key={item.uri}>
+                  <ThreadRoleLabel
+                    text={
+                      item.role === 'focus'
+                        ? 'This post'
+                        : item.role === 'ancestor'
+                          ? 'Earlier in thread'
+                          : 'Reply'
+                    }
+                    focus={item.role === 'focus'}
+                    accessibilityLabel={
+                      item.role === 'focus'
+                        ? 'The post you opened'
+                        : item.role === 'ancestor'
+                          ? 'Earlier post in this two-person view'
+                          : 'Reply in this two-person view'
+                    }
+                  />
+                  <PostCard
+                    post={item.post}
+                    highlight={item.role === 'focus'}
+                    onOpenThread={
+                      item.role === 'focus'
+                        ? () => replyInput.current?.focus()
+                        : item.role === 'reply'
+                          ? () => navigation.push('Thread', { uri: item.uri })
+                          : undefined
+                    }
+                    onOpenProfile={openProfile}
+                    onPostHidden={hidePost}
+                    onHiddenReplyChange={
+                      item.role === 'reply' ? onHiddenReplyChange : undefined
+                    }
+                  />
+                </View>
+              ))
+            )}
+          </>
+        ) : (
+        <>
         <View
           accessibilityRole="header"
           accessibilityLabel="Thread: a conversation in order, oldest first"
@@ -528,7 +768,18 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
               : null}
           </View>
         ) : null}
+        </>
+        )}
       </ScrollView>
+
+      <ThreadMenuSheet
+        visible={threadMenuOpen}
+        partners={wallToWall?.partners || []}
+        activeDid={activeLens?.did || null}
+        onClose={() => setThreadMenuOpen(false)}
+        onSelect={openWallToWall}
+        onViewFull={viewFullThread}
+      />
 
       {replyError ? (
         <Text style={{ color: p.danger, paddingHorizontal: 16, paddingBottom: 6 }}>
@@ -648,6 +899,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginBottom: 4,
+  },
+  lensHeader: {
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 6,
+  },
+  viewFullButton: {
+    minHeight: 44,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginTop: 8,
+  },
+  lensEmpty: {
+    alignItems: 'center',
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+    marginHorizontal: 16,
+    marginVertical: 12,
+    paddingHorizontal: 18,
+    paddingVertical: 24,
   },
   roleRow: {
     flexDirection: 'row',
