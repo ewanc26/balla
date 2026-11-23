@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.33.0
+
+- **Advanced → Hosting → Browse PDS hosts** reads the public OpenPDS index in the app (#100). It lists hosts that advertise open registration with the index's own timestamps, user domains, country and sign-up fields, and says plainly that the list is third-party metadata rather than a health check or a promise of sign-up.
+- Choose a listed host or enter a custom HTTPS host. Both paths run the existing read-only `com.atproto.server.describeServer` check and hand the chosen URL to the existing OAuth sign-in, where the host serves its own approval page. The index refresh is explicit; a failed refresh never replaces a good snapshot and a stale report is labelled.
+- No new OAuth scope or dependency; the scope count remains 111. App-password sign-in is deliberately not added: Balla uses OAuth only and treats passwords as provider-owned.
+
 ## 0.32.0
 
 - **Advanced → Services** centralises service defaults in one typed module and separates what Balla can honestly change from what its OAuth grant fixes. The pre-authorisation XRPC handle resolver is now a real, persisted choice: edit the host, **Save resolver**, **Use default** and **Test resolver** all take effect on the next sign-in without a restart and never touch an existing session. The native well-known resolver still runs first, so an independent handle does not need this fallback at all.

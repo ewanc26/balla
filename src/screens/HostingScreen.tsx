@@ -31,7 +31,7 @@ const STATUS_LABELS: Record<HostProbeState, string> = {
 /** Advanced → Hosting: real account facts and a read-only PDS host check. */
 export function HostingScreen() {
   const p = usePalette();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { summary, loading } = useSessionSummary();
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -141,9 +141,15 @@ export function HostingScreen() {
 
       <SettingSection title="Choose a provider">
         <SettingLinkRow
+          icon="list-outline"
+          label="Browse PDS hosts"
+          detail="Open-registration hosts listed by OpenPDS, with a live host check"
+          onPress={() => navigation.navigate('PdsDirectory')}
+        />
+        <SettingLinkRow
           icon="earth-outline"
-          label="Open PDS directory"
-          detail="Independent hosts with open registration"
+          label="Open PDS directory on the web"
+          detail="The same third-party index, outside Balla"
           onPress={() => void openExternalUrl(OPEN_PDS_DIRECTORY)}
           external
         />
