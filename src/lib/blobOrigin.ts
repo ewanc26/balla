@@ -1,7 +1,6 @@
 import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
-import { agent } from './agent';
-import { readWithRetry } from './reliability';
+import { resolveDidDocument } from './identityResolver';
 import { atprotoPdsEndpoint } from './tealModel';
 import {
   MAX_BLOB_CACHE_BYTES,
@@ -95,10 +94,10 @@ export async function resolveBlobUri(fallback: BlobFallback): Promise<string | n
 
   try {
     // The DID document is the source of truth for the author's repo host.
-    const resolved = await readWithRetry(() =>
-      agent.com.atproto.identity.resolveDid({ did: fallback.did })
-    );
-    const endpoint = atprotoPdsEndpoint(resolved.data);
+    // Reuse the strategy-aware resolver so this public read honours the
+    // configured did:plc directory instead of an implicit Bluesky host.
+    const document = await resolveDidDocument(fallback.did);
+    const endpoint = atprotoPdsEndpoint(document);
     if (!endpoint) return null;
 
     // A plain fetch avoids the AppView proxy that the SDK agent attaches to
