@@ -11,7 +11,10 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import { getChatAgent } from '../lib/agent';
+import { usePreferences } from '../lib/preferences';
+import { translateText } from '../lib/translate';
 import {
   dialogAccessibilityProps,
   sheetAnimation,
@@ -23,6 +26,7 @@ import {
   REACTION_CHOICES,
   groupReactions,
   messageActionable,
+  messageTextForAction,
   validateReactionValue,
 } from '../lib/chatGroupModel';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
@@ -50,10 +54,15 @@ export function MessageActionsSheet({
 }) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
+  const { preferences } = usePreferences();
   const [custom, setCustom] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [translation, setTranslation] = useState<string | null>(null);
+  const [translationVisible, setTranslationVisible] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const containerRef = useRef<any>(null);
   const closeRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -64,6 +73,39 @@ export function MessageActionsSheet({
   const mineReactions = new Set(
     groupReactions(message, viewerDid).filter((item) => item.mine).map((item) => item.value)
   );
+  const messageText = messageTextForAction(message);
+
+  async function copyMessageText() {
+    if (!messageText) return;
+    setError(null);
+    setNotice(null);
+    try {
+      await Clipboard.setStringAsync(messageText);
+      setNotice('Message text copied to the clipboard.');
+    } catch {
+      setError('Could not copy the message text. Try again.');
+    }
+  }
+
+  async function translateMessage() {
+    if (!messageText || translating) return;
+    if (translation) {
+      setTranslationVisible((value) => !value);
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setTranslating(true);
+    try {
+      const result = await translateText(messageText, preferences.primaryLanguage);
+      setTranslation(result.text);
+      setTranslationVisible(true);
+    } catch {
+      setError('Could not translate this message. Try again.');
+    } finally {
+      setTranslating(false);
+    }
+  }
 
   async function react(value: string) {
     const validation = validateReactionValue(value);
@@ -103,7 +145,7 @@ export function MessageActionsSheet({
     setError(null);
     try {
       const res = await getChatAgent().chat.bsky.convo.deleteMessageForSelf({
-        convoId: String(message?.convoId || ''),
+        convoId: (convoId || '').trim(),
         messageId: String(message?.id),
       });
       onMessageUpdated(res.data);
@@ -161,7 +203,84 @@ export function MessageActionsSheet({
             </Text>
           ) : (
             <ScrollView keyboardShouldPersistTaps="handled" style={styles.body}>
-              <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', marginTop: 4 }}>
+              {messageText ? (
+                <View style={styles.textSection}>
+                  <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', marginTop: 4 }}>
+                    Message text
+                  </Text>
+                  <View
+                    style={[
+                      styles.textCard,
+                      { backgroundColor: p.bg, borderColor: p.divider },
+                    ]}
+                  >
+                    <Text style={{ color: p.text, fontSize: 14, lineHeight: 20 }}>
+                      {translationVisible && translation ? translation : messageText}
+                    </Text>
+                  </View>
+                  {translation ? (
+                    <Pressable
+                      onPress={() => setTranslationVisible((value) => !value)}
+                      accessibilityRole="button"
+                      accessibilityLabel={
+                        translationVisible ? 'Show the original message' : 'Show the translation'
+                      }
+                      style={({ pressed }) => [
+                        styles.translationToggle,
+                        { opacity: pressed ? 0.7 : 1 },
+                      ]}
+                    >
+                      <Ionicons name="language-outline" size={15} color={p.accent} />
+                      <Text style={{ color: p.accent, fontSize: 13, fontWeight: '600', marginLeft: 5 }}>
+                        {translationVisible ? 'Show original' : 'Show translation'}
+                      </Text>
+                    </Pressable>
+                  ) : null}
+                  <View style={styles.actions}>
+                    <Pressable
+                      onPress={() => void copyMessageText()}
+                      disabled={!!busy || translating}
+                      accessibilityRole="button"
+                      accessibilityLabel="Copy message text"
+                      style={({ pressed }) => [
+                        styles.action,
+                        { backgroundColor: p.bg, borderColor: p.divider, opacity: pressed ? 0.7 : 1 },
+                      ]}
+                    >
+                      <Ionicons name="copy-outline" size={20} color={p.text} />
+                      <Text style={{ color: p.text, fontWeight: '600' }}>Copy text</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => void translateMessage()}
+                      disabled={!!busy || translating}
+                      accessibilityRole="button"
+                      accessibilityLabel="Translate message text"
+                      style={({ pressed }) => [
+                        styles.action,
+                        { backgroundColor: p.bg, borderColor: p.divider, opacity: pressed ? 0.7 : 1 },
+                      ]}
+                    >
+                      {translating ? (
+                        <ActivityIndicator size="small" color={p.text} />
+                      ) : (
+                        <Ionicons name="language-outline" size={20} color={p.text} />
+                      )}
+                      <Text style={{ color: p.text, fontWeight: '600' }}>
+                        {translating ? 'Translating…' : 'Translate'}
+                      </Text>
+                    </Pressable>
+                  </View>
+                  <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 6 }}>
+                    Translation sends this message to Google. Balla does not store message text.
+                  </Text>
+                  {notice ? (
+                    <Text accessibilityRole="status" style={{ color: p.accent, fontSize: 13, marginTop: 8 }}>
+                      {notice}
+                    </Text>
+                  ) : null}
+                </View>
+              ) : null}
+              <Text style={{ color: p.text, fontSize: 15, fontWeight: '600', marginTop: 16 }}>
                 Add a reaction
               </Text>
               <Text style={{ color: p.secondary, fontSize: 13, marginTop: 4 }}>
@@ -339,6 +458,9 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 },
   close: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   body: { maxHeight: 520 },
+  textSection: { marginTop: 8 },
+  textCard: { borderWidth: 1, borderRadius: CARD_RADIUS, padding: 12, marginTop: 8 },
+  translationToggle: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', minHeight: 44, marginTop: 4 },
   reactions: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
   reaction: { minWidth: 52, minHeight: 44, borderWidth: 1, borderRadius: CARD_RADIUS, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 8 },
   customRow: { flexDirection: 'row', gap: 8, marginTop: 10 },

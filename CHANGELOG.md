@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.25.0
+
+- Appearance now offers a **Dark theme** choice with **Dim** and **Dark** when the resolved scheme is dark. Dim lifts the era dark surfaces and accent towards white while keeping the published text and accent-soft tokens, and the choice is stored on this device only. Light mode is unchanged.
+- Message actions now offer visible **Copy text** and **Translate** controls for messages that contain text. Copy writes the exact message text to the clipboard with a visible notice; Translate uses the primary language and offers **Show original** / **Show translation**. Embed-only messages do not show the controls, and Balla still does not log or store message text.
+- Fix delete-for-self using the conversation id from the route instead of a field on the message. No dependency or OAuth scope changed.
+
 ## 0.24.0
 
 - The post overflow now has **Mute words & tags** immediately after Mute thread. It opens Content filters with the muted-words section in view.

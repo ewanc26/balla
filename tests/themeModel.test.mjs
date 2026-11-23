@@ -19,6 +19,7 @@ test('nine solid accents and four Facebook-era presets are available', () => {
   assert.equal(DEFAULT_THEME_CHOICE.accent, 'facebook');
   assert.equal(DEFAULT_THEME_CHOICE.era, 'newfacebook');
   assert.equal(DEFAULT_THEME_CHOICE.colourMode, 'system');
+  assert.equal(DEFAULT_THEME_CHOICE.darkTheme, 'dim');
   assert.equal(DEFAULT_THEME_CHOICE.fontScale, 'default');
   assert.deepEqual(
     FACEBOOK_ERAS.map((era) => era.years),
@@ -100,8 +101,67 @@ test('every era and accent pair keeps readable text and controls', () => {
 });
 
 test('dark accents choose a dark label when white would fail', () => {
-  const p = buildPalette('dark', { accent: 'orange', era: 'newfacebook' });
+  const p = buildPalette('dark', {
+    accent: 'orange',
+    era: 'newfacebook',
+    darkTheme: 'dark',
+  });
   assert.equal(p.accent, '#FFB74D');
   assert.equal(p.onAccent, '#111827');
   assert.ok(contrastRatio(p.onAccent, p.accent) >= 4.5);
+});
+
+test('dim is the default dark theme and invalid stored values fall back', () => {
+  assert.equal(DEFAULT_THEME_CHOICE.darkTheme, 'dim');
+  assert.deepEqual(
+    normaliseThemeChoice({ darkTheme: 'dark', colourMode: 'dark' }),
+    { ...DEFAULT_THEME_CHOICE, darkTheme: 'dark', colourMode: 'dark' }
+  );
+  assert.deepEqual(normaliseThemeChoice({ darkTheme: 'black' }), DEFAULT_THEME_CHOICE);
+});
+
+test('dim lifts dark surfaces but never changes light mode', () => {
+  const dark = buildPalette('dark', { darkTheme: 'dark' });
+  const dim = buildPalette('dark', { darkTheme: 'dim' });
+  const light = buildPalette('light', { darkTheme: 'dark' });
+  const lightDim = buildPalette('light', { darkTheme: 'dim' });
+
+  assert.deepEqual(light, lightDim);
+  assert.notEqual(dim.bg, dark.bg);
+  assert.notEqual(dim.card, dark.card);
+  assert.notEqual(dim.accent, dark.accent);
+  assert.equal(dim.text, dark.text);
+  assert.equal(dim.accentSoft, dark.accentSoft);
+  assert.equal(dim.darkTheme, 'dim');
+  assert.equal(dark.darkTheme, 'dark');
+});
+
+test('every era and accent pair stays readable in both dark themes', () => {
+  for (const era of FACEBOOK_ERAS) {
+    for (const colour of ACCENT_COLOURS) {
+      for (const darkTheme of ['dim', 'dark']) {
+        const p = buildPalette('dark', {
+          era: era.id,
+          accent: colour.id,
+          darkTheme,
+        });
+        for (const [label, foreground, background, minimum] of [
+          ['accent on card', p.accent, p.card, 4.5],
+          ['accent on soft', p.accent, p.accentSoft, 4.5],
+          ['button label', p.onAccent, p.accent, 4.5],
+          ['body text', p.text, p.card, 4.5],
+          ['secondary text', p.secondary, p.card, 4.5],
+          ['chrome title', p.chromeText, p.chrome, 4.5],
+          ['chrome action', p.chromeAction, p.chrome, 4.5],
+          ['chrome muted icon', p.chromeMuted, p.chrome, 3],
+        ]) {
+          const ratio = contrastRatio(foreground, background);
+          assert.ok(
+            ratio >= minimum,
+            `${darkTheme}/${era.id}/${colour.id} ${label}: ${ratio.toFixed(2)}`
+          );
+        }
+      }
+    }
+  }
 });

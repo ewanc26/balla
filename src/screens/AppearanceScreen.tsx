@@ -10,11 +10,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { usePreferences } from '../lib/preferences';
 import {
   ACCENT_COLOURS,
+  DARK_THEMES,
   FACEBOOK_ERAS,
   FONT_SCALES,
   buildPalette,
   eraFor,
   type ColorScheme,
+  type DarkThemeId,
   type FontScaleId,
   type Palette,
 } from '../lib/themeModel';
@@ -27,8 +29,14 @@ import {
 
 export function AppearanceScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
-  const { preferences, setAccent, setEra, setColourMode, setFontScale } =
-    usePreferences();
+  const {
+    preferences,
+    setAccent,
+    setEra,
+    setColourMode,
+    setDarkTheme,
+    setFontScale,
+  } = usePreferences();
   const scheme: ColorScheme = useResolvedScheme();
   const selectedEra = eraFor(preferences.era);
 
@@ -73,6 +81,24 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
           onChange={setColourMode}
         />
       </SettingSection>
+
+      {scheme === 'dark' ? (
+        <SettingSection title="Dark theme" detail="Dim or Dark">
+          <SettingChoice
+            label="Dark theme"
+            options={DARK_THEMES.map((value) => ({
+              value,
+              label: value === 'dim' ? 'Dim' : 'Dark',
+              detail:
+                value === 'dim'
+                  ? 'Softer surfaces with the same contrast.'
+                  : 'Full dark palette.',
+            }))}
+            value={preferences.darkTheme}
+            onChange={(value: DarkThemeId) => setDarkTheme(value)}
+          />
+        </SettingSection>
+      ) : null}
 
       <SettingSection title="Text size" detail="Post and composer text">
         <SettingChoice
