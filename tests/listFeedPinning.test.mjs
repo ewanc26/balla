@@ -37,8 +37,10 @@ test('the Feeds manager opens and removes list-feed shortcuts', () => {
 });
 
 test('release copy records list-feed pinning', () => {
-  assert.equal(JSON.parse(read('../package.json')).version, '0.23.0');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.23.0');
+  assert.equal(
+    JSON.parse(read('../package.json')).version,
+    JSON.parse(read('../app.json')).expo.version,
+  );
 
   const changelog = read('../CHANGELOG.md');
   assert.match(changelog, /## 0\.23\.0/);

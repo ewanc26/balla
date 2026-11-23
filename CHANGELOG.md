@@ -3,6 +3,16 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.23.1
+
+- CI now runs the deterministic test suite and the static-site build on every
+  push and pull request, in addition to typechecking, Expo dependency drift and
+  icon sync. All install steps use `npm ci` so a green check is tied to the
+  committed lockfile.
+- Add a deterministic workflow test and update the contributing guide and README
+  so the documented checks match the enforced ones. No dependency or OAuth
+  scope changed.
+
 ## 0.23.0
 
 - Curation list feeds can now be pinned to Home through the published saved-feed
