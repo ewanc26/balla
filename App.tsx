@@ -108,6 +108,7 @@ import {
   HEADER_SEARCH_MIN_WIDTH,
   READING_COLUMN_MAX_WIDTH,
   navigationLayout,
+  tabBarHeight,
 } from './src/lib/layout';
 import {
   MOCK_MODE,
@@ -130,7 +131,7 @@ const TAB_NAMES: TabName[] = ['Home', 'Search', 'Notifications', 'Saved', 'Profi
 function Tabs() {
   const p = usePalette();
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
+  const { width, fontScale } = useWindowDimensions();
   const showBottomTabs = navigationLayout(width).bottomTabs;
   // Five equal slots leave too little room for the full word on a phone, and
   // React Navigation truncates a single-line tab label rather than wrapping it.
@@ -149,7 +150,8 @@ function Tabs() {
               backgroundColor: p.chrome,
               borderTopColor: p.chromeBorder,
               borderTopWidth: StyleSheet.hairlineWidth,
-              height: 64 + insets.bottom,
+              // Font-scale aware so a scaled-up tab label is never clipped (#190).
+              height: tabBarHeight(fontScale) + insets.bottom,
               paddingTop: 6,
               paddingBottom: insets.bottom + 10,
             }

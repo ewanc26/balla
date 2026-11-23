@@ -9,6 +9,7 @@ import {
   RIGHT_RAIL_MIN_WIDTH,
   navigationLayout,
   replyIndent,
+  tabBarHeight,
 } from '../src/lib/layout.ts';
 
 test('exactly one primary navigation surface is visible at any width', () => {
@@ -66,6 +67,39 @@ test('the desktop right rail keeps its fixed width instead of stretching', () =>
     rail,
     /right: \{\s*width: 300,\s*flexGrow: 0,\s*flexShrink: 0,\s*flexBasis: 300,/
   );
+});
+
+test('the bottom bar keeps its default height at and below normal font scales', () => {
+  assert.equal(tabBarHeight(0.85), 64);
+  assert.equal(tabBarHeight(1), 64);
+  assert.equal(tabBarHeight(1.5), 64);
+});
+
+test('the bottom bar grows with the system font scale so a tab label is never clipped (#190)', () => {
+  assert.equal(tabBarHeight(2), 68);
+  assert.equal(tabBarHeight(3), 80);
+  for (let scale = 0.85; scale <= 4; scale += 0.05) {
+    const height = tabBarHeight(scale);
+    const scaledLabelLine = Math.ceil(12 * scale);
+    assert.ok(
+      height >= 64,
+      `the bar must never shrink below 64pt (got ${height} at font scale ${scale})`
+    );
+    assert.ok(
+      height - 16 >= 26 + scaledLabelLine + 2,
+      `a ${height}pt bar leaves less than the ${scaledLabelLine}pt scaled label plus its cushion at font scale ${scale}`
+    );
+    assert.ok(
+      height <= 64 + scaledLabelLine,
+      `the bar grew by more than the label at font scale ${scale}`
+    );
+  }
+});
+
+test('the tab bar consumes the font-scale-aware height', () => {
+  const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+  assert.match(app, /const \{ width, fontScale \} = useWindowDimensions\(\);/);
+  assert.match(app, /height: tabBarHeight\(fontScale\) \+ insets\.bottom,/);
 });
 
 test('reply indentation keeps a readable text column on phones', () => {

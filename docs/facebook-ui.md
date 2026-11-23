@@ -91,7 +91,9 @@ visible. The header does not repeat tab destinations: the left rail owns them
 on desktop and the bottom tabs own them on mobile, so a screen never shows the
 same navigation twice. On narrow screens the header adds direct 44pt actions
 for Feeds, Lists and settings — destinations the five-tab bar cannot fit —
-without duplicating a tab.
+without duplicating a tab. On mobile the bottom bar's height follows the
+system font scale, so a scaled-up tab label is rendered whole at large text
+sizes instead of being clipped.
 
 Balla follows the Feeds pattern but keeps every control visible: Home has a
 44pt **Switch** button that opens a sheet with Following first, then pinned
