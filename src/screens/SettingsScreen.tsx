@@ -21,7 +21,6 @@ import { APP_VERSION } from '../lib/version';
 const GITHUB = 'https://github.com/ewanc26/balla';
 const ISSUES = 'https://github.com/ewanc26/balla/issues';
 const ADVISORY = 'https://github.com/ewanc26/balla/security/advisories/new';
-const SUPPORT = 'https://ewancroft.uk/support';
 
 export function SettingsScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
@@ -301,12 +300,6 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
 
       <Section title="Help and support">
         <Row
-          icon="heart-outline"
-          label="Support Balla"
-          detail="One-off or recurring support for independent software"
-          onPress={() => openUrl(SUPPORT)}
-        />
-        <Row
           icon="help-circle-outline"
           label="Help"
           detail="Reporting, blocking and finding your way"
@@ -351,10 +344,8 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
         <Row
           icon="information-circle-outline"
           label="About Balla"
-          value={`Version ${APP_VERSION}`}
           onPress={() => openInfo('about', 'About Balla')}
         />
-        <CreatorByline />
         <Row
           icon="code-slash-outline"
           label="Source code"
@@ -371,9 +362,15 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
 
       <SignOutControl />
 
-      <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, textAlign: 'center', paddingHorizontal: 24, marginTop: 18 }}>
-        Balla is independent software. Facebook-era styling is a design reference only, and Bluesky references identify the network Balla uses. Balla is not affiliated with, endorsed by or sponsored by Meta or Bluesky Social PBC.
-      </Text>
+      <View style={styles.footer}>
+        <CreatorByline />
+        <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, marginTop: 2 }}>
+          Version {APP_VERSION}
+        </Text>
+        <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, textAlign: 'center', marginTop: 10 }}>
+          Balla is independent software. Facebook-era styling is a design reference only, and Bluesky references identify the network Balla uses. Balla is not affiliated with, endorsed by or sponsored by Meta or Bluesky Social PBC.
+        </Text>
+      </View>
     </ScrollView>
   );
 }
@@ -498,5 +495,10 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  footer: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    marginTop: 18,
   },
 });
