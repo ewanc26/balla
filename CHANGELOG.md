@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.31.0
+
+- Sign-in now resolves a handle from that host’s own `/.well-known/atproto-did` file first, falling back to the configured XRPC resolver (#100). An account on an independent PDS no longer needs Bluesky’s resolver to sign in; DNS-published handles keep working through the fallback. The DID document still decides the account’s PDS, so a handle suffix never implies a Bluesky host.
+- **Advanced → Hosting** shows this account’s real DID, handle, resource server (PDS), authorization server and granted token count, and runs a read-only `com.atproto.server.describeServer` check against any host or handle. The result reports the server DID, advertised user domains, invite and phone requirements. Only HTTP status and structured fields are classified; no provider message text is read or stored.
+- The screen links out to the Open PDS directory and handle-resolution docs. It states honestly that AppView, chat and video audiences are part of the OAuth grant and need new authorisation to change, rather than offering inert endpoint overrides.
+- No new OAuth scope or dependency; the scope count remains 111.
+
 ## 0.30.0
 
 - Messages now degrade honestly on a host that does not run a chat service (#103). A failed chat read is classified from its XRPC error code and HTTP status only, so no message text or preview is ever read, logged or shown in a failure. Instead of a broken inbox with dead compose actions, Messages shows one readable explanation with **Check again** and a link-out explaining how chat services work.
