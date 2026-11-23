@@ -263,6 +263,10 @@ export default function App() {
     if (navigationRef.isReady()) navigationRef.navigate('Chat');
   }, []);
 
+  const openThread = useCallback((uri: string) => {
+    if (navigationRef.isReady()) navigationRef.navigate('Thread', { uri });
+  }, []);
+
   const syncActiveTab = useCallback(() => {
     const name = navigationRef.getCurrentRoute()?.name || 'Home';
     setRouteName(name);
@@ -493,7 +497,12 @@ export default function App() {
                           />
                         </Stack.Navigator>
                       </View>
-                      {showChrome && showRight ? <RightRail onNavigate={navigateToTab} /> : null}
+                      {showChrome && showRight ? (
+                        <RightRail
+                          onNavigate={navigateToTab}
+                          onOpenThread={openThread}
+                        />
+                      ) : null}
                     </View>
                   </View>
                   </NavigationContainer>
