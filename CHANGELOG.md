@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.55.0
+
+- **The desktop right rail now shows Recent activity (#154).** A fixed twelve-row card lists the newest replies and reposts from accounts you follow, built from the Following page already in memory. It adds no request, reads no likes and sends no notifications. Label, mute, block and snooze gates apply, and each row opens its thread. **Hide this card** writes only a device-local preference, reversible in Appearance, and the rail scrolls instead of pushing its other cards off screen.
+- **Threads gain a wall-to-wall lens (#153).** The Thread menu lists the other visible authors only when you also appear in the thread; choosing one filters the already-fetched tree to exactly your posts and theirs, in rendered thread order. Third-party replies are excluded by author, not ranking, and the hidden-reply and moderation gates stay in place. The header says **Showing only you and @them**, announces the same statement to screen readers and keeps a visible **View full thread** exit. The lens adds no request, writes nothing, and leaves the composer and full conversation unchanged.
+- No new OAuth scope or dependency; the scope count remains 111. CI's full gate passed: deterministic tests, typecheck, Expo dependency drift, advisory audit, icon sync and site build.
+
 ## 0.54.0
 
 - **The Supporters card is the app's one support ask (#163), and creator attribution now covers every site footer (#162).** About shows a static card with one sentence, a 44pt **Support Balla** button and the shared `CreatorByline`. `SUPPORT_URL` lives once beside the service hosts and `CREATOR` derives the author's name, handle and links from it; no other source file repeats the URL. Settings no longer carries a second support row, and no feed, thread, profile, notification or chat surface links the page. Every site footer now carries the same byline and supporters block beside an AGPL-3.0 licence line.
