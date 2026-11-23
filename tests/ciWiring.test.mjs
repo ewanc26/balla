@@ -13,6 +13,7 @@ test('CI installs from the committed lockfile and runs every local check', () =>
   for (const command of [
     'npx tsc --noEmit',
     'npx expo install --check',
+    'npm audit --audit-level=moderate',
     'npm test',
     'npm run site:build',
     'python3 scripts/gen-icons.py --check',
@@ -39,12 +40,14 @@ test('contributor docs and release notes describe the enforced checks', () => {
 
   assert.match(contributing, /deterministic test\s+suite/);
   assert.match(contributing, /static-site build/);
+  assert.match(contributing, /npm audit --audit-level=moderate/);
   assert.match(contributing, /npm test/);
   assert.match(contributing, /npm run site:build/);
   assert.match(
     readme,
-    /typecheck, dependency\s+audit,\s+deterministic test suite,\s+static-site build and icon sync/,
+    /typecheck, dependency\s+audit[^,]*,\s+deterministic test suite,\s+static-site build and icon sync/,
   );
+  assert.match(readme, /npm audit --audit-level=moderate/);
   assert.match(changelog, new RegExp(`^## ${pkg.version.replaceAll('.', '\\.')}$`, 'm'));
   assert.match(changelog, /CI now runs the deterministic test suite/);
   assert.equal(app.expo.version, pkg.version);
