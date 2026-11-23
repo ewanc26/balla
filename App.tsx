@@ -55,6 +55,8 @@ import { ReportReceiptsScreen } from './src/screens/ReportReceiptsScreen';
 import { FeedGeneratorScreen } from './src/screens/FeedGeneratorScreen';
 import { FeedsScreen } from './src/screens/FeedsScreen';
 import { DiscoveryScreen } from './src/screens/DiscoveryScreen';
+import { NewsScreen } from './src/screens/NewsScreen';
+import { NewsBundleScreen } from './src/screens/NewsBundleScreen';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { AccessibilitySettingsScreen } from './src/screens/AccessibilitySettingsScreen';
 import { AppIconSettingsScreen } from './src/screens/AppIconSettingsScreen';
@@ -301,6 +303,10 @@ export default function App() {
       navigationRef.navigate('Hashtag', { tag: 'tea' });
     } else if (screen === 'Topic') {
       navigationRef.navigate('Topic', { topic: 'book fair' });
+    } else if (screen === 'News') {
+      navigationRef.navigate('News');
+    } else if (screen === 'NewsBundle') {
+      navigationRef.navigate('NewsBundle', { topic: 'politics', region: 'uk' });
     } else if (screen !== 'Tabs') {
       navigationRef.navigate(screen as any);
     }
@@ -483,6 +489,11 @@ export default function App() {
                           <Stack.Screen name="Topic" component={DiscoveryScreen} />
                           <Stack.Screen name="VideoFeed" component={DiscoveryScreen} />
                           <Stack.Screen name="Discover" component={DiscoveryScreen} />
+                          <Stack.Screen name="News" component={NewsScreen} />
+                          <Stack.Screen
+                            name="NewsBundle"
+                            component={NewsBundleScreen}
+                          />
                           <Stack.Screen name="StarterPack" component={StarterPackScreen} />
                           <Stack.Screen name="StarterPackEdit" component={StarterPackEditScreen} />
                           <Stack.Screen name="Lists" component={ListsScreen} />

@@ -86,6 +86,8 @@ export const WEB_LINKING_CONFIG = {
     Topic: 'topic/:topic',
     VideoFeed: 'video',
     Discover: 'discover',
+    News: 'news',
+    NewsBundle: 'news/:topic/:region',
     StarterPack: 'starter-pack/:uri',
     StarterPackEdit: 'starter-pack-edit/:uri',
     Lists: 'lists',

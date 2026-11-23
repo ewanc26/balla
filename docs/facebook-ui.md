@@ -66,6 +66,7 @@ product, not a claim that every account looks identical.
 | Feeds in the left menu, with sub-filters for a chronological catch-up | `src/components/AppRail.tsx`, `src/screens/FeedsScreen.tsx` |
 | Optional For you shelf with operator, algorithm and source disclosure | `src/screens/FeedsScreen.tsx`, `src/lib/rankedFeeds.ts` |
 | Edited badge with a two-entry original/current history | `src/components/EditedBadge.tsx`, `src/lib/postEditModel.ts` |
+| News tab as an inspectable topic-and-region publisher bundle | `src/screens/NewsScreen.tsx`, `src/screens/NewsBundleScreen.tsx`, `src/lib/newsBundles.ts` |
 | Visible feed switcher on Home, Following first | `src/components/FeedSwitcherSheet.tsx`, `src/screens/FeedScreen.tsx`, `src/lib/feedSwitcher.ts` |
 | Like/Comment/Share action bar | `PostCard.tsx`: Like, Repost, Comment and a 44pt Save control |
 | Post overflow for sharing and safety | `src/components/PostMenu.tsx`: Copy, Share, Quote, Report, Mute, Block and Delete |

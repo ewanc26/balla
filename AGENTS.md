@@ -139,7 +139,10 @@ thread reply order are saved through `app.bsky.actor` preferences and applied
 locally. Hashtags in posts open their own newest-first page; Search also offers
 explicit topic and video pages and an opt-in Discover surface. All four use the
 already-authorized `searchPostsV2` call, paginate, and never enter Following;
-only Discover is ranked, and its page says so. Account and security settings
+only Discover is ranked, and its page says so. Discover also carries News
+bundles: a topic crossed with a region shows the exact publisher roster, then
+adds it as one ordinary curation list in a single atomic write. No follow, feed
+preference, ranking input or other account state changes. Account and security settings
 show the identity Balla can read, a real
 birthday and automation-label write, and non-secret OAuth session facts. A
 Settings → Accounts screen lists the accounts on this device with labelled

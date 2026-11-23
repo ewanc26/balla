@@ -185,6 +185,35 @@ export function DiscoveryScreen({ route, navigation }: { route?: any; navigation
         <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, marginTop: 8 }}>
           {copy.banner}
         </Text>
+        {mode === 'discover' ? (
+          <Pressable
+            onPress={() => navigation.navigate('News')}
+            accessibilityRole="button"
+            accessibilityLabel="Open News bundles"
+            style={({ pressed }) => [
+              styles.newsEntry,
+              {
+                backgroundColor: p.bg,
+                borderColor: p.divider,
+                opacity: pressed ? 0.7 : 1,
+              },
+            ]}
+          >
+            <Ionicons name="newspaper-outline" size={20} color={p.accent} />
+            <View style={{ flex: 1, marginLeft: 10 }}>
+              <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+                News bundles
+              </Text>
+              <Text
+                style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 2 }}
+              >
+                Pick topics and a region. Balla adds one public list of publisher
+                accounts; no follows and no ranking.
+              </Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={p.secondary} />
+          </Pressable>
+        ) : null}
         {MOCK_MODE ? (
           <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 16, marginTop: 6 }}>
             Preview: these are sample posts, not live results.
@@ -267,5 +296,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 32,
+  },
+  newsEntry: {
+    minHeight: 44,
+    marginTop: 10,
+    paddingHorizontal: 11,
+    paddingVertical: 9,
+    borderRadius: 8,
+    borderWidth: StyleSheet.hairlineWidth,
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });
