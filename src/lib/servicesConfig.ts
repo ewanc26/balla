@@ -1,8 +1,10 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { forgetDirectoryDidDocuments } from './identityCache.ts';
 import {
   DEFAULT_SERVICES,
   DEFAULT_SERVICES_CONFIG,
   SERVICES_STORAGE_KEY,
+  effectivePlcDirectory,
   effectiveResolver,
   normaliseServicesConfig,
   type ServicesConfig,
@@ -73,14 +75,20 @@ export async function setHandleResolverEndpoint(endpoint: string | null): Promis
 /** Pass null to restore the compiled default did:plc directory. */
 export async function setPlcDirectoryEndpoint(endpoint: string | null): Promise<ServicesConfig> {
   const config = await getServicesConfig();
+  const before = effectivePlcDirectory(config);
   const next = { ...config, plcDirectory: endpoint };
   await persist(next);
-  return getServicesConfig();
+  const after = await getServicesConfig();
+  if (effectivePlcDirectory(after) !== before) await forgetDirectoryDidDocuments();
+  return after;
 }
 
 export async function resetServicesConfig(): Promise<ServicesConfig> {
+  const before = effectivePlcDirectory(await getServicesConfig());
   await persist({ ...DEFAULT_SERVICES_CONFIG });
-  return getServicesConfig();
+  const after = await getServicesConfig();
+  if (effectivePlcDirectory(after) !== before) await forgetDirectoryDidDocuments();
+  return after;
 }
 
 /** Exposed for tests and diagnostics; never returns token material. */

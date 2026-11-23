@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.51.0
+
+- **Corrected an effective-immediately overclaim in the PLC directory setting (#97, partial).** v0.50.0 said a directory change took effect on the next read, but the default `auto` identity strategy returns a fresh cached `did:plc` document before consulting the directory. Changing the host therefore did not refresh identities already seen on this device.
+- **What changed.** Saving or resetting a different PLC directory now forgets cached `did:plc` documents so the next read uses the configured host. Handle mappings and `did:web` documents are kept, so offline browsing still works and unrelated identities are not disturbed. A no-op save does not clear anything. The pure rule and its wiring are covered by regression tests.
+- **Why this is still partial #97.** This is a token-free public read host; AppView, chat, video and labeler remain grant-bound facts, the PDS remains DID-discovered, and a directory that cannot serve known `did:plc` identities still fails those lookups until the default is restored. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.50.0
 
 - **The public did:plc directory is now genuinely configurable (#97, partial).** Advanced → Services has an editable **PLC directory** host with **Save directory**, **Use default** and **Test directory** actions. The saved host is persisted on this device, reversible with one tap, and takes effect on the next read without a restart or a new sign-in. It is a distinct setting from the handle resolver: one resolves DNS-only handles before sign-in, the other reads `did:plc` DID documents.

@@ -107,6 +107,22 @@ export function cachedEntryForHandle(entries: IdentityEntry[], handle: string | 
   return entries.find((entry) => entry.handle === key) ?? null;
 }
 
+/**
+ * Forget only DID documents read through a public did:plc directory. A host
+ * change must not leave old documents looking current under the default
+ * cache-first strategy, but the handle mapping and did:web documents stay so
+ * offline browsing still works. Pure so it can be tested without storage.
+ */
+export function forgetPlcDidDocuments(entries: IdentityEntry[]): IdentityEntry[] {
+  let changed = false;
+  const next = entries.map((entry) => {
+    if (!entry.did.startsWith('did:plc:') || !entry.didDoc) return entry;
+    changed = true;
+    return { ...entry, didDoc: null, source: null };
+  });
+  return changed ? next : entries;
+}
+
 /** Drop malformed, duplicate and overflowing entries; newest first. */
 export function normaliseIdentityCache(value: unknown): IdentityEntry[] {
   if (!Array.isArray(value)) return [];

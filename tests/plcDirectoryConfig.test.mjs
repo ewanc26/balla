@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { probePlcDirectory } from '../src/lib/servicesProbe.ts';
 import { plcDocumentUrl } from '../src/lib/serviceHosts.ts';
-import { plcDirectoryUrl } from '../src/lib/identityModel.ts';
+import { plcDirectoryUrl, forgetPlcDidDocuments } from '../src/lib/identityModel.ts';
 import { probeAccount } from '../src/lib/accountPreflight.ts';
 import { DEFAULT_SERVICES } from '../src/lib/servicesModel.ts';
 
@@ -13,6 +13,7 @@ const screen = readFileSync(new URL('../src/screens/ServicesScreen.tsx', import.
 const config = readFileSync(new URL('../src/lib/servicesConfig.ts', import.meta.url), 'utf8');
 const resolver = readFileSync(new URL('../src/lib/identityResolver.ts', import.meta.url), 'utf8');
 const exporter = readFileSync(new URL('../src/lib/servicesExportModel.ts', import.meta.url), 'utf8');
+const identityCache = readFileSync(new URL('../src/lib/identityCache.ts', import.meta.url), 'utf8');
 
 function jsonResponse(body, status = 200) {
   return {
@@ -21,6 +22,26 @@ function jsonResponse(body, status = 200) {
     json: async () => body,
   };
 }
+
+test('a directory change forgets cached did:plc documents but keeps handles and did:web', () => {
+  const now = Date.now();
+  const plcDoc = { id: 'did:plc:abc123' };
+  const webDoc = { id: 'did:web:example.com' };
+  const entries = [
+    { did: 'did:plc:abc123', handle: 'alice.example', didDoc: plcDoc, source: 'plc', updatedAt: now },
+    { did: 'did:web:example.com', handle: null, didDoc: webDoc, source: 'web', updatedAt: now },
+    { did: 'did:plc:offline', handle: 'bob.example', didDoc: null, source: null, updatedAt: now },
+  ];
+
+  const next = forgetPlcDidDocuments(entries);
+  assert.notEqual(next, entries, 'a real change returns a new list');
+  assert.deepEqual(next[0], { did: 'did:plc:abc123', handle: 'alice.example', didDoc: null, source: null, updatedAt: now });
+  assert.equal(next[0].handle, 'alice.example', 'the offline handle mapping survives');
+  assert.equal(next[1].didDoc, webDoc, 'did:web documents are unaffected');
+  assert.equal(next[2].didDoc, null);
+
+  assert.equal(forgetPlcDidDocuments(next), next, 'a no-op keeps the same list');
+});
 
 test('both DID-document URL helpers honour a configured https directory', () => {
   // The two helpers keep their existing path-encoding behaviour; only the host
@@ -117,6 +138,14 @@ test('account pre-flight reads the DID document from the configured directory', 
   assert.equal(result.pds, PDS);
   assert.equal(calls[0], `${CUSTOM}/${DID}`);
   assert.ok(!calls.some((url) => url.startsWith(DEFAULT_SERVICES.plcDirectory)), 'the compiled default must not be read');
+});
+
+test('a directory change invalidates only cached did:plc documents', () => {
+  assert.match(identityCache, /forgetPlcDidDocuments/);
+  assert.match(identityCache, /forgetDirectoryDidDocuments\(\)/);
+  assert.match(config, /forgetDirectoryDidDocuments/);
+  assert.match(config, /effectivePlcDirectory\(after\) !== before/);
+  assert.match(config, /if \(effectivePlcDirectory\(after\) !== before\) await forgetDirectoryDidDocuments\(\);/);
 });
 
 test('identity resolution, the UI and the export all use the configured directory', () => {
