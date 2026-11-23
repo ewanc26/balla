@@ -17,11 +17,37 @@ jobs:
         with:
           node-version: 22
       - name: Install
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: Types
         run: npx tsc --noEmit
       - name: Dependency drift
         run: npx expo install --check
+
+  tests:
+    name: Deterministic test suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Tests
+        run: npm test
+
+  site:
+    name: Static site build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Install
+        run: npm ci --no-audit --no-fund
+      - name: Build site
+        run: npm run site:build
 
   icons:
     name: Generated icons are current
@@ -45,7 +71,7 @@ jobs:
   gate:
     name: CI gate
     if: always()
-    needs: [typecheck, icons]
+    needs: [typecheck, tests, site, icons]
     runs-on: ubuntu-latest
     steps:
       - env:

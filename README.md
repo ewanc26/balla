@@ -100,8 +100,10 @@ content stays with Bluesky and is never stored or logged. Device push for chat
 remains blocked (#36). The list model, routes and deliberate gaps are
 documented in [docs/lists.md](docs/lists.md).
 
-CI runs the typecheck, dependency audit and icon sync on every push, so a green
-check is a real claim about the commit it ran on. The research and gap analysis
+CI installs from the committed lockfile and runs the typecheck, dependency
+audit, deterministic test suite, static-site build and icon sync on every push
+and pull request, so a green check is a real claim about the commit it ran on.
+The research and gap analysis
 for a fully compliant client is in
 [docs/bluesky-compliance.md](docs/bluesky-compliance.md).
 
