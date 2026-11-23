@@ -1,0 +1,35 @@
+/**
+ * The one place the default AT Protocol host literals live (#97). Everything
+ * else derives its defaults from here, so "no Bluesky host outside the config"
+ * is auditable with a single source scan. This module has no imports and no
+ * platform dependencies: it is facts only, never an editable setting.
+ *
+ * Grant-bound audiences are written into this sign-in's OAuth grant; showing
+ * them is honest, but changing one needs a fresh authorisation. Only the
+ * pre-auth resolver has a persisted override (see servicesModel.ts).
+ */
+
+export const SERVICE_HOSTS = {
+  /** Public XRPC resolver used before sign-in. */
+  handleResolver: 'https://bsky.social',
+  /** Fallback PDS value; the active account's real PDS comes from its DID document. */
+  pds: 'https://bsky.social',
+  appviewDid: 'did:web:api.bsky.app',
+  appviewAudience: 'did:web:api.bsky.app#bsky_appview',
+  chatDid: 'did:web:api.bsky.chat',
+  chatAudience: 'did:web:api.bsky.chat#bsky_chat',
+  videoService: 'https://video.bsky.app',
+  videoAudience: 'did:web:video.bsky.app',
+  labelerDid: 'did:plc:ar7c4by46qjdydhdevvrndac',
+  labelerAudience: 'did:plc:ar7c4by46qjdydhdevvrndac#atproto_labeler',
+  plcDirectory: 'https://plc.directory',
+} as const;
+
+/** Public DID documents read by the informational service checks. */
+export const APPVIEW_DID_DOCUMENT_URL = 'https://api.bsky.app/.well-known/did.json';
+export const CHAT_DID_DOCUMENT_URL = 'https://api.bsky.chat/.well-known/did.json';
+
+/** The public directory URL for a did:plc identifier. */
+export function plcDocumentUrl(did: string): string | null {
+  return /^did:plc:[a-z0-9]+$/i.test(did) ? `${SERVICE_HOSTS.plcDirectory}/${did}` : null;
+}

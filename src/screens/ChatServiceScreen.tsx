@@ -19,6 +19,7 @@ import {
   type ChatServiceState,
 } from '../lib/chatServiceModel';
 import { openExternalUrl } from '../lib/openLink';
+import { CHAT_DID_DOCUMENT_URL } from '../lib/serviceHosts.ts';
 import { usePalette } from '../theme';
 
 const STATUS_LABELS: Record<ChatServiceState, string> = {
@@ -31,11 +32,6 @@ const STATUS_LABELS: Record<ChatServiceState, string> = {
   limited: 'Rate limited',
   unknown: 'Unknown',
 };
-
-// Public DID document for the chat service named by the proxy. Reading it is
-// informational only: the account's own proxy probe below is what decides
-// whether Messages can work on this host.
-const CHAT_DID_DOCUMENT_URL = 'https://api.bsky.chat/.well-known/did.json';
 
 async function readChatDidAdvertises(): Promise<boolean | null> {
   try {

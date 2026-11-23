@@ -91,7 +91,7 @@ test('the agent routes chat through the documented proxy helper', () => {
   assert.match(agent, /export function getChatAgent\(\): Agent/);
   assert.match(agent, /candidate\.withProxy\(CHAT_SERVICE_TYPE, CHAT_SERVICE_DID\)/);
   assert.match(agent, /typeof candidate\.withProxy === 'function'/);
-  assert.match(model, /CHAT_SERVICE_DID = 'did:web:api\.bsky\.chat'/);
+  assert.match(model, /CHAT_SERVICE_DID = SERVICE_HOSTS\.chatDid/);
   assert.match(model, /CHAT_SERVICE_TYPE = 'bsky_chat'/);
 });
 

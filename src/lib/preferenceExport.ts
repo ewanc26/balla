@@ -6,9 +6,10 @@ import * as Clipboard from 'expo-clipboard';
  * real file; native builds copy the same JSON to the clipboard, which the user
  * can paste into a notes app or migration tool. Nothing is uploaded or logged.
  */
-export async function exportPreferencesJson(
+async function exportJsonFile(
   filename: string,
-  json: string
+  json: string,
+  label: string,
 ): Promise<string> {
   if (Platform.OS === 'web') {
     const doc = (globalThis as any).document;
@@ -30,9 +31,28 @@ export async function exportPreferencesJson(
   }
 
   await Clipboard.setStringAsync(json);
-  return 'Preferences JSON copied to the clipboard. Keep it somewhere private.';
+  return `${label} JSON copied to the clipboard. Keep it somewhere private.`;
+}
+
+export async function exportPreferencesJson(
+  filename: string,
+  json: string
+): Promise<string> {
+  return exportJsonFile(filename, json, 'Preferences');
+}
+
+/** Service configuration is non-secret, but the same care applies. */
+export async function exportServicesJson(
+  filename: string,
+  json: string
+): Promise<string> {
+  return exportJsonFile(filename, json, 'Service configuration');
 }
 
 export function preferenceExportAction(): string {
   return Platform.OS === 'web' ? 'Download preferences JSON' : 'Copy preferences JSON';
+}
+
+export function servicesExportAction(): string {
+  return Platform.OS === 'web' ? 'Download service configuration' : 'Copy service configuration';
 }

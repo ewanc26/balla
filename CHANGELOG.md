@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.42.0
+
+- **Advanced → Services can now export a real configuration record (#97, partial).** A visible **Download service configuration** action (clipboard copy on native) writes the effective handle resolver, whether it is still the compiled default, every default service DID/audience and this sign-in's non-secret session metadata. The web download and native clipboard use the same local-only exporter as preferences; nothing is uploaded or logged.
+- **The export says what it is not.** It contains no access token, refresh token, password or provider message text, and its notes state that only the resolver can be changed on this device, that grant-bound audiences need a new authorisation, and that the record is not an import or a credential. Signed-out sessions export with empty session facts rather than invented values.
+- **Default hosts now have one auditable source.** `serviceHosts.ts` owns every default AT Protocol host; the services model, chat, video probe, identity directory and pre-flight derive from it. This removes duplicate host literals without changing any endpoint, so existing sessions keep working exactly as before.
+- This is not a second backend, a provider picker or a completed #97: AppView, chat, video and labeler endpoints remain grant-bound facts, and changing any of them still needs reauthorisation. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.41.0
 
 - **Advanced → Account pre-flight adds a real pre-login check (#100, partial).** Enter another account's handle or DID; Balla resolves a handle from its own `/.well-known/atproto-did` first, falls back to the configured public XRPC resolver, reads the DID document from `plc.directory` or the `did:web` well-known path, and follows its `#atproto_pds` endpoint. It then checks `describeServer`, the PDS's `oauth-protected-resource` metadata and its authorization server's published metadata. Each step is a public, unauthenticated read with structured fields only.

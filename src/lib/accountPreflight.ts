@@ -16,6 +16,7 @@ import {
   wellKnownUrl,
   type ServerFacts,
 } from './hostingModel.ts';
+import { plcDocumentUrl } from './serviceHosts.ts';
 import { DEFAULT_SERVICES, didWebUrl } from './servicesModel.ts';
 import { atprotoPdsEndpoint } from './tealModel.ts';
 
@@ -89,7 +90,7 @@ function documentUrl(did: string): string | null {
     const base = didWebUrl(did);
     return base ? `${base}/.well-known/did.json` : null;
   }
-  if (PLC_RE.test(did)) return `https://plc.directory/${did}`;
+  if (PLC_RE.test(did)) return plcDocumentUrl(did);
   return null;
 }
 

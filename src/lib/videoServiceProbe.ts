@@ -9,10 +9,11 @@
  */
 
 import { formatBytes } from './imageBytes.ts';
+import { SERVICE_HOSTS } from './serviceHosts.ts';
 import { serviceStatusDetail } from './servicesProbe.ts';
 
-export const VIDEO_SERVICE_ENDPOINT = 'https://video.bsky.app';
-export const VIDEO_SERVICE_DID = 'did:web:video.bsky.app';
+export const VIDEO_SERVICE_ENDPOINT = SERVICE_HOSTS.videoService;
+export const VIDEO_SERVICE_DID = SERVICE_HOSTS.videoAudience;
 export const VIDEO_LIMITS_LXM = 'app.bsky.video.getUploadLimits';
 
 export type VideoQuota = {

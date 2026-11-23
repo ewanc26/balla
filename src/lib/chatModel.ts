@@ -7,10 +7,12 @@
  * here are shown only inside the signed-in conversation list.
  */
 
+import { SERVICE_HOSTS } from './serviceHosts.ts';
+
 export const CHAT_PAGE_SIZE = 30;
 export const CHAT_TEXT_LIMIT = 1000;
 
-export const CHAT_SERVICE_DID = 'did:web:api.bsky.chat';
+export const CHAT_SERVICE_DID = SERVICE_HOSTS.chatDid;
 export const CHAT_SERVICE_TYPE = 'bsky_chat';
 /** The OAuth audience for chat RPCs must carry the service's fragment. */
 export const CHAT_AUDIENCE = `${CHAT_SERVICE_DID}#${CHAT_SERVICE_TYPE}`;

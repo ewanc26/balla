@@ -10,21 +10,22 @@
  */
 
 import { normaliseHostUrl } from './hostingModel.ts';
+import { SERVICE_HOSTS } from './serviceHosts.ts';
 
 export const DEFAULT_SERVICES = {
   /** Unauthenticated resolver used before sign-in. Runtime-editable. */
-  handleResolver: 'https://bsky.social',
+  handleResolver: SERVICE_HOSTS.handleResolver,
   /** Discovered from the signed-in account's DID document, not configured. */
-  pds: 'https://bsky.social',
-  appviewDid: 'did:web:api.bsky.app',
-  appviewAudience: 'did:web:api.bsky.app#bsky_appview',
-  chatDid: 'did:web:api.bsky.chat',
-  chatAudience: 'did:web:api.bsky.chat#bsky_chat',
-  videoService: 'https://video.bsky.app',
-  videoAudience: 'did:web:video.bsky.app',
-  labelerDid: 'did:plc:ar7c4by46qjdydhdevvrndac',
-  labelerAudience: 'did:plc:ar7c4by46qjdydhdevvrndac#atproto_labeler',
-  plcDirectory: 'https://plc.directory',
+  pds: SERVICE_HOSTS.pds,
+  appviewDid: SERVICE_HOSTS.appviewDid,
+  appviewAudience: SERVICE_HOSTS.appviewAudience,
+  chatDid: SERVICE_HOSTS.chatDid,
+  chatAudience: SERVICE_HOSTS.chatAudience,
+  videoService: SERVICE_HOSTS.videoService,
+  videoAudience: SERVICE_HOSTS.videoAudience,
+  labelerDid: SERVICE_HOSTS.labelerDid,
+  labelerAudience: SERVICE_HOSTS.labelerAudience,
+  plcDirectory: SERVICE_HOSTS.plcDirectory,
 } as const;
 
 export const SERVICES_STORAGE_KEY = 'balla.services.v1';
