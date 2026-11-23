@@ -5,6 +5,8 @@
  * where an account lives; a handle suffix never implies a Bluesky host.
  */
 
+import { SERVICE_HOSTS } from './serviceHosts.ts';
+
 export const IDENTITY_CACHE_KEY = 'balla.identity.cache.v1';
 export const IDENTITY_STRATEGY_KEY = 'balla.identity.strategy.v1';
 
@@ -52,7 +54,7 @@ export function normaliseIdentityStrategy(value: unknown): IdentityStrategy {
 /** The public directory URL for a did:plc identifier. */
 export function plcDirectoryUrl(did: string): string | null {
   return isDid(did) && did.startsWith('did:plc:')
-    ? `https://plc.directory/${encodeURIComponent(did)}`
+    ? `${SERVICE_HOSTS.plcDirectory}/${encodeURIComponent(did)}`
     : null;
 }
 

@@ -234,8 +234,8 @@ test('token, network, HTTP and bad-response failures never invent a quota', asyn
 });
 
 test('probe source stays grant-bound and free of provider prose or local secrets', () => {
-  assert.match(source, /https:\/\/video\.bsky\.app/);
-  assert.match(source, /did:web:video\.bsky\.app/);
+  assert.match(source, /VIDEO_SERVICE_ENDPOINT = SERVICE_HOSTS\.videoService/);
+  assert.match(source, /VIDEO_SERVICE_DID = SERVICE_HOSTS\.videoAudience/);
   assert.match(source, /serviceStatusDetail/);
   assert.doesNotMatch(source, /\.message\b/);
   assert.doesNotMatch(source, /AsyncStorage/);

@@ -16,8 +16,22 @@ import {
   setHandleResolverEndpoint,
   subscribeServicesConfig,
 } from '../lib/servicesConfig';
-import { DEFAULT_SERVICES, SERVICE_SLOT_COPY, normaliseServicesConfig } from '../lib/servicesModel.ts';
+import {
+  DEFAULT_SERVICES,
+  SERVICE_SLOT_COPY,
+  normaliseServicesConfig,
+} from '../lib/servicesModel.ts';
+import {
+  buildServicesExport,
+  serialiseServicesExport,
+  servicesExportName,
+} from '../lib/servicesExportModel.ts';
+import {
+  exportServicesJson,
+  servicesExportAction,
+} from '../lib/preferenceExport.ts';
 import { probeAppView, probeChat, probeResolver, type ServiceProbe } from '../lib/servicesProbe.ts';
+import { useSessionSummary } from '../lib/sessionInfo';
 import { openExternalUrl } from '../lib/openLink';
 import { CARD_RADIUS, webInputReset, usePalette } from '../theme';
 
@@ -42,6 +56,9 @@ export function ServicesScreen() {
   const [appviewProbe, setAppviewProbe] = useState<ServiceProbe | null>(null);
   const [chatProbe, setChatProbe] = useState<ServiceProbe | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const { summary } = useSessionSummary();
 
   const refresh = useCallback(async () => {
     const config = await getServicesConfig();
@@ -108,6 +125,34 @@ export function ServicesScreen() {
     setBusy(false);
   }
 
+  async function exportConfiguration() {
+    if (exporting) return;
+    setExporting(true);
+    setExportMessage(null);
+    try {
+      const config = await getServicesConfig();
+      const json = serialiseServicesExport(
+        buildServicesExport(
+          config,
+          summary
+            ? {
+                did: summary.did,
+                authorizationServer: summary.authorizationServer,
+                resourceServer: summary.resourceServer,
+                scopeCount: summary.scopeCount,
+              }
+            : null,
+          new Date().toISOString(),
+        ),
+      );
+      setExportMessage(await exportServicesJson(servicesExportName(), json));
+    } catch {
+      setExportMessage('Could not export the configuration on this device.');
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: p.bg }}
@@ -170,6 +215,22 @@ export function ServicesScreen() {
         <SettingNote>
           Advanced → Hosting shows the actual PDS and authorization server for
           the active account, and can read any host’s server description.
+        </SettingNote>
+      </SettingSection>
+
+      <SettingSection
+        title="Configuration record"
+        detail="Export the resolver choice, the grant-bound service facts and this session's non-secret metadata. The file contains no token, password or provider message text."
+      >
+        <SettingButton
+          label={servicesExportAction()}
+          onPress={() => void exportConfiguration()}
+          busy={exporting}
+        />
+        {exportMessage ? <SettingValueRow label="Export" value={exportMessage} /> : null}
+        <SettingNote>
+          The export is a record, not an import: only the handle resolver can be
+          changed here, and grant-bound services need a new authorisation.
         </SettingNote>
       </SettingSection>
 

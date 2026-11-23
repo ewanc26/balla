@@ -72,8 +72,8 @@ test('labeler reachability is a real public check, separate from AppView listing
 test('release notes and version describe the live video quota check', () => {
   const pkg = JSON.parse(read('../package.json'));
   const changelog = read('../CHANGELOG.md');
-  assert.equal(pkg.version, '0.41.0');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.41.0');
+  assert.equal(pkg.version, '0.42.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.42.0');
   assert.match(changelog, /## 0\.36\.0/);
   assert.match(changelog, /getUploadLimits/);
   assert.match(changelog, /grant-bound/);
@@ -99,7 +99,7 @@ test('Advanced exposes a working Media origin screen with real cache and quota c
 
 test('video quota is grant-bound, structured and shared with the upload pre-flight', () => {
   assert.match(videoServiceProbe, /app\.bsky\.video\.getUploadLimits/);
-  assert.match(videoServiceProbe, /did:web:video\.bsky\.app/);
+  assert.match(videoServiceProbe, /VIDEO_SERVICE_DID = SERVICE_HOSTS\.videoAudience/);
   assert.match(videoServiceProbe, /serviceStatusDetail/);
   assert.match(videoServiceProbe, /normaliseVideoQuota/);
   assert.match(videoServiceProbe, /\.canUpload/);

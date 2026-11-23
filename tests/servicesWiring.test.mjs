@@ -11,6 +11,7 @@ const screen = read('../src/screens/ServicesScreen.tsx');
 const config = read('../src/lib/servicesConfig.ts');
 const probe = read('../src/lib/servicesProbe.ts');
 const model = read('../src/lib/servicesModel.ts');
+const hosts = read('../src/lib/serviceHosts.ts');
 
 test('Advanced exposes a registered Services screen with a stable web path', () => {
   assert.match(app, /<Stack\.Screen name="Services" component={ServicesScreen} \/>/);
@@ -21,7 +22,8 @@ test('Advanced exposes a registered Services screen with a stable web path', () 
 });
 
 test('the default hosts live in one services config module', () => {
-  assert.match(model, /handleResolver: 'https:\/\/bsky\.social'/);
+  assert.match(hosts, /handleResolver: 'https:\/\/bsky\.social'/);
+  assert.match(model, /handleResolver: SERVICE_HOSTS\.handleResolver/);
   assert.match(agent, /DEFAULT_SERVICE = DEFAULT_SERVICES\.handleResolver/);
   assert.match(agent, /APPVIEW_PROXY = DEFAULT_SERVICES\.appviewAudience/);
   assert.match(agent, /configureProxy\(APPVIEW_PROXY\)/);
