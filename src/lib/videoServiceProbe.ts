@@ -9,12 +9,13 @@
  */
 
 import { formatBytes } from './imageBytes.ts';
-import { SERVICE_HOSTS } from './serviceHosts.ts';
+import { SERVICE_HOSTS, VIDEO_LIMITS_LXM } from './serviceHosts.ts';
 import { serviceStatusDetail } from './servicesProbe.ts';
+
+export { VIDEO_LIMITS_LXM };
 
 export const VIDEO_SERVICE_ENDPOINT = SERVICE_HOSTS.videoService;
 export const VIDEO_SERVICE_DID = SERVICE_HOSTS.videoAudience;
-export const VIDEO_LIMITS_LXM = 'app.bsky.video.getUploadLimits';
 
 export type VideoQuota = {
   canUpload: boolean;

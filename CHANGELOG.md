@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.44.0
+
+- **Advanced → Services can now test the video endpoint (#97, partial).** A visible **Test video endpoint** button makes one unauthenticated GET to the published `app.bsky.video.getUploadLimits` XRPC method. The result reports HTTP status, latency and whether the endpoint is reachable; a `401` is a real, useful answer that proves the endpoint exists and that quota needs this sign-in's token. The response body is never parsed, so provider prose cannot surface.
+- **Grant-bound services stay facts.** AppView, chat, video and labeler remain written into this sign-in's OAuth scope; this adds a read-only reachability check, not a provider picker or a repointed audience. The existing public labeler probe in Content filters is reused rather than duplicated, and the shared video lexicon constant now has one source.
+- This is not a completed #97: changing those services still needs a new authorisation. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.43.0
 
 - **The login screen can now check an account before sign-in (#100, partial).** Enter any handle or DID and use the visible **Check this account** button. Balla runs the same real public reads as Advanced → Account pre-flight: it resolves the identity from its own well-known file or the saved resolver, reads the DID document, follows `#atproto_pds`, and checks public `describeServer`, protected-resource and authorization-server metadata. The result shows the state, identity source, DID, PDS and authorization server; provider error prose is never read or shown.

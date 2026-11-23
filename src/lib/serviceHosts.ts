@@ -29,6 +29,9 @@ export const SERVICE_HOSTS = {
 export const APPVIEW_DID_DOCUMENT_URL = 'https://api.bsky.app/.well-known/did.json';
 export const CHAT_DID_DOCUMENT_URL = 'https://api.bsky.chat/.well-known/did.json';
 
+/** Published video lexicon used by both the quota and reachability checks. */
+export const VIDEO_LIMITS_LXM = 'app.bsky.video.getUploadLimits';
+
 /** The public directory URL for a did:plc identifier. */
 export function plcDocumentUrl(did: string): string | null {
   return /^did:plc:[a-z0-9]+$/i.test(did) ? `${SERVICE_HOSTS.plcDirectory}/${did}` : null;
