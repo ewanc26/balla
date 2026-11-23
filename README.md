@@ -202,3 +202,5 @@ payment details.
 
 Balla is licensed under the GNU Affero General Public License v3.0. See
 [LICENSE](LICENSE).
+
+Copyright (C) 2026 Ewan Croft (ewanc26).
