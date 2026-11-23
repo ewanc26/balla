@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.28.0
+
+- Post images now fall back to the author's PDS when the AppView-hosted URL fails (#94). Raw-record blob refs supply the DID + CID; the DID document resolves the PDS and a public `com.atproto.sync.getBlob` read supplies the bytes. No new OAuth scope or dependency.
+- **Advanced → Media** offers two real strategies: **Follow URL** (default, retry from PDS on failure) and **PDS origin first**. Both use the same honest fallback; no fabricated CID from a CDN URL, and no inert metered-network toggle.
+- A bounded 8 MB in-memory image cache with a visible used/limit readout and a working **Clear image cache** action. Cache holds only decoded image bytes, never post text or credentials.
+- Broken images now show an explicit **Image unavailable** tile instead of a blank rectangle. Link-card thumbnails and profile link icons remain third-party URLs with no PDS fallback, by design.
+- The post-image upload path already capped images at 2 MB with a pre-upload error; no change was needed there.
+
 ## 0.27.1
 
 - The message action sheet's visible label now reads **Copy message text**, matching the #111 acceptance wording and its accessibility label. No behaviour changed; message text is still never logged or stored by Balla.

@@ -18,7 +18,9 @@ import { CARD_RADIUS, cardShadow, useFontScale, usePalette } from '../theme';
 import { usePreferences } from '../lib/preferences';
 import { touchTargetStyle } from '../lib/accessibilityModel';
 import { Avatar } from './Avatar';
+import { RemoteImage } from './RemoteImage';
 import { ImageViewer } from './ImageViewer';
+import { blobFallbacksForPost } from '../lib/blobOriginModel';
 import { PostMenu } from './PostMenu';
 import {
   feedbackEnabled,
@@ -117,7 +119,11 @@ export function PostCard({
   const replies = post ? post.replyCount || 0 : 0;
   const quotes = post ? post.quoteCount || 0 : 0;
   const hasEngagement = likes > 0 || reposts > 0 || quotes > 0;
-  const imgs = extractImages(post);
+  const fallbacks = blobFallbacksForPost(post);
+  const imgs = extractImages(post).map((image, index) => ({
+    ...image,
+    fallback: fallbacks[index] || null,
+  }));
   const quote = quoteFromEmbed(post?.embed);
   const linkCard = externalFromEmbed(post?.embed);
   const video = videoFromEmbed(post?.embed);
@@ -997,8 +1003,9 @@ function Images({ images, onOpen }: { images: any[]; onOpen: (index: number) => 
         accessibilityLabel={i.alt || 'Open post image'}
         style={{ marginTop: 12, position: 'relative' }}
       >
-        <Image
-          source={{ uri: i.thumb || i.fullsize }}
+        <RemoteImage
+          uri={i.thumb || i.fullsize}
+          fallback={i.fallback}
           style={{
             width: '100%',
             aspectRatio: 1.91,
@@ -1039,8 +1046,9 @@ function Images({ images, onOpen }: { images: any[]; onOpen: (index: number) => 
             }
             style={{ width: '49.5%', position: 'relative' }}
           >
-            <Image
-              source={{ uri: i.thumb || i.fullsize }}
+            <RemoteImage
+              uri={i.thumb || i.fullsize}
+              fallback={i.fallback}
               style={{
                 width: '100%',
                 aspectRatio: 1,

@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { RemoteImage } from './RemoteImage';
+import type { BlobFallback } from '../lib/blobOriginModel';
 import {
   dialogAccessibilityProps,
   dialogAnimation,
@@ -13,6 +15,7 @@ interface ImageViewerImage {
   thumb?: string;
   fullsize?: string;
   alt?: string;
+  fallback?: BlobFallback | null;
 }
 
 interface ImageViewerProps {
@@ -87,8 +90,9 @@ export function ImageViewer({ images, index, onClose }: ImageViewerProps) {
               <ActivityIndicator size="large" color="#FFFFFF" />
             </View>
           )}
-          <Image
-            source={{ uri }}
+          <RemoteImage
+            uri={uri}
+            fallback={image.fallback}
             onLoadStart={() => setLoading(true)}
             onLoadEnd={() => setLoading(false)}
             accessibilityRole="image"
