@@ -194,7 +194,7 @@ test('search scopes are exact, include every destination RPC and omit the v1 sea
     readFileSync(new URL('../oauth-client-metadata.json', import.meta.url), 'utf8')
   );
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  const audience = 'aud=did:web:api.bsky.app#bsky_appview';
+  const audience = 'aud=did:web:api.eurosky.network#bsky_appview';
   assert.equal(tokens.length, 112);
   assert.equal(/repo:\*|rpc:\*|blob:\*/.test(metadata.scope), false);
 

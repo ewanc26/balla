@@ -114,13 +114,13 @@ test('list-feed pinning reuses the existing saved-feed scopes', () => {
   assert.equal(tokens.length, 112);
   assert.equal(
     tokens.includes(
-      'rpc:app.bsky.feed.getFeedGenerators?aud=did:web:api.bsky.app#bsky_appview'
+      'rpc:app.bsky.feed.getFeedGenerators?aud=did:web:api.eurosky.network#bsky_appview'
     ),
     true
   );
   assert.equal(
     tokens.includes(
-      'rpc:app.bsky.feed.getListFeed?aud=did:web:api.bsky.app#bsky_appview'
+      'rpc:app.bsky.feed.getListFeed?aud=did:web:api.eurosky.network#bsky_appview'
     ),
     true
   );

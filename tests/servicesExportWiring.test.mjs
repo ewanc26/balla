@@ -40,7 +40,7 @@ test('defaults are declared in one host module and the rest derive from it', () 
   const hosts = read('../src/lib/serviceHosts.ts');
   for (const host of [
     'https://bsky.social',
-    'https://api.bsky.app/.well-known/did.json',
+    'https://api.eurosky.network/.well-known/did.json',
     'https://api.bsky.chat/.well-known/did.json',
     'https://video.bsky.app',
     'https://plc.directory',

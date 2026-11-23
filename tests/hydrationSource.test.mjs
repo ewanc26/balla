@@ -19,7 +19,7 @@ test('the hydration source is the one audited grant-bound AppView, with no secon
   assert.equal(HYDRATION_SOURCE_DID, DEFAULT_SERVICES.appviewDid);
   assert.equal(HYDRATION_SOURCE_AUDIENCE, DEFAULT_SERVICES.appviewAudience);
   assert.equal(HYDRATION_SOURCE_DID, APPVIEW_HEALTH_DID);
-  assert.equal(hydrationSourceText(), 'did:web:api.bsky.app');
+  assert.equal(hydrationSourceText(), 'did:web:api.eurosky.network');
   assert.equal(hydrationSourceText('did:web:other.test'), 'did:web:other.test');
   assert.match(HYDRATION_SOURCE_COPY.note, /not a live check/);
 });

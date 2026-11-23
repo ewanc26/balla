@@ -13,9 +13,9 @@ export const SERVICE_HOSTS = {
   /** Public XRPC resolver used before sign-in. */
   handleResolver: 'https://bsky.social',
   /** Fallback PDS value; the active account's real PDS comes from its DID document. */
-  pds: 'https://bsky.social',
-  appviewDid: 'did:web:api.bsky.app',
-  appviewAudience: 'did:web:api.bsky.app#bsky_appview',
+  pds: 'https://eurosky.social',
+  appviewDid: 'did:web:api.eurosky.network',
+  appviewAudience: 'did:web:api.eurosky.network#bsky_appview',
   chatDid: 'did:web:api.bsky.chat',
   chatAudience: 'did:web:api.bsky.chat#bsky_chat',
   videoService: 'https://video.bsky.app',
@@ -42,7 +42,7 @@ export const CREATOR = {
 } as const;
 
 /** Public DID documents read by the informational service checks. */
-export const APPVIEW_DID_DOCUMENT_URL = 'https://api.bsky.app/.well-known/did.json';
+export const APPVIEW_DID_DOCUMENT_URL = 'https://api.eurosky.network/.well-known/did.json';
 export const CHAT_DID_DOCUMENT_URL = 'https://api.bsky.chat/.well-known/did.json';
 
 /** Published video lexicon used by both the quota and reachability checks. */

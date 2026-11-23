@@ -9,12 +9,12 @@ import {
 } from '../src/lib/appViewHealth.ts';
 import { DEFAULT_SERVICES } from '../src/lib/servicesModel.ts';
 
-const DOCUMENT_URL = 'https://api.bsky.app/.well-known/did.json';
-const PROFILE_URL = 'https://api.bsky.app/xrpc/app.bsky.actor.getProfile?actor=did%3Aplc%3Aabc123';
+const DOCUMENT_URL = 'https://api.eurosky.network/.well-known/did.json';
+const PROFILE_URL = 'https://api.eurosky.network/xrpc/app.bsky.actor.getProfile?actor=did%3Aplc%3Aabc123';
 const ACTOR = 'did:plc:abc123';
 
 const document = {
-  service: [{ id: '#bsky_appview', type: 'BskyAppView', serviceEndpoint: 'https://api.bsky.app' }],
+  service: [{ id: '#bsky_appview', type: 'BskyAppView', serviceEndpoint: 'https://api.eurosky.network' }],
 };
 
 function harness(routes) {
@@ -46,7 +46,7 @@ test('a signed-in check measures the document and the public profile canary', as
 
   assert.equal(result.state, 'ok');
   assert.equal(result.status, 200);
-  assert.equal(result.endpoint, 'https://api.bsky.app');
+  assert.equal(result.endpoint, 'https://api.eurosky.network');
   assert.equal(result.documentLatencyMs, 10);
   assert.equal(result.profileLatencyMs, 10);
   assert.deepEqual(calls.map((call) => call.url), [DOCUMENT_URL, PROFILE_URL]);

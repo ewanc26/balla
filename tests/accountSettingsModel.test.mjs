@@ -113,7 +113,7 @@ test('birthdays are real, past calendar dates and can be cleared', () => {
 
 test('provider links are only described as authoritative for bsky.social', () => {
   assert.equal(isBlueskyService('https://bsky.social'), true);
-  assert.equal(isBlueskyService('https://api.bsky.app'), false);
+  assert.equal(isBlueskyService('https://api.eurosky.network'), false);
   assert.equal(isBlueskyService('https://pds.example.com'), false);
   assert.match(providerLinkDetail('https://bsky.social', 'account'), /correct/);
   assert.match(providerLinkDetail('https://pds.example.com', 'account'), /another provider/);

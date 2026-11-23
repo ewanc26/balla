@@ -70,7 +70,7 @@ The feature adds only the collections and RPC methods it uses:
 - `app.bsky.graph.muteActorList`
 - `app.bsky.graph.unmuteActorList`
 
-All AppView calls use the existing `did:web:api.bsky.app#bsky_appview`
+All AppView calls use the existing `did:web:api.eurosky.network#bsky_appview`
 audience. Existing sessions must sign out and back in before the new scope is
 available.
 

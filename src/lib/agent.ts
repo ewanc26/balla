@@ -160,11 +160,23 @@ export const oauthClient = new ExpoOAuthClient({
   },
 });
 
-function attachSession(next: OAuthSession) {
+async function attachSession(next: OAuthSession) {
   session = next;
   agent = new Agent(next);
+  // The AppView audience is grant-bound: a session's token scope names the
+  // AppView its PDS may proxy to. Honour the grant actually held rather than
+  // the build's compiled default, so an upgrade does not silently re-point an
+  // existing session at a different operator.
+  let proxy = APPVIEW_PROXY;
+  try {
+    const granted = await next.getTokenInfo();
+    const match = granted.scope.match(/aud=([^\s]*#bsky_appview)/);
+    if (match?.[1]) proxy = match[1];
+  } catch {
+    // Token metadata is unavailable; keep the compiled default.
+  }
   // app.bsky.* reads are served by the AppView, reached through the PDS.
-  agent.configureProxy(APPVIEW_PROXY);
+  agent.configureProxy(proxy);
 }
 
 async function setActive(next: OAuthSession) {
