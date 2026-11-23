@@ -5,6 +5,7 @@ import {
   MAX_IDENTITY_CACHE_ENTRIES,
   cachedEntryForDid,
   cachedEntryForHandle,
+  forgetPlcDidDocuments,
   isFresh,
   normaliseIdentityCache,
   normaliseIdentityStrategy,
@@ -86,6 +87,21 @@ export async function rememberHandle(handle: string, did: string): Promise<void>
 
 export async function clearIdentityCache(): Promise<void> {
   entries = [];
+  await persist();
+  notify();
+}
+
+/**
+ * A public did:plc directory change must take effect for identities already
+ * seen on this device. Drop cached did:plc documents so a fresh read uses the
+ * configured host, while handle mappings and did:web documents survive for
+ * offline browsing.
+ */
+export async function forgetDirectoryDidDocuments(): Promise<void> {
+  const current = await load();
+  const next = forgetPlcDidDocuments(current);
+  if (next === current) return;
+  entries = next;
   await persist();
   notify();
 }
