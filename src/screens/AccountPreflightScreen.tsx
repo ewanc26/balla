@@ -12,23 +12,14 @@ import { openExternalUrl } from '../lib/openLink';
 import { getHandleResolverEndpoint } from '../lib/servicesConfig';
 import {
   ACCOUNT_PREFLIGHT_COPY,
+  ACCOUNT_PREFLIGHT_STATE_LABELS,
   probeAccount,
   type AccountPreflightResult,
-  type AccountPreflightState,
 } from '../lib/accountPreflight.ts';
 import { IDENTITY_DOCS_URL, OPEN_PDS_DIRECTORY } from '../lib/hostingModel';
 import { CARD_RADIUS, webInputReset, usePalette } from '../theme';
 
 const ISSUE_URL = 'https://github.com/ewanc26/balla/issues/100';
-
-const STATE_LABELS: Record<AccountPreflightState, string> = {
-  invalid: 'Invalid input',
-  unresolved: 'Identity not resolved',
-  'no-pds': 'No PDS advertised',
-  incompatible: 'Not an AT Protocol PDS',
-  'no-oauth': 'No usable OAuth metadata',
-  ok: 'Public checks passed',
-};
 
 /** Advanced → Account pre-flight: public facts before an OAuth sign-in. */
 export function AccountPreflightScreen() {
@@ -74,7 +65,7 @@ export function AccountPreflightScreen() {
         </View>
         {result ? (
           <View>
-            <SettingValueRow label="Result" value={STATE_LABELS[result.state]} />
+            <SettingValueRow label="Result" value={ACCOUNT_PREFLIGHT_STATE_LABELS[result.state]} />
             <SettingValueRow label="Detail" value={result.detail} />
             <SettingValueRow label="Identity source" value={result.source ?? 'Not resolved'} />
             <SettingValueRow label="DID" value={result.did ?? 'Not available'} />

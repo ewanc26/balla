@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.43.0
+
+- **The login screen can now check an account before sign-in (#100, partial).** Enter any handle or DID and use the visible **Check this account** button. Balla runs the same real public reads as Advanced → Account pre-flight: it resolves the identity from its own well-known file or the saved resolver, reads the DID document, follows `#atproto_pds`, and checks public `describeServer`, protected-resource and authorization-server metadata. The result shows the state, identity source, DID, PDS and authorization server; provider error prose is never read or shown.
+- **The check says what it is not.** It does not sign in, create an account, grant a scope or guarantee that the provider's approval page will succeed. Sign-in still uses the provider's own OAuth approval page, and Balla remains OAuth-only with no app-password flow. Both pre-flight surfaces now share one set of result labels, so they cannot drift apart.
+- This is not a verified independent-PDS login: end-to-end sign-in on a non-Bluesky host still needs credentials, so #100 stays open. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.42.0
 
 - **Advanced → Services can now export a real configuration record (#97, partial).** A visible **Download service configuration** action (clipboard copy on native) writes the effective handle resolver, whether it is still the compiled default, every default service DID/audience and this sign-in's non-secret session metadata. The web download and native clipboard use the same local-only exporter as preferences; nothing is uploaded or logged.
