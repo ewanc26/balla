@@ -60,6 +60,7 @@ import {
 } from '../lib/snooze';
 import { snoozeRemainingLabel } from '../lib/snoozeModel';
 import { canSharePost } from '../lib/shareViaChatModel';
+import { canOfferEdit } from '../lib/postEditModel';
 import { ShareViaChatSheet } from './ShareViaChatSheet';
 
 type Mode = 'menu' | 'report' | 'confirm-block' | 'confirm-delete' | 'confirm-hide';
@@ -169,6 +170,9 @@ export function PostMenu({
   const author = post.author || {};
   const viewer = author.viewer || {};
   const isOwn = !!author.did && author.did === agent.did;
+  // The menu offers Edit only while the local record is still inside its
+  // one-edit window. The screen re-checks the window and the account age.
+  const editOffer = isOwn ? canOfferEdit(post.record) : null;
   const isReply = !!(post.record && post.record.reply && post.record.reply.parent);
   const canHideForEveryone = isReply && !isOwn && isThreadRootAuthor(post);
   const isMuted = !!viewer.muted;
@@ -763,6 +767,18 @@ export function PostMenu({
               onPress={() => void handleTogglePin()}
               disabled={busy}
             />
+            {editOffer && editOffer.ok ? (
+              <MenuRow
+                icon="create-outline"
+                label="Edit post"
+                detail="Fix a typo within five minutes of posting. You can edit once; likes, reposts and replies reset."
+                onPress={() => {
+                  onClose();
+                  navigation.navigate('EditPost', { uri: post.uri });
+                }}
+                disabled={busy}
+              />
+            ) : null}
             <MenuRow
               icon="options-outline"
               label="Interaction settings"

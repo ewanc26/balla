@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useSyncExternalStore } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -35,6 +35,9 @@ import { translateText } from '../lib/translate';
 import { richTextSegments, type RichTextSegment } from '../lib/richtext';
 import { eventRefFromRecordEmbed } from '../lib/eventsModel';
 import { EventEmbed } from './EventEmbed';
+import { isEdited } from '../lib/postEditModel';
+import { postEditRecord, subscribePostEdits } from '../lib/postEditStore';
+import { EditedBadge } from './EditedBadge';
 import {
   QUOTE_UNAVAILABLE_COPY,
   externalFromEmbed,
@@ -94,8 +97,18 @@ export function PostCard({
       }
     : undefined;
   const moderation = usePostModeration(post);
+  // An edit made in this app run updates the card immediately, without polling
+  // the AppView or adding a read scope. The next normal fetch replaces it.
+  const liveEdit = useSyncExternalStore(
+    subscribePostEdits,
+    () =>
+      post && typeof post.uri === 'string'
+        ? postEditRecord(post.uri)
+        : undefined,
+    () => undefined
+  );
   const author = post && post.author ? post.author : {};
-  const record = post && post.record ? post.record : {};
+  const record = liveEdit || (post && post.record ? post.record : {});
   const bodySegments = richTextSegments(
     (record && record.text) || '',
     record && record.facets
@@ -363,21 +376,24 @@ export function PostCard({
         ]}
       >
         <View style={styles.header}>
-          {onOpenProfile && author.did ? (
-            <Pressable
-              onPress={() => onOpenProfile(author.did)}
-              accessibilityRole="button"
-              accessibilityLabel={`Open ${author.handle || author.displayName || 'author'}'s profile`}
-              style={({ pressed }) => [
-                styles.headerAuthor,
-                { opacity: pressed ? 0.65 : 1 },
-              ]}
-            >
-              {header}
-            </Pressable>
-          ) : (
-            <View style={styles.headerAuthor}>{header}</View>
-          )}
+          <View style={styles.headerMain}>
+            {onOpenProfile && author.did ? (
+              <Pressable
+                onPress={() => onOpenProfile(author.did)}
+                accessibilityRole="button"
+                accessibilityLabel={`Open ${author.handle || author.displayName || 'author'}'s profile`}
+                style={({ pressed }) => [
+                  styles.headerAuthor,
+                  { opacity: pressed ? 0.65 : 1 },
+                ]}
+              >
+                {header}
+              </Pressable>
+            ) : (
+              <View style={styles.headerAuthor}>{header}</View>
+            )}
+          </View>
+          {isEdited(record) ? <EditedBadge record={record} /> : null}
           <Pressable
             onPress={() => setMenuOpen(true)}
             accessibilityRole="button"
@@ -691,7 +707,7 @@ export function PostCard({
         onClose={() => setViewerIndex(null)}
       />
       <PostMenu
-        post={post}
+        post={liveEdit ? { ...post, record: liveEdit } : post}
         visible={menuOpen}
         onClose={() => setMenuOpen(false)}
         onHidden={(hiddenPost, scope) => {
@@ -1251,6 +1267,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   header: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
+  headerMain: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    minWidth: 0,
+  },
   headerAuthor: {
     flex: 1,
     flexDirection: 'row',

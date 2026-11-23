@@ -26,6 +26,8 @@ const viewer = {
   postsCount: 42,
   followsCount: 128,
   followersCount: 96,
+  // Old enough for the edit guard; the preview needs a real profile fact.
+  createdAt: minutesAgo(60 * 24 * 400),
 };
 
 const mum = {
@@ -127,6 +129,7 @@ function makePost({
   viewerState = {},
   embed,
   recordEmbed,
+  recordExtras,
 }: {
   uri: string;
   author: any;
@@ -138,6 +141,7 @@ function makePost({
   viewerState?: Record<string, any>;
   embed?: any;
   recordEmbed?: any;
+  recordExtras?: Record<string, any>;
 }) {
   const indexedAt = minutesAgo(minutes);
   return {
@@ -149,6 +153,7 @@ function makePost({
       text,
       createdAt: indexedAt,
       ...(recordEmbed ? { embed: recordEmbed } : {}),
+      ...(recordExtras || {}),
     },
     indexedAt,
     ...(embed ? { embed } : {}),
@@ -310,6 +315,33 @@ const notifications = [
 ];
 
 const feed = posts.map((post) => ({ post }));
+
+// Preview-only posts. They are not added to the timeline, so the feed fixture
+// and its counts stay exactly as the other screens expect.
+const editablePost = makePost({
+  uri: 'at://did:plc:mockviewer/app.bsky.feed.post/edit-preview',
+  author: viewer,
+  minutes: 1,
+  likeCount: 0,
+  repostCount: 0,
+  replyCount: 0,
+  text: 'A post with a small typo, ready for the edit preview.',
+});
+
+const editedReply = makePost({
+  uri: 'at://did:plc:mockviewer/app.bsky.feed.post/edited-preview',
+  author: viewer,
+  minutes: 25,
+  likeCount: 2,
+  repostCount: 0,
+  replyCount: 0,
+  text: 'Updated wording: the book fair is in March.',
+  recordExtras: {
+    originalText: 'Original wording: the book fair is in March.',
+    updatedAt: minutesAgo(24),
+  },
+});
+
 const thread = {
   $type: 'app.bsky.feed.defs#threadViewPost',
   post: posts[1],
@@ -319,10 +351,16 @@ const thread = {
       post: replyPost,
       replies: [],
     },
+    {
+      $type: 'app.bsky.feed.defs#threadViewPost',
+      post: editedReply,
+      replies: [],
+    },
   ],
 };
 
 export const MOCK_THREAD_URI = posts[1].uri;
+export const MOCK_EDIT_URI = editablePost.uri;
 export const MOCK_OTHER_ACTOR = mum.did;
 export const MOCK_CONVO_ID = '3lmockconvo0000000000000000';
 export const MOCK_GROUP_CONVO_ID = '3lmockgroupconvo0000000000000';
@@ -543,7 +581,9 @@ export function installMockAgent() {
   const gateKey = (collection: string, rkey: string) => `${collection}:${rkey}`;
   mock.getPostThread = async ({ uri }: { uri?: string } = {}) => {
     const requested = (uri || '').split('/').pop() || '1';
-    const post = posts.find((item) => item.uri === uri) || thread.post;
+    const post =
+      posts.find((item) => item.uri === uri) ||
+      (uri === editablePost.uri ? editablePost : thread.post);
     return {
       data: {
         thread: {
@@ -556,6 +596,9 @@ export function installMockAgent() {
       },
     };
   };
+  // The edit preview can complete its one atomic write without leaving the
+  // browser; the editor still rebuilds the real replacement record locally.
+  mock.com.atproto.repo.applyWrites = async () => ({ data: {} });
   mock.com.atproto.repo.getRecord = async ({
     collection,
     rkey,
@@ -1355,6 +1398,8 @@ export function mockInitialScreen(): string {
     'Topic',
     'VideoFeed',
     'Discover',
+    'Feeds',
+    'EditPost',
   ].includes(requested)
     ? requested
     : 'Tabs';

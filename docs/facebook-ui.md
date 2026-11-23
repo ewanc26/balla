@@ -64,6 +64,8 @@ product, not a claim that every account looks identical.
 | Visible photo, video/GIF and link controls with one media type per post | `src/screens/ComposeScreen.tsx`, `src/lib/videoModel.ts`, `src/lib/videoUpload.ts` |
 | Inset video with author alt text in a feed card | `src/components/PostCard.tsx`, `src/lib/embedModel.ts` |
 | Feeds in the left menu, with sub-filters for a chronological catch-up | `src/components/AppRail.tsx`, `src/screens/FeedsScreen.tsx` |
+| Optional For you shelf with operator, algorithm and source disclosure | `src/screens/FeedsScreen.tsx`, `src/lib/rankedFeeds.ts` |
+| Edited badge with a two-entry original/current history | `src/components/EditedBadge.tsx`, `src/lib/postEditModel.ts` |
 | Visible feed switcher on Home, Following first | `src/components/FeedSwitcherSheet.tsx`, `src/screens/FeedScreen.tsx`, `src/lib/feedSwitcher.ts` |
 | Like/Comment/Share action bar | `PostCard.tsx`: Like, Repost, Comment and a 44pt Save control |
 | Post overflow for sharing and safety | `src/components/PostMenu.tsx`: Copy, Share, Quote, Report, Mute, Block and Delete |
@@ -111,10 +113,12 @@ opt-in at build time and never runs in a normal build:
 
 Open `http://localhost:4173/app/` with `?tab=Home`, `?tab=Search`,
 `?tab=Notifications`, `?tab=Saved` or `?tab=Profile` to choose a tab, and add
-`?screen=Thread`, `?screen=Compose` or `?screen=UserProfile` to open a detail
-screen. The mock agent returns local fixtures only; it does not contact
-Bluesky. A yellow “Preview · mock data” strip is always visible so the data is
-never mistaken for a real session.
+`?screen=Thread`, `?screen=Compose`, `?screen=UserProfile`, `?screen=Feeds` or
+`?screen=EditPost` to open a detail screen. The Thread fixture includes one
+edited reply so the Edited badge and its two-entry history can be checked, and
+EditPost opens a fresh post by the preview viewer. The mock agent returns local
+fixtures only; it does not contact Bluesky. A yellow “Preview · mock data” strip
+is always visible so the data is never mistaken for a real session.
 
 ## What Balla deliberately does not copy
 

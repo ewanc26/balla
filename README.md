@@ -96,7 +96,12 @@ session cache; an opt-in, per-account On this day card that reads only your own 
 PDS for this calendar date, with a full Memories screen and no AppView or engagement counts; a quiet profile Events strip and event cards in posts, read from public `community.lexicon.calendar.event` records, with event times, locations, map/link-outs and visible Going / Interested / Not going RSVPs written as one public `community.lexicon.calendar.rsvp` record (a new narrow scope; older sessions need to sign in again); a desktop
 Recent activity rail card built only from the Following page already in memory, with a
 reversible device-local hide; a wall-to-wall thread lens for you and one other visible author; a
-creator byline and one static Supporters card in About; a generated icon set;
+creator byline and one static Supporters card in About; feed discovery also has an
+opt-in For you shelf, fu first, naming the operator, the published algorithm and a
+source link, with a subscribe or unsubscribe that never changes Following or Home;
+one honest edit per post inside five minutes, with the engagement reset disclosed
+before confirmation, the previous text kept in the record and a tappable Edited
+badge showing both versions; a generated icon set;
 multi-account support with a labelled Accounts screen to switch, add and remove OAuth sessions, each kept separate by DID with no shared tokens or carried-over state; account and security settings for the identity Balla can read, birthday and automation-label self-labels, privacy controls and non-secret OAuth session facts, with provider links for email, password, 2FA, app passwords and account lifecycle; account export, deactivation and deletion guidance that links to the PDS controls;
 a moderation inbox for reports, decisions, notices, account standing and appeals;
 and a web client at <https://balla.croft.click/app>. The shell follows Facebook's current
