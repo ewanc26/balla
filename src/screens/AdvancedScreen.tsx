@@ -59,6 +59,15 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
         />
       </Section>
 
+      <Section title="Identity">
+        <Row
+          icon="finger-print-outline"
+          label="Identity"
+          detail="DID and handle resolution strategy, cached identities and offline reads"
+          onPress={() => navigation.navigate('IdentitySettings')}
+        />
+      </Section>
+
       <View style={styles.footnote}>
         <Ionicons name="information-circle-outline" size={16} color={p.secondary} />
         <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 17, flex: 1 }}>

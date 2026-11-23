@@ -34,7 +34,7 @@ test('profiles render the strip only when enabled and never in the feed', () => 
 test('teal reads are bounded, retryable and use the shared external opener', () => {
   const reader = read('../src/lib/teal.ts');
   const strip = read('../src/components/MusicActivityStrip.tsx');
-  assert.match(reader, /agent\.com\.atproto\.identity\.resolveDid/);
+  assert.match(reader, /resolveDidDocument/);
   assert.match(reader, /readWithRetry/);
   assert.match(reader, /com\.atproto\.repo\.listRecords/);
   assert.match(reader, /Promise\.allSettled/);
