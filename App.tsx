@@ -26,6 +26,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ThreadScreen } from './src/screens/ThreadScreen';
 import { StandardSiteScreen } from './src/screens/StandardSiteScreen';
 import { ComposeScreen } from './src/screens/ComposeScreen';
+import { EditPostScreen } from './src/screens/EditPostScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AdvancedScreen } from './src/screens/AdvancedScreen';
 import { BackendScreen } from './src/screens/BackendScreen';
@@ -110,6 +111,7 @@ import {
   MOCK_MODE,
   MOCK_OTHER_ACTOR,
   MOCK_THREAD_URI,
+  MOCK_EDIT_URI,
   MOCK_CONVO_ID,
   MOCK_GROUP_CONVO_ID,
   installMockAgent,
@@ -287,6 +289,10 @@ export default function App() {
       navigationRef.navigate('UserProfile', { actor: MOCK_OTHER_ACTOR });
     } else if (screen === 'Compose') {
       navigationRef.navigate('Compose');
+    } else if (screen === 'Feeds') {
+      navigationRef.navigate('Feeds');
+    } else if (screen === 'EditPost') {
+      navigationRef.navigate('EditPost', { uri: MOCK_EDIT_URI });
     } else if (screen === 'Conversation') {
       navigationRef.navigate('Conversation', { convoId: MOCK_CONVO_ID });
     } else if (screen === 'ConversationSettings' || screen === 'JoinRequests') {
@@ -408,6 +414,10 @@ export default function App() {
                           <Stack.Screen name="Thread" component={ThreadScreen} />
                           <Stack.Screen name="Memories" component={MemoriesScreen} />
                           <Stack.Screen name="StandardSite" component={StandardSiteScreen} />
+                          <Stack.Screen
+                            name="EditPost"
+                            component={EditPostScreen}
+                          />
                           <Stack.Screen
                             name="InteractionSettings"
                             component={InteractionSettingsScreen}

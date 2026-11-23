@@ -32,6 +32,7 @@ export const WEB_LINKING_CONFIG = {
         Profile: 'profile',
       },
     },
+    EditPost: 'post/:uri/edit',
     Thread: 'post/:uri',
     Memories: 'memories',
     StandardSite: 'standard-site/:uri',
