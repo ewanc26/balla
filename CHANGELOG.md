@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.34.0
+
+- **Published articles now open in Balla as a read-only Standard.site reader** (#101). Bluesky's enhanced external card publishes a `source` publication, `associatedRefs` strong refs, `createdAt`/`updatedAt` and `readingTime`; the card shows the publication name, author, date and reading time, and opens a dedicated screen. Plain link cards keep their existing browser behaviour, so nothing is inferred from a URL.
+- The reader reads `site.standard.document` and its `site.standard.publication` from the author's PDS with unauthenticated `com.atproto.repo.getRecord`; the AppView does not serve these records. DID documents decide the PDS, the canonical URL comes only from the publication URL plus the document path, and domain verification compares the published well-known AT-URI with the record. Failures are classified from HTTP status and XRPC error codes only; no provider message text is read or stored.
+- Real structured blocks render with the app's palette and font scaling: headings, paragraphs with UTF-8 facet links, quotes, lists, rules, images by CID from the author's PDS, and embedded post links. Publication colours appear as labelled swatches only. Galleries, tables, videos, questions, polls and other rich blocks show an explicit **not rendered** label; long records are labelled as shortened rather than silently truncated. The reader says plainly that subscribe, recommend and comment writes need new permissions Balla does not request here, and comments live in the linked Bluesky post.
+- No new OAuth scope or dependency; the scope count remains 111. A registered native screen and web path (`standard-site/:uri`) make the view shareable. Add deterministic model, loader and wiring tests for real record shapes, strong refs, canonical URLs, verification, honest fallbacks and no message text.
+
 ## 0.33.0
 
 - **Advanced → Hosting → Browse PDS hosts** reads the public OpenPDS index in the app (#100). It lists hosts that advertise open registration with the index's own timestamps, user domains, country and sign-up fields, and says plainly that the list is third-party metadata rather than a health check or a promise of sign-up.

@@ -1,6 +1,6 @@
 {
   "name": "balla",
-  "version": "0.33.0",
+  "version": "0.34.0",
   "private": true,
   "description": "A Facebook-inspired Bluesky client.",
   "engines": {
