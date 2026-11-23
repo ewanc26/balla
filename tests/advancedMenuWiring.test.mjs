@@ -18,6 +18,7 @@ const identityResolver = read('../src/lib/identityResolver.ts');
 const identityProfile = read('../src/lib/identityProfile.ts');
 const identityScreen = read('../src/screens/IdentitySettingsScreen.tsx');
 const profileScreen = read('../src/screens/ProfileScreen.tsx');
+const chatServiceScreen = read('../src/screens/ChatServiceScreen.tsx');
 
 test('Advanced is a real stack screen with a stable web path', () => {
   assert.match(app, /<Stack\.Screen name="Advanced" component=\{AdvancedScreen\} \/>/);
@@ -96,6 +97,15 @@ test('identity resolution stores a bounded on-device cache and honours strategy'
   assert.match(identityResolver, /resolveDidDocument/);
   assert.match(identityResolver, /resolveHandleToDid/);
   assert.match(identityResolver, /agent\.com\.atproto\.identity\.resolveHandle/);
+});
+
+test('Advanced exposes a working Chat service screen with a real proxy probe', () => {
+  assert.match(app, /<Stack\.Screen name="ChatService" component=\{ChatServiceScreen\} \/>/);
+  assert.equal(WEB_LINKING_CONFIG.screens.ChatService, 'settings/advanced/chat');
+  assert.match(advanced, /navigation\.navigate\('ChatService'\)/);
+  assert.match(chatServiceScreen, /checkChatService\(\)/);
+  assert.match(chatServiceScreen, /SettingButton label="Check chat service"/);
+  assert.ok(!/onPress=\{\(\) => \{\}\}/.test(chatServiceScreen));
 });
 
 test('a previously seen profile falls back to a public PDS read', () => {

@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.30.0
+
+- Messages now degrade honestly on a host that does not run a chat service (#103). A failed chat read is classified from its XRPC error code and HTTP status only, so no message text or preview is ever read, logged or shown in a failure. Instead of a broken inbox with dead compose actions, Messages shows one readable explanation with **Check again** and a link-out explaining how chat services work.
+- **Advanced → Chat** runs a real single-read proxy probe against this account's chat service and reports the result (reachable, unreachable, not advertised, not authorised, disabled, limited or unknown). It also shows the real proxy type, service DID, granted audience and whether the chat DID document advertises a service.
+- No inert endpoint override: this session's chat permission is audience-bound to `did:web:api.bsky.chat#bsky_chat`, so pointing chat at another DID would need a new authorisation with different scopes. Balla says so in-app rather than faking a control.
+- Every other screen stays independent of chat availability. No new OAuth scope or dependency; the scope count remains 111.
+
 ## 0.29.0
 
 - Identity resolution now has a real on-device cache of DID documents and handle mappings, capped at 120 entries with a 24-hour freshness window (#96). Profiles seen before keep resolving when a directory is unreachable.

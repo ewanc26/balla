@@ -68,6 +68,15 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
         />
       </Section>
 
+      <Section title="Chat">
+        <Row
+          icon="chatbubble-ellipses-outline"
+          label="Chat service"
+          detail="Check whether this host can serve direct messages"
+          onPress={() => navigation.navigate('ChatService')}
+        />
+      </Section>
+
       <View style={styles.footnote}>
         <Ionicons name="information-circle-outline" size={16} color={p.secondary} />
         <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 17, flex: 1 }}>
