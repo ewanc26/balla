@@ -46,8 +46,8 @@ test('the release and public copy describe the settings-only facts', () => {
   const changelog = read('../CHANGELOG.md');
   const compliance = read('../docs/bluesky-compliance.md');
   const features = read('../site/features.html');
-  assert.equal(pkg.version, '0.60.4');
-  assert.equal(appJson.expo.version, '0.60.4');
+  assert.equal(pkg.version, '0.60.5');
+  assert.equal(appJson.expo.version, '0.60.5');
   assert.match(changelog, /^## 0\.60\.4$/m);
   assert.match(changelog, /#99, partial/);
   assert.match(compliance, /Home feed no longer repeats/);

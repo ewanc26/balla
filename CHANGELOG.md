@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.60.5
+
+- **Tab labels are no longer clipped at large system text sizes (#190).** The bottom bar's height now follows the system font scale instead of a fixed 64pt: the 10pt tab label scales with the OS font, and the bar grows by exactly the scaled label's deficit plus a 2pt cushion, so every label is fully visible at every text size — the issue's "not clipped" option, with nothing hidden and no label opting out of OS font scaling. The bar keeps its unchanged 64pt height at and below normal scales, screen-reader labels still carry each tab's full name, and the height rule lives in `src/lib/layout.ts` with deterministic tests in `tests/navigationLayout.test.mjs`.
+- CI's full gate passed: deterministic tests (764), typecheck, Expo dependency drift, advisory audit, icon sync and site build.
+
 ## 0.60.4
 
 - **Reaction chips now read public community-lexicon records.** Post cards show a compact emoji and count row from `community.lexicon.interaction.reaction` records in the subject's repository, rendered beside the existing like count and absent when there are none. A visible 44pt reaction palette opens and closes with buttons and states plainly that reaction records are public. Moderation parity follows the card's existing gate; no new OAuth scope or dependency is added and the scope count remains 112. Writes remain deferred until the lexicon settles.

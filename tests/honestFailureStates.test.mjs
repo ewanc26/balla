@@ -62,8 +62,8 @@ test('the service-check fact row includes the shipped labeler endpoint', () => {
 test('the release documents honest failure states with no new scope', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.60.4');
-  assert.equal(appJson.expo.version, '0.60.4');
+  assert.equal(pkg.version, '0.60.5');
+  assert.equal(appJson.expo.version, '0.60.5');
   assert.match(changelog, /^## 0\.60\.4$/m);
   assert.match(changelog, /instead of retrying early/);
   assert.match(changelog, /scope count remains 111/);
