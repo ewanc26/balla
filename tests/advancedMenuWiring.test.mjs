@@ -8,6 +8,10 @@ const app = read('../App.tsx');
 const settings = read('../src/screens/SettingsScreen.tsx');
 const advanced = read('../src/screens/AdvancedScreen.tsx');
 const contentFilters = read('../src/screens/ContentFiltersScreen.tsx');
+const mediaOrigin = read('../src/screens/MediaOriginScreen.tsx');
+const postCard = read('../src/components/PostCard.tsx');
+const imageViewer = read('../src/components/ImageViewer.tsx');
+const remoteImage = read('../src/components/RemoteImage.tsx');
 
 test('Advanced is a real stack screen with a stable web path', () => {
   assert.match(app, /<Stack\.Screen name="Advanced" component=\{AdvancedScreen\} \/>/);
@@ -36,4 +40,26 @@ test('the labeler surface shows real per-service state and local-filter resilien
   assert.match(contentFilters, /agent\.getLabelers\(\{ dids: \[did\], detailed: true \}\)/);
   assert.match(contentFilters, /agent\.addLabeler\(did\)/);
   assert.match(contentFilters, /agent\.removeLabeler\(labeler\.did\)/);
+});
+
+test('Advanced exposes a working Media origin screen with a real cache control', () => {
+  assert.match(app, /<Stack\.Screen name="MediaOrigin" component=\{MediaOriginScreen\} \/>/);
+  assert.equal(WEB_LINKING_CONFIG.screens.MediaOrigin, 'settings/advanced/media');
+  assert.match(advanced, /navigation\.navigate\('MediaOrigin'\)/);
+  assert.match(mediaOrigin, /setBlobOriginStrategy/);
+  assert.match(mediaOrigin, /clearBlobCache\(\)/);
+  assert.match(mediaOrigin, /formatBytes\(info\.bytes\)/);
+  assert.match(mediaOrigin, /formatBytes\(MAX_BLOB_CACHE_BYTES\)/);
+  assert.ok(!/onPress=\{\(\) => \{\}\}/.test(mediaOrigin));
+});
+
+test('post images retry from the PDS through one shared image seam', () => {
+  assert.match(postCard, /blobFallbacksForPost\(post\)/);
+  assert.match(postCard, /fallback: fallbacks\[index\]/);
+  assert.equal((postCard.match(/<RemoteImage/g) || []).length, 2);
+  assert.match(imageViewer, /fallback=\{image\.fallback\}/);
+  assert.match(remoteImage, /resolveBlobUri\(fallback\)/);
+  assert.match(remoteImage, /onError=\{handleError\}/);
+  assert.match(remoteImage, /Image unavailable/);
+  assert.match(remoteImage, /pdsFirst/);
 });

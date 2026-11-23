@@ -50,6 +50,15 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
         />
       </Section>
 
+      <Section title="Media">
+        <Row
+          icon="image-outline"
+          label="Media origin"
+          detail="Choose PDS-first image loading and manage the image cache"
+          onPress={() => navigation.navigate('MediaOrigin')}
+        />
+      </Section>
+
       <View style={styles.footnote}>
         <Ionicons name="information-circle-outline" size={16} color={p.secondary} />
         <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 17, flex: 1 }}>

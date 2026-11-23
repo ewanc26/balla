@@ -11,6 +11,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setThemeChoice } from '../theme';
 import { normaliseLanguages } from './postOptions';
 import {
+  normaliseBlobOriginStrategy,
+  type BlobOriginStrategy,
+} from './blobOriginModel';
+import {
   normaliseThemeChoice,
   type AccentId,
   type ColourMode,
@@ -46,6 +50,8 @@ export type AppPreferences = {
   contentLanguages: string[];
   /** Whether the subtle teal.fm recent-plays strip appears on profiles. */
   showMusicActivity: boolean;
+  /** Device-local media origin choice; "pds-first" reads blobs from the PDS. */
+  blobOriginStrategy: BlobOriginStrategy;
 };
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
@@ -61,6 +67,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   primaryLanguage: 'en',
   contentLanguages: [],
   showMusicActivity: true,
+  blobOriginStrategy: 'follow-url',
 };
 
 type PreferencesContextValue = {
@@ -77,6 +84,7 @@ type PreferencesContextValue = {
   setPrimaryLanguage: (value: string) => void;
   setContentLanguages: (value: string[]) => void;
   setShowMusicActivity: (value: boolean) => void;
+  setBlobOriginStrategy: (value: BlobOriginStrategy) => void;
 };
 
 const PreferencesContext = createContext<PreferencesContextValue>({
@@ -93,6 +101,7 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   setPrimaryLanguage: () => {},
   setContentLanguages: () => {},
   setShowMusicActivity: () => {},
+  setBlobOriginStrategy: () => {},
 });
 
 function parseStored(value: string | null): AppPreferences {
@@ -128,6 +137,7 @@ function parseStored(value: string | null): AppPreferences {
         typeof parsed?.showMusicActivity === 'boolean'
           ? parsed.showMusicActivity
           : DEFAULT_PREFERENCES.showMusicActivity,
+      blobOriginStrategy: normaliseBlobOriginStrategy(parsed?.blobOriginStrategy),
     };
   } catch {
     return DEFAULT_PREFERENCES;
@@ -224,6 +234,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     (value: boolean) => update({ showMusicActivity: value }),
     [update]
   );
+  const setBlobOriginStrategy = useCallback(
+    (value: BlobOriginStrategy) => update({ blobOriginStrategy: value }),
+    [update]
+  );
 
   const value = useMemo(
     () => ({
@@ -240,6 +254,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setPrimaryLanguage,
       setContentLanguages,
       setShowMusicActivity,
+      setBlobOriginStrategy,
     }),
     [
       preferences,
@@ -255,6 +270,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setPrimaryLanguage,
       setContentLanguages,
       setShowMusicActivity,
+      setBlobOriginStrategy,
     ]
   );
 

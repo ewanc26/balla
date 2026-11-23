@@ -42,6 +42,7 @@ export const WEB_LINKING_CONFIG = {
     Compose: 'compose',
     Settings: 'settings',
     Advanced: 'settings/advanced',
+    MediaOrigin: 'settings/advanced/media',
     Accounts: 'settings/accounts',
     AddAccount: 'settings/accounts/add',
     Appearance: 'appearance',
