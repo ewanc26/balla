@@ -9,7 +9,7 @@ import {
   SettingValueRow,
 } from '../components/SettingControls';
 import { openExternalUrl } from '../lib/openLink';
-import { getHandleResolverEndpoint } from '../lib/servicesConfig';
+import { getHandleResolverEndpoint, getPlcDirectoryEndpoint } from '../lib/servicesConfig';
 import {
   ACCOUNT_PREFLIGHT_COPY,
   ACCOUNT_PREFLIGHT_STATE_LABELS,
@@ -37,7 +37,10 @@ export function AccountPreflightScreen() {
   async function check() {
     if (busy) return;
     setBusy(true);
-    setResult(await probeAccount(input, { resolver: await getHandleResolverEndpoint() }));
+    setResult(await probeAccount(input, {
+      resolver: await getHandleResolverEndpoint(),
+      plcDirectory: await getPlcDirectoryEndpoint(),
+    }));
     setBusy(false);
   }
 

@@ -137,12 +137,12 @@ async function readJson(fetchImpl: typeof fetch, url: string): Promise<unknown |
   }
 }
 
-function documentUrl(did: string): string | null {
+function documentUrl(did: string, plcDirectory: string): string | null {
   if (did.startsWith('did:web:')) {
     const base = didWebUrl(did);
     return base ? `${base}/.well-known/did.json` : null;
   }
-  if (PLC_RE.test(did)) return plcDocumentUrl(did);
+  if (PLC_RE.test(did)) return plcDocumentUrl(did, plcDirectory);
   return null;
 }
 
@@ -229,6 +229,8 @@ export type AccountPreflightDeps = {
   fetchImpl?: typeof fetch;
   /** Public pre-auth resolver; the screen passes the saved override. */
   resolver?: string;
+  /** Public did:plc directory; the screen passes the saved override. */
+  plcDirectory?: string;
 };
 
 /** Resolve a handle from its own host first, then through the public resolver. */
@@ -270,6 +272,7 @@ export async function probeAccount(
 ): Promise<AccountPreflightResult> {
   const fetchImpl = deps.fetchImpl ?? fetch;
   const resolver = deps.resolver ?? DEFAULT_SERVICES.handleResolver;
+  const plcDirectory = deps.plcDirectory ?? DEFAULT_SERVICES.plcDirectory;
   const classified = classifyHandleInput(input);
 
   let identity: { did: string; source: AccountPreflightSource } | null = null;
@@ -285,7 +288,7 @@ export async function probeAccount(
   }
   if (!identity) return result('unresolved', 'Could not resolve this handle or DID from public sources.');
 
-  const url = documentUrl(identity.did);
+  const url = documentUrl(identity.did, plcDirectory);
   if (!url) return result('unresolved', 'This DID method is not resolved by the public pre-flight.', { ...identity });
   const document = await readJson(fetchImpl, url);
   if (!document) return result('unresolved', 'The DID document could not be read from a public directory.', { ...identity });

@@ -12,15 +12,30 @@ import { DEFAULT_SERVICES } from '../src/lib/servicesModel.ts';
 const AT = '2026-11-23T12:00:00.000Z';
 
 test('the export records the effective resolver and whether it is the default', () => {
-  const fallback = buildServicesExport({ handleResolver: null }, null, AT);
+  const fallback = buildServicesExport({ handleResolver: null, plcDirectory: null }, null, AT);
   assert.equal(fallback.schema, SERVICES_EXPORT_SCHEMA);
   assert.equal(fallback.exportedAt, AT);
   assert.equal(fallback.changeable.handleResolver, DEFAULT_SERVICES.handleResolver);
   assert.equal(fallback.changeable.usingDefaultResolver, true);
 
-  const override = buildServicesExport({ handleResolver: 'https://selfhosted.social' }, null, AT);
+  const override = buildServicesExport({ handleResolver: 'https://selfhosted.social', plcDirectory: null }, null, AT);
   assert.equal(override.changeable.handleResolver, 'https://selfhosted.social');
   assert.equal(override.changeable.usingDefaultResolver, false);
+});
+
+test('the export records the effective PLC directory and whether it is the default', () => {
+  const fallback = buildServicesExport({ handleResolver: null, plcDirectory: null }, null, AT);
+  assert.equal(fallback.changeable.plcDirectory, DEFAULT_SERVICES.plcDirectory);
+  assert.equal(fallback.changeable.usingDefaultPlcDirectory, true);
+
+  const override = buildServicesExport({ handleResolver: null, plcDirectory: 'https://plc.example' }, null, AT);
+  assert.equal(override.changeable.plcDirectory, 'https://plc.example');
+  assert.equal(override.changeable.usingDefaultPlcDirectory, false);
+
+  // Config persisted before this field existed stays on the safe default.
+  const legacy = buildServicesExport({ handleResolver: null }, null, AT);
+  assert.equal(legacy.changeable.plcDirectory, DEFAULT_SERVICES.plcDirectory);
+  assert.equal(legacy.changeable.usingDefaultPlcDirectory, true);
 });
 
 test('grant-bound defaults are exported verbatim as facts', () => {

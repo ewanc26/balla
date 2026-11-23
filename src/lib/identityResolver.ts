@@ -1,4 +1,5 @@
 import { agent } from './agent';
+import { getPlcDirectoryEndpoint } from './servicesConfig.ts';
 import { readWithRetry } from './reliability';
 import {
   cachedDidDoc,
@@ -83,7 +84,7 @@ export async function resolveDidDocument(did: string): Promise<unknown | null> {
     let document: unknown | null = null;
     try {
       if (source === 'plc') {
-        const url = plcDirectoryUrl(did);
+        const url = plcDirectoryUrl(did, await getPlcDirectoryEndpoint());
         if (url) document = await readWithRetry(() => fetchDocument(url));
       } else if (source === 'web') {
         const url = didWebDocumentUrl(did);

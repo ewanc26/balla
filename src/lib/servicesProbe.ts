@@ -5,7 +5,7 @@
  * never read, logged or displayed.
  */
 
-import { VIDEO_LIMITS_LXM } from './serviceHosts.ts';
+import { VIDEO_LIMITS_LXM, plcDocumentUrl } from './serviceHosts.ts';
 import {
   DEFAULT_SERVICES,
   advertisedEndpoint,
@@ -73,6 +73,30 @@ function didDocumentUrl(did: string): string | null {
   const base = didWebUrl(did);
   if (base) return `${base}/.well-known/did.json`;
   return null;
+}
+
+/**
+ * Public did:plc directory check against the configured host. Reads one known
+ * public DID document and verifies its structured `id` field; provider error
+ * text is never read, logged or displayed.
+ */
+export async function probePlcDirectory(directory: string, deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
+  const base = /^https:\/\/[a-z0-9.-]+$/i.test(directory) ? directory : null;
+  if (!base) return probe('invalid', null, null, directory, 'Enter an https host without a path.');
+  const canary = DEFAULT_SERVICES.labelerDid;
+  const url = plcDocumentUrl(canary, base);
+  if (!url) return probe('invalid', null, null, base, 'Invalid directory address.');
+  const { response, latencyMs } = await timed(url, deps.fetchImpl);
+  if (!response) return probe('unavailable', null, latencyMs, base, 'Could not reach this directory.');
+  if (!response.ok) return probe('unavailable', response.status, latencyMs, base, serviceStatusDetail(response.status));
+  try {
+    const document = await response.json() as Record<string, unknown>;
+    return document.id === canary
+      ? probe('ok', response.status, latencyMs, base, 'Read a public did:plc document from this directory.')
+      : probe('unavailable', response.status, latencyMs, base, 'Response was not the requested DID document.');
+  } catch {
+    return probe('unavailable', response.status, latencyMs, base, 'Response was not JSON.');
+  }
 }
 
 /** AppView DID document plus an optional public profile read for this account. */

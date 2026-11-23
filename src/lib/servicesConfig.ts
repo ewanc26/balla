@@ -9,9 +9,10 @@ import {
 } from './servicesModel.ts';
 
 /**
- * Persisted service choices. Only the pre-auth resolver is editable; every
- * other slot is derived from the OAuth grant or the account's DID document.
- * Storage failures are non-fatal: the app falls back to the compiled default.
+ * Persisted service choices. Only the two public, token-free read hosts are
+ * editable: the pre-auth resolver and the did:plc directory. Every other slot
+ * is derived from the OAuth grant or the account's DID document. Storage
+ * failures are non-fatal: the app falls back to the compiled default.
  */
 let cached: ServicesConfig | null = null;
 const listeners = new Set<() => void>();
@@ -44,6 +45,12 @@ export async function getHandleResolverEndpoint(fallback: string = DEFAULT_SERVI
   return config.handleResolver ?? fallback;
 }
 
+/** The public did:plc directory used for identity reads and pre-flight checks. */
+export async function getPlcDirectoryEndpoint(fallback: string = DEFAULT_SERVICES.plcDirectory): Promise<string> {
+  const config = await getServicesConfig();
+  return config.plcDirectory ?? fallback;
+}
+
 async function persist(config: ServicesConfig): Promise<void> {
   cached = normaliseServicesConfig(config);
   try {
@@ -59,6 +66,14 @@ async function persist(config: ServicesConfig): Promise<void> {
 export async function setHandleResolverEndpoint(endpoint: string | null): Promise<ServicesConfig> {
   const config = await getServicesConfig();
   const next = { ...config, handleResolver: endpoint };
+  await persist(next);
+  return getServicesConfig();
+}
+
+/** Pass null to restore the compiled default did:plc directory. */
+export async function setPlcDirectoryEndpoint(endpoint: string | null): Promise<ServicesConfig> {
+  const config = await getServicesConfig();
+  const next = { ...config, plcDirectory: endpoint };
   await persist(next);
   return getServicesConfig();
 }

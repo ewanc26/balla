@@ -1,11 +1,12 @@
 /**
  * Framework-free service facts and defaults.
  *
- * AT Protocol splits a session into roles. Only one of them can honestly be
- * changed at runtime: the pre-authorisation XRPC handle resolver. The AppView,
- * chat, video and labeler audiences are written into the OAuth grant scope
- * (111 tokens in oauth-client-metadata.json), so pointing them somewhere else
- * needs a fresh authorisation. Balla shows those as facts, never as inert
+ * AT Protocol splits a session into roles. Two read-only hosts can honestly be
+ * changed at runtime: the pre-authorisation XRPC handle resolver and the public
+ * did:plc directory. Neither needs a token or changes an existing grant. The
+ * AppView, chat, video and labeler audiences are written into the OAuth grant
+ * scope (111 tokens in oauth-client-metadata.json), so pointing them somewhere
+ * else needs a fresh authorisation. Balla shows those as facts, never as inert
  * toggles. Keeping every default here makes "no host outside config" auditable.
  */
 
@@ -30,20 +31,26 @@ export const DEFAULT_SERVICES = {
 
 export const SERVICES_STORAGE_KEY = 'balla.services.v1';
 
-/** Only the resolver is editable; `null` means "use the default". */
+/** Only public, token-free read hosts are editable; `null` means "use the default". */
 export type ServicesConfig = {
   handleResolver: string | null;
+  plcDirectory: string | null;
 };
 
-export const DEFAULT_SERVICES_CONFIG: ServicesConfig = { handleResolver: null };
+export const DEFAULT_SERVICES_CONFIG: ServicesConfig = { handleResolver: null, plcDirectory: null };
+
+function override(value: unknown, fallback: string): string | null {
+  const endpoint = typeof value === 'string' ? normaliseHostUrl(value) : null;
+  // Persisting the default explicitly is pointless; null keeps one source of truth.
+  return endpoint && endpoint !== fallback ? endpoint : null;
+}
 
 export function normaliseServicesConfig(raw: unknown): ServicesConfig {
   if (!raw || typeof raw !== 'object') return { ...DEFAULT_SERVICES_CONFIG };
   const value = raw as Record<string, unknown>;
-  const endpoint = typeof value.handleResolver === 'string' ? normaliseHostUrl(value.handleResolver) : null;
-  // Persisting the default explicitly is pointless; null keeps one source of truth.
   return {
-    handleResolver: endpoint && endpoint !== DEFAULT_SERVICES.handleResolver ? endpoint : null,
+    handleResolver: override(value.handleResolver, DEFAULT_SERVICES.handleResolver),
+    plcDirectory: override(value.plcDirectory, DEFAULT_SERVICES.plcDirectory),
   };
 }
 
@@ -53,6 +60,16 @@ export function effectiveResolver(config: ServicesConfig): string {
 
 export function isDefaultResolver(config: ServicesConfig): boolean {
   return config.handleResolver === null;
+}
+
+export function effectivePlcDirectory(config: ServicesConfig): string {
+  return config.plcDirectory ?? DEFAULT_SERVICES.plcDirectory;
+}
+
+export function isDefaultPlcDirectory(config: ServicesConfig): boolean {
+  // Treat a missing field as "default" so config persisted before this setting
+  // existed, and partial diagnostic fixtures, stay on the safe compiled host.
+  return config.plcDirectory == null;
 }
 
 const DID_WEB_RE = /^did:web:([a-z0-9.-]+)(?::(.+))?$/i;
@@ -86,12 +103,16 @@ export function advertisedEndpoint(document: unknown, fragment: string): string 
   return null;
 }
 
-export type ServiceSlot = 'resolver' | 'appview' | 'chat' | 'pds' | 'video' | 'labeler';
+export type ServiceSlot = 'resolver' | 'plcDirectory' | 'appview' | 'chat' | 'pds' | 'video' | 'labeler';
 
 export const SERVICE_SLOT_COPY: Record<ServiceSlot, { label: string; detail: string }> = {
   resolver: {
     label: 'Handle resolver',
     detail: 'Used before sign-in for handles without a well-known file. Changeable now.',
+  },
+  plcDirectory: {
+    label: 'PLC directory',
+    detail: 'Public did:plc DID document directory for identity resolution and pre-flight checks. Changeable now.',
   },
   appview: {
     label: 'AppView',
