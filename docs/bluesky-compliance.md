@@ -232,7 +232,11 @@ Balla and is never logged. Device push delivery remains blocked (#36).
    `src/lib/reliability.ts` classifies 429, offline, auth-expired and server
    failures, reads retry idempotently with bounded backoff and `Retry-After`,
    optimistic like/repost/bookmark changes roll back, and failed posts,
-   replies, deletes and reports stay visible with a retry.
+   replies, deletes and reports stay visible with a retry. Failure messages are
+   service-neutral because the helper also covers identity directories and
+   third-party hosts. When a service advertises a wait longer than the
+   automatic backoff cap, the read stops and the message tells the person to
+   wait; Balla never retries earlier than the wait it describes.
 8. Complete an accessibility pass: screen reader labels, focus order, Dynamic
    Type and reduced-motion behaviour. Done: shared rules in
    `src/lib/accessibilityModel.ts` and hooks in `src/lib/accessibility.ts`;

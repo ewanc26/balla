@@ -2,7 +2,6 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   BASE_BACKOFF_MS,
-  MAX_BACKOFF_MS,
   MAX_READ_ATTEMPTS,
   classifyFailure,
   describeFailure,
@@ -42,15 +41,18 @@ test('retry-after is read from seconds, HTTP dates and header maps', () => {
   assert.equal(retryAfterMsFrom(new Error('no headers')), null);
 });
 
-test('descriptions tell the truth and include rate-limit waits', () => {
+test('descriptions tell the truth, include rate-limit waits and name no provider', () => {
   assert.match(
     describeFailure(xrpcError(429, { headers: { 'retry-after': '9' } }), 'fallback'),
-    /Try again in about 9 seconds/
+    /Wait about 9 seconds before trying again/
   );
   assert.match(describeFailure(xrpcError(1), 'fallback'), /Check your connection/);
   assert.match(describeFailure(xrpcError(401), 'fallback'), /Sign out, sign in again/);
   assert.match(describeFailure(xrpcError(500), 'fallback'), /service is having trouble/);
   assert.equal(describeFailure(new Error('weird'), 'Custom fallback'), 'Custom fallback');
+  for (const err of [xrpcError(429), xrpcError(1), xrpcError(500)]) {
+    assert.doesNotMatch(describeFailure(err, 'fallback'), /Bluesky/i);
+  }
 });
 
 test('reads retry transient failures with bounded exponential backoff', async () => {
@@ -69,15 +71,36 @@ test('reads retry transient failures with bounded exponential backoff', async ()
   assert.deepEqual(delays, [BASE_BACKOFF_MS, BASE_BACKOFF_MS * 2]);
 });
 
-test('a 429 honours retry-after and caps the automatic wait', async () => {
+test('a 429 with a long advertised wait stops instead of retrying too early', async () => {
   const delays = [];
-  await readWithRetry(
-    async () => {
-      throw xrpcError(429, { headers: { 'retry-after': '30' } });
-    },
-    { attempts: 2, delay: async (ms) => { delays.push(ms); } }
-  ).catch(() => {});
-  assert.deepEqual(delays, [MAX_BACKOFF_MS]);
+  let calls = 0;
+  await assert.rejects(
+    readWithRetry(
+      async () => {
+        calls += 1;
+        throw xrpcError(429, { headers: { 'retry-after': '30' } });
+      },
+      { attempts: 3, delay: async (ms) => { delays.push(ms); } }
+    )
+  );
+  assert.equal(calls, 1);
+  assert.deepEqual(delays, []);
+});
+
+test('a 429 with a short advertised wait is honoured exactly', async () => {
+  const delays = [];
+  let calls = 0;
+  await assert.rejects(
+    readWithRetry(
+      async () => {
+        calls += 1;
+        throw xrpcError(429, { headers: { 'retry-after': '3' } });
+      },
+      { attempts: 2, delay: async (ms) => { delays.push(ms); } }
+    )
+  );
+  assert.equal(calls, 2);
+  assert.deepEqual(delays, [3000]);
 });
 
 test('auth failures are never retried and attempts stay bounded', async () => {
