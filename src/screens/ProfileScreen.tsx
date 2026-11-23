@@ -6,6 +6,7 @@ import {
   StyleSheet,
   Text,
   View,
+  useWindowDimensions,
 } from 'react-native';
 import { openExternalUrl } from '../lib/openLink';
 import { FlashList } from '@shopify/flash-list';
@@ -49,6 +50,7 @@ import {
   verificationBadgeLabel,
   type VerificationSummary,
 } from '../lib/profileModel';
+import { statCountsForRow } from '../lib/statCountModel';
 import {
   liveLinkFromStatus,
   statusIsActive,
@@ -503,6 +505,18 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   }
 
   function Header() {
+    const { width: windowWidth } = useWindowDimensions();
+    // Large counts stay exact while the three stats fit the row together; when
+    // they would overflow the window, the widest one fuzzes (1.2M-style)
+    // instead of letting the row spill off the screen.
+    const statCounts = statCountsForRow(
+      {
+        posts: profile.postsCount || 0,
+        following: profile.followsCount || 0,
+        followers: profile.followersCount || 0,
+      },
+      windowWidth
+    );
     return (
       <View>
         {actionError ? (
@@ -727,8 +741,13 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             ) : null}
 
             <View style={{ flexDirection: 'row', gap: 18, marginTop: 10 }}>
-              <Stat value={profile.postsCount || 0} label="posts" />
               <Stat
+                count={statCounts.posts}
+                value={profile.postsCount || 0}
+                label="posts"
+              />
+              <Stat
+                count={statCounts.following}
                 value={profile.followsCount || 0}
                 label="following"
                 onPress={() =>
@@ -739,6 +758,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 }
               />
               <Stat
+                count={statCounts.followers}
                 value={profile.followersCount || 0}
                 label="followers"
                 onPress={() =>
@@ -1368,31 +1388,35 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 }
 
 function Stat({
+  count,
   value,
   label,
   onPress,
 }: {
+  count: string;
   value: number;
   label: string;
   onPress?: () => void;
 }) {
   const p = usePalette();
+  // The drawn count may be fuzzed by statCountsForRow when the row would
+  // overflow the window; the exact value stays for the screen reader label.
   const text = (
     <Text style={{ color: p.secondary, fontSize: 15 }}>
-      <Text style={{ color: p.text, fontWeight: '700' }}>{value}</Text> {label}
+      <Text style={{ color: p.text, fontWeight: '700' }}>{count}</Text> {label}
     </Text>
   );
-  if (!onPress) return text;
+  // All three stats share one 44pt centred frame. A bare Text sits higher in
+  // the row than its Pressable neighbours, which reads as misaligned counts.
+  if (!onPress) {
+    return <View style={styles.statFrame}>{text}</View>;
+  }
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`View ${value} ${label}`}
-      style={({ pressed }) => ({
-        minHeight: 44,
-        justifyContent: 'center',
-        opacity: pressed ? 0.6 : 1,
-      })}
+      style={({ pressed }) => [styles.statFrame, { opacity: pressed ? 0.6 : 1 }]}
     >
       {text}
     </Pressable>
@@ -1572,5 +1596,9 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 4,
     backgroundColor: '#E4E6EB',
+  },
+  statFrame: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });
