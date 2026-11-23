@@ -30,6 +30,7 @@ import type { FeedbackKind } from '../lib/feedFeedbackModel';
 import { usePostModeration } from '../lib/moderationContext';
 import { accountLabelCauses, warnedByLabel } from '../lib/labelVisibility';
 import { ContentWarning } from './ContentWarning';
+import { ReplyPreview } from './ReplyPreview';
 import { translateText } from '../lib/translate';
 import { richTextSegments, type RichTextSegment } from '../lib/richtext';
 import {
@@ -57,6 +58,8 @@ interface PostCardProps {
   onHiddenReplyChange?: (post: any, hidden: boolean) => void;
   /** The active custom feed, when it can receive ranking feedback. */
   feedbackFeed?: { uri?: string; generator?: any; feedContext?: string; reqId?: string };
+  /** Feed-only: fetch a first reply while this card is on screen. */
+  replyPreviewEnabled?: boolean;
   highlight?: boolean;
 }
 
@@ -68,6 +71,7 @@ export function PostCard({
   onPostHidden,
   onHiddenReplyChange,
   feedbackFeed,
+  replyPreviewEnabled,
   highlight,
 }: PostCardProps) {
   const p = usePalette();
@@ -639,6 +643,12 @@ export function PostCard({
             />
           </Pressable>
         </View>
+        <ReplyPreview
+          post={post}
+          enabled={!!replyPreviewEnabled}
+          onOpenThread={onOpenThread}
+          onOpenProfile={onOpenProfile}
+        />
         {actionError ? (
           <View style={styles.actionError}>
             <Text style={{ color: p.danger, flex: 1, fontSize: 12 }}>{actionError}</Text>
