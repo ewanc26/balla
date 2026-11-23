@@ -17,6 +17,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { PostCard } from '../components/PostCard';
+import { withFeedReply } from '../lib/replyContext.ts';
 import { Avatar } from '../components/Avatar';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
@@ -92,7 +93,7 @@ export function FeedGeneratorScreen({
         setIsValid(generatorResponse.data.isValid);
         setPosts(
           (feedResponse.data.feed || [])
-            .map((item: any) => item.post)
+            .map(withFeedReply)
             .filter(Boolean)
         );
         setCursor(feedResponse.data.cursor);
@@ -500,6 +501,7 @@ export function FeedGeneratorScreen({
       renderItem={({ item }) => (
         <PostCard
           post={item}
+          replyParent={item.feedReply?.parent}
           onOpenThread={openThread}
           onOpenProfile={openProfile}
           onPostHidden={hidePost}

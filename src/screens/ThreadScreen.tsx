@@ -197,6 +197,7 @@ function ReplyBranch({
       />
       <PostCard
         post={node.post}
+        showReplyContext={false}
         onOpenThread={onOpenThread}
         onOpenProfile={onOpenProfile}
         onPostHidden={onPostHidden}
@@ -631,6 +632,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
                   />
                   <PostCard
                     post={item.post}
+                    showReplyContext={false}
                     highlight={item.role === 'focus'}
                     onOpenThread={
                       item.role === 'focus'
@@ -679,6 +681,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
             />
             <PostCard
               post={a.post}
+              showReplyContext={false}
               onOpenProfile={openProfile}
               onPostHidden={hidePost}
             />
@@ -687,6 +690,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
         <ThreadRoleLabel text="This post" focus accessibilityLabel="The post you opened" />
         <PostCard
           post={thread.post}
+          showReplyContext={false}
           highlight
           onOpenThread={() => replyInput.current?.focus()}
           onOpenProfile={openProfile}

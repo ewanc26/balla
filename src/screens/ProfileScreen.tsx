@@ -18,6 +18,7 @@ import { describeFailure, readWithRetry } from '../lib/reliability';
 import { readProfileFromPds } from '../lib/identityProfile';
 import { noteProfileHandle } from '../lib/identityResolver';
 import { PostCard } from '../components/PostCard';
+import { withFeedReply } from '../lib/replyContext.ts';
 import { Avatar } from '../components/Avatar';
 import { ProfileMenu } from '../components/ProfileMenu';
 import { ReportLinkSheet } from '../components/ReportLinkSheet';
@@ -76,11 +77,11 @@ import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 async function loadTabPosts(actor: string, tab: ProfileFeedTab): Promise<any[]> {
   if (usesActorLikes(tab)) {
     const res = await networkBackend.profile.getActorLikes({ actor, limit: 30 });
-    return (res.data.feed || []).map((item: any) => item.post);
+    return (res.data.feed || []).map(withFeedReply).filter(Boolean);
   }
   const filter = filterForTab(tab) || undefined;
   const res = await networkBackend.profile.getAuthorFeed({ actor, limit: 30, filter });
-  return (res.data.feed || []).map((item: any) => item.post);
+  return (res.data.feed || []).map(withFeedReply).filter(Boolean);
 }
 
 export function ProfileScreen({ route, navigation }: { route?: any; navigation: any }) {
@@ -1329,6 +1330,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             ) : null}
             <PostCard
               post={item.post}
+              replyParent={item.post.feedReply?.parent}
               onOpenThread={openThread}
               onOpenProfile={openProfile}
               onPostHidden={hidePost}
