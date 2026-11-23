@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.46.0
+
+- **Advanced → Services can now test the labeler endpoint (#97, partial).** A visible **Test labeler** action reuses the existing public `labelerProbe.ts`: it resolves the default moderation labeler's DID document, then makes one unauthenticated `com.atproto.label.queryLabels` canary call. The result reports HTTP status, latency and the endpoint from that DID document; provider prose is never read or shown.
+- **The check says what it is not.** An empty labels array is a valid answer and proves only that the advertised endpoint answers from this device. It does not change which labels Balla applies, subscribe a labeler or grant any scope; the subscribed labelers are still managed in Content filters. No probe logic was duplicated.
+- This completes the per-slot public test action for every service shown in Advanced → Services, but it is not a completed #97: AppView, chat, video and labeler remain grant-bound facts, the PDS remains DID-discovered, and only the handle resolver is changeable on this device. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.45.0
 
 - **Account pre-flight now checks real OAuth capabilities (#100, partial).** Both Advanced → Account pre-flight and the login screen's pre-sign-in check read the authorization server's published fields and classify them against the ten capabilities Balla's public OAuth client needs: `code` response, authorization-code and refresh grants, S256 PKCE, public-client token auth, the `atproto` scope, issuer responses, a pushed-authorization endpoint, ES256 DPoP and client metadata document support.

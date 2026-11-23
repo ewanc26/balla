@@ -9,6 +9,13 @@ import {
   SettingValueRow,
 } from '../components/SettingControls';
 import { getActiveDid } from '../lib/agent';
+import { resolveDidDocument } from '../lib/identityResolver';
+import {
+  checkingLabelerProbe,
+  labelerProbeText,
+  probeLabeler,
+  type LabelerProbe,
+} from '../lib/labelerProbe.ts';
 import {
   getHandleResolverEndpoint,
   getServicesConfig,
@@ -62,6 +69,7 @@ export function ServicesScreen() {
   const [appviewProbe, setAppviewProbe] = useState<ServiceProbe | null>(null);
   const [chatProbe, setChatProbe] = useState<ServiceProbe | null>(null);
   const [videoProbe, setVideoProbe] = useState<ServiceProbe | null>(null);
+  const [labelerProbe, setLabelerProbe] = useState<LabelerProbe | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
@@ -137,6 +145,16 @@ export function ServicesScreen() {
     setBusy(true);
     setVideoProbe({ state: 'checking', status: null, latencyMs: null, endpoint: null, detail: 'Checking…' });
     setVideoProbe(await probeVideoEndpoint());
+    setBusy(false);
+  }
+
+  async function checkLabeler() {
+    if (busy) return;
+    setBusy(true);
+    setLabelerProbe(checkingLabelerProbe());
+    setLabelerProbe(
+      await probeLabeler(DEFAULT_SERVICES.labelerDid, { resolveDocument: resolveDidDocument }),
+    );
     setBusy(false);
   }
 
@@ -227,6 +245,14 @@ export function ServicesScreen() {
           ? <SettingValueRow label="Detail" value={videoProbe.detail} />
           : null}
         <SettingValueRow label={SERVICE_SLOT_COPY.labeler.label} value={DEFAULT_SERVICES.labelerAudience} />
+        <SettingButton label="Test labeler" onPress={() => void checkLabeler()} busy={busy} />
+        <SettingValueRow label="Labeler result" value={labelerProbeText(labelerProbe)} />
+        <SettingNote>
+          The labeler check reads the DID document, then makes one public label
+          query. It proves the advertised endpoint answers from this device; it
+          does not change which labels Balla applies or grant any scope. The
+          labelers you subscribe to are managed in Content filters.
+        </SettingNote>
       </SettingSection>
 
       <SettingSection title="Discovered from your account">
