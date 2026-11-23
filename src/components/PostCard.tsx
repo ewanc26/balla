@@ -33,6 +33,8 @@ import { ContentWarning } from './ContentWarning';
 import { ReplyPreview } from './ReplyPreview';
 import { translateText } from '../lib/translate';
 import { richTextSegments, type RichTextSegment } from '../lib/richtext';
+import { eventRefFromRecordEmbed } from '../lib/eventsModel';
+import { EventEmbed } from './EventEmbed';
 import {
   QUOTE_UNAVAILABLE_COPY,
   externalFromEmbed,
@@ -128,6 +130,7 @@ export function PostCard({
     ...image,
     fallback: fallbacks[index] || null,
   }));
+  const eventRef = eventRefFromRecordEmbed(record && record.embed);
   const quote = quoteFromEmbed(post?.embed);
   const linkCard = externalFromEmbed(post?.embed);
   const video = videoFromEmbed(post?.embed);
@@ -540,7 +543,9 @@ export function PostCard({
                   <VideoEmbed video={video} />
                 ))}
 
-              {quote ? (
+              {eventRef ? (
+                <EventEmbed reference={eventRef} />
+              ) : quote ? (
                 <QuoteCard
                   quote={quote}
                   onOpenThread={() => {

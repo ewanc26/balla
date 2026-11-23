@@ -61,7 +61,7 @@ test('no new permission, dependency, dependency override or provider message tex
     assert.match(readFileSync(plist, 'utf8'), /<string>0\.57\.0<\/string>/);
   }
   assert.deepEqual(pkg.overrides, { minimatch: '11.0.9', zod: '4.6.6' });
-  assert.equal(metadata.scope.split(' ').filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(' ').filter(Boolean).length, 112);
   assert.doesNotMatch(model, /\.message\b/);
   assert.doesNotMatch(loader, /\.message\b/);
   assert.doesNotMatch(screen, /\.message\b/);

@@ -68,5 +68,5 @@ test('the release documents honest failure states with no new scope', () => {
   assert.match(changelog, /scope count remains 111/);
   assert.match(compliance, /Balla never retries earlier than the wait it describes/);
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
-  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
 });

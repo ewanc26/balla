@@ -93,7 +93,7 @@ check; local rules keep working through an outage; repost-only account mutes; pe
 preferences; a device-local 30-day Home snooze, listed and revocable in Following preferences; a
 deterministic first-reply preview on viewable feed cards, using the configured thread order and a
 session cache; an opt-in, per-account On this day card that reads only your own posts from your
-PDS for this calendar date, with a full Memories screen and no AppView or engagement counts; a desktop
+PDS for this calendar date, with a full Memories screen and no AppView or engagement counts; a quiet profile Events strip and event cards in posts, read from public `community.lexicon.calendar.event` records, with event times, locations, map/link-outs and visible Going / Interested / Not going RSVPs written as one public `community.lexicon.calendar.rsvp` record (a new narrow scope; older sessions need to sign in again); a desktop
 Recent activity rail card built only from the Following page already in memory, with a
 reversible device-local hide; a wall-to-wall thread lens for you and one other visible author; a
 creator byline and one static Supporters card in About; a generated icon set;

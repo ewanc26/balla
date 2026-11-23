@@ -28,6 +28,7 @@ import { useViewer } from '../lib/viewer';
 import { useAccountPreferences } from '../lib/accountPreferences';
 import { usePreferences } from '../lib/preferences';
 import { MusicActivityStrip } from '../components/MusicActivityStrip';
+import { ProfileEventsStrip } from '../components/ProfileEventsStrip';
 import { profileLinkHost, profileLinkLabel } from '../lib/profileLinks';
 import {
   listMemberCount,
@@ -1206,6 +1207,10 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
             {!showProfileWarning && !isBlocked ? (
               <MusicActivityStrip did={profile.did} enabled={preferences.showMusicActivity} />
+            ) : null}
+
+            {!showProfileWarning && !isBlocked ? (
+              <ProfileEventsStrip did={profile.did} />
             ) : null}
 
             {isSelf ? (

@@ -69,5 +69,5 @@ test('the release documents the labeler check as partial #97 without new scope',
   assert.match(compliance, /labeler test reuses `labelerProbe\.ts`/);
   assert.match(features, /labeler endpoint/);
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
-  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
 });

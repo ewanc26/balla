@@ -75,7 +75,7 @@ test('the assisted links are external and the source is documented', () => {
 
 test('no new OAuth scope or dependency enables the move', () => {
   const scopes = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(scopes.length, 111);
+  assert.equal(scopes.length, 112);
   assert.equal(
     scopes.some((scope) =>
       /^(?:rpc|repo|blob):[^\s]*(createAccount|importRepo|checkAccountStatus|listMissingBlobs|activateAccount|deactivateAccount|signPlcOperation|submitPlcOperation)/i.test(scope)

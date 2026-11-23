@@ -112,6 +112,10 @@ const profiles = [
   },
 ];
 
+export const MOCK_EVENT_URI =
+  'at://did:plc:mockmum/community.lexicon.calendar.event/3event';
+export const MOCK_EVENT_CID = 'bafy-mock-event';
+
 function makePost({
   uri,
   author,
@@ -122,6 +126,7 @@ function makePost({
   replyCount,
   viewerState = {},
   embed,
+  recordEmbed,
 }: {
   uri: string;
   author: any;
@@ -132,6 +137,7 @@ function makePost({
   replyCount: number;
   viewerState?: Record<string, any>;
   embed?: any;
+  recordEmbed?: any;
 }) {
   const indexedAt = minutesAgo(minutes);
   return {
@@ -142,6 +148,7 @@ function makePost({
       $type: 'app.bsky.feed.post',
       text,
       createdAt: indexedAt,
+      ...(recordEmbed ? { embed: recordEmbed } : {}),
     },
     indexedAt,
     ...(embed ? { embed } : {}),
@@ -219,6 +226,19 @@ const posts = [
         },
         indexedAt: minutesAgo(320),
       },
+    },
+  }),
+  makePost({
+    uri: 'at://did:plc:mockmum/app.bsky.feed.post/event-1',
+    author: mum,
+    minutes: 210,
+    likeCount: 6,
+    repostCount: 1,
+    replyCount: 0,
+    text: 'A date for the bookbinding evening, if anyone local wants to come along.',
+    recordEmbed: {
+      $type: 'app.bsky.embed.record',
+      record: { uri: MOCK_EVENT_URI, cid: MOCK_EVENT_CID },
     },
   }),
   makePost({
@@ -546,6 +566,34 @@ export function installMockAgent() {
     const value = mockGateRecords.get(gateKey(collection || '', rkey || ''));
     if (!value) throw new Error('Record not found');
     return { data: { uri: '', cid: '', value } };
+  };
+  mock.com.atproto.repo.listRecords = async ({
+    collection,
+    cursor,
+    limit,
+  }: {
+    collection?: string;
+    cursor?: string;
+    limit?: number;
+  } = {}) => {
+    const prefix = `${collection || ''}:`;
+    const entries = [...mockGateRecords.entries()]
+      .filter(([key]) => key.startsWith(prefix))
+      .sort(([a], [b]) => a.localeCompare(b));
+    const start = Math.max(0, Number(cursor) || 0);
+    const size = Math.max(1, Math.min(limit || 50, 100));
+    const page = entries.slice(start, start + size);
+    const next = start + size < entries.length ? String(start + size) : undefined;
+    return {
+      data: {
+        records: page.map(([key, value]) => ({
+          uri: `at://${viewer.did}/${collection}/${key.slice(prefix.length)}`,
+          cid: `bafy-${key.slice(prefix.length)}`,
+          value,
+        })),
+        cursor: next,
+      },
+    };
   };
   mock.com.atproto.repo.putRecord = async ({
     collection,

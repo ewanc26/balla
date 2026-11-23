@@ -61,7 +61,7 @@ test('the pre-flight uses public identity, PDS and OAuth reads only', () => {
 
 test('no OAuth scope, dependency or message-text path was added', () => {
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
-  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
   const pkg = JSON.parse(read('../package.json'));
   assert.deepEqual(Object.keys(pkg.devDependencies).sort(), ['@types/react', 'typescript']);
   for (const source of [model, screen]) {

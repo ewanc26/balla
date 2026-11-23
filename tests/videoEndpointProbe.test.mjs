@@ -80,5 +80,5 @@ test('the release documents the video check as partial #97', () => {
   assert.match(changelog, /scope count remains 111/);
   assert.match(compliance, /video endpoint reachability/);
   const metadata = JSON.parse(readFileSync(new URL('../oauth-client-metadata.json', import.meta.url), 'utf8'));
-  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
 });

@@ -43,7 +43,7 @@ test('the social check stays within the read-only lexicon set', () => {
 
 test('no new scope or dependency is introduced', () => {
   const scopes = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(scopes.length, 111);
+  assert.equal(scopes.length, 112);
   assert.equal(
     scopes.some((scope) => /site\.standard|pub\.leaflet/i.test(scope)),
     false
