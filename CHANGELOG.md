@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.52.0
+
+- **The configured handle resolver now applies to the in-app public handle fallback (#97, partial).** The resolver override was already used for sign-in and account pre-flight, but `resolveHandleToDid` — the offline profile path taken when the AppView cannot serve `getProfile` — still called the agent's default Bluesky XRPC endpoint. A changed resolver was therefore ignored precisely where it mattered most.
+- **What changed.** That fallback now uses the shared native-first resolver: it reads the handle's own `/.well-known/atproto-did` first and falls back to the configured, persisted resolver endpoint on each lookup. Independent-PDS handles can resolve offline without asking Bluesky, and no restart or new sign-in is needed. The returned DID is still validated before it is cached. The identity strategy label no longer names a hardcoded `plc.directory` host.
+- **Why this is still partial #97.** This remains a token-free public read path; AppView, chat, video and labeler are grant-bound facts, the PDS is DID-discovered, and this is not a provider switch or failover. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.51.0
 
 - **Corrected an effective-immediately overclaim in the PLC directory setting (#97, partial).** v0.50.0 said a directory change took effect on the next read, but the default `auto` identity strategy returns a fresh cached `did:plc` document before consulting the directory. Changing the host therefore did not refresh identities already seen on this device.
