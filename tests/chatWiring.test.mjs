@@ -153,6 +153,47 @@ test('chat screens call the chat proxy, never log message content', () => {
   assert.match(settings, /openExternalUrl/);
 });
 
+test('a host without chat degrades to an honest Messages state', () => {
+  const inbox = read('../src/screens/ChatScreen.tsx');
+  const serviceModel = read('../src/lib/chatServiceModel.ts');
+  const serviceRuntime = read('../src/lib/chatService.ts');
+  const serviceScreen = read('../src/screens/ChatServiceScreen.tsx');
+
+  // The inbox classifies the real list failure and shows one explanatory state.
+  assert.match(inbox, /chatServiceStateFromError\(err\)/);
+  assert.match(inbox, /isServiceWideFailure\(state\)/);
+  assert.match(inbox, /Messages aren’t available here/);
+  assert.match(inbox, /chatServiceCopy\(serviceState\)/);
+  assert.match(inbox, /openExternalUrl\(CHAT_SERVICE_DOCS_URL\)/);
+  assert.match(inbox, /setServiceState\(null\)/);
+  // No fake compose controls survive when the service is unavailable.
+  const blockStart = inbox.indexOf('if (serviceState && isServiceWideFailure');
+  const blockEnd = inbox.indexOf('  return (\n    <FlatList', blockStart);
+  const unavailable = inbox.slice(blockStart, blockEnd);
+  const healthy = inbox.slice(blockEnd);
+  assert.match(unavailable, /Check again/);
+  assert.doesNotMatch(unavailable, /New group/);
+  assert.doesNotMatch(unavailable, /sendMessage\(/);
+  assert.match(healthy, /New group/);
+
+  // The probe makes one real proxy read and never reads message text.
+  assert.match(serviceRuntime, /getChatAgent\(\)\.chat\.bsky\.convo\.listConvos\(\{ limit: 1 \}\)/);
+  assert.match(serviceRuntime, /chatServiceStateFromError\(err\)/);
+  assert.doesNotMatch(serviceRuntime, /console\.|AsyncStorage|lastMessage/);
+  assert.match(serviceModel, /CHAT_SERVICE_DOCS_URL/);
+  assert.match(serviceModel, /message text is/i);
+
+  // Advanced → Chat reports real facts; it does not fake an endpoint override.
+  assert.match(serviceScreen, /checkChatService\(\)/);
+  assert.match(serviceScreen, /chatServiceCopy\(state\)/);
+  assert.match(serviceScreen, /CHAT_AUDIENCE/);
+  assert.match(serviceScreen, /CHAT_SERVICE_DID/);
+  assert.match(serviceScreen, /openExternalUrl\(CHAT_SERVICE_DOCS_URL\)/);
+  assert.match(serviceScreen, /Balla does not show an override that cannot work/);
+  assert.doesNotMatch(serviceScreen, /onPress=\{\(\) => \{\}\}/);
+  assert.doesNotMatch(serviceScreen, /console\.(log|debug|info)/);
+});
+
 test('chat has navigation entry points and explicit web paths', () => {
   const app = read('../App.tsx');
   const header = read('../src/components/AppHeader.tsx');
@@ -168,6 +209,7 @@ test('chat has navigation entry points and explicit web paths', () => {
   assert.match(linking, /Chat: 'messages'/);
   assert.match(linking, /Conversation: 'messages\/:convoId'/);
   assert.match(linking, /ChatSettings: 'messages\/settings'/);
+  assert.match(linking, /ChatService: 'settings\/advanced\/chat'/);
   assert.match(linking, /ChatNotificationSettings: 'messages\/settings\/notifications'/);
   assert.match(linking, /CreateGroup: 'messages\/new-group'/);
   assert.match(linking, /JoinGroup: 'messages\/join'/);

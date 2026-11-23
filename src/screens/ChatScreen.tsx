@@ -14,6 +14,14 @@ import { Ionicons } from '@expo/vector-icons';
 import { agent, getChatAgent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { timeAgo } from '../lib/time';
+import { openExternalUrl } from '../lib/openLink';
+import {
+  CHAT_SERVICE_DOCS_URL,
+  chatServiceCopy,
+  chatServiceStateFromError,
+  isServiceWideFailure,
+  type ChatServiceState,
+} from '../lib/chatServiceModel';
 import { Avatar } from '../components/Avatar';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import {
@@ -46,6 +54,9 @@ export function ChatScreen() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A host without a chat service must show one honest state, not a broken
+  // inbox with dead compose actions and a generic error line.
+  const [serviceState, setServiceState] = useState<ChatServiceState | null>(null);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -66,7 +77,11 @@ export function ChatScreen() {
       setRequests(requestList?.data?.requests || []);
       setRequestCursor(requestList?.data?.cursor);
       if (unread?.data) setCounts(unread.data as Counts);
+      // A successful read proves this host serves chat; clear any old notice.
+      setServiceState(null);
     } catch (err) {
+      const state = chatServiceStateFromError(err);
+      if (isServiceWideFailure(state)) setServiceState(state);
       setError(chatErrorCopy(err));
     }
     setRefreshing(false);
@@ -135,6 +150,66 @@ export function ChatScreen() {
     const convoId = item?.id || item?.convoId;
     if (!convoId) return;
     navigation.navigate('Conversation', { convoId });
+  }
+
+  // A host that cannot serve chat gets one readable explanation and two real
+  // actions. No error screen, no dead compose controls, no silent failure.
+  // Every other Balla screen is independent and keeps working.
+  if (serviceState && isServiceWideFailure(serviceState)) {
+    return (
+      <View style={{ flex: 1, backgroundColor: p.bg }}>
+        <View
+          style={{
+            backgroundColor: p.card,
+            borderBottomWidth: StyleSheet.hairlineWidth,
+            borderBottomColor: p.divider,
+            paddingHorizontal: 16,
+            paddingTop: 16,
+            paddingBottom: 14,
+          }}
+        >
+          <Text style={{ color: p.text, fontSize: 20, fontWeight: '700' }}>Messages</Text>
+        </View>
+        <ScrollView contentContainerStyle={{ padding: 24, gap: 12 }}>
+          <Ionicons name="chatbubble-ellipses-outline" size={38} color={p.secondary} />
+          <Text style={{ color: p.text, fontSize: 18, fontWeight: '700' }}>
+            Messages aren’t available here
+          </Text>
+          <Text style={{ color: p.secondary, fontSize: 14, lineHeight: 21 }}>
+            {chatServiceCopy(serviceState)}
+          </Text>
+          <Pressable
+            onPress={() => {
+              setServiceState(null);
+              void load();
+            }}
+            accessibilityRole="button"
+            accessibilityLabel="Check chat again"
+            style={({ pressed }) => [
+              styles.action,
+              { alignSelf: 'flex-start', borderColor: p.divider, opacity: pressed ? 0.65 : 1 },
+            ]}
+          >
+            <Ionicons name="refresh-outline" size={17} color={p.accent} />
+            <Text style={{ color: p.accent, fontWeight: '600', marginLeft: 6 }}>Check again</Text>
+          </Pressable>
+          <Pressable
+            onPress={() => void openExternalUrl(CHAT_SERVICE_DOCS_URL)}
+            accessibilityRole="button"
+            accessibilityLabel="Read how chat services work"
+            style={({ pressed }) => [
+              styles.action,
+              { alignSelf: 'flex-start', borderColor: p.divider, opacity: pressed ? 0.65 : 1 },
+            ]}
+          >
+            <Ionicons name="open-outline" size={17} color={p.accent} />
+            <Text style={{ color: p.accent, fontWeight: '600', marginLeft: 6 }}>
+              How chat services work
+            </Text>
+          </Pressable>
+        </ScrollView>
+      </View>
+    );
   }
 
   return (

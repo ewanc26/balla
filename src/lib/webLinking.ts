@@ -44,6 +44,7 @@ export const WEB_LINKING_CONFIG = {
     Advanced: 'settings/advanced',
     MediaOrigin: 'settings/advanced/media',
     IdentitySettings: 'settings/advanced/identity',
+    ChatService: 'settings/advanced/chat',
     Accounts: 'settings/accounts',
     AddAccount: 'settings/accounts/add',
     Appearance: 'appearance',
