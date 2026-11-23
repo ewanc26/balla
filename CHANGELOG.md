@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.60.1
+
+- **The desktop right rail keeps its width.** It was stretching to 740px at 1440 and squeezing the reading column to 440px; it now stays at 300px and the feed returns to 680px. The 1300px layout gets the same fix; the 1000px layout is unchanged.
+- **Home no longer shows a hydration-source banner.** Advanced → AppView now lists the grant-bound hydration source with its DID and says the timeline no longer repeats it. No new read, write or OAuth scope; the scope count remains 112.
+- **Replies are labelled on Home.** Each reply card starts with "Replying to @handle", read from the parent post already in the feed response. A self-reply says "their earlier post"; a missing parent author says "an earlier post" rather than inventing a handle.
+- CI's full gate passed: deterministic tests (759), typecheck, Expo dependency drift, advisory audit, icon sync and site build. Browser renders covered 320, 390, 820, 1000, 1300 and 1440 pixels, dark and light at 390, and 640, 844 and 1000 pixels of height; every capture had zero horizontal overflow and zero sub-44pt buttons. The rail measured 300px and the feed 680px at 1300 and 1440.
+
 ## 0.60.0
 
 - **Discover now carries News bundles (#159).** Pick one of five topics — Politics, Climate, Culture, Technology or Sport — and a region (Global, UK, US or Europe), then review the exact publisher roster before anything is written. Confirming adds one ordinary Balla curation list with a public `app.bsky.graph.list` record and one `app.bsky.graph.listitem` per publisher in a single atomic `applyWrites`, so a failed write cannot leave a half-filled bundle. Every handle and DID in the compiled pack was resolved against the public AppView on 23 November 2026; the pack is validated at load and fails closed to an honest empty state.

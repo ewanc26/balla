@@ -32,13 +32,13 @@ test('the shared resolver reads the configured directory before falling back', (
 test('release notes and public docs describe the media-path change honestly', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.60.0');
-  assert.equal(appJson.expo.version, '0.60.0');
+  assert.equal(pkg.version, '0.60.1');
+  assert.equal(appJson.expo.version, '0.60.1');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.60\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.60\.1<\/string>/);
   }
-  assert.match(changelog, /^## 0\.60\.0$/m);
+  assert.match(changelog, /^## 0\.60\.1$/m);
   assert.match(changelog, /#97, partial/);
   assert.match(changelog, /scope count remains 111/);
   assert.match(compliance, /Media fallback/);
