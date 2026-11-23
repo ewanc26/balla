@@ -236,7 +236,8 @@ recommendation is involved.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
 mapping and the deliberate omissions (Stories, ranking) live in
-`docs/facebook-ui.md`.
+`docs/facebook-ui.md`. The mobile bottom bar's height follows the system
+font scale, so a scaled-up tab label stays whole at large text sizes (#190).
 Post reaction chips read public `community.lexicon.interaction.reaction`
 records from the subject's repository; the palette is visible, opens and
 closes with buttons, and writes stay deferred until the lexicon settles.
