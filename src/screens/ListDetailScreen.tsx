@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { PostCard } from '../components/PostCard';
+import { withFeedReply } from '../lib/replyContext.ts';
 import { Avatar } from '../components/Avatar';
 import { ReportListSheet } from '../components/ReportListSheet';
 import { subscribeActorHidden } from '../lib/moderation';
@@ -98,7 +99,7 @@ export function ListDetailScreen({
             const feed = await readWithRetry(() => loadListFeedPage(uri));
             setPosts(
               (feed.feed || [])
-                .map((item: any) => item.post)
+                .map(withFeedReply)
                 .filter(Boolean)
             );
             setFeedCursor(feed.cursor);
@@ -743,6 +744,7 @@ export function ListDetailScreen({
         tab === 'posts' ? (
           <PostCard
             post={item}
+            replyParent={item.feedReply?.parent}
             onOpenThread={(postUri) => navigation.navigate('Thread', { uri: postUri })}
             onOpenProfile={openProfile}
             onPostHidden={hidePost}

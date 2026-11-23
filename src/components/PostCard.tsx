@@ -38,7 +38,7 @@ import { EventEmbed } from './EventEmbed';
 import { isEdited } from '../lib/postEditModel';
 import { postEditRecord, subscribePostEdits } from '../lib/postEditStore';
 import { EditedBadge } from './EditedBadge';
-import { replyContextFor } from '../lib/replyContext.ts';
+import { replyContextForPost } from '../lib/replyContext.ts';
 import {
   QUOTE_UNAVAILABLE_COPY,
   externalFromEmbed,
@@ -68,6 +68,8 @@ interface PostCardProps {
   replyPreviewEnabled?: boolean;
   /** Feed-only: the parent post carried by the feed response, when known. */
   replyParent?: any;
+  /** Feed cards default on; thread surfaces already label and nest replies. */
+  showReplyContext?: boolean;
   highlight?: boolean;
 }
 
@@ -81,6 +83,7 @@ export function PostCard({
   feedbackFeed,
   replyPreviewEnabled,
   replyParent,
+  showReplyContext = true,
   highlight,
 }: PostCardProps) {
   const p = usePalette();
@@ -112,7 +115,9 @@ export function PostCard({
     () => undefined
   );
   const author = post && post.author ? post.author : {};
-  const replyContext = replyContextFor(replyParent, author.did);
+  const replyContext = showReplyContext
+    ? replyContextForPost(post, replyParent)
+    : null;
   const record = liveEdit || (post && post.record ? post.record : {});
   const bodySegments = richTextSegments(
     (record && record.text) || '',
