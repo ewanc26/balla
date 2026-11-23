@@ -248,7 +248,7 @@ export function MessageActionsSheet({
                       ]}
                     >
                       <Ionicons name="copy-outline" size={20} color={p.text} />
-                      <Text style={{ color: p.text, fontWeight: '600' }}>Copy text</Text>
+                      <Text style={{ color: p.text, fontWeight: '600' }}>Copy message text</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => void translateMessage()}

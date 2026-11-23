@@ -208,6 +208,7 @@ test('message text actions copy exact text and translate to the primary language
   assert.match(sheet, /messageTextForAction\(message\)/);
   assert.match(sheet, /Clipboard\.setStringAsync\(messageText\)/);
   assert.match(sheet, /accessibilityLabel="Copy message text"/);
+  assert.match(sheet, />Copy message text<\/Text>/);
   assert.match(sheet, /accessibilityLabel="Translate message text"/);
   assert.match(sheet, /translateText\(messageText, preferences\.primaryLanguage\)/);
   assert.match(sheet, /'Show the original message'/);
