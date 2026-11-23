@@ -17,10 +17,16 @@ function normaliseIdentifier(value: string): string {
   return value.trim().replace(/\s+/g, '').replace(/^@/, '');
 }
 
-export function LoginScreen({ onLoggedIn }: { onLoggedIn: () => void }) {
+export function LoginScreen({
+  onLoggedIn,
+  initialIdentifier = '',
+}: {
+  onLoggedIn: () => void;
+  initialIdentifier?: string;
+}) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
-  const [identifier, setIdentifier] = useState('');
+  const [identifier, setIdentifier] = useState(() => normaliseIdentifier(initialIdentifier));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

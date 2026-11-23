@@ -46,6 +46,7 @@ export const WEB_LINKING_CONFIG = {
     IdentitySettings: 'settings/advanced/identity',
     ChatService: 'settings/advanced/chat',
     Hosting: 'settings/advanced/hosting',
+    PdsDirectory: 'settings/advanced/pds-directory',
     Services: 'settings/advanced/services',
     Accounts: 'settings/accounts',
     AddAccount: 'settings/accounts/add',
