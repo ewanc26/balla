@@ -194,6 +194,11 @@ popup that returns to `/app` and hands the session to the tab that opened it.
 On the web only, React Navigation linking gives every screen an address under
 `/app` so posts, profiles and lists can be shared and browser history works.
 Native navigation is unchanged.
+The post and profile menus offer a device-local 30-day snooze: Home skips that
+account's posts and reposts, every other surface is untouched, and Following
+preferences lists and ends active snoozes. About carries the one static
+Supporters card and the shared creator byline; no feed, thread or notification
+surface links the support page.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
 mapping and the deliberate omissions (Stories, reactions, ranking) live in
