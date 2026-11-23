@@ -423,8 +423,12 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
 .footer-links a { display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; text-decoration: none; }
 .footer-links a:hover { color: var(--text); text-decoration: underline; }
 .footer-byline { margin-top: 1rem; color: var(--text); font-weight: 700; font-size: 0.82rem; }
-.footer-byline a { color: var(--blue-ink); text-decoration: underline; text-underline-offset: 3px; }
+.footer-byline a { display: inline-flex; align-items: center; min-height: 44px; color: var(--blue-ink); text-decoration: underline; text-underline-offset: 3px; }
 .footer-byline a:hover { color: var(--text); }
+.footer-support { color: var(--text); font-weight: 600; }
+.footer-support a { display: inline-flex; align-items: center; min-height: 44px; color: var(--blue-ink); text-decoration: underline; text-underline-offset: 3px; }
+.footer-support a:hover { color: var(--text); }
+.footer-licence { color: var(--muted); font-size: 0.78rem; }
 
 /* Legal pages */
 

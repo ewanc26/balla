@@ -25,6 +25,22 @@ export const SERVICE_HOSTS = {
   plcDirectory: 'https://plc.directory',
 } as const;
 
+/** The reader support page (#163), beside the hosts so the URL has one home. */
+export const SUPPORT_URL = 'https://ewancroft.uk/support';
+
+/**
+ * The creator's public links, kept beside the protocol hosts so no surface
+ * invents a second copy. The support page owns its routes: Balla links out and
+ * stops, and never hydrates support details from records.
+ */
+export const CREATOR = {
+  name: 'Ewan Croft',
+  handle: 'ewancroft.uk',
+  site: 'https://ewancroft.uk',
+  webProfile: 'https://bsky.app/profile/ewancroft.uk',
+  supportUrl: SUPPORT_URL,
+} as const;
+
 /** Public DID documents read by the informational service checks. */
 export const APPVIEW_DID_DOCUMENT_URL = 'https://api.bsky.app/.well-known/did.json';
 export const CHAT_DID_DOCUMENT_URL = 'https://api.bsky.chat/.well-known/did.json';

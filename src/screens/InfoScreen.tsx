@@ -10,7 +10,7 @@ import { openExternalUrl } from '../lib/openLink';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { APP_VERSION } from '../lib/version';
-import { CreatorByline } from '../components/CreatorByline';
+import { SupportersCard } from '../components/SupportersCard';
 
 const GITHUB = 'https://github.com/ewanc26/balla';
 const ISSUES = 'https://github.com/ewanc26/balla/issues';
@@ -19,14 +19,12 @@ const PRIVACY = 'https://balla.croft.click/privacy';
 const TERMS = 'https://balla.croft.click/terms';
 const GUIDELINES = 'https://balla.croft.click/guidelines';
 const COPYRIGHT = 'https://balla.croft.click/copyright';
-const SUPPORT = 'https://ewancroft.uk/support';
 
 type Topic = {
   title: string;
   paragraphs: string[];
   bullets?: string[];
   link?: { label: string; url: string };
-  links?: { label: string; url: string }[];
 };
 
 const TOPICS: Record<string, Topic> = {
@@ -171,10 +169,8 @@ const TOPICS: Record<string, Topic> = {
       'References to Bluesky identify the open network and protocol Balla uses. They do not make Balla official or endorsed. All product names and marks belong to their owners.',
       `Version ${APP_VERSION}. The client is built with Expo and React Native, with OAuth and DPoP handled by @atproto/oauth-client-expo.`,
       'No ranking, ads, suggested posts or injected content. The Following timeline stays newest-first.',
-      'Balla is independent software supported by readers. One-off and recurring support is handled at ewancroft.uk/support.',
     ],
     link: { label: 'View the source', url: GITHUB },
-    links: [{ label: 'Support Balla', url: SUPPORT }],
   },
 };
 
@@ -247,26 +243,7 @@ export function InfoScreen({ route, navigation }: { route: any; navigation: any 
             <Ionicons name="open-outline" size={18} color={p.accent} style={{ marginLeft: 6 }} />
           </Pressable>
         ) : null}
-        {topic.links?.map((link) => (
-          <Pressable
-            key={link.label}
-            onPress={() => {
-              void openExternalUrl(link.url).catch(() => {});
-            }}
-            accessibilityRole="button"
-            accessibilityLabel={link.label}
-            style={({ pressed }) => [
-              styles.linkButton,
-              { borderColor: p.accent, opacity: pressed ? 0.65 : 1 },
-            ]}
-          >
-            <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700' }}>
-              {link.label}
-            </Text>
-            <Ionicons name="open-outline" size={18} color={p.accent} style={{ marginLeft: 6 }} />
-          </Pressable>
-        ))}
-        <CreatorByline />
+        {topicKey === 'about' ? <SupportersCard /> : null}
         <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 16, marginTop: 18 }}>
           Plain-language project policy, not legal advice. Last updated 21 November 2026.
         </Text>
