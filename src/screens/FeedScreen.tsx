@@ -28,6 +28,7 @@ import { filterSnoozedItems } from '../lib/snoozeModel';
 import { useSnoozedAccounts } from '../lib/snooze';
 import { buildRecentActivity } from '../lib/recentActivityModel';
 import { setRecentActivity } from '../lib/recentActivity';
+import { clearReplyPreviewCache } from '../lib/replyPreviewStore';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { FeedSwitcherSheet } from '../components/FeedSwitcherSheet';
@@ -56,6 +57,9 @@ export function FeedScreen() {
   const [moreLoading, setMoreLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [previewVisibleUris, setPreviewVisibleUris] = useState<Set<string>>(
+    () => new Set()
+  );
   const requestId = useRef(0);
   const activeSource = activeFeed
     ? homeFeeds.find((item) => item.value === activeFeed)
@@ -123,9 +127,11 @@ export function FeedScreen() {
     setReqId(undefined);
     setError(null);
     setLoading(true);
+    setPreviewVisibleUris(new Set());
     void load(true);
     return () => {
       requestId.current += 1;
+      clearReplyPreviewCache();
     };
     // The cursor is deliberately not a dependency: loading another page must
     // not reset the timeline. Switching feeds owns the reload.
@@ -181,6 +187,32 @@ export function FeedScreen() {
 
   // Only Following is filtered here. Custom and list feeds keep the order
   // their service returns; filters are the home feedViewPref, not a global rule.
+  // FlashList reports the cards that have stayed on screen long enough to be
+  // worth one depth-1 read. The callback is stable because changing it on the
+  // fly is not supported. Leaving the viewport removes a queued request.
+  const viewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 20,
+    minimumViewTime: 150,
+  }).current;
+  const onViewableItemsChanged = useRef(
+    ({ viewableItems }: { viewableItems: any[] }) => {
+      const next = new Set<string>();
+      for (const token of viewableItems) {
+        const uri = token?.item?.post?.uri;
+        if (typeof uri === 'string') next.add(uri);
+      }
+      setPreviewVisibleUris((previous) => {
+        if (
+          previous.size === next.size &&
+          [...next].every((uri) => previous.has(uri))
+        ) {
+          return previous;
+        }
+        return next;
+      });
+    }
+  ).current;
+
   const visiblePosts = useMemo(() => {
     // Snoozes apply only here: every other surface (notifications, profiles,
     // threads and chat) still shows the account. Expiry is read on each render,
@@ -365,13 +397,17 @@ export function FeedScreen() {
     <View style={{ flex: 1, backgroundColor: p.bg }}>
       <FlashList
         data={visiblePosts}
+        extraData={previewVisibleUris}
         keyExtractor={(item: any) => item.post.uri}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
         renderItem={({ item }) => (
           <PostCard
             post={item.post}
             onOpenThread={openThread}
             onOpenProfile={openProfile}
             onPostHidden={hidePost}
+            replyPreviewEnabled={previewVisibleUris.has(item.post.uri)}
             feedbackFeed={
               activeIsList
                 ? undefined
