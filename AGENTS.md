@@ -209,7 +209,12 @@ compact first direct reply when the card is viewable. Selection follows the
 configured thread order; the author and View all replies controls use the
 existing destinations; and label, mute and block gates suppress the preview.
 Reads are depth-one, capped and session-cached; the reply count stays the post
-view's total.
+view's total. Following preferences can opt into On this day: one bounded public
+PDS walk of the viewer's own posts per launch day, cached per account, then a
+dismissible Home card with up to three posts and a Memories screen. It is off by
+default, shows only earlier years on the current local date, writes no server
+preference and makes no notification, badge or AppView request; any read error
+leaves Home unchanged.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
 mapping and the deliberate omissions (Stories, reactions, ranking) live in
