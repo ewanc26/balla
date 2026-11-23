@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.32.0
+
+- **Advanced → Services** centralises service defaults in one typed module and separates what Balla can honestly change from what its OAuth grant fixes. The pre-authorisation XRPC handle resolver is now a real, persisted choice: edit the host, **Save resolver**, **Use default** and **Test resolver** all take effect on the next sign-in without a restart and never touch an existing session. The native well-known resolver still runs first, so an independent handle does not need this fallback at all.
+- Real read-only connection checks: **Test resolver** resolves a public handle through the configured host, **Test AppView** reads the AppView DID document and (when signed in) a public profile, and **Test chat service** checks the chat service DID document. Results show HTTP status and latency; no provider message text is read or stored.
+- **Grant-bound** AppView, chat, video and labeler audiences are shown as facts, not inert switches: they are bound into this sign-in’s 111-token OAuth scope and changing them requires reauthorisation. The account PDS is shown as discovered from the DID document, and Hosting remains the place to inspect its real value.
+- No new OAuth scope or dependency; the scope count remains 111.
+
 ## 0.31.0
 
 - Sign-in now resolves a handle from that host’s own `/.well-known/atproto-did` file first, falling back to the configured XRPC resolver (#100). An account on an independent PDS no longer needs Bluesky’s resolver to sign in; DNS-published handles keep working through the fallback. The DID document still decides the account’s PDS, so a handle suffix never implies a Bluesky host.

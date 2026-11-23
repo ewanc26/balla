@@ -41,6 +41,15 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
         </View>
       </View>
 
+      <Section title="Infrastructure">
+        <Row
+          icon="git-network-outline"
+          label="Services"
+          detail="Changeable resolver endpoint, grant-bound service facts and connection checks"
+          onPress={() => navigation.navigate('Services')}
+        />
+      </Section>
+
       <Section title="Moderation">
         <Row
           icon="shield-checkmark-outline"

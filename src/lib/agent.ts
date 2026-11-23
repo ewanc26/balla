@@ -9,6 +9,7 @@ import {
 import clientMetadata from '../../oauth-client-metadata.json';
 import { CHAT_SERVICE_DID, CHAT_SERVICE_TYPE } from './chatModel';
 import { createNativeFirstHandleResolver } from './nativeHandleResolver';
+import { DEFAULT_SERVICES } from './servicesModel.ts';
 import {
   ACCOUNTS_KEY,
   handleFromInput,
@@ -25,7 +26,7 @@ import {
 // so signing in again does not require re-entering a handle.
 const LAST_DID_KEY = 'balla.oauth.did.v1';
 const LEGACY_SESSION_KEY = 'balla.session.v1';
-const APPVIEW_PROXY = 'did:web:api.bsky.app#bsky_appview';
+const APPVIEW_PROXY = DEFAULT_SERVICES.appviewAudience;
 const WEB_REDIRECT_URI = 'https://balla.croft.click/app';
 
 // The browser build exposes handleCallback(); the native entry does not.
@@ -65,7 +66,7 @@ async function signInOnWeb(input: string): Promise<OAuthSession> {
   return webSignIn.call(oauthClient, input, { redirect_uri: WEB_REDIRECT_URI });
 }
 
-export const DEFAULT_SERVICE = 'https://bsky.social';
+export const DEFAULT_SERVICE = DEFAULT_SERVICES.handleResolver;
 
 let session: OAuthSession | null = null;
 let loggedOutCb: (() => void) | null = null;
