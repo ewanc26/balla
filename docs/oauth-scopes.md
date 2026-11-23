@@ -59,7 +59,7 @@ completed blob.
 
 All of these use:
 
-`aud=did:web:api.bsky.app#bsky_appview`
+`aud=did:web:api.eurosky.network#bsky_appview`
 
 | Method | Used by |
 | --- | --- |

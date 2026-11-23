@@ -89,13 +89,13 @@ test('the list feature adds exact OAuth scopes and no wildcards', () => {
     'repo:app.bsky.graph.list?action=create&action=update&action=delete',
     'repo:app.bsky.graph.listitem?action=create&action=delete',
     'repo:app.bsky.graph.listblock?action=create&action=delete',
-    'rpc:app.bsky.graph.getLists?aud=did:web:api.bsky.app#bsky_appview',
-    'rpc:app.bsky.graph.getList?aud=did:web:api.bsky.app#bsky_appview',
-    'rpc:app.bsky.graph.getListMutes?aud=did:web:api.bsky.app#bsky_appview',
-    'rpc:app.bsky.graph.getListBlocks?aud=did:web:api.bsky.app#bsky_appview',
-    'rpc:app.bsky.feed.getListFeed?aud=did:web:api.bsky.app#bsky_appview',
-    'rpc:app.bsky.graph.muteActorList?aud=did:web:api.bsky.app#bsky_appview',
-    'rpc:app.bsky.graph.unmuteActorList?aud=did:web:api.bsky.app#bsky_appview',
+    'rpc:app.bsky.graph.getLists?aud=did:web:api.eurosky.network#bsky_appview',
+    'rpc:app.bsky.graph.getList?aud=did:web:api.eurosky.network#bsky_appview',
+    'rpc:app.bsky.graph.getListMutes?aud=did:web:api.eurosky.network#bsky_appview',
+    'rpc:app.bsky.graph.getListBlocks?aud=did:web:api.eurosky.network#bsky_appview',
+    'rpc:app.bsky.feed.getListFeed?aud=did:web:api.eurosky.network#bsky_appview',
+    'rpc:app.bsky.graph.muteActorList?aud=did:web:api.eurosky.network#bsky_appview',
+    'rpc:app.bsky.graph.unmuteActorList?aud=did:web:api.eurosky.network#bsky_appview',
   ];
   assert.equal(tokens.length, 112);
   for (const scope of required) assert.ok(tokens.includes(scope), scope);

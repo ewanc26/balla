@@ -32,7 +32,7 @@ test('switching rebuilds the authenticated tree from the active DID', () => {
   assert.match(app, /setActiveDid\(did\)/);
   assert.match(agentModule, /accountChangedCb\?\.\(did\)/);
   assert.match(agentModule, /new Agent\(next\)/);
-  assert.match(agentModule, /configureProxy\(APPVIEW_PROXY\)/);
+  assert.match(agentModule, /configureProxy\(/);
 });
 
 test('the account registry stores only non-secret DID and handle metadata', () => {

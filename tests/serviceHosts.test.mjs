@@ -13,11 +13,13 @@ import { VIDEO_SERVICE_DID, VIDEO_SERVICE_ENDPOINT } from '../src/lib/videoServi
 
 test('one module owns every default AT Protocol host', () => {
   assert.equal(SERVICE_HOSTS.handleResolver, 'https://bsky.social');
-  assert.equal(SERVICE_HOSTS.appviewAudience, 'did:web:api.bsky.app#bsky_appview');
+  assert.equal(SERVICE_HOSTS.pds, 'https://eurosky.social');
+  assert.equal(SERVICE_HOSTS.appviewDid, 'did:web:api.eurosky.network');
+  assert.equal(SERVICE_HOSTS.appviewAudience, 'did:web:api.eurosky.network#bsky_appview');
   assert.equal(SERVICE_HOSTS.chatAudience, 'did:web:api.bsky.chat#bsky_chat');
   assert.equal(SERVICE_HOSTS.videoService, 'https://video.bsky.app');
   assert.equal(SERVICE_HOSTS.plcDirectory, 'https://plc.directory');
-  assert.equal(APPVIEW_DID_DOCUMENT_URL, 'https://api.bsky.app/.well-known/did.json');
+  assert.equal(APPVIEW_DID_DOCUMENT_URL, 'https://api.eurosky.network/.well-known/did.json');
   assert.equal(CHAT_DID_DOCUMENT_URL, 'https://api.bsky.chat/.well-known/did.json');
 });
 

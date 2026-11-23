@@ -8,7 +8,7 @@ test('server drafts use four exact AppView RPC scopes and no wildcards', () => {
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
   assert.equal(tokens.length, 112);
-  const audience = '?aud=did:web:api.bsky.app#bsky_appview';
+  const audience = '?aud=did:web:api.eurosky.network#bsky_appview';
   for (const method of ['createDraft', 'deleteDraft', 'getDrafts', 'updateDraft']) {
     assert.ok(tokens.includes(`rpc:app.bsky.draft.${method}${audience}`), method);
   }

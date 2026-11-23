@@ -224,8 +224,8 @@ test('activity subscriptions are real AppView RPCs wired into the profile header
   assert.match(profile, /notifications-outline/);
   assert.match(mock, /putActivitySubscription/);
   const tokens = oauthMetadata.scope.split(/\s+/);
-  assert.ok(tokens.includes('rpc:app.bsky.notification.listActivitySubscriptions?aud=did:web:api.bsky.app#bsky_appview'));
-  assert.ok(tokens.includes('rpc:app.bsky.notification.putActivitySubscription?aud=did:web:api.bsky.app#bsky_appview'));
+  assert.ok(tokens.includes('rpc:app.bsky.notification.listActivitySubscriptions?aud=did:web:api.eurosky.network#bsky_appview'));
+  assert.ok(tokens.includes('rpc:app.bsky.notification.putActivitySubscription?aud=did:web:api.eurosky.network#bsky_appview'));
   assert.match(activityNotificationsScreen, /listActivitySubscriptions/);
   assert.match(activityNotificationsScreen, /SubscribeProfileSheet/);
   assert.match(app, /<Stack\.Screen name="ActivityNotifications"/);

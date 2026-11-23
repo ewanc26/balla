@@ -41,7 +41,7 @@ test('the export records the effective PLC directory and whether it is the defau
 test('grant-bound defaults are exported verbatim as facts', () => {
   const value = buildServicesExport({ handleResolver: null }, null, AT);
   assert.deepEqual(value.defaults, { ...DEFAULT_SERVICES });
-  assert.equal(value.defaults.appviewAudience, 'did:web:api.bsky.app#bsky_appview');
+  assert.equal(value.defaults.appviewAudience, 'did:web:api.eurosky.network#bsky_appview');
   assert.equal(value.defaults.chatAudience, 'did:web:api.bsky.chat#bsky_chat');
 });
 

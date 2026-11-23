@@ -26,7 +26,7 @@ test('all four discovery destinations are registered with stable web paths', () 
 
 test('discovery uses only the already authorised searchPostsV2 scope', () => {
   const scopes = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.ok(scopes.includes('rpc:app.bsky.feed.searchPostsV2?aud=did:web:api.bsky.app#bsky_appview'));
+  assert.ok(scopes.includes('rpc:app.bsky.feed.searchPostsV2?aud=did:web:api.eurosky.network#bsky_appview'));
   assert.ok(!scopes.some((scope) => /getTrendingTopics|getSuggested/.test(scope)));
   assert.match(screen, /networkBackend\.search\.searchPosts\(/);
   assert.match(read('../src/lib/networkBackend.ts'), /agent\.app\.bsky\.feed\.searchPostsV2\(/);

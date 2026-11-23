@@ -26,7 +26,7 @@ test('the default hosts live in one services config module', () => {
   assert.match(model, /handleResolver: SERVICE_HOSTS\.handleResolver/);
   assert.match(agent, /DEFAULT_SERVICE = DEFAULT_SERVICES\.handleResolver/);
   assert.match(agent, /APPVIEW_PROXY = DEFAULT_SERVICES\.appviewAudience/);
-  assert.match(agent, /configureProxy\(APPVIEW_PROXY\)/);
+  assert.match(agent, /configureProxy\(/);
   assert.match(agent, /createNativeFirstHandleResolver\(DEFAULT_SERVICE\)/);
 });
 

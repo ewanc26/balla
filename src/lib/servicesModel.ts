@@ -108,30 +108,30 @@ export type ServiceSlot = 'resolver' | 'plcDirectory' | 'appview' | 'chat' | 'pd
 export const SERVICE_SLOT_COPY: Record<ServiceSlot, { label: string; detail: string }> = {
   resolver: {
     label: 'Handle resolver',
-    detail: 'Used before sign-in for handles without a well-known file. Changeable now.',
+    detail: 'Bluesky fallback. Used before sign-in for handles without a well-known file. Changeable now.',
   },
   plcDirectory: {
     label: 'PLC directory',
-    detail: 'Public did:plc DID document directory for identity resolution and pre-flight checks. Changeable now.',
+    detail: 'Bluesky fallback. Public did:plc DID document directory for identity resolution and pre-flight checks. Changeable now.',
   },
   appview: {
     label: 'AppView',
-    detail: 'Serves timelines, profiles and notifications for this grant. Grant-bound.',
+    detail: 'Eurosky-operated. Serves timelines, profiles and notifications for this grant. Grant-bound.',
   },
   chat: {
     label: 'Chat service',
-    detail: 'Serves direct messages through a service proxy. Grant-bound.',
+    detail: 'Bluesky fallback. Serves direct messages through a service proxy. Grant-bound.',
   },
   pds: {
     label: 'Account PDS',
-    detail: 'Discovered from this account’s DID document. Cannot be overridden.',
+    detail: 'Eurosky for new sign-ups; otherwise discovered from this account’s DID document. Cannot be overridden.',
   },
   video: {
     label: 'Video service',
-    detail: 'Handles video upload limits and uploads. Grant-bound.',
+    detail: 'Bluesky fallback. Handles video upload limits and uploads. Grant-bound.',
   },
   labeler: {
     label: 'Moderation labeler',
-    detail: 'Default report and label service. Grant-bound; other labelers are an Advanced choice.',
+    detail: 'Bluesky fallback. Default report and label service. Grant-bound; other labelers are an Advanced choice.',
   },
 };

@@ -16,7 +16,8 @@ import { probeResolver } from '../src/lib/servicesProbe.ts';
 
 test('service defaults are the single source of truth for runtime hosts', () => {
   assert.equal(DEFAULT_SERVICES.handleResolver, 'https://bsky.social');
-  assert.equal(DEFAULT_SERVICES.appviewAudience, 'did:web:api.bsky.app#bsky_appview');
+  assert.equal(DEFAULT_SERVICES.pds, 'https://eurosky.social');
+  assert.equal(DEFAULT_SERVICES.appviewAudience, 'did:web:api.eurosky.network#bsky_appview');
   assert.equal(DEFAULT_SERVICES.chatAudience, 'did:web:api.bsky.chat#bsky_chat');
   assert.equal(DEFAULT_SERVICES.videoAudience, 'did:web:video.bsky.app');
   assert.equal(DEFAULT_SERVICES.plcDirectory, 'https://plc.directory');
@@ -72,7 +73,7 @@ test('only a non-default https PLC directory is persisted as an override', () =>
 });
 
 test('did:web maps to a hostname and optional path segments', () => {
-  assert.equal(didWebUrl('did:web:api.bsky.app'), 'https://api.bsky.app');
+  assert.equal(didWebUrl('did:web:api.eurosky.network'), 'https://api.eurosky.network');
   assert.equal(didWebUrl('did:web:example.com:user'), 'https://example.com/user');
   assert.equal(didWebUrl('did:web:selfhosted.social'), 'https://selfhosted.social');
   assert.equal(didWebUrl('did:plc:abc123'), null);
@@ -86,11 +87,11 @@ test('service endpoints come from DID document structured fields', () => {
       {
         id: '#bsky_appview',
         type: 'BskyAppView',
-        serviceEndpoint: 'https://api.bsky.app',
+        serviceEndpoint: 'https://api.eurosky.network',
       },
     ],
   };
-  assert.equal(advertisedEndpoint(document, '#bsky_appview'), 'https://api.bsky.app');
+  assert.equal(advertisedEndpoint(document, '#bsky_appview'), 'https://api.eurosky.network');
   assert.equal(advertisedEndpoint(document, '#bsky_chat'), null);
   assert.equal(advertisedEndpoint(null, '#bsky_appview'), null);
 });
