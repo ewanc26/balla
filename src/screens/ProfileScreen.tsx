@@ -13,6 +13,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { moderateProfile } from '@atproto/api';
 import { agent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
+import { readProfileFromPds } from '../lib/identityProfile';
+import { noteProfileHandle } from '../lib/identityResolver';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { ProfileMenu } from '../components/ProfileMenu';
@@ -87,6 +89,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const actor = (route && route.params && route.params.actor) || agent.did;
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
+  const [identityFromCache, setIdentityFromCache] = useState(false);
   const [failed, setFailed] = useState(false);
   const [failureMessage, setFailureMessage] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -117,6 +120,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
     let active = true;
     setProfile(null);
     setPosts([]);
+    setIdentityFromCache(false);
     setFailed(false);
     setFailureMessage(null);
     setActionError(null);
@@ -142,6 +146,9 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
         const prof = await readWithRetry(() => agent.getProfile({ actor }));
         if (!active) return;
         const detail = prof.data;
+        // Remember the handle -> DID mapping seen during a normal AppView read
+        // so the profile can still resolve when a directory is unreachable.
+        void noteProfileHandle(detail.handle, detail.did);
         setProfile(detail);
         setFollowingUri(detail.viewer && detail.viewer.following);
 
@@ -200,6 +207,16 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             .catch(() => {});
         }
       } catch (err) {
+        // The AppView can be unreachable while the account's own PDS still
+        // answers. Identity resolved from the on-device cache plus a public
+        // repo read keeps a previously seen profile readable.
+        const offline = await readProfileFromPds(actor);
+        if (active && offline) {
+          setProfile(offline.profile);
+          setIdentityFromCache(offline.identityFromCache);
+          setActiveTab('posts');
+          return;
+        }
         if (active) {
           setFailed(true);
           setFailureMessage(describeFailure(err, 'Could not load this profile.'));
@@ -498,6 +515,13 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             >
               <Text style={{ color: p.accent, fontWeight: '700' }}>Dismiss</Text>
             </Pressable>
+          </View>
+        ) : null}
+        {identityFromCache ? (
+          <View style={{ paddingHorizontal: 16, paddingTop: 8 }}>
+            <Text style={{ color: p.secondary, fontSize: 13 }}>
+              Identity from this device’s cache · profile read from its PDS
+            </Text>
           </View>
         ) : null}
         <View

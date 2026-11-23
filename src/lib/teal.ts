@@ -4,8 +4,8 @@
  * endpoint there. Balla never writes to a teal collection and needs no extra
  * OAuth scope: these are unauthenticated, public repository reads.
  */
-import { agent } from './agent';
 import { readWithRetry } from './reliability';
+import { resolveDidDocument } from './identityResolver';
 import {
   TEAL_COLLECTIONS,
   atprotoPdsEndpoint,
@@ -83,10 +83,8 @@ async function listCollection(
 export async function loadTealPlays(did: string): Promise<TealPlay[]> {
   if (!did) return [];
   try {
-    const resolved = await readWithRetry(() =>
-      agent.com.atproto.identity.resolveDid({ did })
-    );
-    const endpoint = atprotoPdsEndpoint(resolved.data);
+    const document = await resolveDidDocument(did);
+    const endpoint = atprotoPdsEndpoint(document);
     if (!endpoint) return [];
 
     const pages = await Promise.allSettled(

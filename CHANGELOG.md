@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.29.0
+
+- Identity resolution now has a real on-device cache of DID documents and handle mappings, capped at 120 entries with a 24-hour freshness window (#96). Profiles seen before keep resolving when a directory is unreachable.
+- **Advanced → Identity** offers four working strategies: Auto (DID's own method), Registry first, Web first and Local cache only. It shows the last lookup source, the saved-identity count, and a working Clear action. No new OAuth scope or dependency.
+- When the AppView cannot load a profile, Balla resolves the identity from cache and reads `app.bsky.actor.profile` from the account's own PDS. The profile header states when identity came from the cache; avatars and banners use only CIDs from the raw record.
+- Signing in again invalidates that account's cached DID document so a migrated PDS is resolved afresh. DID documents remain the source of truth for service endpoints; a handle suffix never implies a Bluesky host.
+- The read-only teal.fm integration shares the same strategy-aware resolver as profile and post identity reads.
+
 ## 0.28.0
 
 - Post images now fall back to the author's PDS when the AppView-hosted URL fails (#94). Raw-record blob refs supply the DID + CID; the DID document resolves the PDS and a public `com.atproto.sync.getBlob` read supplies the bytes. No new OAuth scope or dependency.

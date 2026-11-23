@@ -28,6 +28,7 @@ import { ComposeScreen } from './src/screens/ComposeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AdvancedScreen } from './src/screens/AdvancedScreen';
 import { MediaOriginScreen } from './src/screens/MediaOriginScreen';
+import { IdentitySettingsScreen } from './src/screens/IdentitySettingsScreen';
 import { AccountsScreen } from './src/screens/AccountsScreen';
 import { AddAccountScreen } from './src/screens/AddAccountScreen';
 import { InfoScreen } from './src/screens/InfoScreen';
@@ -85,6 +86,7 @@ import { OpenLinkProvider } from './src/lib/openLink';
 import { ViewPreferencesProvider } from './src/lib/viewPreferences';
 import { AccountPreferencesProvider } from './src/lib/accountPreferences';
 import { restore, setOnAccountChanged, setOnLoggedOut } from './src/lib/agent';
+import { invalidateIdentity } from './src/lib/identityCache';
 import { installWebAccessibility } from './src/lib/accessibility';
 import { webLinking } from './src/lib/webLinking';
 import { PREVIEW_WARNING, usePalette, useResolvedScheme } from './src/theme';
@@ -200,6 +202,9 @@ export default function App() {
     setOnLoggedOut(() => setLoggedIn(false));
     setOnAccountChanged((did) => {
       if (did) {
+        // A re-signed-in account may have migrated to a new PDS. Force its DID
+        // document to resolve again so stale service endpoints are not reused.
+        void invalidateIdentity(did);
         setLoggedIn(true);
         setActiveDid(did);
       } else {
@@ -405,6 +410,7 @@ export default function App() {
                           <Stack.Screen name="Settings" component={SettingsScreen} />
                           <Stack.Screen name="Advanced" component={AdvancedScreen} />
                           <Stack.Screen name="MediaOrigin" component={MediaOriginScreen} />
+                          <Stack.Screen name="IdentitySettings" component={IdentitySettingsScreen} />
                           <Stack.Screen name="Accounts" component={AccountsScreen} />
                           <Stack.Screen name="AddAccount" component={AddAccountScreen} />
                           <Stack.Screen name="Appearance" component={AppearanceScreen} />

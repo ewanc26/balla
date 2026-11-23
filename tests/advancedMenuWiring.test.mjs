@@ -12,6 +12,12 @@ const mediaOrigin = read('../src/screens/MediaOriginScreen.tsx');
 const postCard = read('../src/components/PostCard.tsx');
 const imageViewer = read('../src/components/ImageViewer.tsx');
 const remoteImage = read('../src/components/RemoteImage.tsx');
+const identityModel = read('../src/lib/identityModel.ts');
+const identityCache = read('../src/lib/identityCache.ts');
+const identityResolver = read('../src/lib/identityResolver.ts');
+const identityProfile = read('../src/lib/identityProfile.ts');
+const identityScreen = read('../src/screens/IdentitySettingsScreen.tsx');
+const profileScreen = read('../src/screens/ProfileScreen.tsx');
 
 test('Advanced is a real stack screen with a stable web path', () => {
   assert.match(app, /<Stack\.Screen name="Advanced" component=\{AdvancedScreen\} \/>/);
@@ -62,4 +68,43 @@ test('post images retry from the PDS through one shared image seam', () => {
   assert.match(remoteImage, /onError=\{handleError\}/);
   assert.match(remoteImage, /Image unavailable/);
   assert.match(remoteImage, /pdsFirst/);
+});
+
+test('Advanced exposes a working Identity screen with real cache state', () => {
+  assert.match(app, /<Stack\.Screen name="IdentitySettings" component=\{IdentitySettingsScreen\} \/>/);
+  assert.equal(WEB_LINKING_CONFIG.screens.IdentitySettings, 'settings/advanced/identity');
+  assert.match(advanced, /navigation\.navigate\('IdentitySettings'\)/);
+  assert.match(identityScreen, /setIdentityStrategy/);
+  assert.match(identityScreen, /clearIdentityCache\(\)/);
+  assert.match(identityScreen, /identityCacheStats/);
+  assert.match(identityScreen, /lastIdentitySource/);
+  assert.match(identityScreen, /A DID document is the source of truth/);
+  assert.ok(!/onPress=\{\(\) => \{\}\}/.test(identityScreen));
+});
+
+test('identity resolution stores a bounded on-device cache and honours strategy', () => {
+  assert.match(identityModel, /MAX_IDENTITY_CACHE_ENTRIES = 120/);
+  assert.match(identityModel, /'local-only'/);
+  assert.match(identityModel, /plcDirectoryUrl/);
+  assert.match(identityModel, /didWebDocumentUrl/);
+  assert.match(identityCache, /AsyncStorage\.getItem\(IDENTITY_CACHE_KEY\)/);
+  assert.match(identityCache, /AsyncStorage\.setItem\(IDENTITY_CACHE_KEY/);
+  assert.match(identityCache, /normaliseIdentityCache/);
+  assert.match(identityCache, /invalidateIdentity/);
+  // A re-sign-in invalidates the DID document so a migrated PDS is re-resolved.
+  assert.match(app, /invalidateIdentity\(did\)/);
+  assert.match(identityResolver, /resolveDidDocument/);
+  assert.match(identityResolver, /resolveHandleToDid/);
+  assert.match(identityResolver, /agent\.com\.atproto\.identity\.resolveHandle/);
+});
+
+test('a previously seen profile falls back to a public PDS read', () => {
+  assert.match(profileScreen, /readProfileFromPds\(actor\)/);
+  assert.match(profileScreen, /noteProfileHandle\(detail\.handle, detail\.did\)/);
+  assert.match(profileScreen, /Identity from this device’s cache · profile read from its PDS/);
+  assert.match(identityProfile, /com\.atproto\.repo\.getRecord/);
+  assert.match(identityProfile, /atprotoPdsEndpoint\(document\)/);
+  assert.match(identityProfile, /identityFromCache = lastIdentitySource\(\) === 'cache'/);
+  // The teal reader shares the same cached resolver, not a direct AppView call.
+  assert.match(read('../src/lib/teal.ts'), /resolveDidDocument\(did\)/);
 });

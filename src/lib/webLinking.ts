@@ -43,6 +43,7 @@ export const WEB_LINKING_CONFIG = {
     Settings: 'settings',
     Advanced: 'settings/advanced',
     MediaOrigin: 'settings/advanced/media',
+    IdentitySettings: 'settings/advanced/identity',
     Accounts: 'settings/accounts',
     AddAccount: 'settings/accounts/add',
     Appearance: 'appearance',
