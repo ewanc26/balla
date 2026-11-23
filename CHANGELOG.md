@@ -3,6 +3,10 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.27.1
+
+- The message action sheet's visible label now reads **Copy message text**, matching the #111 acceptance wording and its accessibility label. No behaviour changed; message text is still never logged or stored by Balla.
+
 ## 0.27.0
 
 - Settings gains a top-level **Advanced** submenu with a stable web path (`settings/advanced`), the home for infrastructure and provider choices that work today. It lists only controls that do something real; unfinished provider choices stay in their own tracked issues rather than appearing as inert rows.
