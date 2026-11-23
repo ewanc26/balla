@@ -139,16 +139,16 @@ function searchError(tab: SearchTab, cause: unknown): string {
     (cause as any)?.status || (cause as any)?.statusCode || 0
   );
   if (status === 429) {
-    return 'Bluesky is rate-limiting search. Wait a moment and try again.';
+    return 'The service is rate-limiting search. Wait a moment and try again.';
   }
   if (status === 400) {
-    return 'Bluesky rejected this query. Adjust the words or filters and try again.';
+    return 'The service rejected this query. Adjust the words or filters and try again.';
   }
   if (status >= 500) {
-    return 'Bluesky’s search service is unavailable. Try again shortly.';
+    return 'The search service is unavailable. Try again shortly.';
   }
   if (cause instanceof TypeError) {
-    return 'Could not reach Bluesky. Check your connection and try again.';
+    return 'Could not reach the service. Check your connection and try again.';
   }
   return `Could not search ${NOUNS[tab]}. Try again.`;
 }

@@ -43,7 +43,7 @@ export function measurePostText(input: string): PostTextMeasurement {
   if (graphemeOver > 0) {
     message = `${graphemeOver} grapheme${graphemeOver === 1 ? '' : 's'} over the ${POST_TEXT_MAX_GRAPHEMES}-grapheme limit.`;
   } else if (byteOver > 0) {
-    message = `${byteOver} UTF-8 bytes over Bluesky's 3,000-byte text cap.`;
+    message = `${byteOver} UTF-8 bytes over the 3,000-byte text cap.`;
   }
 
   return {

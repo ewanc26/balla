@@ -404,7 +404,7 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
             <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, textAlign: 'center' }}>
               {searched
                 ? 'No feed generators matched that search.'
-                : 'Bluesky returned no popular feeds right now.'}
+                : 'The service returned no popular feeds right now.'}
             </Text>
           </View>
         ) : (
