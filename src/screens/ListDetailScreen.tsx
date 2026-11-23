@@ -34,6 +34,7 @@ import {
   setListBlocked,
   setListSubscribed,
 } from '../lib/lists';
+import { useFeeds } from '../lib/feedsContext';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 type Tab = 'posts' | 'people';
@@ -50,6 +51,7 @@ export function ListDetailScreen({
   navigation: any;
 }) {
   const p = usePalette();
+  const { homeFeeds, pinList } = useFeeds();
   const uri = typeof route.params?.uri === 'string' ? route.params.uri : '';
   const [list, setList] = useState<any>(null);
   const [members, setMembers] = useState<any[]>([]);
@@ -152,6 +154,11 @@ export function ListDetailScreen({
   const purpose = listPurposeMeta(list?.purpose);
   const viewer = listViewerState(list);
   const isCurate = purpose.shortLabel === 'Curation';
+  const pinnedToHome =
+    !!list &&
+    homeFeeds.some(
+      (item) => item.type === 'list' && item.value === list.uri && item.pinned
+    );
   const isOwner = !!list?.creator?.did && list.creator.did === agent.did;
   const hiddenForMe = viewer.hidden && !isOwner;
 
@@ -216,6 +223,24 @@ export function ListDetailScreen({
         errorCopy(
           cause,
           `Could not ${next ? 'block' : 'unblock'} this list. Try again.`
+        )
+      );
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  async function togglePin() {
+    if (!list || busy) return;
+    setBusy('pin');
+    setActionError(null);
+    try {
+      await pinList(list.uri, !pinnedToHome);
+    } catch (cause) {
+      setActionError(
+        errorCopy(
+          cause,
+          'Could not change this list’s Home shortcut. Try again.'
         )
       );
     } finally {
@@ -484,6 +509,16 @@ export function ListDetailScreen({
 
         {hiddenForMe ? null : (
         <View style={styles.actions}>
+          {isCurate ? (
+            <Action
+              icon={pinnedToHome ? 'pin' : 'pin-outline'}
+              label={pinnedToHome ? 'Pinned to Home' : 'Pin to Home'}
+              active={pinnedToHome}
+              busy={busy === 'pin'}
+              disabled={!!busy}
+              onPress={() => void togglePin()}
+            />
+          ) : null}
           {isOwner ? (
             <>
               <Action
@@ -541,6 +576,12 @@ export function ListDetailScreen({
           )}
         </View>
         )}
+        {isCurate && !hiddenForMe ? (
+          <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 16, marginTop: 8 }}>
+            Pinning puts this list feed near the top of Switch feed on Home.
+            Following stays chronological and unchanged.
+          </Text>
+        ) : null}
 
         {confirmBlock ? (
           <View style={[styles.deleteBox, { backgroundColor: p.bg, borderColor: p.danger }]}>

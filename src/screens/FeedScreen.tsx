@@ -35,7 +35,7 @@ export function FeedScreen() {
   const p = usePalette();
   const navigation = useNavigation<any>();
   const { profile: me } = useViewer();
-  const { savedFeeds, generators } = useFeeds();
+  const { homeFeeds, generators, lists } = useFeeds();
   const { preferences } = usePreferences();
   const { feedFilters } = useViewPreferences();
   const [activeFeed, setActiveFeed] = useState<string | null>(null);
@@ -48,6 +48,10 @@ export function FeedScreen() {
   const [error, setError] = useState<string | null>(null);
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const requestId = useRef(0);
+  const activeSource = activeFeed
+    ? homeFeeds.find((item) => item.value === activeFeed)
+    : undefined;
+  const activeIsList = activeSource?.type === 'list';
 
   const load = useCallback(
     async (fresh: boolean) => {
@@ -58,12 +62,19 @@ export function FeedScreen() {
       try {
         const target = fresh ? undefined : cursor;
         const readPage = activeFeed
-          ? () =>
-              agent.app.bsky.feed.getFeed({
-                feed: activeFeed,
-                limit: 25,
-                cursor: target,
-              })
+          ? activeIsList
+            ? () =>
+                agent.app.bsky.feed.getListFeed({
+                  list: activeFeed,
+                  limit: 25,
+                  cursor: target,
+                })
+            : () =>
+                agent.app.bsky.feed.getFeed({
+                  feed: activeFeed,
+                  limit: 25,
+                  cursor: target,
+                })
           : () => agent.getTimeline({ limit: 25, cursor: target });
         // Both calls are reads, so bounded backoff is safe here. Writes are
         // never replayed by this helper.
@@ -78,9 +89,11 @@ export function FeedScreen() {
           setError(
             describeFailure(
               err,
-              activeFeed
-                ? 'Could not load this feed. Tap Retry to try again.'
-                : 'Could not load the timeline. Tap Retry to try again.'
+              activeIsList
+                ? 'Could not load this list feed. Tap Retry to try again.'
+                : activeFeed
+                  ? 'Could not load this feed. Tap Retry to try again.'
+                  : 'Could not load the timeline. Tap Retry to try again.'
             )
           );
         }
@@ -92,7 +105,7 @@ export function FeedScreen() {
         }
       }
     },
-    [activeFeed, cursor]
+    [activeFeed, activeIsList, cursor]
   );
 
   useEffect(() => {
@@ -108,11 +121,11 @@ export function FeedScreen() {
     // The cursor is deliberately not a dependency: loading another page must
     // not reset the timeline. Switching feeds owns the reload.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeFeed]);
+  }, [activeFeed, activeIsList]);
 
   useEffect(() => {
-    if (!feedStillAvailable(activeFeed, savedFeeds)) setActiveFeed(null);
-  }, [activeFeed, savedFeeds]);
+    if (!feedStillAvailable(activeFeed, homeFeeds)) setActiveFeed(null);
+  }, [activeFeed, homeFeeds]);
 
   useEffect(() => {
     return subscribeActorHidden((did) =>
@@ -140,8 +153,8 @@ export function FeedScreen() {
     );
   }
 
-  // Only Following is filtered here. Custom feeds keep the order their
-  // generator returns; filters are the home feedViewPref, not a global rule.
+  // Only Following is filtered here. Custom and list feeds keep the order
+  // their service returns; filters are the home feedViewPref, not a global rule.
   const visiblePosts = useMemo(
     () =>
       activeFeed
@@ -153,10 +166,10 @@ export function FeedScreen() {
     [activeFeed, posts, feedFilters, preferences.contentLanguages]
   );
 
-  const activeGenerator = activeFeed ? generators[activeFeed] : undefined;
-  const activeCreator = activeGenerator?.creator;
-  const choices = feedChoices(savedFeeds, generators);
-  const activeChoice = selectedFeed(activeFeed, savedFeeds, generators);
+  const activeGenerator =
+    activeFeed && !activeIsList ? generators[activeFeed] : undefined;
+  const choices = feedChoices(homeFeeds, generators, lists);
+  const activeChoice = selectedFeed(activeFeed, homeFeeds, generators, lists);
 
   function Header() {
     return (
@@ -176,7 +189,11 @@ export function FeedScreen() {
                 textTransform: 'uppercase',
               }}
             >
-              {activeChoice.following ? 'Chronological feed' : 'Custom feed'}
+              {activeChoice.following
+                ? 'Chronological feed'
+                : activeChoice.kind === 'list'
+                  ? 'List feed'
+                  : 'Custom feed'}
             </Text>
             <Text
               numberOfLines={1}
@@ -189,7 +206,7 @@ export function FeedScreen() {
             onPress={() => setSwitcherOpen(true)}
             accessibilityRole="button"
             accessibilityLabel="Switch feed"
-            accessibilityHint="Choose Following or one of your saved feeds"
+            accessibilityHint="Choose Following, a saved feed or a list feed"
             style={({ pressed }) => [
               styles.switchButton,
               {
@@ -208,7 +225,7 @@ export function FeedScreen() {
         {activeFeed ? (
           <View style={[styles.feedNote, { borderColor: p.divider }]}>
             <Ionicons
-              name="git-branch-outline"
+              name={activeChoice.kind === 'list' ? 'list-outline' : 'git-branch-outline'}
               size={16}
               color={p.secondary}
             />
@@ -220,10 +237,9 @@ export function FeedScreen() {
                 flex: 1,
               }}
             >
-              Custom feed
-              {activeCreator?.handle ? ` by @${activeCreator.handle}` : ''}. Its
-              order comes from the generator, not Balla. Following remains
-              chronological and first.
+              {activeChoice.kind === 'list'
+                ? `List feed${activeChoice.creator ? ` by ${activeChoice.creator}` : ''}. Posts from people on this list, newest first. Following remains chronological and first.`
+                : `Custom feed${activeChoice.creator ? ` by ${activeChoice.creator}` : ''}. Its order comes from the generator, not Balla. Following remains chronological and first.`}
             </Text>
           </View>
         ) : null}
@@ -298,12 +314,16 @@ export function FeedScreen() {
             onOpenThread={openThread}
             onOpenProfile={openProfile}
             onPostHidden={hidePost}
-            feedbackFeed={{
-              uri: activeFeed || undefined,
-              generator: activeGenerator,
-              feedContext: item.feedContext,
-              reqId,
-            }}
+            feedbackFeed={
+              activeIsList
+                ? undefined
+                : {
+                    uri: activeFeed || undefined,
+                    generator: activeGenerator,
+                    feedContext: item.feedContext,
+                    reqId,
+                  }
+            }
           />
         )}
         // FlashList v2 measures items itself; estimatedItemSize is gone.

@@ -3,6 +3,16 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.23.0
+
+- Curation list feeds can now be pinned to Home through the published saved-feed
+  preference (`type: 'list'`). Pinned list feeds appear in Switch feed with the
+  real list name and creator, load through `app.bsky.feed.getListFeed`, and can
+  be reordered or removed in the Feeds screen. Following remains first and
+  chronological; this adds a separate destination, not ranking.
+- The Feeds screen now manages generator feeds and list feeds together. List
+  metadata comes from `app.bsky.graph.getList`; no OAuth scope changed.
+
 ## 0.22.1
 
 - Both composers now enforce the published `app.bsky.feed.post` text caps: 300

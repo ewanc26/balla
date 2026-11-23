@@ -84,7 +84,7 @@ export function FeedSwitcherSheet({
                 Switch feed
               </Text>
               <Text style={{ color: p.secondary, fontSize: 12, marginTop: 2 }}>
-                Following is always newest first. Custom feeds keep their generator’s order.
+                Following and list feeds are newest first. Custom feeds keep their generator’s order.
               </Text>
             </View>
             <Pressable
@@ -112,7 +112,7 @@ export function FeedSwitcherSheet({
                   accessibilityLabel={
                     choice.following
                       ? 'Following, chronological feed'
-                      : `${choice.label}${choice.creator ? ` by ${choice.creator}` : ''}${choice.pinned ? ', pinned' : ''}`
+                      : `${choice.label}${choice.kind === 'list' ? ', list feed' : ''}${choice.creator ? ` by ${choice.creator}` : ''}${choice.pinned ? ', pinned' : ''}`
                   }
                   accessibilityState={{ checked: active }}
                   style={({ pressed }) => [
@@ -128,7 +128,13 @@ export function FeedSwitcherSheet({
                   ]}
                 >
                   <Ionicons
-                    name={choice.following ? 'time-outline' : 'albums-outline'}
+                    name={
+                      choice.following
+                        ? 'time-outline'
+                        : choice.kind === 'list'
+                          ? 'list-outline'
+                          : 'albums-outline'
+                    }
                     size={21}
                     color={active ? p.accent : p.secondary}
                   />
@@ -145,7 +151,9 @@ export function FeedSwitcherSheet({
                     >
                       {choice.following
                         ? 'Newest first · no ranking or ads'
-                        : `${choice.pinned ? 'Pinned · ' : ''}${choice.creator || 'Custom feed'}`}
+                        : choice.kind === 'list'
+                          ? `${choice.pinned ? 'Pinned · ' : ''}List feed${choice.creator ? ` ${choice.creator}` : ''}`
+                          : `${choice.pinned ? 'Pinned · ' : ''}${choice.creator || 'Custom feed'}`}
                     </Text>
                   </View>
                   {active ? (
@@ -159,7 +167,7 @@ export function FeedSwitcherSheet({
           <Pressable
             onPress={onManage}
             accessibilityRole="button"
-            accessibilityLabel="Manage saved feeds"
+            accessibilityLabel="Manage feeds and lists"
             style={({ pressed }) => [
               styles.manage,
               { borderTopColor: p.divider, opacity: pressed ? 0.65 : 1 },
@@ -167,7 +175,7 @@ export function FeedSwitcherSheet({
           >
             <Ionicons name="settings-outline" size={19} color={p.accent} />
             <Text style={{ color: p.accent, fontSize: 15, fontWeight: '700', marginLeft: 10 }}>
-              Manage saved feeds
+              Manage feeds and lists
             </Text>
           </Pressable>
         </View>

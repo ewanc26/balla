@@ -40,12 +40,22 @@ export function normaliseSavedFeeds(value: unknown): SavedFeedItem[] {
   return Array.from(byId.values());
 }
 
+/** Generator feeds only; list feeds are separate saved-feed entries. */
 export function feedItems(items: SavedFeedItem[]): SavedFeedItem[] {
   return items.filter((item) => item.type === 'feed');
 }
 
-export function pinnedFeedItems(items: SavedFeedItem[]): SavedFeedItem[] {
-  return items.filter((item) => item.type === 'feed' && item.pinned);
+export function listFeedItems(items: SavedFeedItem[]): SavedFeedItem[] {
+  return items.filter((item) => item.type === 'list');
+}
+
+/** Every saved source that can be read on Home: generators and list feeds. */
+export function homeFeedItems(items: SavedFeedItem[]): SavedFeedItem[] {
+  return items.filter((item) => item.type === 'feed' || item.type === 'list');
+}
+
+export function pinnedHomeFeedItems(items: SavedFeedItem[]): SavedFeedItem[] {
+  return homeFeedItems(items).filter((item) => item.pinned);
 }
 
 export function findSavedFeed(
@@ -55,40 +65,56 @@ export function findSavedFeed(
   return items.find((item) => item.type === 'feed' && item.value === value);
 }
 
+export function findSavedListItem(
+  items: SavedFeedItem[],
+  value: string
+): SavedFeedItem | undefined {
+  return items.find((item) => item.type === 'list' && item.value === value);
+}
+
+export function findSavedItem(
+  items: SavedFeedItem[],
+  value: string
+): SavedFeedItem | undefined {
+  return items.find(
+    (item) =>
+      (item.type === 'feed' || item.type === 'list') && item.value === value
+  );
+}
+
 export function isFeedSaved(items: SavedFeedItem[], value: string): boolean {
   return !!findSavedFeed(items, value);
 }
 
 /**
- * Moves a pinned feed among the pinned feed entries only. Timeline and list
- * preferences supplied by other clients keep their positions, and unpinned
- * entries are never displaced by a Home-tab reorder.
+ * Moves a pinned source among the pinned entries only. Following and other
+ * preference types supplied by other clients keep their positions, and
+ * unpinned entries are never displaced by a Home-tab reorder.
  */
 export function movePinnedFeed(
   items: SavedFeedItem[],
   value: string,
   direction: -1 | 1
 ): SavedFeedItem[] {
-  const feedPositions = items
+  const sourcePositions = items
     .map((item, index) =>
-      item.type === 'feed' && item.pinned ? index : -1
+      (item.type === 'feed' || item.type === 'list') && item.pinned
+        ? index
+        : -1
     )
     .filter((index) => index >= 0);
-  const visibleIndex = feedPositions.findIndex(
+  const visibleIndex = sourcePositions.findIndex(
     (index) => items[index].value === value
   );
   if (visibleIndex < 0) return items;
   const targetVisibleIndex = visibleIndex + direction;
-  if (
-    targetVisibleIndex < 0 ||
-    targetVisibleIndex >= feedPositions.length
-  ) {
+  if (targetVisibleIndex < 0 || targetVisibleIndex >= sourcePositions.length) {
     return items;
   }
 
   const next = items.slice();
-  const from = feedPositions[visibleIndex];
-  const to = feedPositions[targetVisibleIndex];
+  const from = sourcePositions[visibleIndex];
+  const to = sourcePositions[targetVisibleIndex];
   [next[from], next[to]] = [next[to], next[from]];
   return next;
 }

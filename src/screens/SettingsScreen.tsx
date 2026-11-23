@@ -29,7 +29,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
   const selectedEra = eraFor(preferences.era);
   const selectedAccent = accentFor(preferences.accent);
   const { unreadCounts } = useModerationInboxUnread();
-  const { pinnedFeeds } = useFeeds();
+  const { pinnedHomeFeeds } = useFeeds();
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Settings & privacy' });
@@ -231,8 +231,8 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
         <Row
           icon="albums-outline"
           label="Saved feeds"
-          detail="Pin custom feeds to Home, reorder them or discover new ones"
-          value={`${pinnedFeeds.length} pinned`}
+          detail="Pin custom feeds and list feeds to Home, reorder them or discover new ones"
+          value={`${pinnedHomeFeeds.length} pinned`}
           onPress={() => navigation.navigate('Feeds')}
         />
         <Row

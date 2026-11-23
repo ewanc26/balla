@@ -1,6 +1,6 @@
 # Lists
 
-Last researched: **21 November 2026**.
+Last researched: **21 November 2026**. Implementation update: **23 November 2026**.
 
 Balla implements Bluesky’s curation and moderation lists directly through the
 AT Protocol. A list is an `app.bsky.graph.list` record on the creator’s PDS;
@@ -33,6 +33,12 @@ account. A list block is an `app.bsky.graph.listblock` record.
   fixed after creation). Owners add and remove accounts from the People view.
 - **Profile links:** authored lists appear on profiles, with a link to the full
   list index for that account.
+- **Home shortcuts:** a curation list feed can be pinned to Home through the
+  published `app.bsky.actor.defs#savedFeed` preference with `type: 'list'`.
+  Pinned list feeds are ordered with generator feeds in Switch feed, loaded
+  through `app.bsky.feed.getListFeed`, and labelled with metadata from
+  `app.bsky.graph.getList`. Unpinning or removing the shortcut never changes
+  list membership or Following.
 - **Search and navigation:** Search has a direct Lists destination; the desktop
   rail and Settings have the same route.
 - **Moderation states:** `!hide` lists show a generic hidden card to everyone
@@ -75,5 +81,3 @@ available.
 - List avatars are not uploaded yet.
 - Reference lists are displayed if encountered, but only curation and moderation
   lists can be created.
-- List feeds are not pinned to the feed switcher. That needs saved-feed support for list
-  URIs and is a separate change.

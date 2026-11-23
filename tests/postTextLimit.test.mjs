@@ -76,8 +76,8 @@ test('both composers use the shared caps and visible counters', () => {
 });
 
 test('release copy records the text caps', () => {
-  assert.equal(JSON.parse(read('../package.json')).version, '0.22.1');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.22.1');
+  assert.equal(JSON.parse(read('../package.json')).version, '0.23.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.23.0');
 
   const changelog = read('../CHANGELOG.md');
   assert.match(changelog, /## 0\.22\.1/);
