@@ -93,6 +93,12 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
           detail="Account PDS facts and a read-only host compatibility check"
           onPress={() => navigation.navigate('Hosting')}
         />
+        <Row
+          icon="swap-horizontal-outline"
+          label="Move to another PDS"
+          detail="Read-only migration pre-flight: check a destination, export preferences and open assisted tools"
+          onPress={() => navigation.navigate('MigrationPreflight')}
+        />
       </Section>
 
       <View style={styles.footnote}>

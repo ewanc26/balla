@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.37.0
+
+- **Advanced → Account now offers a read-only migration pre-flight** (#104, partial). **Move to another PDS** shows the current DID, PDS, authorization server and scope count, then lets the user filter the public OpenPDS host directory and run a real `com.atproto.server.describeServer` check on a listed or custom destination. Host details are third-party or server-published facts, not a promise of sign-up or a migration result.
+- **Preferences export is real but local.** The screen reads `app.bsky.actor.getPreferences` through the existing AppView scope, reports only the number of entries and their type names, and exports the raw JSON on request: a browser download on web, clipboard copy on native. Inventory copy never reads or renders preference values, and Balla never uploads the export.
+- The screen names the operations a full move requires — destination account creation, repo export/import, blob inventory, status checks, PLC identity changes and account activation — and explains that none are in this OAuth grant. There is deliberately **no move button**. Links open the authoritative AT Protocol guide, PDS safety notes, goat, PDS MOOVER and a first-person walkthrough; the operator's own approval page owns any actual migration.
+- No new OAuth scope or dependency; the scope count remains 111. Full in-app migration, session re-binding and post-migration verification remain open in #104.
+
 ## 0.36.0
 
 - **Advanced → Media now reads the video service quota live** (#102, partial). The new Video service section shows the DID and endpoint fixed in this sign-in's OAuth grant and offers **Check video quota**. That button mints a short-lived service token for `app.bsky.video.getUploadLimits`, then displays only the lexicon's `canUpload`, `remainingDailyVideos` and `remainingDailyBytes`. Nothing is claimed before the service answers; a failed or CORS-blocked read is reported as unreadable, never as zero.

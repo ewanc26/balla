@@ -53,12 +53,12 @@ test('the reader is read-only, honest about limits and keeps user-controlled sty
 
 test('no new permission, dependency, dependency override or provider message text', () => {
   const pkg = JSON.parse(read('../package.json'));
-  assert.equal(pkg.version, '0.36.0');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.36.0');
+  assert.equal(pkg.version, '0.37.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.37.0');
   // Native projects are generated locally and are not tracked in this repo.
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.36\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.37\.0<\/string>/);
   }
   assert.deepEqual(pkg.overrides, { minimatch: '11.0.9', zod: '4.6.6' });
   assert.equal(metadata.scope.split(' ').filter(Boolean).length, 111);
