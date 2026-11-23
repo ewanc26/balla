@@ -22,6 +22,8 @@ import { useModeration } from '../lib/moderationContext';
 import { accountLabelCauses, hiddenByLabel } from '../lib/labelVisibility';
 import { useViewer } from '../lib/viewer';
 import { useAccountPreferences } from '../lib/accountPreferences';
+import { usePreferences } from '../lib/preferences';
+import { MusicActivityStrip } from '../components/MusicActivityStrip';
 import { profileLinkHost, profileLinkLabel } from '../lib/profileLinks';
 import {
   listMemberCount,
@@ -81,6 +83,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const { profile: viewerProfile } = useViewer();
   const { settings: accountSettings } = useAccountPreferences();
   const hideBadges = accountSettings.hideVerificationBadges;
+  const { preferences } = usePreferences();
   const actor = (route && route.params && route.params.actor) || agent.did;
   const [profile, setProfile] = useState<any>(null);
   const [posts, setPosts] = useState<any[]>([]);
@@ -1154,6 +1157,10 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                   />
                 ))}
               </View>
+            ) : null}
+
+            {!showProfileWarning && !isBlocked ? (
+              <MusicActivityStrip did={profile.did} enabled={preferences.showMusicActivity} />
             ) : null}
 
             {isSelf ? (
