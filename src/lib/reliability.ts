@@ -126,22 +126,24 @@ export function classifyFailure(err: unknown): FailureKind {
 function waitSeconds(retryAfterMs: number | null): string {
   if (retryAfterMs === null) return 'Wait a moment and try again.';
   const seconds = Math.max(1, Math.ceil(retryAfterMs / 1000));
-  return `Try again in about ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`;
+  // An instruction to the person, never a claim that this client will retry on
+  // its own after that long. The retry loop stops when a wait exceeds its cap.
+  return `Wait about ${seconds} ${seconds === 1 ? 'second' : 'seconds'} before trying again.`;
 }
 
 export function describeFailure(err: unknown, fallback: string): string {
   const kind = classifyFailure(err);
   if (kind === 'rate-limited') {
-    return `Bluesky is limiting requests. ${waitSeconds(retryAfterMsFrom(err))}`;
+    return `The service is limiting requests. ${waitSeconds(retryAfterMsFrom(err))}`;
   }
   if (kind === 'offline') {
-    return 'Could not reach Bluesky. Check your connection and try again.';
+    return 'Could not reach the service. Check your connection and try again.';
   }
   if (kind === 'auth-expired') {
     return 'Your session needs renewing. Sign out, sign in again, then retry.';
   }
   if (kind === 'server') {
-    return "Bluesky's service is having trouble. Try again shortly.";
+    return 'The service is having trouble. Try again shortly.';
   }
   return fallback;
 }
@@ -165,8 +167,13 @@ export async function readWithRetry<T>(
     try {
       return await read();
     } catch (err) {
-      if (attempt >= attempts || !shouldRetry(classifyFailure(err))) throw err;
-      const advertised = classifyFailure(err) === 'rate-limited' ? retryAfterMsFrom(err) : null;
+      const kind = classifyFailure(err);
+      if (attempt >= attempts || !shouldRetry(kind)) throw err;
+      const advertised = kind === 'rate-limited' ? retryAfterMsFrom(err) : null;
+      // A service asking for longer than our automatic cap is asking the client
+      // to stop. Retrying earlier would ignore that instruction and make the
+      // visible "try again in N seconds" a lie, so surface the error instead.
+      if (advertised !== null && advertised > MAX_BACKOFF_MS) throw err;
       const backoff = Math.min(
         advertised ?? Math.min(BASE_BACKOFF_MS * 2 ** (attempt - 1), MAX_BACKOFF_MS),
         MAX_BACKOFF_MS
