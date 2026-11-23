@@ -99,7 +99,7 @@ test('filters duplicate and unusable search results', () => {
   assert.equal(mentionActors([{ handle: 'a' }, { handle: 'b' }], 1).length, 1);
 });
 
-test('the composer uses the existing people-search scope', () => {
+test('both composers use the shared picker and people-search scope', () => {
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
   assert.equal(tokens.length, 111);
@@ -109,15 +109,28 @@ test('the composer uses the existing people-search scope', () => {
     1
   );
 
-  const screen = read('../src/screens/ComposeScreen.tsx');
-  assert.match(screen, /activeMentionQuery/);
+  const hook = read('../src/lib/useMentionSuggestions.ts');
   assert.match(
-    screen,
+    hook,
     /agent\s*\.searchActors\(\{ q: mention\.query\.trim\(\), limit: 6 \}\)/
   );
-  assert.match(screen, /<MentionSuggestions/);
-  assert.match(screen, /selection=\{selection\}/);
-  assert.match(screen, /onSelectionChange=/);
+  assert.match(hook, /mentionActors\(response\?\.data\?\.actors\)/);
+  assert.match(hook, /setTimeout\(/);
+
+  const compose = read('../src/screens/ComposeScreen.tsx');
+  assert.match(compose, /useMentionSuggestions\(text, selection, !sending\)/);
+  assert.match(compose, /<MentionSuggestions/);
+  assert.match(compose, /selection=\{selection\}/);
+  assert.match(compose, /onSelectionChange=/);
+
+  const thread = read('../src/screens/ThreadScreen.tsx');
+  assert.match(
+    thread,
+    /useMentionSuggestions\(replyText, replySelection, !sending\)/
+  );
+  assert.match(thread, /<MentionSuggestions/);
+  assert.match(thread, /selection=\{replySelection\}/);
+  assert.match(thread, /applyMention\(replyText, replyActiveMention, actor\.handle\)/);
 
   const picker = read('../src/components/MentionSuggestions.tsx');
   assert.match(picker, /accessibilityLabel={`Mention @\$\{handle\}`}/);
@@ -127,23 +140,26 @@ test('the composer uses the existing people-search scope', () => {
 });
 
 test('release copy describes the picker without widening the scope', () => {
-  assert.equal(JSON.parse(read('../package.json')).version, '0.21.0');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.21.0');
+  assert.equal(JSON.parse(read('../package.json')).version, '0.22.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.22.0');
 
   const changelog = read('../CHANGELOG.md');
-  assert.match(changelog, /## 0\.21\.0/);
+  assert.match(changelog, /## 0\.22\.0/);
   assert.match(changelog, /suggests matching accounts/i);
-  assert.match(read('../README.md'), /suggests matching accounts/i);
-  assert.match(read('../AGENTS.md'), /suggests\s+matching accounts/i);
+  assert.match(changelog, /thread replies/i);
+  assert.match(read('../README.md'), /thread replies/i);
+  assert.match(read('../AGENTS.md'), /thread replies/i);
 
   const site = read('../site/features.html');
   assert.match(site, /issues\/79/);
+  assert.match(site, /issues\/81/);
   assert.match(site, /suggests matching accounts/i);
+  assert.match(site, /thread replies/i);
 
   assert.match(
     read('../docs/oauth-scopes.md'),
-    /People search and composer mention suggestions/
+    /People search and composer\/reply mention suggestions/
   );
-  assert.match(read('../docs/bluesky-compliance.md'), /mention suggestions/i);
-  assert.match(read('../docs/social-app-reference.md'), /mention suggestions/i);
+  assert.match(read('../docs/bluesky-compliance.md'), /thread replies/i);
+  assert.match(read('../docs/social-app-reference.md'), /thread replies/i);
 });

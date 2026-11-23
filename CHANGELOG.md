@@ -3,6 +3,21 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.22.0
+
+- Thread replies now write real rich-text facets for links, hashtags and
+  mentions, using the same detector and unresolved-mention filter as new posts.
+  A reply's facets are generated from the trimmed reply text and sent with the
+  `agent.post` call; an unresolvable mention stays plain text rather than being
+  stored with an empty DID.
+- The reply composer now offers the same inline mention suggestions as the main
+  composer. Picker state lives in one shared hook used by both screens, so
+  debouncing, stale-response protection and loading, empty and failure states
+  cannot drift. No OAuth scope or dependency changed; the AppView scope remains
+  111 tokens.
+- Add deterministic tests for reply facets and shared picker wiring, and update
+  the README, current-state, compliance note, reference inventory and site copy.
+
 ## 0.21.0
 
 - The composer now suggests matching accounts while a mention is typed.

@@ -2,6 +2,8 @@ export type TextSelection = { start: number; end: number };
 
 export type ActiveMention = { query: string; start: number; end: number };
 
+export type MentionStatus = 'loading' | 'ready' | 'error';
+
 export type MentionActor = {
   did?: string;
   handle?: string;
