@@ -77,6 +77,15 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
         />
       </Section>
 
+      <Section title="Account">
+        <Row
+          icon="server-outline"
+          label="Hosting"
+          detail="Account PDS facts and a read-only host compatibility check"
+          onPress={() => navigation.navigate('Hosting')}
+        />
+      </Section>
+
       <View style={styles.footnote}>
         <Ionicons name="information-circle-outline" size={16} color={p.secondary} />
         <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 17, flex: 1 }}>

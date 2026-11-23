@@ -63,6 +63,7 @@ import { ChatScreen } from './src/screens/ChatScreen';
 import { ConversationScreen } from './src/screens/ConversationScreen';
 import { ChatSettingsScreen } from './src/screens/ChatSettingsScreen';
 import { ChatServiceScreen } from './src/screens/ChatServiceScreen';
+import { HostingScreen } from './src/screens/HostingScreen';
 import { ChatNotificationSettingsScreen } from './src/screens/ChatNotificationSettingsScreen';
 import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
 import { JoinGroupScreen } from './src/screens/JoinGroupScreen';
@@ -413,6 +414,7 @@ export default function App() {
                           <Stack.Screen name="MediaOrigin" component={MediaOriginScreen} />
                           <Stack.Screen name="IdentitySettings" component={IdentitySettingsScreen} />
                           <Stack.Screen name="ChatService" component={ChatServiceScreen} />
+                          <Stack.Screen name="Hosting" component={HostingScreen} />
                           <Stack.Screen name="Accounts" component={AccountsScreen} />
                           <Stack.Screen name="AddAccount" component={AddAccountScreen} />
                           <Stack.Screen name="Appearance" component={AppearanceScreen} />

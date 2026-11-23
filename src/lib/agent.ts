@@ -8,6 +8,7 @@ import {
 } from '@atproto/oauth-client-expo';
 import clientMetadata from '../../oauth-client-metadata.json';
 import { CHAT_SERVICE_DID, CHAT_SERVICE_TYPE } from './chatModel';
+import { createNativeFirstHandleResolver } from './nativeHandleResolver';
 import {
   ACCOUNTS_KEY,
   handleFromInput,
@@ -135,7 +136,9 @@ async function rememberAccount(did: string, input?: string): Promise<AccountEntr
 }
 
 export const oauthClient = new ExpoOAuthClient({
-  handleResolver: DEFAULT_SERVICE,
+  // Resolve a handle from its own host first, then fall back to the XRPC
+  // resolver. Non-Bluesky accounts no longer depend on Bluesky to sign in.
+  handleResolver: createNativeFirstHandleResolver(DEFAULT_SERVICE),
   clientMetadata: clientMetadata as OAuthClientMetadataInput,
   onSessionDeleted: (sub: string) => {
     if (removing.has(sub)) return;
