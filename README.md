@@ -91,7 +91,8 @@ separates AppView listing from a direct public-endpoint check for each subscribe
 labeler, and accepts arbitrary labeler DIDs when their own service answers that
 check; local rules keep working through an outage; repost-only account mutes; per-category notification
 preferences; a device-local 30-day Home snooze, listed and revocable in Following preferences; a
-desktop Recent activity rail card built only from the Following page already in memory, with a
+deterministic first-reply preview on viewable feed cards, using the configured thread order and a
+session cache; a desktop Recent activity rail card built only from the Following page already in memory, with a
 reversible device-local hide; a wall-to-wall thread lens for you and one other visible author; a
 creator byline and one static Supporters card in About; a generated icon set;
 multi-account support with a labelled Accounts screen to switch, add and remove OAuth sessions, each kept separate by DID with no shared tokens or carried-over state; account and security settings for the identity Balla can read, birthday and automation-label self-labels, privacy controls and non-secret OAuth session facts, with provider links for email, password, 2FA, app passwords and account lifecycle; account export, deactivation and deletion guidance that links to the PDS controls;
