@@ -11,10 +11,6 @@ import { FlashList } from '@shopify/flash-list';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { networkBackend } from '../lib/networkBackend';
-import {
-  HYDRATION_SOURCE_COPY,
-  hydrationSourceText,
-} from '../lib/hydrationSource.ts';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
@@ -295,36 +291,6 @@ export function FeedScreen() {
           </Pressable>
         </View>
 
-        <Pressable
-          onPress={() => navigation.navigate('AppView')}
-          accessibilityRole="button"
-          accessibilityLabel={HYDRATION_SOURCE_COPY.buttonLabel}
-          accessibilityHint={HYDRATION_SOURCE_COPY.buttonHint}
-          style={({ pressed }) => [
-            styles.sourceBar,
-            { borderBottomColor: p.divider, opacity: pressed ? 0.7 : 1 },
-          ]}
-        >
-          <Ionicons name="server-outline" size={15} color={p.secondary} />
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text
-              numberOfLines={1}
-              style={{
-                color: p.secondary,
-                fontSize: 11,
-                textTransform: 'uppercase',
-                fontWeight: '700',
-              }}
-            >
-              {HYDRATION_SOURCE_COPY.label}
-            </Text>
-            <Text numberOfLines={1} style={{ color: p.text, fontSize: 12, marginTop: 1 }}>
-              {hydrationSourceText()}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward-outline" size={16} color={p.secondary} />
-        </Pressable>
-
         {activeFeed ? (
           <View style={[styles.feedNote, { borderColor: p.divider }]}>
             <Ionicons
@@ -428,6 +394,7 @@ export function FeedScreen() {
         renderItem={({ item }) => (
           <PostCard
             post={item.post}
+            replyParent={item.reply?.parent}
             onOpenThread={openThread}
             onOpenProfile={openProfile}
             onPostHidden={hidePost}
@@ -571,15 +538,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 12,
     marginLeft: 10,
-  },
-  sourceBar: {
-    minHeight: 44,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 9,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
   },
   feedNote: {
     flexDirection: 'row',

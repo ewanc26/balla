@@ -46,9 +46,10 @@ test('a long advertised wait is instruction to the person, never an early auto-r
   );
 });
 
-test('the public site no longer says the shipped hydration-source label is unimplemented', () => {
-  assert.doesNotMatch(features, /A primary\/mirror picker, failover, a hydration-source label and per-function routing are not implemented/);
-  assert.match(features, /names the grant-bound AppView as its hydration source/);
+test('the public site keeps hydration facts in settings, not on the Home feed', () => {
+  assert.doesNotMatch(features, /Home feed names that same AppView as a hydration source/);
+  assert.match(features, /Home feed no longer repeats it/);
+  assert.match(features, /Home feed keeps only the timeline/);
   assert.doesNotMatch(home, /<ul><li>Error-state polish<\/li><\/ul>/);
   assert.match(home, /Truthful failures and bounded retries/);
   assert.match(home, /AppView health and hydration source/);

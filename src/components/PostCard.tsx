@@ -38,6 +38,7 @@ import { EventEmbed } from './EventEmbed';
 import { isEdited } from '../lib/postEditModel';
 import { postEditRecord, subscribePostEdits } from '../lib/postEditStore';
 import { EditedBadge } from './EditedBadge';
+import { replyContextFor } from '../lib/replyContext.ts';
 import {
   QUOTE_UNAVAILABLE_COPY,
   externalFromEmbed,
@@ -65,6 +66,8 @@ interface PostCardProps {
   feedbackFeed?: { uri?: string; generator?: any; feedContext?: string; reqId?: string };
   /** Feed-only: fetch a first reply while this card is on screen. */
   replyPreviewEnabled?: boolean;
+  /** Feed-only: the parent post carried by the feed response, when known. */
+  replyParent?: any;
   highlight?: boolean;
 }
 
@@ -77,6 +80,7 @@ export function PostCard({
   onHiddenReplyChange,
   feedbackFeed,
   replyPreviewEnabled,
+  replyParent,
   highlight,
 }: PostCardProps) {
   const p = usePalette();
@@ -108,6 +112,7 @@ export function PostCard({
     () => undefined
   );
   const author = post && post.author ? post.author : {};
+  const replyContext = replyContextFor(replyParent, author.did);
   const record = liveEdit || (post && post.record ? post.record : {});
   const bodySegments = richTextSegments(
     (record && record.text) || '',
@@ -375,6 +380,26 @@ export function PostCard({
           highlight && { borderColor: p.accent, borderWidth: 2 },
         ]}
       >
+        {replyContext ? (
+          <View style={styles.replyContext}>
+            <Ionicons
+              name="return-down-forward-outline"
+              size={14}
+              color={p.secondary}
+            />
+            <Text
+              numberOfLines={1}
+              style={{
+                color: p.secondary,
+                fontSize: font(12),
+                fontWeight: '600',
+                marginLeft: 6,
+              }}
+            >
+              {replyContext.label}
+            </Text>
+          </View>
+        ) : null}
         <View style={styles.header}>
           <View style={styles.headerMain}>
             {onOpenProfile && author.did ? (
@@ -1267,6 +1292,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   header: { flexDirection: 'row', alignItems: 'center', minHeight: 44 },
+  replyContext: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 24,
+    marginBottom: 2,
+  },
   headerMain: {
     flex: 1,
     flexDirection: 'row',

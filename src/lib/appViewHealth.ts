@@ -24,7 +24,7 @@ export const APPVIEW_HEALTH_COPY = {
   measures:
     'Check makes unauthenticated public reads: the AppView’s did:web document and, when signed in, one profile canary for this account. It reports HTTP status and elapsed time from this device.',
   limits:
-    'These reads do not report sync lag, feed freshness or any other provider. This build has no mirror, failover or per-function routing, so #99 remains open. The feed names the grant-bound AppView as a static hydration-source label; that is a fact of the grant, not a switch or a live check.',
+    'These reads do not report sync lag, feed freshness or any other provider. This build has no mirror, failover or per-function routing, so #99 remains open. The grant-bound AppView and its hydration facts are shown only on this screen; they are a fact of the grant, not a switch or a live check.'
 } as const;
 
 export type AppViewHealthProbe = {
