@@ -86,7 +86,9 @@ in-app browser choice and autoplay, with external links opening through one
 opener that always leaves mailto, tel and SMS links with the system handler;
 labeler subscriptions with per-label
 filters, an adult-content gate and muted words with a post-menu shortcut into
-the visible section; repost-only account mutes; per-category notification
+the visible section; an Advanced submenu that opens the labeler services section
+and shows whether the AppView currently lists each service while keeping local
+rules working through an outage; repost-only account mutes; per-category notification
 preferences; a generated icon set;
 multi-account support with a labelled Accounts screen to switch, add and remove OAuth sessions, each kept separate by DID with no shared tokens or carried-over state; account and security settings for the identity Balla can read, birthday and automation-label self-labels, privacy controls and non-secret OAuth session facts, with provider links for email, password, 2FA, app passwords and account lifecycle; account export, deactivation and deletion guidance that links to the PDS controls;
 a moderation inbox for reports, decisions, notices, account standing and appeals;

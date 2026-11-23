@@ -289,6 +289,15 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
         />
       </Section>
 
+      <Section title="Advanced">
+        <Row
+          icon="options-outline"
+          label="Advanced"
+          detail="Infrastructure choices, including third-party labeler services"
+          onPress={() => navigation.navigate('Advanced')}
+        />
+      </Section>
+
       <Section title="Help and support">
         <Row
           icon="heart-outline"

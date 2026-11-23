@@ -53,9 +53,11 @@ export function ContentFiltersScreen({
   const { reload } = useModeration();
   const scrollRef = useRef<any>(null);
   const mutedWordsRef = useRef<any>(null);
+  const labelersRef = useRef<any>(null);
   const [prefs, setPrefs] = useState<any>(null);
   const [labelDefs, setLabelDefs] = useState<Record<string, any[]>>({});
   const [services, setServices] = useState<Record<string, any>>({});
+  const [servicesAvailable, setServicesAvailable] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -98,9 +100,12 @@ export function ContentFiltersScreen({
           if (did) byDid[did] = view;
         }
         setServices(byDid);
+        setServicesAvailable(true);
       } catch {
-        // Names are cosmetic. The underlying prefs still load and save.
+        // Names and reachability are cosmetic. The underlying prefs still
+        // load and save, so local filters keep working when a service is down.
         setServices({});
+        setServicesAvailable(false);
       }
     } catch {
       setError('Could not load your moderation preferences.');
@@ -120,6 +125,24 @@ export function ContentFiltersScreen({
     if (route?.params?.section !== 'muted-words' || loading || !prefs) return;
     const timer = setTimeout(() => {
       mutedWordsRef.current?.measureLayout?.(
+        scrollRef.current,
+        (_x: number, y: number) => {
+          scrollRef.current?.scrollTo({
+            y: Math.max(0, y - 8),
+            animated: !reducedMotion,
+          });
+        }
+      );
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [route?.params?.section, loading, prefs, reducedMotion]);
+
+  // The Advanced menu can open the labeler section directly. Measured the same
+  // way, so the scroll target stays correct as services load.
+  useEffect(() => {
+    if (route?.params?.section !== 'labelers' || loading || !prefs) return;
+    const timer = setTimeout(() => {
+      labelersRef.current?.measureLayout?.(
         scrollRef.current,
         (_x: number, y: number) => {
           scrollRef.current?.scrollTo({
@@ -327,10 +350,15 @@ export function ContentFiltersScreen({
         </View>
       </Section>
 
-      <Section title="Subscribed labelers">
+      <Section title="Subscribed labelers" sectionRef={labelersRef}>
+        <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, paddingHorizontal: 12, paddingBottom: 8 }}>
+          Labels are advisory metadata from services you choose. Anyone can run a
+          labeler. Your local filters keep working if a service is unavailable.
+        </Text>
         {labelers.map((labeler: any) => {
           const isDefault = labeler.did === BSKY_LABELER_DID;
           const view = services[labeler.did];
+          const reachable = servicesAvailable && (isDefault || Boolean(view));
           return (
             <View key={labeler.did} style={[styles.labelerRow, { borderBottomColor: p.divider }]}>
               <Avatar
@@ -348,6 +376,19 @@ export function ContentFiltersScreen({
                     : view?.creator?.handle
                       ? `@${view.creator.handle}`
                       : labeler.did}
+                </Text>
+                <Text
+                  accessibilityRole={reachable ? undefined : 'alert'}
+                  style={{
+                    color: reachable ? p.secondary : p.danger,
+                    fontSize: 11,
+                    marginTop: 2,
+                  }}
+                  numberOfLines={1}
+                >
+                  {reachable
+                    ? 'Subscribed · listed by the AppView'
+                    : 'Subscribed · not listed by the AppView, local rules still apply'}
                 </Text>
               </View>
               {isDefault ? (
@@ -726,10 +767,18 @@ export function ContentFiltersScreen({
   );
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({
+  title,
+  children,
+  sectionRef,
+}: {
+  title: string;
+  children: React.ReactNode;
+  sectionRef?: any;
+}) {
   const p = usePalette();
   return (
-    <View style={{ marginBottom: 14 }}>
+    <View ref={sectionRef} style={{ marginBottom: 14 }}>
       <Text style={{ color: p.secondary, fontSize: 13, fontWeight: '700', paddingHorizontal: 18, marginBottom: 6 }}>
         {title}
       </Text>
