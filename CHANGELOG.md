@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.58.0
+
+- **Public calendar events now appear on profiles and in posts (#157).** A profile Events strip appears only when the account has published `community.lexicon.calendar.event` records; a post shows an event when its raw record embeds an event strong reference. Both open a detail sheet with the published name, description, local-time window, mode, status, locations and links. Events come straight from the author's PDS with unauthenticated reads: no AppView view type, ranked feed or recommendation path is involved.
+- **RSVP is one visible tap with change and remove controls.** Going, Interested and Not going write a public `community.lexicon.calendar.rsvp` record. Changing the choice updates the same record rather than adding another, using an existing rkey when present and a lexicon-valid TID for a new record. Remove deletes every matching RSVP. There are no reminders, notifications, tickets or follower actions, and every control is at least 44pt with a visible label.
+- **One narrow permission is added.** The metadata gains `repo:community.lexicon.calendar.rsvp?action=create&action=update&action=delete` and now has **112 tokens**. Reading public events needs no permission; sessions authorised before 0.58.0 must sign out and back in once before writing an RSVP. The only added dependency is the official `@atproto/common-web` TID helper, already present transitively through `@atproto/api`.
+- CI's full gate passed: deterministic tests (710), typecheck, Expo dependency drift, advisory audit, icon sync and site build. Browser checks covered Home, the profile Events strip and the event sheet at 320, 390, 820, 1000, 1300 and 1440, including 44pt RSVP controls, no horizontal overflow, change and remove, and an empty profile with no Events section.
+
 ## 0.57.0
 
 - **Home can now show an opt-in On this day card (#152).** Following preferences gains a per-account, device-local toggle, off by default. When on, Balla reads the viewer's own `app.bsky.feed.post` records from their configured PDS with one bounded `listRecords` walk per launch day, cached per account. The card shows up to three compact posts from this local calendar date in earlier years, newest first, with the exact date and years in the copy; **See all** opens a Memories screen with the whole set, and every row opens Thread. Dismissal is remembered for the rest of the day.
