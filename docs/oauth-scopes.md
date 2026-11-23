@@ -21,7 +21,7 @@ audience, documented below.
 | `repo:app.bsky.graph.list?action=create&action=update&action=delete` | Creating, editing and deleting curation and moderation lists |
 | `repo:app.bsky.graph.listitem?action=create&action=delete` | Adding and removing list members |
 | `repo:app.bsky.graph.listblock?action=create&action=delete` | Blocking and unblocking a list |
-| `repo:app.bsky.graph.starterpack?action=create&action=update` | Creating and editing starter packs, using the official `app.bsky.graph.starterpack` record and a reference list |
+| `repo:app.bsky.graph.starterpack?action=create&action=update&action=delete` | Creating, editing and deleting starter packs, using the official `app.bsky.graph.starterpack` record and a private reference list |
 | `repo:app.bsky.feed.threadgate?action=create&action=update&action=delete` | Reply gates and hiding replies for everyone (`hiddenReplies`) |
 | `repo:app.bsky.feed.postgate?action=create&action=update&action=delete` | Quote/embedding gates and quote detach/reattach |
 | `repo:app.bsky.graph.verification?action=create&action=delete` | Trusted verifiers issuing and removing verification records |
@@ -221,7 +221,8 @@ The client metadata has widened over time for profile editing, saved feeds and
 the moderation inbox while staying granular. Sessions authorised before any of
 those changes keep their old grant and must re-authorise before the new
 profile/link/blob, list, saved-feed, inbox, starter-pack or chat-group scopes are available.
-Sessions authorised before 0.19.0 need that re-authorisation before threadgate,
+Sessions authorised before 0.20.0 need that re-authorisation before starter-pack
+deletion is accepted. Sessions authorised before 0.19.0 need it before threadgate,
 postgate, verification, live-status, activity-privacy, activity-subscription,
 generator-feedback or account-draft (`app.bsky.draft.*`) calls are accepted.
 Signing out and back in requests the current scope. Sessions authorised before

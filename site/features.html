@@ -69,6 +69,7 @@
           <div class="fact-row"><dt>Photo posts</dt><dd>Up to ten images, per-image alt text, compression, retries and a full-screen viewer.</dd></div>
           <div class="fact-row"><dt>Video and GIF posts</dt><dd>MP4 and animated GIF uploads with visible processing states, cancellable waits, optional WebVTT captions and Bluesky's muted GIF presentation in the feed.</dd></div>
           <div class="fact-row"><dt>Post options</dt><dd>Content warnings from Bluesky's self-label vocabulary, up to three post languages, and reply and quote controls written to real threadgate and postgate records. Edit interaction settings on any post you authored.</dd></div>
+          <div class="fact-row"><dt>Rich text</dt><dd>Mentions, links and hashtags are written as real rich-text facets. Mention handles are resolved to DIDs; an unresolvable handle stays plain text rather than being stored with an empty DID.</dd></div>
           <div class="fact-row"><dt>Drafts</dt><dd>An unfinished post is kept on your device with a restore-or-discard prompt, and saved drafts live in your private Bluesky stash through the real app.bsky.draft RPCs. Reopen, update, delete and clear-on-publish all work; photos, videos and quoted posts need adding again.</dd></div>
           <div class="fact-row"><dt>Custom feeds</dt><dd>Discover, save, pin and reorder generators. Switch feed on Home puts Following first and any saved feed one tap away.</dd></div>
           <div class="fact-row"><dt>Lists</dt><dd>Create and edit curation and moderation lists, manage members, read list feeds, subscribe or block.</dd></div>
@@ -130,7 +131,7 @@
           </div>
           <div class="roadmap-row">
             <span class="pill">P2</span>
-            <div><strong>Starter packs</strong><p>Shipped: search, landing pages, explicit follow/add-feed actions, official share links, and creation/editing for packs you own. Starter-pack writes use one extra narrow scope, so sessions authorised before 0.13.0 need to sign in again.</p></div>
+            <div><strong>Starter packs</strong><p>Shipped: search, landing pages, explicit follow/add-feed actions, official share links, and creation, editing and deletion for packs you own (<a href="https://github.com/ewanc26/balla/issues/76">issue #76 ↗</a>). Starter-pack writes use one extra narrow scope; deletion adds its delete action, so sessions authorised before 0.20.0 need to sign in again.</p></div>
             <a href="https://github.com/ewanc26/balla/issues/20">Issue #20 ↗</a>
           </div>
           <div class="roadmap-row">

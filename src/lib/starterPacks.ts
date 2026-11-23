@@ -1,7 +1,10 @@
 import { agent } from './agent';
+import { deleteListItems } from './lists';
 import { recordKey } from './listModel';
 import {
   diffStarterPackMembers,
+  isRecordNotFoundError,
+  parseStarterPackListUri,
   parseStarterPackUri,
   starterPackListItemRecord,
   starterPackListRecord,
@@ -230,4 +233,44 @@ export async function updateStarterPack(
   );
 
   return existing.uri;
+}
+
+/**
+ * Deletes a pack the signed-in account owns, then its private reference list.
+ * The list goes first, matching Bluesky's official client; a retry after a
+ * partial failure tolerates the list already being gone.
+ */
+export async function deleteStarterPack(
+  uri: string,
+  listUri?: string | null
+): Promise<void> {
+  const parsed = parseStarterPackUri(uri);
+  if (!parsed) throw new Error('This starter pack has no valid address.');
+  const repo = signedInDid();
+  if (parsed.did !== repo) {
+    throw new Error('You can only delete a starter pack you created.');
+  }
+
+  if (listUri) {
+    const list = parseStarterPackListUri(listUri);
+    if (!list || list.did !== repo) {
+      throw new Error('This starter pack has no removable reference list.');
+    }
+    await deleteListItems(listUri);
+    try {
+      await agent.com.atproto.repo.deleteRecord({
+        repo,
+        collection: 'app.bsky.graph.list',
+        rkey: list.rkey,
+      });
+    } catch (error) {
+      if (!isRecordNotFoundError(error)) throw error;
+    }
+  }
+
+  await agent.com.atproto.repo.deleteRecord({
+    repo,
+    collection: 'app.bsky.graph.starterpack',
+    rkey: parsed.rkey,
+  });
 }

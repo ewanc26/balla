@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import {
   diffStarterPackMembers,
   isBlockedCreator,
+  isRecordNotFoundError,
+  parseStarterPackListUri,
   parseStarterPackUri,
   starterPackActionError,
   starterPackListItemRecord,
@@ -25,6 +27,22 @@ test('starter-pack AT URIs are parsed only for the real collection', () => {
   );
   assert.equal(parseStarterPackUri('https://bsky.app/start/alice.test/3labc'), null);
   assert.equal(parseStarterPackUri('at://did:plc:abc123/app.bsky.graph.starterpack/'), null);
+});
+
+test('reference-list URIs are parsed only for the list collection', () => {
+  assert.deepEqual(
+    parseStarterPackListUri(
+      'at://did:plc:abc123/app.bsky.graph.list/3labcdef'
+    ),
+    { did: 'did:plc:abc123', rkey: '3labcdef' }
+  );
+  assert.equal(
+    parseStarterPackListUri(
+      'at://did:plc:abc123/app.bsky.graph.starterpack/3labcdef'
+    ),
+    null
+  );
+  assert.equal(parseStarterPackListUri('at://bad'), null);
 });
 
 test('share links use the official short path and never invent membership', () => {
@@ -98,6 +116,20 @@ test('record bodies use generated lexicon shapes with an injected timestamp', ()
       createdAt,
     }
   );
+});
+
+test('only the PDS record-not-found error is treated as an already-deleted list', () => {
+  assert.equal(
+    isRecordNotFoundError({
+      status: 400,
+      error: 'RecordNotFound',
+      message: 'Could not locate record',
+    }),
+    true
+  );
+  assert.equal(isRecordNotFoundError({ status: 404, message: 'RecordNotFound' }), true);
+  assert.equal(isRecordNotFoundError({ status: 500, message: 'Internal error' }), false);
+  assert.equal(isRecordNotFoundError(new Error('offline')), false);
 });
 
 test('member diffs and scope errors stay deterministic', () => {

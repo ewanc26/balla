@@ -159,7 +159,9 @@ status through `app.bsky.actor.status` with a LIVE badge, and trusted verifiers
 can issue and remove verification records. Tapping any post image opens a full-screen
 viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
-keep the text rather than eating it. The composer supports threads, photos with
+keep the text rather than eating it. New posts write rich-text facets for links,
+hashtags and mentions whose handles resolve to DIDs; an unresolvable mention
+stays plain text rather than being stored with an empty DID. The composer supports threads, photos with
 alt text, MP4/GIF video with optional WebVTT captions and honest processing
 states, link cards, quotes, self-applied content warnings, up to three post
 languages per post, and reply and quote controls written to real threadgate and
@@ -167,9 +169,9 @@ postgate records. An unfinished post is kept locally with a Restore/Discard
 prompt, and posts you authored have an Interaction settings screen. Tapping a notification opens the thread it belongs to; a follow opens the actor's public profile. Lists support creation and editing,
 membership, list feeds, subscribe/block states and profile links; list and feed
 reports are implemented through real strong-ref report writes. Starter packs have search, landing pages, explicit
-follow and add-feed actions, official share links, and creation/editing for
-packs the signed-in account owns; writes use one narrow starter-pack repo scope
-and older sessions need to sign in again. Private messages are available through a Messages entry point: an inbox with real unread and join-request counts, chat requests, and conversations that page through history, send text and post embeds with replies and reactions. Groups can be created and managed with members, invite links and join requests; conversations expose settings with lock/unlock where allowed, mark-all-read, mute/unmute, leave, chat reporting and actor blocking, and separate chat notification preferences. Chat calls use the chat-service proxy and thirty-six narrow `rpc:chat.bsky.convo.*`, `rpc:chat.bsky.group.*` and `rpc:chat.bsky.notification.*` scopes; message content is not stored by Balla or logged, and older sessions need to sign in again for chat. Saved and pinned custom feeds have
+follow and add-feed actions, official share links, and creation, editing and
+deletion for packs the signed-in account owns; writes use one narrow starter-pack repo scope;
+sessions authorised before 0.20.0 need to sign in again before deleting a pack. Private messages are available through a Messages entry point: an inbox with real unread and join-request counts, chat requests, and conversations that page through history, send text and post embeds with replies and reactions. Groups can be created and managed with members, invite links and join requests; conversations expose settings with lock/unlock where allowed, mark-all-read, mute/unmute, leave, chat reporting and actor blocking, and separate chat notification preferences. Chat calls use the chat-service proxy and thirty-six narrow `rpc:chat.bsky.convo.*`, `rpc:chat.bsky.group.*` and `rpc:chat.bsky.notification.*` scopes; message content is not stored by Balla or logged, and older sessions need to sign in again for chat. Saved and pinned custom feeds have
 their own Home tabs and a Feeds management screen, and Following stays first and
 chronological. Reply trees render nested branches
 under their parents, with
