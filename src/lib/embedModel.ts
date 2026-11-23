@@ -1,8 +1,15 @@
 /**
  * Framework-free rules for reading the view shapes Balla renders. Kept free of
  * React Native imports so the honest fallbacks can be tested under Node.
- * Shapes follow app.bsky.embed.record and app.bsky.embed.external.
+ * Shapes follow app.bsky.embed.record and app.bsky.embed.external. An external
+ * view may also carry the AppView's published Standard.site enhancement; only
+ * those structured fields are passed on, never a scraped page description.
  */
+
+import {
+  standardSiteFromEmbed,
+  type StandardSiteCard,
+} from './standardSiteModel.ts';
 
 export type QuoteView =
   | {
@@ -30,6 +37,8 @@ export type ExternalView = {
   description: string;
   thumb?: string;
   host: string;
+  /** Published Standard.site enhancement, absent on an ordinary link card. */
+  standardSite?: StandardSiteCard;
 };
 
 /** The AppView's published video view, not a guessed record shape. */
@@ -113,6 +122,9 @@ export function externalFromEmbed(embed: any): ExternalView | null {
   if (!endsWith(typeOf(candidate), 'app.bsky.embed.external#view')) return null;
   const external = candidate.external;
   if (!external || typeof external.uri !== 'string') return null;
+  // A plain card stays plain. Only the AppView's published enhancement carries
+  // the structured record refs that can open an honest in-app reader.
+  const standardSite = standardSiteFromEmbed(candidate) ?? undefined;
   return {
     uri: external.uri,
     title:
@@ -125,6 +137,7 @@ export function externalFromEmbed(embed: any): ExternalView | null {
       ? { thumb: external.thumb }
       : {}),
     host: externalHost(external.uri),
+    ...(standardSite ? { standardSite } : {}),
   };
 }
 

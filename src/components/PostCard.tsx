@@ -13,7 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { agent } from '../lib/agent';
 import { describeFailure, withOptimisticRollback } from '../lib/reliability';
-import { timeAgo } from '../lib/time';
+import { formatDate, timeAgo } from '../lib/time';
 import { CARD_RADIUS, cardShadow, useFontScale, usePalette } from '../theme';
 import { usePreferences } from '../lib/preferences';
 import { touchTargetStyle } from '../lib/accessibilityModel';
@@ -811,12 +811,28 @@ function QuoteCard({
 /** External cards show only the metadata Bluesky returned, never invented copy. */
 function LinkCard({ card }: { card: ExternalView }) {
   const p = usePalette();
+  const font = useFontScale();
+  const navigation = useNavigation<any>();
+  const site = card.standardSite;
+  const meta = site
+    ? [
+        site.authorHandle || site.authorName || site.publicationName,
+        site.readingTime ? `${site.readingTime} min read` : null,
+        site.createdAt ? formatDate(site.createdAt) : null,
+      ].filter(Boolean)
+    : [];
   return (
     <Pressable
-      onPress={() => void openExternalUrl(card.uri).catch(() => {})}
-      accessibilityRole="link"
-      accessibilityLabel={`Open ${card.title} on ${card.host}`}
-      accessibilityHint="Opens this link in your browser"
+      onPress={() =>
+        site
+          ? navigation.navigate('StandardSite', { uri: site.documentUri })
+          : void openExternalUrl(card.uri).catch(() => {})
+      }
+      accessibilityRole={site ? 'button' : 'link'}
+      accessibilityLabel={
+        site ? `Read ${card.title} from ${site.publicationName} in Balla` : `Open ${card.title} on ${card.host}`
+      }
+      accessibilityHint={site ? 'Opens the article in Balla' : 'Opens this link in your browser'}
       style={({ pressed }) => [
         styles.embedCard,
         {
@@ -840,12 +856,42 @@ function LinkCard({ card }: { card: ExternalView }) {
           accessibilityLabel={`Preview image for ${card.title}`}
         />
       ) : null}
-      <Text
-        numberOfLines={1}
-        style={{ color: p.secondary, fontSize: 11, marginTop: card.thumb ? 8 : 0 }}
-      >
-        {card.host}
-      </Text>
+      {site ? (
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            marginTop: card.thumb ? 8 : 0,
+          }}
+        >
+          {site.publicationIcon ? (
+            <Image
+              source={{ uri: site.publicationIcon }}
+              style={{ width: 20, height: 20, borderRadius: 4 }}
+              accessible
+              accessibilityLabel={`${site.publicationName} icon`}
+            />
+          ) : null}
+          <Text
+            numberOfLines={1}
+            style={{
+              color: p.secondary,
+              fontSize: font(11),
+              marginLeft: site.publicationIcon ? 6 : 0,
+              flex: 1,
+            }}
+          >
+            {site.publicationName}
+          </Text>
+        </View>
+      ) : (
+        <Text
+          numberOfLines={1}
+          style={{ color: p.secondary, fontSize: 11, marginTop: card.thumb ? 8 : 0 }}
+        >
+          {card.host}
+        </Text>
+      )}
       <Text
         numberOfLines={2}
         style={{ color: p.text, fontSize: 15, fontWeight: '700', marginTop: 2 }}
@@ -858,6 +904,19 @@ function LinkCard({ card }: { card: ExternalView }) {
           style={{ color: p.secondary, fontSize: 13, lineHeight: 18, marginTop: 2 }}
         >
           {card.description}
+        </Text>
+      ) : null}
+      {site && meta.length ? (
+        <Text
+          numberOfLines={1}
+          style={{ color: p.secondary, fontSize: font(11), marginTop: 6 }}
+        >
+          {meta.join(' · ')}
+        </Text>
+      ) : null}
+      {site ? (
+        <Text style={{ color: p.accent, fontSize: font(11), fontWeight: '700', marginTop: 4 }}>
+          Read in Balla
         </Text>
       ) : null}
     </Pressable>

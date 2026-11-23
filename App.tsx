@@ -24,6 +24,7 @@ import { NotificationsScreen } from './src/screens/NotificationsScreen';
 import { BookmarksScreen } from './src/screens/BookmarksScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ThreadScreen } from './src/screens/ThreadScreen';
+import { StandardSiteScreen } from './src/screens/StandardSiteScreen';
 import { ComposeScreen } from './src/screens/ComposeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AdvancedScreen } from './src/screens/AdvancedScreen';
@@ -389,6 +390,7 @@ export default function App() {
                             options={{ headerShown: false }}
                           />
                           <Stack.Screen name="Thread" component={ThreadScreen} />
+                          <Stack.Screen name="StandardSite" component={StandardSiteScreen} />
                           <Stack.Screen
                             name="InteractionSettings"
                             component={InteractionSettingsScreen}
