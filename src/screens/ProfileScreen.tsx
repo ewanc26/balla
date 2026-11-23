@@ -1382,17 +1382,17 @@ function Stat({
       <Text style={{ color: p.text, fontWeight: '700' }}>{value}</Text> {label}
     </Text>
   );
-  if (!onPress) return text;
+  // All three stats share one 44pt centred frame. A bare Text sits higher in
+  // the row than its Pressable neighbours, which reads as misaligned counts.
+  if (!onPress) {
+    return <View style={styles.statFrame}>{text}</View>;
+  }
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`View ${value} ${label}`}
-      style={({ pressed }) => ({
-        minHeight: 44,
-        justifyContent: 'center',
-        opacity: pressed ? 0.6 : 1,
-      })}
+      style={({ pressed }) => [styles.statFrame, { opacity: pressed ? 0.6 : 1 }]}
     >
       {text}
     </Pressable>
@@ -1572,5 +1572,9 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 4,
     backgroundColor: '#E4E6EB',
+  },
+  statFrame: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
 });
