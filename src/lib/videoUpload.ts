@@ -14,6 +14,14 @@
 import { AppBskyVideoDefs } from '@atproto/api';
 import { agent } from './agent';
 import { describeFailure } from './reliability';
+import { serviceStatusDetail } from './servicesProbe.ts';
+import {
+  VIDEO_LIMITS_LXM,
+  VIDEO_SERVICE_DID,
+  VIDEO_SERVICE_ENDPOINT,
+  normaliseVideoQuota,
+  videoQuotaProblem,
+} from './videoServiceProbe.ts';
 import {
   videoJobDone,
   videoJobFailed,
@@ -21,9 +29,6 @@ import {
   type ComposerVideo,
   type VideoJobStatus,
 } from './videoModel.ts';
-
-const VIDEO_SERVICE = 'https://video.bsky.app';
-const VIDEO_SERVICE_DID = 'did:web:video.bsky.app';
 const POLL_MS = 2000;
 const MAX_POLLS = 150;
 const SERVICE_AUTH_TTL_SECONDS = 30 * 60;
@@ -55,7 +60,7 @@ function wait(ms: number, signal: AbortSignal): Promise<void> {
 }
 
 function serviceUrl(method: string, params?: Record<string, string>): string {
-  const url = new URL(`${VIDEO_SERVICE}/xrpc/${method}`);
+  const url = new URL(`${VIDEO_SERVICE_ENDPOINT}/xrpc/${method}`);
   for (const [key, value] of Object.entries(params || {})) {
     url.searchParams.set(key, value);
   }
@@ -184,33 +189,26 @@ export async function uploadComposerVideo({
 }): Promise<{ blob: unknown }> {
   onStatus(null);
 
-  const limitsToken = await serviceToken(
-    VIDEO_SERVICE_DID,
-    'app.bsky.video.getUploadLimits',
-    signal
-  );
+  const limitsToken = await serviceToken(VIDEO_SERVICE_DID, VIDEO_LIMITS_LXM, signal);
   const limitsResponse = await fetchJson(
-    serviceUrl('app.bsky.video.getUploadLimits'),
+    serviceUrl(VIDEO_LIMITS_LXM),
     { headers: { Authorization: `Bearer ${limitsToken}` } },
     signal
   );
   if (!limitsResponse.ok) {
     throw new VideoUploadError(
-      await readError(limitsResponse, 'Bluesky could not check your video limit.')
+      `Bluesky’s video service could not check your quota. ${serviceStatusDetail(limitsResponse.status)}`
     );
   }
-  const limits = (await limitsResponse.json()) as {
-    canUpload?: boolean;
-    message?: string;
-    error?: string;
-  };
-  if (limits.canUpload === false) {
+  const limits = await limitsResponse.json().catch(() => null);
+  const quota = normaliseVideoQuota(limits);
+  if (!quota) {
     throw new VideoUploadError(
-      limits.message ||
-        limits.error ||
-        'Bluesky is not accepting video uploads for this account just now.'
+      'Bluesky’s video service returned no usable canUpload quota.'
     );
   }
+  const quotaProblem = videoQuotaProblem(video.byteSize, quota);
+  if (quotaProblem) throw new VideoUploadError(quotaProblem);
 
   const identity = await accountIdentity(signal);
   const uploadToken = await serviceToken(

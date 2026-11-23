@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.36.0
+
+- **Advanced → Media now reads the video service quota live** (#102, partial). The new Video service section shows the DID and endpoint fixed in this sign-in's OAuth grant and offers **Check video quota**. That button mints a short-lived service token for `app.bsky.video.getUploadLimits`, then displays only the lexicon's `canUpload`, `remainingDailyVideos` and `remainingDailyBytes`. Nothing is claimed before the service answers; a failed or CORS-blocked read is reported as unreadable, never as zero.
+- The composer upload path uses the same quota model. If the service refuses uploads, has no daily videos left, or publishes fewer remaining bytes than the chosen file, Balla stops before sending any video bytes. The local MP4/GIF, duration and caption checks stay separate; daily limits come from the service, not a hardcoded Bluesky figure.
+- Provider prose is never read, logged or stored in this path: failures are classified from HTTP status and the structured response shape. The endpoint and audience remain grant-bound, so **no fake side-car field** is offered; changing them needs reauthorisation. The section links to AT Protocol's video-handling guide and Streamplace as an alternative host. Full endpoint switching, PDS-advertised side-cars and non-Bluesky playback remain open in #102.
+- No new OAuth scope or dependency; the scope count remains 111.
+
 ## 0.35.0
 
 - **Advanced → Moderation now measures third-party labelers directly** (#95). Each subscribed service still shows whether the AppView lists it, but that is labelled as exactly that; a separate line now performs a real public-endpoint check: it resolves the labeler DID, reads its `#atproto_labeler` endpoint and runs one unauthenticated `com.atproto.label.queryLabels` canary query. Results show HTTP status and latency, or say plainly that the endpoint could not be reached from this device.

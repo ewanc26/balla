@@ -20,6 +20,8 @@ const identityScreen = read('../src/screens/IdentitySettingsScreen.tsx');
 const profileScreen = read('../src/screens/ProfileScreen.tsx');
 const chatServiceScreen = read('../src/screens/ChatServiceScreen.tsx');
 const labelerProbe = read('../src/lib/labelerProbe.ts');
+const videoServiceProbe = read('../src/lib/videoServiceProbe.ts');
+const videoUpload = read('../src/lib/videoUpload.ts');
 
 test('Advanced is a real stack screen with a stable web path', () => {
   assert.match(app, /<Stack\.Screen name="Advanced" component=\{AdvancedScreen\} \/>/);
@@ -67,18 +69,19 @@ test('labeler reachability is a real public check, separate from AppView listing
   assert.doesNotMatch(labelerProbe, /authorization/);
 });
 
-test('release notes and version describe the direct labeler check', () => {
+test('release notes and version describe the live video quota check', () => {
   const pkg = JSON.parse(read('../package.json'));
   const changelog = read('../CHANGELOG.md');
-  assert.equal(pkg.version, '0.35.0');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.35.0');
-  assert.match(changelog, /## 0\.35\.0/);
-  assert.match(changelog, /public-endpoint check/);
-  assert.match(changelog, /queue lag or a service-side mute state/);
+  assert.equal(pkg.version, '0.36.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.36.0');
+  assert.match(changelog, /## 0\.36\.0/);
+  assert.match(changelog, /getUploadLimits/);
+  assert.match(changelog, /grant-bound/);
+  assert.match(changelog, /no fake side-car field|No fake side-car field/);
   assert.match(changelog, /scope count remains 111/);
 });
 
-test('Advanced exposes a working Media origin screen with a real cache control', () => {
+test('Advanced exposes a working Media origin screen with real cache and quota controls', () => {
   assert.match(app, /<Stack\.Screen name="MediaOrigin" component=\{MediaOriginScreen\} \/>/);
   assert.equal(WEB_LINKING_CONFIG.screens.MediaOrigin, 'settings/advanced/media');
   assert.match(advanced, /navigation\.navigate\('MediaOrigin'\)/);
@@ -86,7 +89,29 @@ test('Advanced exposes a working Media origin screen with a real cache control',
   assert.match(mediaOrigin, /clearBlobCache\(\)/);
   assert.match(mediaOrigin, /formatBytes\(info\.bytes\)/);
   assert.match(mediaOrigin, /formatBytes\(MAX_BLOB_CACHE_BYTES\)/);
+  assert.match(mediaOrigin, /probeVideoQuota\(\{/);
+  assert.match(mediaOrigin, /getServiceAuth\(\{/);
+  assert.match(mediaOrigin, /Check video quota/);
+  assert.match(mediaOrigin, /videoQuotaText\(videoQuota\)/);
+  assert.match(mediaOrigin, /Changing them needs a new grant/);
   assert.ok(!/onPress=\{\(\) => \{\}\}/.test(mediaOrigin));
+});
+
+test('video quota is grant-bound, structured and shared with the upload pre-flight', () => {
+  assert.match(videoServiceProbe, /app\.bsky\.video\.getUploadLimits/);
+  assert.match(videoServiceProbe, /did:web:video\.bsky\.app/);
+  assert.match(videoServiceProbe, /serviceStatusDetail/);
+  assert.match(videoServiceProbe, /normaliseVideoQuota/);
+  assert.match(videoServiceProbe, /\.canUpload/);
+  assert.match(videoServiceProbe, /remainingDailyVideos/);
+  assert.match(videoServiceProbe, /remainingDailyBytes/);
+  assert.doesNotMatch(videoServiceProbe, /\.message\b/);
+  assert.doesNotMatch(videoServiceProbe, /AsyncStorage/);
+  assert.match(videoUpload, /normaliseVideoQuota\(limits\)/);
+  assert.match(videoUpload, /videoQuotaProblem\(video\.byteSize, quota\)/);
+  assert.match(videoUpload, /VIDEO_LIMITS_LXM/);
+  assert.doesNotMatch(videoUpload, /limits\.message/);
+  assert.doesNotMatch(videoUpload, /const VIDEO_SERVICE =/);
 });
 
 test('post images retry from the PDS through one shared image seam', () => {
