@@ -231,6 +231,12 @@ export function AccountSettingsScreen({ navigation }: { navigation: any }) {
           detail="What Balla can delete, and what stays on your PDS."
           onPress={() => navigation.navigate('AccountLifecycle')}
         />
+        <SettingLinkRow
+          icon="swap-horizontal-outline"
+          label="Move to another PDS"
+          detail="Read-only pre-flight and verified migration tools; Balla cannot perform the move."
+          onPress={() => navigation.navigate('MigrationPreflight')}
+        />
       </SettingSection>
 
       <SettingNote>

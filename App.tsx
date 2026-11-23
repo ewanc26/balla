@@ -39,6 +39,7 @@ import { ContentFiltersScreen } from './src/screens/ContentFiltersScreen';
 import { ContentAndMediaSettingsScreen } from './src/screens/ContentAndMediaSettingsScreen';
 import { AccountLifecycleScreen } from './src/screens/AccountLifecycleScreen';
 import { AccountSettingsScreen } from './src/screens/AccountSettingsScreen';
+import { MigrationPreflightScreen } from './src/screens/MigrationPreflightScreen';
 import { PrivacySecurityScreen } from './src/screens/PrivacySecurityScreen';
 import { ActivityPrivacyScreen } from './src/screens/ActivityPrivacyScreen';
 import { SessionSecurityScreen } from './src/screens/SessionSecurityScreen';
@@ -436,6 +437,7 @@ export default function App() {
                           <Stack.Screen name="ContentAndMediaSettings" component={ContentAndMediaSettingsScreen} />
                           <Stack.Screen name="AccountLifecycle" component={AccountLifecycleScreen} />
                           <Stack.Screen name="AccountSettings" component={AccountSettingsScreen} />
+                          <Stack.Screen name="MigrationPreflight" component={MigrationPreflightScreen} />
                           <Stack.Screen name="PrivacySecurity" component={PrivacySecurityScreen} />
                           <Stack.Screen name="ActivityPrivacy" component={ActivityPrivacyScreen} />
                           <Stack.Screen name="SessionSecurity" component={SessionSecurityScreen} />
