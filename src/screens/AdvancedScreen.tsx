@@ -100,6 +100,12 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
 
       <Section title="Account">
         <Row
+          icon="person-check-outline"
+          label="Account pre-flight"
+          detail="Resolve a handle or DID and check its PDS before sign-in"
+          onPress={() => navigation.navigate('AccountPreflight')}
+        />
+        <Row
           icon="server-outline"
           label="Hosting"
           detail="Account PDS facts and a read-only host compatibility check"
