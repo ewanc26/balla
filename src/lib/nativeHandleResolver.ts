@@ -5,7 +5,8 @@ import {
   type ResolveHandleOptions,
   type ResolvedHandle,
 } from '@atproto/oauth-client-expo';
-import { didFromWellKnown, wellKnownUrl } from './hostingModel';
+import { getHandleResolverEndpoint } from './servicesConfig.ts';
+import { didFromWellKnown, wellKnownUrl } from './hostingModel.ts';
 
 /**
  * Protocol-native handle resolution for sign-in. The AT Protocol resolves a
@@ -15,9 +16,15 @@ import { didFromWellKnown, wellKnownUrl } from './hostingModel';
  * the configured XRPC resolver for handles published only through DNS or a
  * directory. No new scope or dependency: these are public, unauthenticated
  * reads and the resolver classes ship with the installed OAuth client.
+ *
+ * The fallback is created per resolution from the persisted endpoint, so a
+ * change in Advanced → Services takes effect on the very next sign-in without
+ * a restart and without touching a signed-in OAuth session.
  */
+export type HandleResolverFactory = () => Promise<HandleResolver>;
+
 export class NativeFirstHandleResolver implements HandleResolver {
-  constructor(private readonly fallback: HandleResolver) {}
+  constructor(private readonly fallback: HandleResolverFactory) {}
 
   async resolve(handle: string, options?: ResolveHandleOptions): Promise<ResolvedHandle> {
     const url = wellKnownUrl(handle);
@@ -43,11 +50,15 @@ export class NativeFirstHandleResolver implements HandleResolver {
         // let the configured resolver try its own strategies.
       }
     }
-    return this.fallback.resolve(handle, options);
+    const resolver = await this.fallback();
+    return resolver.resolve(handle, options);
   }
 }
 
-/** Compose the native-first resolver over the existing XRPC fallback. */
+/** Compose the native-first resolver over the configurable XRPC fallback. */
 export function createNativeFirstHandleResolver(service: string): HandleResolver {
-  return new NativeFirstHandleResolver(new XrpcHandleResolver(service));
+  return new NativeFirstHandleResolver(async () => {
+    const endpoint = await getHandleResolverEndpoint(service);
+    return new XrpcHandleResolver(endpoint);
+  });
 }

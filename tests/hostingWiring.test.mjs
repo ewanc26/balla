@@ -21,7 +21,8 @@ test('Advanced exposes a registered Hosting screen with a stable web path', () =
 
 test('the OAuth client resolves handles from the host first, with an XRPC fallback', () => {
   assert.match(agent, /createNativeFirstHandleResolver\(DEFAULT_SERVICE\)/);
-  assert.match(resolver, /new XrpcHandleResolver\(service\)/);
+  assert.match(resolver, /new XrpcHandleResolver\(endpoint\)/);
+  assert.match(resolver, /getHandleResolverEndpoint\(service\)/);
   assert.match(resolver, /wellKnownUrl\(handle\)/);
   assert.match(resolver, /redirect: 'error'/);
   assert.match(resolver, /isResolvedHandle\(did\)/);
@@ -29,7 +30,8 @@ test('the OAuth client resolves handles from the host first, with an XRPC fallba
   // back rather than report a successful "not found" resolution.
   assert.match(resolver, /did !== null && isResolvedHandle\(did\)/);
   assert.match(resolver, /options\?\.signal\?\.aborted\) throw err/);
-  assert.match(resolver, /return this\.fallback\.resolve\(handle, options\)/);
+  assert.match(resolver, /const resolver = await this\.fallback\(\)/);
+  assert.match(resolver, /return resolver\.resolve\(handle, options\)/);
   // No new dependency or scope: the resolver ships with the OAuth client.
   assert.match(resolver, /from '@atproto\/oauth-client-expo'/);
 });
