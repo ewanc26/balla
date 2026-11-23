@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.54.0
+
+- **The Supporters card is the app's one support ask (#163), and creator attribution now covers every site footer (#162).** About shows a static card with one sentence, a 44pt **Support Balla** button and the shared `CreatorByline`. `SUPPORT_URL` lives once beside the service hosts and `CREATOR` derives the author's name, handle and links from it; no other source file repeats the URL. Settings no longer carries a second support row, and no feed, thread, profile, notification or chat surface links the page. Every site footer now carries the same byline and supporters block beside an AGPL-3.0 licence line.
+- **Home gains a device-local 30-day snooze (#151).** The post menu and profile menu offer **Snooze for 30 days** beside mute and block; an active snooze becomes **End snooze** with an honest countdown (`Snoozed, 23 days left`). The record is keyed by DID and stored only in AsyncStorage: no PDS write, no XRPC call and no follow to another device. Following feed assembly skips the author's posts and reposts they performed, leaves order untouched and changes no other surface. Following preferences lists every active snooze with its remaining days and ends any of them in one tap.
+- No new OAuth scope or dependency; the scope count remains 111. CI's full gate passed: deterministic tests, typecheck, Expo dependency drift, advisory audit, icon sync and site build.
+
 ## 0.53.0
 
 - **Image and video fallbacks now honour the configured did:plc directory (#97, partial).** When a post image or video has to be read straight from its author's PDS, Balla first resolves the author's DID document. That read still called the agent's default Bluesky `resolveDid` endpoint, so a saved directory host was ignored on the media path even after v0.50.0–v0.52.0 fixed the other public reads.
