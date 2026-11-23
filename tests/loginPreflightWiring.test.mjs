@@ -44,9 +44,9 @@ test('the login check shows the advertised capability count without a fake contr
 test('the release documents the login check as partial #100', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.58.0');
-  assert.equal(appJson.expo.version, '0.58.0');
-  assert.match(changelog, /^## 0\.58\.0$/m);
+  assert.equal(pkg.version, '0.59.0');
+  assert.equal(appJson.expo.version, '0.59.0');
+  assert.match(changelog, /^## 0\.59\.0$/m);
   assert.match(changelog, /#100, partial/);
   assert.match(changelog, /login screen/);
   assert.match(changelog, /scope count remains 111/);
