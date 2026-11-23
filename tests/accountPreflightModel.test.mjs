@@ -1,6 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { probeAccount, ACCOUNT_PREFLIGHT_COPY } from '../src/lib/accountPreflight.ts';
+import {
+  probeAccount,
+  ACCOUNT_PREFLIGHT_COPY,
+  OAUTH_CAPABILITY_LABELS,
+} from '../src/lib/accountPreflight.ts';
 
 const DID = 'did:plc:3434wfandtk52wlqq4u5g72a';
 const HANDLE = 'selfhosted.social';
@@ -21,6 +25,15 @@ const authorizationServer = {
   issuer: PDS,
   authorization_endpoint: `${PDS}/oauth/authorize`,
   token_endpoint: `${PDS}/oauth/token`,
+  response_types_supported: ['code'],
+  grant_types_supported: ['authorization_code', 'refresh_token'],
+  code_challenge_methods_supported: ['S256'],
+  token_endpoint_auth_methods_supported: ['none', 'private_key_jwt'],
+  scopes_supported: ['atproto'],
+  authorization_response_iss_parameter_supported: true,
+  pushed_authorization_request_endpoint: `${PDS}/oauth/par`,
+  dpop_signing_alg_values_supported: ['ES256'],
+  client_id_metadata_document_supported: true,
 };
 
 function harness(routes) {
@@ -129,4 +142,89 @@ test('a host without an account is rejected before any network call', async () =
   assert.equal(result.state, 'invalid');
   assert.match(result.detail, /Check a host/);
   assert.equal(calls.length, 0);
+});
+
+test('the copy explains the published capability fields without overclaiming', () => {
+  assert.match(ACCOUNT_PREFLIGHT_COPY.capabilities, /S256 PKCE/);
+  assert.match(ACCOUNT_PREFLIGHT_COPY.capabilities, /PAR/);
+  assert.match(ACCOUNT_PREFLIGHT_COPY.capabilities, /ES256 DPoP/);
+  assert.match(ACCOUNT_PREFLIGHT_COPY.capabilities, /advertised facts, not a promise/);
+});
+
+test('a server advertising every required field reports the full capability set', async () => {
+  const { fetchImpl } = harness({
+    [WELL_KNOWN]: { body: DID },
+    [DID_DOC]: { body: JSON.stringify(didDocument) },
+    [DESCRIBE]: { body: JSON.stringify(serverDescription) },
+    [PROTECTED]: { body: JSON.stringify(protectedResource) },
+    [AS_METADATA]: { body: JSON.stringify(authorizationServer) },
+  });
+  const result = await probeAccount(HANDLE, { fetchImpl });
+
+  assert.equal(result.state, 'ok');
+  assert.deepEqual(result.oauthCapabilities.missing, []);
+  assert.equal(result.oauthCapabilities.supported.length, 10);
+  for (const key of result.oauthCapabilities.supported) {
+    assert.ok(OAUTH_CAPABILITY_LABELS[key], `unlabelled capability: ${key}`);
+  }
+});
+
+test('missing required fields produce oauth-incompatible with fixed labels only', async () => {
+  const weakServer = {
+    ...authorizationServer,
+    grant_types_supported: ['authorization_code'],
+    code_challenge_methods_supported: ['plain'],
+    token_endpoint_auth_methods_supported: ['client_secret_basic'],
+    dpop_signing_alg_values_supported: ['RS256'],
+    client_id_metadata_document_supported: false,
+    message: 'private provider detail',
+  };
+  const { fetchImpl } = harness({
+    [DID_DOC]: { body: JSON.stringify(didDocument) },
+    [DESCRIBE]: { body: JSON.stringify(serverDescription) },
+    [PROTECTED]: { body: JSON.stringify(protectedResource) },
+    [AS_METADATA]: { body: JSON.stringify(weakServer) },
+  });
+  const result = await probeAccount(DID, { fetchImpl });
+
+  assert.equal(result.state, 'oauth-incompatible');
+  assert.deepEqual(result.oauthCapabilities.missing, [
+    'refresh-grant',
+    's256-pkce',
+    'public-client',
+    'dpop-es256',
+    'client-metadata-document',
+  ]);
+  assert.match(result.detail, /refresh_token grant/);
+  assert.match(result.detail, /S256 PKCE/);
+  assert.ok(!result.detail.includes('private provider detail'));
+  assert.ok(!JSON.stringify(result).includes('private provider detail'));
+});
+
+test('the PAR hint is not required when the pushed authorization endpoint is published', async () => {
+  const noHint = { ...authorizationServer, require_pushed_authorization_requests: false };
+  const { fetchImpl } = harness({
+    [DID_DOC]: { body: JSON.stringify(didDocument) },
+    [DESCRIBE]: { body: JSON.stringify(serverDescription) },
+    [PROTECTED]: { body: JSON.stringify(protectedResource) },
+    [AS_METADATA]: { body: JSON.stringify(noHint) },
+  });
+  const result = await probeAccount(DID, { fetchImpl });
+
+  assert.equal(result.state, 'ok');
+  assert.ok(!result.oauthCapabilities.missing.includes('pushed-auth-endpoint'));
+});
+
+test('capabilities are not reported before OAuth metadata is read', async () => {
+  const noOauth = harness({
+    [DID_DOC]: { body: JSON.stringify(didDocument) },
+    [DESCRIBE]: { body: JSON.stringify(serverDescription) },
+    [PROTECTED]: { body: '{}' },
+  });
+  const noOauthResult = await probeAccount(DID, { fetchImpl: noOauth.fetchImpl });
+  assert.equal(noOauthResult.oauthCapabilities, null);
+
+  const missingPds = harness({ [DID_DOC]: { body: JSON.stringify({ service: [] }) } });
+  const missingPdsResult = await probeAccount(DID, { fetchImpl: missingPds.fetchImpl });
+  assert.equal(missingPdsResult.oauthCapabilities, null);
 });

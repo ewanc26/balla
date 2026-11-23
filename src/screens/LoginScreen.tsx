@@ -13,6 +13,7 @@ import { DEFAULT_SERVICE, login } from '../lib/agent';
 import {
   ACCOUNT_PREFLIGHT_COPY,
   ACCOUNT_PREFLIGHT_STATE_LABELS,
+  OAUTH_CAPABILITY_LABELS,
   probeAccount,
   type AccountPreflightResult,
 } from '../lib/accountPreflight.ts';
@@ -79,6 +80,7 @@ export function LoginScreen({
         pds: null,
         authorizationServer: null,
         facts: null,
+        oauthCapabilities: null,
         detail: 'The public check could not complete on this device.',
       });
     } finally {
@@ -261,6 +263,20 @@ export function LoginScreen({
               <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19 }}>
                 Authorization server: {checkResult.authorizationServer ?? 'Not available'}
               </Text>
+              {checkResult.oauthCapabilities ? (
+                <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19 }}>
+                  OAuth capabilities:{' '}
+                  {checkResult.oauthCapabilities.supported.length} of{' '}
+                  {checkResult.oauthCapabilities.supported.length +
+                    checkResult.oauthCapabilities.missing.length}{' '}
+                  advertised
+                  {checkResult.oauthCapabilities.missing.length
+                    ? ` — missing ${checkResult.oauthCapabilities.missing
+                        .map((key) => OAUTH_CAPABILITY_LABELS[key])
+                        .join(', ')}`
+                    : ''}
+                </Text>
+              ) : null}
             </View>
           ) : null}
 

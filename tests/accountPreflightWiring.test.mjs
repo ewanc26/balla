@@ -30,6 +30,20 @@ test('the screen runs the real public check with the saved resolver and no inert
   assert.doesNotMatch(screen, /SettingSwitch|SettingChoice|secureTextEntry|onPress=\{\(\) => \{\}\}/);
 });
 
+test('the screen shows the published OAuth capability count and any missing labels', () => {
+  assert.match(screen, /OAUTH_CAPABILITY_LABELS/);
+  assert.match(screen, /result\.oauthCapabilities\.supported\.length/);
+  assert.match(screen, /result\.oauthCapabilities\.missing/);
+  assert.match(screen, /advertised/);
+  assert.match(model, /export const OAUTH_CAPABILITY_LABELS/);
+  assert.match(model, /classifyOAuthCapabilities\(metadata\)/);
+  assert.match(model, /oauth-incompatible/);
+  assert.match(model, /authorization_response_iss_parameter_supported === true/);
+  assert.match(model, /pushed_authorization_request_endpoint/);
+  assert.match(model, /dpop_signing_alg_values_supported\)\.includes\('ES256'\)/);
+  assert.doesNotMatch(model, /require_pushed_authorization_requests === true/);
+});
+
 test('the pre-flight uses public identity, PDS and OAuth reads only', () => {
   assert.match(model, /wellKnownUrl\(/);
   assert.match(model, /com\.atproto\.identity\.resolveHandle/);
@@ -55,13 +69,13 @@ test('no OAuth scope, dependency or message-text path was added', () => {
 test('release notes and the compliance matrix describe the partial check', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.44.0');
-  assert.equal(appJson.expo.version, '0.44.0');
+  assert.equal(pkg.version, '0.45.0');
+  assert.equal(appJson.expo.version, '0.45.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.44\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.45\.0<\/string>/);
   }
-  assert.match(changelog, /^## 0\.44\.0$/m);
+  assert.match(changelog, /^## 0\.45\.0$/m);
   assert.match(changelog, /#100, partial/);
   assert.match(changelog, /not a login/i);
   assert.match(changelog, /scope count remains 111/);

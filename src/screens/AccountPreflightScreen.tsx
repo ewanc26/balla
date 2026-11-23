@@ -13,6 +13,7 @@ import { getHandleResolverEndpoint } from '../lib/servicesConfig';
 import {
   ACCOUNT_PREFLIGHT_COPY,
   ACCOUNT_PREFLIGHT_STATE_LABELS,
+  OAUTH_CAPABILITY_LABELS,
   probeAccount,
   type AccountPreflightResult,
 } from '../lib/accountPreflight.ts';
@@ -89,6 +90,24 @@ export function AccountPreflightScreen() {
               label="Authorization server"
               value={result.authorizationServer ?? 'Not available'}
             />
+            {result.oauthCapabilities ? (
+              <View>
+                <SettingValueRow
+                  label="OAuth capabilities"
+                  value={`${result.oauthCapabilities.supported.length} of ${
+                    result.oauthCapabilities.supported.length + result.oauthCapabilities.missing.length
+                  } advertised`}
+                />
+                {result.oauthCapabilities.missing.length ? (
+                  <SettingValueRow
+                    label="Not advertised"
+                    value={result.oauthCapabilities.missing
+                      .map((key) => OAUTH_CAPABILITY_LABELS[key])
+                      .join(', ')}
+                  />
+                ) : null}
+              </View>
+            ) : null}
           </View>
         ) : null}
       </SettingSection>
