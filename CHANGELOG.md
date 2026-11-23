@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.60.3
+
+- **Default infrastructure now follows Eurosky where Eurosky operates the role.** Fresh installs use `api.eurosky.network` as the AppView and `eurosky.social` as the fallback/signup PDS, while handle resolution, chat, video, the labeler and `plc.directory` keep their existing defaults. Existing grants are honoured by reading the AppView audience from the session's token scope. Advanced → Services and AppView name Eurosky-operated versus Bluesky-fallback roles and state that an AppView outage is reported as unavailable rather than marking the whole app offline. Scope count remains 112; no new dependency.
+- CI's full gate passed: deterministic tests (761), typecheck, Expo dependency drift, advisory audit, icon sync and site build.
+
 ## 0.60.2
 
 - **Reply context now appears on every feed card.** Profile author and likes feeds and list feeds keep `feedViewPost.reply.parent` while mapping posts, so their cards name the parent instead of falling back to a generic line. Custom feeds preserve it too, while search results, bookmarks and quote lists use **“Replying to an earlier post”** from `record.reply.parent`. Threads keep their existing Reply and ancestor labels and opt out. No new reads, writes, OAuth scopes or dependencies; the scope count remains 112.
