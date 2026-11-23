@@ -33,6 +33,7 @@ export const WEB_LINKING_CONFIG = {
       },
     },
     Thread: 'post/:uri',
+    Memories: 'memories',
     StandardSite: 'standard-site/:uri',
     InteractionSettings: 'post/:uri/interaction',
     VerificationSettings: 'settings/verification',

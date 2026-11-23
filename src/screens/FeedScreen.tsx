@@ -29,7 +29,10 @@ import { useSnoozedAccounts } from '../lib/snooze';
 import { buildRecentActivity } from '../lib/recentActivityModel';
 import { setRecentActivity } from '../lib/recentActivity';
 import { clearReplyPreviewCache } from '../lib/replyPreviewStore';
+import { useMemories } from '../lib/useMemories';
+import { isMemoriesDismissed, memoriesDateKey } from '../lib/memoriesModel';
 import { PostCard } from '../components/PostCard';
+import { MemoriesCard } from '../components/MemoriesCard';
 import { Avatar } from '../components/Avatar';
 import { FeedSwitcherSheet } from '../components/FeedSwitcherSheet';
 import {
@@ -45,7 +48,7 @@ export function FeedScreen() {
   const navigation = useNavigation<any>();
   const { profile: me } = useViewer();
   const { homeFeeds, generators, lists } = useFeeds();
-  const { preferences } = usePreferences();
+  const { preferences, dismissMemories } = usePreferences();
   const { feedFilters } = useViewPreferences();
   const snoozedAccounts = useSnoozedAccounts();
   const [activeFeed, setActiveFeed] = useState<string | null>(null);
@@ -65,6 +68,16 @@ export function FeedScreen() {
     ? homeFeeds.find((item) => item.value === activeFeed)
     : undefined;
   const activeIsList = activeSource?.type === 'list';
+  const memoriesDayKey = memoriesDateKey(new Date());
+  const memoriesPreference = me?.did
+    ? preferences.memories[me.did]
+    : undefined;
+  const memoriesEnabled = !!memoriesPreference?.enabled;
+  const memories = useMemories(me?.did, memoriesEnabled, memoriesDayKey);
+  const showMemories =
+    !activeFeed &&
+    !!memories?.items.length &&
+    !isMemoriesDismissed(memoriesPreference, memoriesDayKey);
 
   const load = useCallback(
     async (fresh: boolean) => {
@@ -389,6 +402,17 @@ export function FeedScreen() {
             </Text>
           </Pressable>
         </View>
+
+        {showMemories && memories ? (
+          <MemoriesCard
+            memories={memories}
+            onOpenThread={openThread}
+            onSeeAll={() => navigation.navigate('Memories')}
+            onDismiss={() => {
+              if (me?.did) dismissMemories(me.did, memories.dateKey);
+            }}
+          />
+        ) : null}
       </View>
     );
   }

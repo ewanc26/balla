@@ -11,6 +11,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setThemeChoice } from '../theme';
 import { normaliseLanguages } from './postOptions';
 import {
+  normaliseMemoriesPreferences,
+  withMemoriesDismissed,
+  withMemoriesEnabled,
+  type MemoriesPreferences,
+} from './memoriesModel';
+import {
   normaliseBlobOriginStrategy,
   type BlobOriginStrategy,
 } from './blobOriginModel';
@@ -54,6 +60,8 @@ export type AppPreferences = {
   showRecentActivity: boolean;
   /** Device-local media origin choice; "pds-first" reads blobs from the PDS. */
   blobOriginStrategy: BlobOriginStrategy;
+  /** Per-account, device-local On this day settings. Default is off. */
+  memories: MemoriesPreferences;
 };
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
@@ -71,6 +79,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   showMusicActivity: true,
   showRecentActivity: true,
   blobOriginStrategy: 'follow-url',
+  memories: {},
 };
 
 type PreferencesContextValue = {
@@ -89,6 +98,8 @@ type PreferencesContextValue = {
   setShowMusicActivity: (value: boolean) => void;
   setShowRecentActivity: (value: boolean) => void;
   setBlobOriginStrategy: (value: BlobOriginStrategy) => void;
+  setMemoriesEnabled: (did: string, value: boolean) => void;
+  dismissMemories: (did: string, dateKey: string) => void;
 };
 
 const PreferencesContext = createContext<PreferencesContextValue>({
@@ -107,6 +118,8 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   setShowMusicActivity: () => {},
   setShowRecentActivity: () => {},
   setBlobOriginStrategy: () => {},
+  setMemoriesEnabled: () => {},
+  dismissMemories: () => {},
 });
 
 function parseStored(value: string | null): AppPreferences {
@@ -147,6 +160,7 @@ function parseStored(value: string | null): AppPreferences {
           ? parsed.showRecentActivity
           : DEFAULT_PREFERENCES.showRecentActivity,
       blobOriginStrategy: normaliseBlobOriginStrategy(parsed?.blobOriginStrategy),
+      memories: normaliseMemoriesPreferences(parsed?.memories),
     };
   } catch {
     return DEFAULT_PREFERENCES;
@@ -251,6 +265,18 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     (value: BlobOriginStrategy) => update({ blobOriginStrategy: value }),
     [update]
   );
+  const setMemoriesEnabled = useCallback(
+    (did: string, value: boolean) =>
+      update({ memories: withMemoriesEnabled(prefsRef.current.memories, did, value) }),
+    [update]
+  );
+  const dismissMemories = useCallback(
+    (did: string, dateKey: string) =>
+      update({
+        memories: withMemoriesDismissed(prefsRef.current.memories, did, dateKey),
+      }),
+    [update]
+  );
 
   const value = useMemo(
     () => ({
@@ -269,6 +295,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setShowMusicActivity,
       setShowRecentActivity,
       setBlobOriginStrategy,
+      setMemoriesEnabled,
+      dismissMemories,
     }),
     [
       preferences,
@@ -286,6 +314,8 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setShowMusicActivity,
       setShowRecentActivity,
       setBlobOriginStrategy,
+      setMemoriesEnabled,
+      dismissMemories,
     ]
   );
 
