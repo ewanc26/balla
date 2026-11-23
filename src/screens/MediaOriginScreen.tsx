@@ -1,14 +1,17 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useState } from 'react';
 import { ScrollView } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
   SettingButton,
   SettingChoice,
+  SettingLinkRow,
   SettingNote,
   SettingSection,
   SettingValueRow,
   type ChoiceOption,
 } from '../components/SettingControls';
+import { agent } from '../lib/agent';
+import { openExternalUrl } from '../lib/openLink';
 import { usePreferences } from '../lib/preferences';
 import {
   blobCacheInfo,
@@ -16,8 +19,20 @@ import {
   subscribeBlobCache,
 } from '../lib/blobOrigin';
 import { formatBytes } from '../lib/imageBytes';
+import {
+  checkingVideoQuota,
+  idleVideoQuota,
+  probeVideoQuota,
+  videoQuotaText,
+  VIDEO_SERVICE_DID,
+  VIDEO_SERVICE_ENDPOINT,
+  type VideoQuotaProbe,
+} from '../lib/videoServiceProbe';
 import { MAX_BLOB_CACHE_BYTES, type BlobOriginStrategy } from '../lib/blobOriginModel';
 import { usePalette } from '../theme';
+
+const VIDEO_DOCS = 'https://atproto.com/guides/video-handling';
+const ALTERNATIVE_VIDEO = 'https://stream.place';
 
 const STRATEGIES: readonly ChoiceOption<BlobOriginStrategy>[] = [
   {
@@ -43,12 +58,28 @@ export function MediaOriginScreen() {
   const navigation = useNavigation();
   const { preferences, setBlobOriginStrategy } = usePreferences();
   const [info, setInfo] = useState(() => blobCacheInfo());
+  const [videoQuota, setVideoQuota] = useState<VideoQuotaProbe>(() => idleVideoQuota());
 
   useLayoutEffect(() => {
     navigation.setOptions({ title: 'Media origin' });
   }, [navigation]);
 
   useEffect(() => subscribeBlobCache(() => setInfo(blobCacheInfo())), []);
+
+  const checkVideoQuota = useCallback(async () => {
+    setVideoQuota(checkingVideoQuota());
+    const result = await probeVideoQuota({
+      serviceToken: async (aud, lxm) => {
+        const { data } = await agent.com.atproto.server.getServiceAuth({
+          aud,
+          lxm,
+          exp: Math.floor(Date.now() / 1000) + 300,
+        });
+        return data.token;
+      },
+    });
+    setVideoQuota(result);
+  }, []);
 
   return (
     <ScrollView
@@ -75,6 +106,42 @@ export function MediaOriginScreen() {
           disabled={info.entries === 0}
         />
       </SettingSection>
+
+      <SettingSection
+        title="Video service"
+        detail="The side-car named in this app's OAuth grant. Quota is read live from that service; it is not a local guess."
+      >
+        <SettingValueRow label="Service DID" value={VIDEO_SERVICE_DID} />
+        <SettingValueRow label="Endpoint" value={VIDEO_SERVICE_ENDPOINT} />
+        <SettingValueRow label="Quota" value={videoQuotaText(videoQuota)} />
+        <SettingButton
+          label="Check video quota"
+          onPress={() => void checkVideoQuota()}
+          busy={videoQuota.state === 'checking'}
+        />
+        <SettingLinkRow
+          icon="book-outline"
+          label="Video handling guide"
+          detail="Read how side-car services process AT Protocol video."
+          external
+          onPress={() => void openExternalUrl(VIDEO_DOCS)}
+        />
+        <SettingLinkRow
+          icon="play-circle-outline"
+          label="Alternative video hosts"
+          detail="Streamplace is an open-source AT Protocol video service."
+          external
+          onPress={() => void openExternalUrl(ALTERNATIVE_VIDEO)}
+        />
+      </SettingSection>
+
+      <SettingNote>
+        The video endpoint and audience are fixed when you authorise Balla.
+        Changing them needs a new grant, so Balla does not offer a settings field
+        that would only look configurable. MP4/GIF and caption limits remain
+        local checks; the daily quota above comes from the service. A failed or
+        CORS-blocked quota read is reported as unreadable, never as zero quota.
+      </SettingNote>
 
       <SettingNote>
         Blobs are content-addressed and served by the author’s personal data
