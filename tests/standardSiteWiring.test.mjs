@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { WEB_LINKING_CONFIG } from '../src/lib/webLinking.ts';
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -55,7 +55,11 @@ test('no new permission, dependency, dependency override or provider message tex
   const pkg = JSON.parse(read('../package.json'));
   assert.equal(pkg.version, '0.34.0');
   assert.equal(JSON.parse(read('../app.json')).expo.version, '0.34.0');
-  assert.match(read('../ios/Balla/Info.plist'), /<string>0\.34\.0<\/string>/);
+  // Native projects are generated locally and are not tracked in this repo.
+  const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
+  if (existsSync(plist)) {
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.34\.0<\/string>/);
+  }
   assert.deepEqual(pkg.overrides, { minimatch: '11.0.9', zod: '4.6.6' });
   assert.equal(metadata.scope.split(' ').filter(Boolean).length, 111);
   assert.doesNotMatch(model, /\.message\b/);
