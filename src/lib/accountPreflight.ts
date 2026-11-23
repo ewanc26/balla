@@ -26,9 +26,32 @@ export type AccountPreflightState =
   | 'no-pds'
   | 'incompatible'
   | 'no-oauth'
+  | 'oauth-incompatible'
   | 'ok';
 
 export type AccountPreflightSource = 'did' | 'well-known' | 'resolver';
+
+/**
+ * Fields atproto OAuth makes mandatory for a public client like Balla. The PAR
+ * *endpoint* is required; the optional `require_pushed_authorization_requests`
+ * hint is not, because a server may allow PAR without setting it.
+ */
+export type OAuthCapabilityKey =
+  | 'code-response'
+  | 'auth-code-grant'
+  | 'refresh-grant'
+  | 's256-pkce'
+  | 'public-client'
+  | 'atproto-scope'
+  | 'issuer-parameter'
+  | 'pushed-auth-endpoint'
+  | 'dpop-es256'
+  | 'client-metadata-document';
+
+export type OAuthCapabilityReport = {
+  supported: OAuthCapabilityKey[];
+  missing: OAuthCapabilityKey[];
+};
 
 export type AccountPreflightResult = {
   state: AccountPreflightState;
@@ -37,12 +60,29 @@ export type AccountPreflightResult = {
   pds: string | null;
   authorizationServer: string | null;
   facts: ServerFacts | null;
+  oauthCapabilities: OAuthCapabilityReport | null;
   detail: string;
+};
+
+/** Fixed labels for the public-client fields this build's OAuth flow uses. */
+export const OAUTH_CAPABILITY_LABELS: Record<OAuthCapabilityKey, string> = {
+  'code-response': 'code response type',
+  'auth-code-grant': 'authorization_code grant',
+  'refresh-grant': 'refresh_token grant',
+  's256-pkce': 'S256 PKCE',
+  'public-client': 'public client token authentication',
+  'atproto-scope': 'atproto scope',
+  'issuer-parameter': 'issuer response parameter',
+  'pushed-auth-endpoint': 'pushed authorization request endpoint',
+  'dpop-es256': 'ES256 DPoP signing',
+  'client-metadata-document': 'client_id metadata document support',
 };
 
 export const ACCOUNT_PREFLIGHT_COPY = {
   detail:
     'Reads public identity, server and OAuth metadata only. It does not sign you in, create an account, or guarantee that the provider’s approval page will succeed.',
+  capabilities:
+    'The authorization server’s published fields are checked against the capabilities Balla’s public OAuth client needs: code and refresh grants, S256 PKCE, public-client auth, the atproto scope, issuer responses, PAR, ES256 DPoP and client metadata documents. These are advertised facts, not a promise that sign-in will succeed.',
   limits:
     'A successful check does not grant any scope. AppView, chat and video audiences stay bound to the OAuth grant, so changing them still needs a new authorisation. Account reviews and sign-up approval belong to the host.',
 } as const;
@@ -54,6 +94,7 @@ export const ACCOUNT_PREFLIGHT_STATE_LABELS: Record<AccountPreflightState, strin
   'no-pds': 'No PDS advertised',
   incompatible: 'Not an AT Protocol PDS',
   'no-oauth': 'No usable OAuth metadata',
+  'oauth-incompatible': 'OAuth capabilities not advertised',
   ok: 'Public checks passed',
 };
 
@@ -72,6 +113,7 @@ function result(
     pds: null,
     authorizationServer: null,
     facts: null,
+    oauthCapabilities: null,
     detail,
     ...fields,
   };
@@ -125,6 +167,62 @@ function authorizationServerOk(payload: unknown, origin: string): boolean {
     typeof value.authorization_endpoint === 'string' &&
     typeof value.token_endpoint === 'string'
   );
+}
+
+const REQUIRED_OAUTH_CAPABILITIES: OAuthCapabilityKey[] = [
+  'code-response',
+  'auth-code-grant',
+  'refresh-grant',
+  's256-pkce',
+  'public-client',
+  'atproto-scope',
+  'issuer-parameter',
+  'pushed-auth-endpoint',
+  'dpop-es256',
+  'client-metadata-document',
+];
+
+function stringList(value: unknown): string[] {
+  return Array.isArray(value)
+    ? value.filter((item): item is string => typeof item === 'string')
+    : [];
+}
+
+/** Classify only published structured fields; never read provider prose. */
+function classifyOAuthCapabilities(payload: unknown): OAuthCapabilityReport {
+  const value = payload && typeof payload === 'object'
+    ? (payload as Record<string, unknown>)
+    : {};
+  const has = (key: OAuthCapabilityKey): boolean => {
+    switch (key) {
+      case 'code-response':
+        return stringList(value.response_types_supported).includes('code');
+      case 'auth-code-grant':
+        return stringList(value.grant_types_supported).includes('authorization_code');
+      case 'refresh-grant':
+        return stringList(value.grant_types_supported).includes('refresh_token');
+      case 's256-pkce':
+        return stringList(value.code_challenge_methods_supported).includes('S256');
+      case 'public-client':
+        return stringList(value.token_endpoint_auth_methods_supported).includes('none');
+      case 'atproto-scope':
+        return stringList(value.scopes_supported).includes('atproto');
+      case 'issuer-parameter':
+        return value.authorization_response_iss_parameter_supported === true;
+      case 'pushed-auth-endpoint':
+        return (
+          typeof value.pushed_authorization_request_endpoint === 'string' &&
+          value.pushed_authorization_request_endpoint.length > 0
+        );
+      case 'dpop-es256':
+        return stringList(value.dpop_signing_alg_values_supported).includes('ES256');
+      case 'client-metadata-document':
+        return value.client_id_metadata_document_supported === true;
+    }
+  };
+  const supported = REQUIRED_OAUTH_CAPABILITIES.filter(has);
+  const missing = REQUIRED_OAUTH_CAPABILITIES.filter((key) => !supported.includes(key));
+  return { supported, missing };
 }
 
 export type AccountPreflightDeps = {
@@ -225,9 +323,19 @@ export async function probeAccount(
     });
   }
 
+  const oauthCapabilities = classifyOAuthCapabilities(metadata);
+  if (oauthCapabilities.missing.length) {
+    const missing = oauthCapabilities.missing.map((key) => OAUTH_CAPABILITY_LABELS[key]).join(', ');
+    return result(
+      'oauth-incompatible',
+      `The authorization server does not advertise: ${missing}. Balla’s public OAuth client needs these fields.`,
+      { ...identity, pds, facts, authorizationServer, oauthCapabilities },
+    );
+  }
+
   return result(
     'ok',
-    'Public identity, PDS and OAuth metadata checked. Sign-in still uses the provider’s own approval page.',
-    { ...identity, pds, facts, authorizationServer },
+    'Public identity, PDS and OAuth metadata checked, including the fields Balla’s public client needs. Sign-in still uses the provider’s own approval page.',
+    { ...identity, pds, facts, authorizationServer, oauthCapabilities },
   );
 }

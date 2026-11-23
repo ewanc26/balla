@@ -55,13 +55,13 @@ test('defaults are declared in one host module and the rest derive from it', () 
 test('the release documents the partial #97 slice honestly', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.44.0');
-  assert.equal(appJson.expo.version, '0.44.0');
+  assert.equal(pkg.version, '0.45.0');
+  assert.equal(appJson.expo.version, '0.45.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.44\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.45\.0<\/string>/);
   }
-  assert.match(changelog, /^## 0\.44\.0$/m);
+  assert.match(changelog, /^## 0\.45\.0$/m);
   assert.match(changelog, /#97, partial/);
   assert.match(changelog, /export/);
   assert.match(changelog, /scope count remains 111/);

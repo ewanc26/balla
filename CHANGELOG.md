@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.45.0
+
+- **Account pre-flight now checks real OAuth capabilities (#100, partial).** Both Advanced → Account pre-flight and the login screen's pre-sign-in check read the authorization server's published fields and classify them against the ten capabilities Balla's public OAuth client needs: `code` response, authorization-code and refresh grants, S256 PKCE, public-client token auth, the `atproto` scope, issuer responses, a pushed-authorization endpoint, ES256 DPoP and client metadata document support.
+- **An honest new result.** When advertised fields are missing, the check now returns **OAuth capabilities not advertised** and names only the missing capabilities using fixed labels — never provider prose. A server advertising all ten reports "10 of 10 advertised" on both surfaces. The optional `require_pushed_authorization_requests` hint is deliberately not required: a server may allow PAR without setting it.
+- This is still not a verified independent-PDS login: no credentials are available for an end-to-end sign-in on a non-Bluesky host, so #100 stays open. Passing these public checks grants no scope, creates no account and does not make the provider's approval page succeed. There is no new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.44.0
 
 - **Advanced → Services can now test the video endpoint (#97, partial).** A visible **Test video endpoint** button makes one unauthenticated GET to the published `app.bsky.video.getUploadLimits` XRPC method. The result reports HTTP status, latency and whether the endpoint is reachable; a `401` is a real, useful answer that proves the endpoint exists and that quota needs this sign-in's token. The response body is never parsed, so provider prose cannot surface.
