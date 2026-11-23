@@ -125,7 +125,7 @@ public profile; other people's profiles have a follow/unfollow button, while
 the signed-in profile keeps logout. Profiles show their posts, follows and
 followers, plus verification badges (with the verifiers Bluesky reports), label
 warnings, a pinned post, authored lists/feeds/starter packs and a control to
-search that account's posts. Every card has a Save action; removing a bookmark from Saved takes
+search that account's posts. The post overflow also opens Content filters at the muted-words section. Other profiles can be shared or copied as canonical links, muted by reposts only, and have their recorded links reported through the published link-view subject. Every card has a Save action; removing a bookmark from Saved takes
 the card out of that list immediately, and the Saved tab reloads when focused.
 Every card's comment button opens a Thread
 screen: the ancestor chain, the highlighted post, its replies, and a composer

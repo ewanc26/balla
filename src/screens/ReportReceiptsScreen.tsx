@@ -19,6 +19,7 @@ import type { ReportReceipt } from '../lib/reportModel';
 const SUBJECT_LABEL: Record<ReportReceipt['subjectKind'], string> = {
   post: 'Post',
   profile: 'Account',
+  'profile-link': 'Profile link',
   list: 'List',
   feed: 'Feed',
   'chat-message': 'Chat message',

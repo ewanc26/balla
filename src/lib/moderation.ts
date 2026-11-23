@@ -1,6 +1,7 @@
 import { agent } from './agent';
 import { recordReportReceipt } from './reportReceipts';
 import {
+  buildProfileLinkReportSubject,
   REPORT_REASONS,
   type ReportReason,
   type ReportSubjectKind,
@@ -148,6 +149,26 @@ export async function reportChatConversation(
   );
 }
 
+/** Profile links are reported as link views, carrying the record strong ref. */
+export async function reportProfileLink(
+  link: any,
+  reasonType: ReportReason,
+  details: string
+) {
+  const label =
+    typeof link?.title === 'string' && link.title.trim()
+      ? link.title.trim()
+      : link?.url || 'Profile link';
+  return submitReport(
+    buildProfileLinkReportSubject(link),
+    'profile-link',
+    `Link “${label}”`,
+    link?.uri,
+    reasonType,
+    details
+  );
+}
+
 /** Lists are records, so they are reported by strong ref like posts. */
 export async function reportList(
   list: any,
@@ -197,6 +218,11 @@ export async function reportFeed(
 
 export async function muteActor(did: string) {
   return agent.app.bsky.graph.muteActor({ actor: did });
+}
+
+/** Repost-only muting is a scoped actor mute, not a separate record write. */
+export async function muteRepostsActor(did: string) {
+  return agent.app.bsky.graph.muteActor({ actor: did, onlyReposts: true });
 }
 
 export async function unmuteActor(did: string) {

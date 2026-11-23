@@ -42,9 +42,17 @@ function labelText(definition: any): { name: string; description: string } {
 // Content-filter controls backed by the same app.bsky.actor preferences the
 // official client writes. Every write reloads the moderation context so the
 // feed rendering changes without a restart.
-export function ContentFiltersScreen({ navigation }: { navigation: any }) {
+export function ContentFiltersScreen({
+  navigation,
+  route,
+}: {
+  navigation: any;
+  route?: any;
+}) {
   const p = usePalette();
   const { reload } = useModeration();
+  const scrollRef = useRef<any>(null);
+  const mutedWordsRef = useRef<any>(null);
   const [prefs, setPrefs] = useState<any>(null);
   const [labelDefs, setLabelDefs] = useState<Record<string, any[]>>({});
   const [services, setServices] = useState<Record<string, any>>({});
@@ -104,6 +112,25 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
   useEffect(() => {
     void load(true);
   }, [load]);
+
+  // A menu shortcut can ask for the muted-words section directly. Measure it
+  // after prefs render, rather than guessing a scroll offset that changes with
+  // each labeler and enabled toggle.
+  useEffect(() => {
+    if (route?.params?.section !== 'muted-words' || loading || !prefs) return;
+    const timer = setTimeout(() => {
+      mutedWordsRef.current?.measureLayout?.(
+        scrollRef.current,
+        (_x: number, y: number) => {
+          scrollRef.current?.scrollTo({
+            y: Math.max(0, y - 8),
+            animated: !reducedMotion,
+          });
+        }
+      );
+    }, 50);
+    return () => clearTimeout(timer);
+  }, [route?.params?.section, loading, prefs, reducedMotion]);
 
   function labelerName(did: string): string {
     if (did === BSKY_LABELER_DID) return DEFAULT_LABELER_NAME;
@@ -252,6 +279,7 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ flex: 1, backgroundColor: p.bg }}
       contentContainerStyle={{ paddingTop: 8, paddingBottom: 32 }}
     >
@@ -527,8 +555,9 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
         ) : null}
       </Section>
 
-      <Section title="Muted words and hashtags">
-        {mutedWords.length ? (
+      <View ref={mutedWordsRef}>
+        <Section title="Muted words and hashtags">
+          {mutedWords.length ? (
           mutedWords.map((item: any) => (
             <View
               key={`${item.value}:${(item.targets || []).join(',')}`}
@@ -638,7 +667,8 @@ export function ContentFiltersScreen({ navigation }: { navigation: any }) {
             </Pressable>
           </View>
         </View>
-      </Section>
+        </Section>
+      </View>
 
       <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, paddingHorizontal: 18 }}>
         These preferences are stored on your Bluesky account. Balla applies them before

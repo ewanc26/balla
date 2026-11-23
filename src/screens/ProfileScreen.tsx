@@ -16,6 +16,7 @@ import { describeFailure, readWithRetry } from '../lib/reliability';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { ProfileMenu } from '../components/ProfileMenu';
+import { ReportLinkSheet } from '../components/ReportLinkSheet';
 import { ContentWarning } from '../components/ContentWarning';
 import { useModeration } from '../lib/moderationContext';
 import { accountLabelCauses, hiddenByLabel } from '../lib/labelVisibility';
@@ -90,6 +91,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
   const [followBusy, setFollowBusy] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [reportLinkOpen, setReportLinkOpen] = useState(false);
   const [profileRevealed, setProfileRevealed] = useState(false);
   const [knownFollowers, setKnownFollowers] = useState<any[]>([]);
   const [lists, setLists] = useState<any[]>([]);
@@ -1300,7 +1302,14 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
         onClose={() => setMenuOpen(false)}
         onViewerChange={updateViewer}
         onReload={reloadProfile}
+        onReportLink={() => setReportLinkOpen(true)}
       />
+      {reportLinkOpen ? (
+        <ReportLinkSheet
+          links={profile?.links || []}
+          onClose={() => setReportLinkOpen(false)}
+        />
+      ) : null}
       <VerificationSheet
         visible={verificationOpen}
         handle={profile.handle}

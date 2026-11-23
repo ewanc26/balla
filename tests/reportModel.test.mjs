@@ -59,6 +59,16 @@ test('feed receipts are accepted with the same strong-ref rules as list receipts
   assert.deepEqual(normaliseReceipts([{ ...receipt(12), subjectKind: 'feed-generator' }]), []);
 });
 
+test('profile-link receipts are accepted and normalised like other report kinds', () => {
+  const stored = normaliseReceipts([receipt(13, 'profile-link')]);
+  assert.equal(stored.length, 1);
+  assert.equal(stored[0].subjectKind, 'profile-link');
+  assert.deepEqual(
+    normaliseReceipts([{ ...receipt(14), subjectKind: 'link' }]),
+    []
+  );
+});
+
 test('chat report kinds are accepted and normalised like any other receipt', () => {
   for (const kind of ['chat-message', 'chat-convo']) {
     const stored = normaliseReceipts([receipt(10, kind)]);

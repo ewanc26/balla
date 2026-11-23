@@ -53,8 +53,11 @@ labels after the fact or rely on a local block list.
 
 - Post reports send a strongRef to the Bluesky labeler through
   `com.atproto.moderation.createReport` and `atproto-proxy`.
-- Account reports send a `com.atproto.admin.defs#repoRef` instead.
-- Block and mute are server-side AppView/PDS operations. Balla then removes the
+- Account reports send a `com.atproto.admin.defs#repoRef` instead. Profile links
+  with both a URI and CID use `app.bsky.actor.defs#profileLinkView`, carrying the
+  URL as well as the record strong ref.
+- Block and mute are server-side AppView/PDS operations. Repost-only muting uses
+  the scoped actor mute with `onlyReposts: true`. Balla then removes the
   affected author from the current timeline, search, saved posts, profile and
   notification lists. A refresh still relies on the AppView enforcing the
   server state.
