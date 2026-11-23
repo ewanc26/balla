@@ -1,5 +1,7 @@
 import { agent } from './agent';
+import { createNativeFirstHandleResolver } from './nativeHandleResolver';
 import { getPlcDirectoryEndpoint } from './servicesConfig.ts';
+import { DEFAULT_SERVICES } from './servicesModel.ts';
 import { readWithRetry } from './reliability';
 import {
   cachedDidDoc,
@@ -29,6 +31,13 @@ import {
 
 let lastSource: LookupSource = 'none';
 const sourceListeners = new Set<() => void>();
+
+// The same native-first resolver sign-in uses. Its fallback factory reads the
+// persisted endpoint on every resolve, so a handle lookup made when the AppView
+// is unreachable honours the configured resolver instead of an implicit
+// Bluesky host. No scope or new dependency: these are public unauthenticated
+// reads already shipped for sign-in.
+const publicHandleResolver = createNativeFirstHandleResolver(DEFAULT_SERVICES.handleResolver);
 
 function markSource(source: LookupSource): void {
   lastSource = source;
@@ -136,10 +145,7 @@ export async function resolveHandleToDid(input: string): Promise<string | null> 
   }
 
   try {
-    const resolved = await readWithRetry(() =>
-      agent.com.atproto.identity.resolveHandle({ handle })
-    );
-    const did = resolved.data.did;
+    const did = await readWithRetry(() => publicHandleResolver.resolve(handle));
     if (isDid(did)) {
       await rememberHandle(handle, did);
       markSource('network');

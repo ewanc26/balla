@@ -31,7 +31,7 @@ const STRATEGIES: readonly ChoiceOption<IdentityStrategy>[] = [
   {
     value: 'registry-first',
     label: 'Registry first',
-    detail: 'Read plc.directory before did:web documents.',
+    detail: 'Read the configured public identity directory before did:web documents.',
   },
   {
     value: 'web-first',
