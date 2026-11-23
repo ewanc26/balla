@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.60.2
+
+- **Reply context now appears on every feed card.** Profile author and likes feeds and list feeds keep `feedViewPost.reply.parent` while mapping posts, so their cards name the parent instead of falling back to a generic line. Custom feeds preserve it too, while search results, bookmarks and quote lists use **“Replying to an earlier post”** from `record.reply.parent`. Threads keep their existing Reply and ancestor labels and opt out. No new reads, writes, OAuth scopes or dependencies; the scope count remains 112.
+- CI's full gate passed: deterministic tests (761), typecheck, Expo dependency drift, advisory audit, icon sync and site build. The shared card's existing 320–1440px render checks cover the new line; no surface-specific layout was added.
+
 ## 0.60.1
 
 - **The desktop right rail keeps its width.** It was stretching to 740px at 1440 and squeezing the reading column to 440px; it now stays at 300px and the feed returns to 680px. The 1300px layout gets the same fix; the 1000px layout is unchanged.

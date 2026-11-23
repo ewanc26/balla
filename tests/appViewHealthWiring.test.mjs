@@ -56,13 +56,13 @@ test('no OAuth scope, dependency or message-text path was added', () => {
 test('release notes and the compliance matrix describe the partial slice', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.60.1');
-  assert.equal(appJson.expo.version, '0.60.1');
+  assert.equal(pkg.version, '0.60.2');
+  assert.equal(appJson.expo.version, '0.60.2');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.60\.1<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.60\.2<\/string>/);
   }
-  assert.match(changelog, /^## 0\.60\.1$/m);
+  assert.match(changelog, /^## 0\.60\.2$/m);
   assert.match(changelog, /#99, partial/);
   assert.match(changelog, /no failover/i);
   assert.match(changelog, /sync lag/i);
