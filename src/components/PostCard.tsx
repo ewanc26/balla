@@ -35,6 +35,9 @@ import { translateText } from '../lib/translate';
 import { richTextSegments, type RichTextSegment } from '../lib/richtext';
 import { eventRefFromRecordEmbed } from '../lib/eventsModel';
 import { EventEmbed } from './EventEmbed';
+import { ReactionChips } from './ReactionChips';
+import { ReactionPalette } from './ReactionPalette';
+import { loadPostReactions } from '../lib/reactions';
 import { isEdited } from '../lib/postEditModel';
 import { postEditRecord, subscribePostEdits } from '../lib/postEditStore';
 import { EditedBadge } from './EditedBadge';
@@ -104,6 +107,20 @@ export function PostCard({
       }
     : undefined;
   const moderation = usePostModeration(post);
+  const [reactionSummaries, setReactionSummaries] = useState<any[]>([]);
+  const [reactionPaletteOpen, setReactionPaletteOpen] = useState(false);
+  useEffect(() => {
+    let active = true;
+    if (!post?.uri) return;
+    void loadPostReactions(post.uri, agent.did || '').then((summaries) => {
+      if (active) setReactionSummaries(Array.isArray(summaries) ? summaries : []);
+    }).catch(() => {
+      if (active) setReactionSummaries([]);
+    });
+    return () => {
+      active = false;
+    };
+  }, [post?.uri]);
   // An edit made in this app run updates the card immediately, without polling
   // the AppView or adding a read scope. The next normal fetch replaces it.
   const liveEdit = useSyncExternalStore(
@@ -610,8 +627,11 @@ export function PostCard({
           </>
         )}
 
-        {hasEngagement ? (
+        {hasEngagement || reactionSummaries.length > 0 ? (
           <View style={styles.engagement}>
+            {reactionSummaries.length > 0 ? (
+              <ReactionChips reactions={reactionSummaries} />
+            ) : null}
             {likes > 0 ? (
               <EngagementLink
                 text={`${formatCount(likes)} ${likes === 1 ? 'like' : 'likes'}`}
@@ -677,6 +697,22 @@ export function PostCard({
             onPress={openThread}
           />
           <Pressable
+            onPress={() => setReactionPaletteOpen((value) => !value)}
+            accessibilityRole="button"
+            accessibilityLabel="React to post"
+            hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+            style={({ pressed }) => [
+              styles.saveButton,
+              { backgroundColor: pressed ? p.bg : 'transparent' },
+            ]}
+          >
+            <Ionicons
+              name="happy-outline"
+              size={20}
+              color={p.secondary}
+            />
+          </Pressable>
+          <Pressable
             onPress={toggleBookmark}
             accessibilityRole="button"
             accessibilityLabel={bookmarked ? 'Remove bookmark' : 'Save post'}
@@ -699,6 +735,10 @@ export function PostCard({
           enabled={!!replyPreviewEnabled}
           onOpenThread={onOpenThread}
           onOpenProfile={onOpenProfile}
+        />
+        <ReactionPalette
+          visible={reactionPaletteOpen}
+          onClose={() => setReactionPaletteOpen(false)}
         />
         {actionError ? (
           <View style={styles.actionError}>
