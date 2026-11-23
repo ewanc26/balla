@@ -26,6 +26,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { ThreadScreen } from './src/screens/ThreadScreen';
 import { ComposeScreen } from './src/screens/ComposeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { AdvancedScreen } from './src/screens/AdvancedScreen';
 import { AccountsScreen } from './src/screens/AccountsScreen';
 import { AddAccountScreen } from './src/screens/AddAccountScreen';
 import { InfoScreen } from './src/screens/InfoScreen';
@@ -401,6 +402,7 @@ export default function App() {
                           <Stack.Screen name="Compose" component={ComposeScreen} />
                           <Stack.Screen name="UserProfile" component={ProfileScreen} />
                           <Stack.Screen name="Settings" component={SettingsScreen} />
+                          <Stack.Screen name="Advanced" component={AdvancedScreen} />
                           <Stack.Screen name="Accounts" component={AccountsScreen} />
                           <Stack.Screen name="AddAccount" component={AddAccountScreen} />
                           <Stack.Screen name="Appearance" component={AppearanceScreen} />

@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.27.0
+
+- Settings gains a top-level **Advanced** submenu with a stable web path (`settings/advanced`), the home for infrastructure and provider choices that work today. It lists only controls that do something real; unfinished provider choices stay in their own tracked issues rather than appearing as inert rows.
+- **Advanced → Moderation** opens Content filters at a new labeler services section. Each subscribed labeler now shows whether the AppView currently lists it, with a clear note that local rules and reports keep working when a service is unavailable. This states what the read actually measures rather than claiming a network health probe.
+- The labeler section restates in-app that labels are advisory metadata from freely chosen services, that anyone can run one, and that local filters survive an outage. The existing add/remove flow subscribes only after checking the account really is a labeler.
+- Add deterministic wiring tests for the Advanced screen, its navigation and web path, the labeler section deep-link and the honest per-service state. No dependency, OAuth scope or version-specific behaviour changed.
+
 ## 0.26.0
 
 - Profiles with public teal.fm scrobbles now show a compact **Recently played** strip: a small horizontal row of track chips with the title, artist and real relative time. Tapping a chip opens a light detail sheet with the record's metadata and a link out to the profile on teal.fm; there is no player, no music tab and no listening stats.
