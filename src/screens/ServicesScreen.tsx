@@ -30,7 +30,13 @@ import {
   exportServicesJson,
   servicesExportAction,
 } from '../lib/preferenceExport.ts';
-import { probeAppView, probeChat, probeResolver, type ServiceProbe } from '../lib/servicesProbe.ts';
+import {
+  probeAppView,
+  probeChat,
+  probeResolver,
+  probeVideoEndpoint,
+  type ServiceProbe,
+} from '../lib/servicesProbe.ts';
 import { useSessionSummary } from '../lib/sessionInfo';
 import { openExternalUrl } from '../lib/openLink';
 import { CARD_RADIUS, webInputReset, usePalette } from '../theme';
@@ -55,6 +61,7 @@ export function ServicesScreen() {
   const [resolverProbe, setResolverProbe] = useState<ServiceProbe | null>(null);
   const [appviewProbe, setAppviewProbe] = useState<ServiceProbe | null>(null);
   const [chatProbe, setChatProbe] = useState<ServiceProbe | null>(null);
+  const [videoProbe, setVideoProbe] = useState<ServiceProbe | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
@@ -122,6 +129,14 @@ export function ServicesScreen() {
     setBusy(true);
     setChatProbe({ state: 'checking', status: null, latencyMs: null, endpoint: null, detail: 'Checking…' });
     setChatProbe(await probeChat());
+    setBusy(false);
+  }
+
+  async function checkVideo() {
+    if (busy) return;
+    setBusy(true);
+    setVideoProbe({ state: 'checking', status: null, latencyMs: null, endpoint: null, detail: 'Checking…' });
+    setVideoProbe(await probeVideoEndpoint());
     setBusy(false);
   }
 
@@ -206,6 +221,11 @@ export function ServicesScreen() {
           ? <SettingValueRow label="Detail" value={chatProbe.detail} />
           : null}
         <SettingValueRow label={SERVICE_SLOT_COPY.video.label} value={DEFAULT_SERVICES.videoAudience} />
+        <SettingButton label="Test video endpoint" onPress={() => void checkVideo()} busy={busy} />
+        <SettingValueRow label="Video result" value={probeValue(videoProbe)} />
+        {videoProbe?.detail && videoProbe.state !== 'checking'
+          ? <SettingValueRow label="Detail" value={videoProbe.detail} />
+          : null}
         <SettingValueRow label={SERVICE_SLOT_COPY.labeler.label} value={DEFAULT_SERVICES.labelerAudience} />
       </SettingSection>
 

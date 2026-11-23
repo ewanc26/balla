@@ -5,6 +5,7 @@
  * never read, logged or displayed.
  */
 
+import { VIDEO_LIMITS_LXM } from './serviceHosts.ts';
 import {
   DEFAULT_SERVICES,
   advertisedEndpoint,
@@ -29,10 +30,12 @@ function probe(state: ProbeState, status: number | null, latencyMs: number | nul
   return { state, status, latencyMs, endpoint, detail };
 }
 
-async function timed(url: string): Promise<{ response: Response | null; latencyMs: number }> {
+export type ServiceProbeDeps = { fetchImpl?: typeof fetch };
+
+async function timed(url: string, fetchImpl: typeof fetch = fetch): Promise<{ response: Response | null; latencyMs: number }> {
   const started = Date.now();
   try {
-    const response = await fetch(url, { headers: { Accept: 'application/json' } });
+    const response = await fetchImpl(url, { headers: { Accept: 'application/json' } });
     return { response, latencyMs: Date.now() - started };
   } catch {
     return { response: null, latencyMs: Date.now() - started };
@@ -103,6 +106,23 @@ export async function probeAppView(actorDid?: string | null): Promise<ServicePro
   } catch {
     return probe('unavailable', response.status, latencyMs, endpoint, 'DID document was not JSON.');
   }
+}
+
+/**
+ * The video XRPC endpoint is checked without a token. A 401 is a real, useful
+ * answer: it proves the endpoint exists and that quota needs this sign-in's
+ * grant. The response body is never parsed, so provider prose cannot surface.
+ */
+export async function probeVideoEndpoint(deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
+  const endpoint = DEFAULT_SERVICES.videoService;
+  const url = `${endpoint}/xrpc/${VIDEO_LIMITS_LXM}`;
+  const { response, latencyMs } = await timed(url, deps.fetchImpl);
+  if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not reach the video endpoint.');
+  if (response.status === 401 || response.status === 403) {
+    return probe('ok', response.status, latencyMs, endpoint, 'Endpoint reachable; quota needs a sign-in token.');
+  }
+  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
+  return probe('ok', response.status, latencyMs, endpoint, 'Endpoint answered without requiring a token.');
 }
 
 /** Chat service DID document advertises a bsky_chat proxy endpoint. */

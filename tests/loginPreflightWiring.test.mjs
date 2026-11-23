@@ -34,9 +34,9 @@ test('both pre-flight surfaces share the same result labels', () => {
 test('the release documents the login check as partial #100', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.43.0');
-  assert.equal(appJson.expo.version, '0.43.0');
-  assert.match(changelog, /^## 0\.43\.0$/m);
+  assert.equal(pkg.version, '0.44.0');
+  assert.equal(appJson.expo.version, '0.44.0');
+  assert.match(changelog, /^## 0\.44\.0$/m);
   assert.match(changelog, /#100, partial/);
   assert.match(changelog, /login screen/);
   assert.match(changelog, /scope count remains 111/);
