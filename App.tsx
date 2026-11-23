@@ -179,7 +179,14 @@ function Tabs() {
         options={{ tabBarLabel: compactLabels ? 'Alerts' : 'Notifications' }}
       />
       <Tab.Screen name="Saved" component={BookmarksScreen} />
-      <Tab.Screen name="Profile" component={ProfileScreen} />
+      {/* ProfileScreen sets the stack header title to the profile handle, and
+          the bottom bar falls back to options.title for a label. Pin the
+          label so the tab keeps reading "Profile" instead of the handle. */}
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ tabBarLabel: 'Profile' }}
+      />
     </Tab.Navigator>
   );
 }
