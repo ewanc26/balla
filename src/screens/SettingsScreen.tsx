@@ -14,6 +14,7 @@ import { useModerationInboxUnread } from '../lib/moderationInbox';
 import { useFeeds } from '../lib/feedsContext';
 import { accentFor, eraFor } from '../lib/themeModel';
 import { Avatar } from '../components/Avatar';
+import { CreatorByline } from '../components/CreatorByline';
 import { SignOutControl } from '../components/SignOutControl';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { APP_VERSION } from '../lib/version';
@@ -353,6 +354,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           value={`Version ${APP_VERSION}`}
           onPress={() => openInfo('about', 'About Balla')}
         />
+        <CreatorByline />
         <Row
           icon="code-slash-outline"
           label="Source code"

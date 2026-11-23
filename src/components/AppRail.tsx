@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { Avatar } from './Avatar';
+import { CreatorByline } from './CreatorByline';
 import { useViewer } from '../lib/viewer';
 import type { TabName } from './AppHeader';
 
@@ -213,6 +214,7 @@ export function LeftRail({
       >
         Independent AT Protocol software.
       </Text>
+      <CreatorByline />
     </View>
   );
 }

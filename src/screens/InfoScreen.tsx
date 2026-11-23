@@ -10,6 +10,7 @@ import { openExternalUrl } from '../lib/openLink';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { APP_VERSION } from '../lib/version';
+import { CreatorByline } from '../components/CreatorByline';
 
 const GITHUB = 'https://github.com/ewanc26/balla';
 const ISSUES = 'https://github.com/ewanc26/balla/issues';
@@ -265,6 +266,7 @@ export function InfoScreen({ route, navigation }: { route: any; navigation: any 
             <Ionicons name="open-outline" size={18} color={p.accent} style={{ marginLeft: 6 }} />
           </Pressable>
         ))}
+        <CreatorByline />
         <Text style={{ color: p.secondary, fontSize: 11, lineHeight: 16, marginTop: 18 }}>
           Plain-language project policy, not legal advice. Last updated 21 November 2026.
         </Text>
