@@ -53,6 +53,12 @@ import {
 } from '../lib/postActions';
 import type { FeedbackKind } from '../lib/feedFeedbackModel';
 import { hidePostForMe } from '../lib/hiddenPosts';
+import {
+  endSnooze,
+  loadSnoozes,
+  snoozeAccount,
+} from '../lib/snooze';
+import { snoozeRemainingLabel } from '../lib/snoozeModel';
 import { canSharePost } from '../lib/shareViaChatModel';
 import { ShareViaChatSheet } from './ShareViaChatSheet';
 
@@ -105,6 +111,7 @@ export function PostMenu({
   const [isPinned, setIsPinned] = useState(false);
   const [isThreadMuted, setIsThreadMuted] = useState(false);
   const [detached, setDetached] = useState(false);
+  const [snoozedUntil, setSnoozedUntil] = useState<number | null>(null);
   const [shareChatOpen, setShareChatOpen] = useState(false);
   const containerRef = useRef<any>(null);
   const closeButtonRef = useRef<any>(null);
@@ -130,6 +137,14 @@ export function PostMenu({
     setIsPinned(!!(post && post.viewer && post.viewer.pinned));
     setIsThreadMuted(!!(post && post.viewer && post.viewer.threadMuted));
     setDetached(isQuoteDetached(post && post.embed));
+    const snoozeDid = post && post.author && post.author.did;
+    if (snoozeDid) {
+      void loadSnoozes().then((records) => {
+        setSnoozedUntil(records[snoozeDid]?.until ?? null);
+      });
+    } else {
+      setSnoozedUntil(null);
+    }
     if (visible && post && post.record && post.record.reply && isThreadRootAuthor(post)) {
       // Only the root post author can read/write this threadgate, and the
       // record lives in their own repo at the root post's rkey.
@@ -360,6 +375,41 @@ export function PostMenu({
           }. Try again.`
         )
       );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleSnooze() {
+    if (!author.did || busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await snoozeAccount(author.did, author.handle);
+      const records = await loadSnoozes();
+      setSnoozedUntil(records[author.did]?.until ?? Date.now());
+      setNotice(
+        `Snoozed @${author.handle || 'this account'} for 30 days. Only this device hides them from Home.`
+      );
+    } catch {
+      setError('Could not save the snooze on this device. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleEndSnooze() {
+    if (!author.did || busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await endSnooze(author.did);
+      setSnoozedUntil(null);
+      setNotice('Snooze ended. Their posts will appear in Home again.');
+    } catch {
+      setError('Could not end the snooze on this device. Try again.');
     } finally {
       setBusy(false);
     }
@@ -806,6 +856,26 @@ export function PostMenu({
               onPress={() => void handleMute()}
               disabled={busy}
             />
+            {snoozedUntil && snoozedUntil > Date.now() ? (
+              <MenuRow
+                icon="sunny-outline"
+                label="End snooze"
+                detail={`Snoozed, ${snoozeRemainingLabel(
+                  snoozedUntil,
+                  Date.now()
+                )}. Hidden from Home on this device only. Tap to show this account again.`}
+                onPress={() => void handleEndSnooze()}
+                disabled={busy}
+              />
+            ) : (
+              <MenuRow
+                icon="moon-outline"
+                label="Snooze for 30 days"
+                detail="Hide this account from Home on this device. They are not told."
+                onPress={() => void handleSnooze()}
+                disabled={busy}
+              />
+            )}
             <MenuRow
               icon={blockingUri ? 'person-add-outline' : 'ban-outline'}
               label={blockingUri ? 'Unblock account' : 'Block account'}

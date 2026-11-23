@@ -55,6 +55,12 @@ import {
   statusIsActive,
   upsertLiveStatus,
 } from '../lib/liveStatus';
+import {
+  endSnooze,
+  loadSnoozes,
+  snoozeAccount,
+} from '../lib/snooze';
+import { snoozeRemainingLabel } from '../lib/snoozeModel';
 
 type Mode =
   | 'menu'
@@ -96,6 +102,7 @@ export function ProfileMenu({
   const [liveActive, setLiveActive] = useState(false);
   const [liveLink, setLiveLink] = useState('');
   const [liveDuration, setLiveDuration] = useState(DEFAULT_DURATION_MINUTES);
+  const [snoozedUntil, setSnoozedUntil] = useState<number | null>(null);
   const containerRef = useRef<any>(null);
   const closeButtonRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -129,6 +136,14 @@ export function ProfileMenu({
         .catch(() => setLiveActive(false));
     } else {
       setLiveActive(false);
+    }
+    const snoozeDid = profile?.did;
+    if (snoozeDid) {
+      void loadSnoozes().then((records) => {
+        setSnoozedUntil(records[snoozeDid]?.until ?? null);
+      });
+    } else {
+      setSnoozedUntil(null);
     }
   }, [visible, profile?.did]);
 
@@ -260,6 +275,41 @@ export function ProfileMenu({
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       setError('Could not share this profile. Try copying the link instead.');
+    }
+  }
+
+  async function handleSnooze() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await snoozeAccount(profile.did, profile.handle);
+      const records = await loadSnoozes();
+      setSnoozedUntil(records[profile.did]?.until ?? Date.now());
+      setNotice(
+        `Snoozed @${handle} for 30 days. Only this device hides them from Home.`
+      );
+    } catch {
+      setError('Could not save the snooze on this device. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleEndSnooze() {
+    if (busy) return;
+    setBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      await endSnooze(profile.did);
+      setSnoozedUntil(null);
+      setNotice('Snooze ended. Their posts will appear in Home again.');
+    } catch {
+      setError('Could not end the snooze on this device. Try again.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -759,6 +809,26 @@ export function ProfileMenu({
               onPress={() => void handleMute()}
               disabled={busy}
             />
+            {snoozedUntil && snoozedUntil > Date.now() ? (
+              <MenuRow
+                icon="sunny-outline"
+                label="End snooze"
+                detail={`Snoozed, ${snoozeRemainingLabel(
+                  snoozedUntil,
+                  Date.now()
+                )}. Hidden from Home on this device only. Tap to show this account again.`}
+                onPress={() => void handleEndSnooze()}
+                disabled={busy}
+              />
+            ) : (
+              <MenuRow
+                icon="moon-outline"
+                label="Snooze for 30 days"
+                detail="Hide this account from Home on this device. They are not told."
+                onPress={() => void handleSnooze()}
+                disabled={busy}
+              />
+            )}
             <MenuRow
               icon={blockingUri ? 'person-add-outline' : 'ban-outline'}
               label={blockingUri ? 'Unblock account' : 'Block account'}

@@ -1,6 +1,15 @@
 import React, { useLayoutEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { useViewPreferences } from '../lib/viewPreferences';
+import { endSnooze, useSnoozedAccounts } from '../lib/snooze';
+import { activeSnoozes, snoozeRemainingLabel } from '../lib/snoozeModel';
 import {
   SettingNote,
   SettingSection,
@@ -12,6 +21,8 @@ import { usePalette } from '../theme';
 export function FeedPreferencesScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
   const { feedFilters, loading, error, saveFeedFilters } = useViewPreferences();
+  const snoozedAccounts = useSnoozedAccounts();
+  const snoozedList = activeSnoozes(snoozedAccounts, Date.now());
   const [busy, setBusy] = useState<string | null>(null);
 
   useLayoutEffect(() => {
@@ -74,6 +85,60 @@ export function FeedPreferencesScreen({ navigation }: { navigation: any }) {
         />
       </SettingSection>
 
+      <SettingSection
+        title="Snoozed accounts"
+        detail="Home hides these accounts until each 30-day snooze ends. Snoozes are device-local and do not follow your account to other devices."
+      >
+        {snoozedList.length === 0 ? (
+          <Text
+            style={{
+              color: p.secondary,
+              fontSize: 13,
+              lineHeight: 19,
+              paddingHorizontal: 14,
+              paddingVertical: 14,
+            }}
+          >
+            No snoozed accounts.
+          </Text>
+        ) : (
+          snoozedList.map((item) => (
+            <View
+              key={item.did}
+              style={[styles.snoozeRow, { borderTopColor: p.divider }]}
+            >
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text
+                  numberOfLines={1}
+                  style={{ color: p.text, fontSize: 15, fontWeight: '600' }}
+                >
+                  {item.handle ? `@${item.handle}` : item.did}
+                </Text>
+                <Text style={{ color: p.secondary, fontSize: 12, marginTop: 1 }}>
+                  Snoozed, {snoozeRemainingLabel(item.until, Date.now())}
+                </Text>
+              </View>
+              <Pressable
+                onPress={() => void endSnooze(item.did)}
+                accessibilityRole="button"
+                accessibilityLabel={`End snooze for ${
+                  item.handle ? `@${item.handle}` : item.did
+                }`}
+                accessibilityHint="Show this account in Home again now."
+                style={({ pressed }) => [
+                  styles.endButton,
+                  { borderColor: p.accent, opacity: pressed ? 0.65 : 1 },
+                ]}
+              >
+                <Text style={{ color: p.accent, fontSize: 13, fontWeight: '700' }}>
+                  End snooze
+                </Text>
+              </Pressable>
+            </View>
+          ))
+        )}
+      </SettingSection>
+
       <SettingNote>
         Hiding something here changes what appears, not the order of what
         remains. Following stays chronological. Saved feeds keep the order their
@@ -95,3 +160,24 @@ function SettingDivider() {
     />
   );
 }
+
+const styles = StyleSheet.create({
+  snoozeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 56,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  endButton: {
+    minHeight: 44,
+    minWidth: 120,
+    borderWidth: 1,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+  },
+});
