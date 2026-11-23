@@ -145,7 +145,8 @@ test('feed feedback is a real sendInteractions call wired into the post menu', (
   assert.match(postMenu, /Show more like this/);
   assert.match(postMenu, /Show less like this/);
   assert.match(postCard, /onFeedback=\{onFeedback\}/);
-  assert.match(feedScreen, /feedbackFeed=\{\{/);
+  assert.match(feedScreen, /feedbackFeed=\{/);
+  assert.match(feedScreen, /activeIsList\s*\? undefined/);
 });
 
 test('hide post for me is a device-local hide wired into moderation', () => {

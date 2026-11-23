@@ -11,19 +11,25 @@ import { agent } from './agent';
 import {
   feedItems,
   findSavedFeed,
+  findSavedItem,
+  findSavedListItem,
+  homeFeedItems,
+  listFeedItems,
   movePinnedFeed,
   normaliseSavedFeeds,
-  pinnedFeedItems,
+  pinnedHomeFeedItems,
   type SavedFeedItem,
 } from './feedPreferences';
 
-type FeedGenerators = Record<string, any>;
+type FeedDetails = Record<string, any>;
 
 type FeedsContextValue = {
   items: SavedFeedItem[];
   savedFeeds: SavedFeedItem[];
-  pinnedFeeds: SavedFeedItem[];
-  generators: FeedGenerators;
+  homeFeeds: SavedFeedItem[];
+  pinnedHomeFeeds: SavedFeedItem[];
+  generators: FeedDetails;
+  lists: FeedDetails;
   loading: boolean;
   refreshing: boolean;
   error: string | null;
@@ -31,7 +37,9 @@ type FeedsContextValue = {
   refresh: () => Promise<void>;
   saveFeed: (value: string, pinned?: boolean) => Promise<void>;
   removeFeed: (value: string) => Promise<void>;
+  removeSource: (value: string) => Promise<void>;
   setPinned: (value: string, pinned: boolean) => Promise<void>;
+  pinList: (value: string, pinned: boolean) => Promise<void>;
   movePinned: (value: string, direction: -1 | 1) => Promise<void>;
 };
 
@@ -40,8 +48,10 @@ const NOOP = async () => {};
 const FeedsContext = createContext<FeedsContextValue>({
   items: [],
   savedFeeds: [],
-  pinnedFeeds: [],
+  homeFeeds: [],
+  pinnedHomeFeeds: [],
   generators: {},
+  lists: {},
   loading: false,
   refreshing: false,
   error: null,
@@ -49,13 +59,16 @@ const FeedsContext = createContext<FeedsContextValue>({
   refresh: NOOP,
   saveFeed: NOOP,
   removeFeed: NOOP,
+  removeSource: NOOP,
   setPinned: NOOP,
+  pinList: NOOP,
   movePinned: NOOP,
 });
 
 export function FeedsProvider({ children }: { children: React.ReactNode }) {
   const [items, setItems] = useState<SavedFeedItem[]>([]);
-  const [generators, setGenerators] = useState<FeedGenerators>({});
+  const [generators, setGenerators] = useState<FeedDetails>({});
+  const [lists, setLists] = useState<FeedDetails>({});
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -63,37 +76,80 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
   const itemsRef = useRef<SavedFeedItem[]>([]);
   const queue = useRef<Promise<unknown>>(Promise.resolve());
 
-  const loadGenerators = useCallback(async (next: SavedFeedItem[]) => {
-    const uris = feedItems(next).map((item) => item.value);
-    if (uris.length === 0) {
+  const loadDetails = useCallback(async (next: SavedFeedItem[]) => {
+    const feedUris = feedItems(next).map((item) => item.value);
+    const listUris = listFeedItems(next).map((item) => item.value);
+    if (feedUris.length === 0 && listUris.length === 0) {
       setGenerators({});
+      setLists({});
       setDetailsError(null);
       return;
     }
-    try {
-      const response = await agent.app.bsky.feed.getFeedGenerators({
-        feeds: uris,
-      });
-      const map: FeedGenerators = {};
-      for (const generator of response.data.feeds || []) {
-        if (generator?.uri) map[generator.uri] = generator;
-      }
-      setGenerators(map);
-      const missing = uris.filter((uri) => !map[uri]).length;
-      setDetailsError(
-        missing
-          ? `Bluesky returned no details for ${missing} saved ${
+
+    const messages: string[] = [];
+
+    if (feedUris.length > 0) {
+      try {
+        const response = await agent.app.bsky.feed.getFeedGenerators({
+          feeds: feedUris,
+        });
+        const map: FeedDetails = {};
+        for (const generator of response.data.feeds || []) {
+          if (generator?.uri) map[generator.uri] = generator;
+        }
+        setGenerators(map);
+        const missing = feedUris.filter((uri) => !map[uri]).length;
+        if (missing > 0) {
+          messages.push(
+            `Bluesky returned no details for ${missing} saved ${
               missing === 1 ? 'feed' : 'feeds'
             }.`
-          : null
-      );
-    } catch {
-      // Keep the preferences and names the user gave us. A details outage must
-      // not make saved feeds impossible to remove or unpin.
-      setDetailsError(
-        'Saved feeds loaded, but their descriptions could not be fetched.'
-      );
+          );
+        }
+      } catch {
+        // Keep the preferences the user set. A details outage must not make
+        // saved feeds impossible to remove, unpin or reorder.
+        setGenerators({});
+        messages.push(
+          'Saved feeds loaded, but their descriptions could not be fetched.'
+        );
+      }
+    } else {
+      setGenerators({});
     }
+
+    if (listUris.length > 0) {
+      const results = await Promise.allSettled(
+        listUris.map(async (uri) => {
+          const response = await agent.app.bsky.graph.getList({
+            list: uri,
+            limit: 1,
+          });
+          return { uri, list: response.data.list };
+        })
+      );
+      const map: FeedDetails = {};
+      let failed = 0;
+      for (const result of results) {
+        if (result.status === 'fulfilled' && result.value.list) {
+          map[result.value.uri] = result.value.list;
+        } else {
+          failed += 1;
+        }
+      }
+      setLists(map);
+      if (failed > 0) {
+        messages.push(
+          `Bluesky returned no details for ${failed} saved list ${
+            failed === 1 ? 'feed' : 'feeds'
+          }.`
+        );
+      }
+    } else {
+      setLists({});
+    }
+
+    setDetailsError(messages.length > 0 ? messages.join(' ') : null);
   }, []);
 
   const applyServerItems = useCallback(
@@ -101,9 +157,9 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
       const next = normaliseSavedFeeds(value);
       itemsRef.current = next;
       setItems(next);
-      void loadGenerators(next);
+      void loadDetails(next);
     },
-    [loadGenerators]
+    [loadDetails]
   );
 
   const load = useCallback(
@@ -116,7 +172,7 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
         const next = normaliseSavedFeeds(preferences.savedFeeds || []);
         itemsRef.current = next;
         setItems(next);
-        await loadGenerators(next);
+        await loadDetails(next);
       } catch {
         setError('Could not load your saved feeds.');
       } finally {
@@ -124,7 +180,7 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
         setRefreshing(false);
       }
     },
-    [loadGenerators]
+    [loadDetails]
   );
 
   useEffect(() => {
@@ -175,13 +231,45 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
     [applyServerItems, enqueue]
   );
 
+  const removeSource = useCallback(
+    (value: string) =>
+      enqueue(async () => {
+        const existing = findSavedItem(itemsRef.current, value);
+        if (!existing) return;
+        const next = await agent.removeSavedFeeds([existing.id]);
+        applyServerItems(next);
+      }),
+    [applyServerItems, enqueue]
+  );
+
   const setPinned = useCallback(
     (value: string, pinned: boolean) =>
       enqueue(async () => {
-        const existing = findSavedFeed(itemsRef.current, value);
+        const existing = findSavedItem(itemsRef.current, value);
         if (!existing || existing.pinned === pinned) return;
         const next = await agent.updateSavedFeeds([
           { ...existing, pinned },
+        ]);
+        applyServerItems(next);
+      }),
+    [applyServerItems, enqueue]
+  );
+
+  const pinList = useCallback(
+    (value: string, pinned: boolean) =>
+      enqueue(async () => {
+        const existing = findSavedListItem(itemsRef.current, value);
+        if (existing) {
+          if (existing.pinned === pinned) return;
+          const next = await agent.updateSavedFeeds([
+            { ...existing, pinned },
+          ]);
+          applyServerItems(next);
+          return;
+        }
+        if (!pinned) return;
+        const next = await agent.addSavedFeeds([
+          { type: 'list', value, pinned: true },
         ]);
         applyServerItems(next);
       }),
@@ -200,14 +288,17 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
   );
 
   const savedFeeds = useMemo(() => feedItems(items), [items]);
-  const pinnedFeeds = useMemo(() => pinnedFeedItems(items), [items]);
+  const homeFeeds = useMemo(() => homeFeedItems(items), [items]);
+  const pinnedHomeFeeds = useMemo(() => pinnedHomeFeedItems(items), [items]);
 
   const value = useMemo(
     () => ({
       items,
       savedFeeds,
-      pinnedFeeds,
+      homeFeeds,
+      pinnedHomeFeeds,
       generators,
+      lists,
       loading,
       refreshing,
       error,
@@ -215,14 +306,18 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
       refresh,
       saveFeed,
       removeFeed,
+      removeSource,
       setPinned,
+      pinList,
       movePinned,
     }),
     [
       items,
       savedFeeds,
-      pinnedFeeds,
+      homeFeeds,
+      pinnedHomeFeeds,
       generators,
+      lists,
       loading,
       refreshing,
       error,
@@ -230,7 +325,9 @@ export function FeedsProvider({ children }: { children: React.ReactNode }) {
       refresh,
       saveFeed,
       removeFeed,
+      removeSource,
       setPinned,
+      pinList,
       movePinned,
     ]
   );

@@ -107,6 +107,10 @@ All of these use:
 | `app.bsky.notification.updateSeen` | Mark all read |
 | `app.bsky.unspecced.getPopularFeedGenerators` | Feed discovery in search and the Feeds screen |
 
+Pinning a curation list feed adds no token: it writes the published saved-feed
+preference through the existing `putPreferences` grant, reads the list through
+`app.bsky.graph.getList`, and loads posts through `app.bsky.feed.getListFeed`.
+
 ## Feed-generator audience
 
 `rpc:app.bsky.feed.sendInteractions?aud=*`

@@ -19,7 +19,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { useFeeds } from '../lib/feedsContext';
 import type { SavedFeedItem } from '../lib/feedPreferences';
-import { generatorName } from '../lib/feedSwitcher';
+import {
+  generatorCreator,
+  generatorName,
+  listCreator,
+  listName,
+} from '../lib/feedSwitcher';
 import { Avatar } from '../components/Avatar';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
@@ -28,16 +33,17 @@ type Palette = ReturnType<typeof usePalette>;
 export function FeedsScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
   const {
-    savedFeeds,
-    pinnedFeeds,
+    homeFeeds,
+    pinnedHomeFeeds,
     generators,
+    lists,
     loading,
     refreshing,
     error,
     detailsError,
     refresh,
     saveFeed,
-    removeFeed,
+    removeSource,
     setPinned,
     movePinned,
   } = useFeeds();
@@ -152,7 +158,7 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
     ]);
   }
 
-  const unpinnedFeeds = savedFeeds.filter((feed) => !feed.pinned);
+  const unpinnedSources = homeFeeds.filter((source) => !source.pinned);
 
   return (
     <ScrollView
@@ -179,8 +185,8 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
         </View>
         <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, flex: 1 }}>
           Following is always first and newest-first. Use Switch feed on Home to
-          choose any saved feed; pinning only adds shortcuts, it never changes
-          what Following contains.
+          choose any saved feed or list feed; pinning only adds shortcuts, it
+          never changes what Following contains.
         </Text>
       </View>
 
@@ -214,56 +220,61 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
         <View style={[styles.notice, { backgroundColor: p.card, borderColor: p.divider }]}>
           <Ionicons name="information-circle-outline" size={18} color={p.secondary} />
           <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, flex: 1 }}>
-            {detailsError} You can still pin and remove the saved feeds.
+            {detailsError} You can still pin and remove the saved items.
           </Text>
         </View>
       ) : null}
 
       <Section
         title="Pinned to the switcher"
-        detail={`${pinnedFeeds.length} ${pinnedFeeds.length === 1 ? 'feed' : 'feeds'}`}
+        detail={`${pinnedHomeFeeds.length} pinned`}
       >
         <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, paddingHorizontal: 18, marginBottom: 8 }}>
           Following stays first. Use the arrows to change the order of the other
-          pinned feeds in Switch feed.
+          pinned feeds and list feeds in Switch feed.
         </Text>
-        {loading && savedFeeds.length === 0 ? (
+        {loading && homeFeeds.length === 0 ? (
           <View style={styles.emptyCard}>
             <ActivityIndicator color={p.accent} />
           </View>
-        ) : pinnedFeeds.length === 0 ? (
+        ) : pinnedHomeFeeds.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: p.card, borderColor: p.divider }]}>
             <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, textAlign: 'center' }}>
-              No custom feeds are pinned. Pin one below to put it near the top
-              of Switch feed.
+              No feeds or list feeds are pinned. Pin one below to put it near
+              the top of Switch feed.
             </Text>
           </View>
         ) : (
-          pinnedFeeds.map((feed, index) => (
+          pinnedHomeFeeds.map((source, index) => (
             <SavedFeedRow
-              key={feed.id}
-              feed={feed}
-              generator={generators[feed.value]}
+              key={source.id}
+              source={source}
+              generator={generators[source.value]}
+              list={lists[source.value]}
               palette={p}
               index={index}
-              total={pinnedFeeds.length}
-              busy={busy === `saved:${feed.value}`}
+              total={pinnedHomeFeeds.length}
+              busy={busy === `saved:${source.value}`}
               disabled={!!busy}
               onOpen={() =>
-                navigation.navigate('FeedGenerator', { feed: feed.value })
+                source.type === 'list'
+                  ? navigation.navigate('ListDetail', { uri: source.value })
+                  : navigation.navigate('FeedGenerator', { feed: source.value })
               }
               onTogglePin={() =>
-                void run(`saved:${feed.value}`, () =>
-                  setPinned(feed.value, false)
+                void run(`saved:${source.value}`, () =>
+                  setPinned(source.value, false)
                 )
               }
               onMove={(direction) =>
-                void run(`saved:${feed.value}`, () =>
-                  movePinned(feed.value, direction)
+                void run(`saved:${source.value}`, () =>
+                  movePinned(source.value, direction)
                 )
               }
               onRemove={() =>
-                void run(`saved:${feed.value}`, () => removeFeed(feed.value))
+                void run(`saved:${source.value}`, () =>
+                  removeSource(source.value)
+                )
               }
             />
           ))
@@ -271,42 +282,47 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
       </Section>
 
       <Section
-        title="Saved feeds"
-        detail={`${unpinnedFeeds.length} ${unpinnedFeeds.length === 1 ? 'feed' : 'feeds'}`}
+        title="Saved feeds and list feeds"
+        detail={`${unpinnedSources.length} saved`}
       >
-        {loading && savedFeeds.length === 0 ? (
+        {loading && homeFeeds.length === 0 ? (
           <View style={styles.emptyCard}>
             <ActivityIndicator color={p.accent} />
           </View>
-        ) : unpinnedFeeds.length === 0 ? (
+        ) : unpinnedSources.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: p.card, borderColor: p.divider }]}>
             <Text style={{ color: p.secondary, fontSize: 13, lineHeight: 19, textAlign: 'center' }}>
-              No unpinned saved feeds. Saved feeds are opt-in and never replace
-              Following.
+              No unpinned saved feeds or list feeds. Every saved source is
+              optional and never replaces Following.
             </Text>
           </View>
         ) : (
-          unpinnedFeeds.map((feed) => (
+          unpinnedSources.map((source) => (
             <SavedFeedRow
-              key={feed.id}
-              feed={feed}
-              generator={generators[feed.value]}
+              key={source.id}
+              source={source}
+              generator={generators[source.value]}
+              list={lists[source.value]}
               palette={p}
               index={0}
               total={1}
-              busy={busy === `saved:${feed.value}`}
+              busy={busy === `saved:${source.value}`}
               disabled={!!busy}
               onOpen={() =>
-                navigation.navigate('FeedGenerator', { feed: feed.value })
+                source.type === 'list'
+                  ? navigation.navigate('ListDetail', { uri: source.value })
+                  : navigation.navigate('FeedGenerator', { feed: source.value })
               }
               onTogglePin={() =>
-                void run(`saved:${feed.value}`, () =>
-                  setPinned(feed.value, true)
+                void run(`saved:${source.value}`, () =>
+                  setPinned(source.value, true)
                 )
               }
               onMove={() => {}}
               onRemove={() =>
-                void run(`saved:${feed.value}`, () => removeFeed(feed.value))
+                void run(`saved:${source.value}`, () =>
+                  removeSource(source.value)
+                )
               }
             />
           ))
@@ -393,7 +409,9 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
           </View>
         ) : (
           results.map((feed: any) => {
-            const saved = savedFeeds.find((item) => item.value === feed.uri);
+            const saved = homeFeeds.find(
+              (item) => item.type === 'feed' && item.value === feed.uri
+            );
             return (
               <DiscoveryFeedRow
                 key={feed.uri}
@@ -443,8 +461,9 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
       </Section>
 
       <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, paddingHorizontal: 20, marginTop: 2 }}>
-        Custom feeds are algorithms made by other people. Balla only adds one to
-        Home when you pin it, and the Following feed is never replaced.
+        Custom feeds are algorithms made by other people; list feeds show posts
+        from the people on a list. Balla only adds either to Home when you pin
+        it, and the Following feed is never replaced.
       </Text>
     </ScrollView>
   );
@@ -476,8 +495,9 @@ function Section({
 }
 
 function SavedFeedRow({
-  feed,
+  source,
   generator,
+  list,
   palette,
   index,
   total,
@@ -488,8 +508,9 @@ function SavedFeedRow({
   onMove,
   onRemove,
 }: {
-  feed: SavedFeedItem;
+  source: SavedFeedItem;
   generator: any;
+  list: any;
   palette: Palette;
   index: number;
   total: number;
@@ -500,13 +521,18 @@ function SavedFeedRow({
   onMove: (direction: -1 | 1) => void;
   onRemove: () => void;
 }) {
-  const name = generatorName(generator) || 'Saved feed';
-  const creator = generator?.creator?.handle;
+  const isList = source.type === 'list';
+  const name = isList
+    ? listName(list) || 'List feed'
+    : generatorName(generator) || 'Saved feed';
+  const creator = isList ? listCreator(list) : generatorCreator(generator);
   const details = [
-    creator ? `by @${creator}` : null,
-    generator?.likeCount
-      ? `${generator.likeCount} ${generator.likeCount === 1 ? 'like' : 'likes'}`
-      : null,
+    creator ? `by ${creator}` : null,
+    isList
+      ? 'List feed'
+      : generator?.likeCount
+        ? `${generator.likeCount} ${generator.likeCount === 1 ? 'like' : 'likes'}`
+        : null,
   ]
     .filter(Boolean)
     .join(' · ');
@@ -528,7 +554,11 @@ function SavedFeedRow({
           { backgroundColor: pressed ? palette.bg : 'transparent' },
         ]}
       >
-        <Avatar avatar={generator?.avatar} displayName={name} size={46} />
+        <Avatar
+          avatar={isList ? list?.avatar : generator?.avatar}
+          displayName={name}
+          size={46}
+        />
         <View style={{ flex: 1, minWidth: 0 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
             <Text
@@ -537,7 +567,7 @@ function SavedFeedRow({
             >
               {name}
             </Text>
-            {feed.pinned ? (
+            {source.pinned ? (
               <View style={[styles.badge, { backgroundColor: palette.accentSoft }]}>
                 <Ionicons name="pin" size={11} color={palette.accent} />
                 <Text style={{ color: palette.accent, fontSize: 10, fontWeight: '700' }}>
@@ -550,7 +580,7 @@ function SavedFeedRow({
             style={{ color: palette.secondary, fontSize: 12, marginTop: 2 }}
             numberOfLines={1}
           >
-            {details || 'Custom feed'}
+            {details || (isList ? 'List feed' : 'Custom feed')}
           </Text>
         </View>
         {busy ? (
@@ -563,12 +593,12 @@ function SavedFeedRow({
       <View style={[styles.feedControls, { borderTopColor: palette.divider }]}>
         <ActionButton
           palette={palette}
-          icon={feed.pinned ? 'pin' : 'pin-outline'}
-          label={feed.pinned ? 'Unpin' : 'Pin'}
+          icon={source.pinned ? 'pin' : 'pin-outline'}
+          label={source.pinned ? 'Unpin' : 'Pin'}
           disabled={disabled}
           onPress={onTogglePin}
         />
-        {feed.pinned ? (
+        {source.pinned ? (
           <>
             <ActionButton
               palette={palette}
