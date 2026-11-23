@@ -3,6 +3,17 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.22.1
+
+- Both composers now enforce the published `app.bsky.feed.post` text caps: 300
+  graphemes and 3,000 UTF-8 bytes. The main composer previously checked only
+  graphemes; the reply composer checked neither. Both show a live grapheme
+  counter, report the byte cap honestly, and disable Post/Reply before an
+  invalid request is sent. Text is never truncated or rewritten.
+- Add a shared text-measurement helper and deterministic tests for ASCII,
+  grapheme and byte boundaries, including emoji-heavy text that fits the
+  grapheme cap but not the byte cap. No OAuth scope or dependency changed.
+
 ## 0.22.0
 
 - Thread replies now write real rich-text facets for links, hashtags and

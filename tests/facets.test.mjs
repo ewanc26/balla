@@ -67,7 +67,7 @@ test('the thread reply composer attaches facets to replies', () => {
     'utf8'
   );
   assert.match(screen, /import \{ postFacets \} from '\.\.\/lib\/facets'/);
-  assert.match(screen, /const text = replyText\.trim\(\)/);
+  assert.match(screen, /const text = replyLimit\.text/);
   assert.match(screen, /const facets = await postFacets\(text, agent\)/);
   assert.match(screen, /\.\.\.\(facets \? \{ facets \} : \{\}\)/);
   assert.match(screen, /reply: \{/);
