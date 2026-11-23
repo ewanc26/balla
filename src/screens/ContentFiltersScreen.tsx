@@ -17,6 +17,13 @@ import {
   useDialogFocus,
   useReducedMotion,
 } from '../lib/accessibility';
+import { resolveDidDocument } from '../lib/identityResolver';
+import {
+  checkingLabelerProbe,
+  labelerProbeText,
+  probeLabeler,
+  type LabelerProbe,
+} from '../lib/labelerProbe';
 import { BSKY_LABELER_DID } from '../lib/moderation';
 import { useModeration } from '../lib/moderationContext';
 import { Avatar } from '../components/Avatar';
@@ -58,6 +65,7 @@ export function ContentFiltersScreen({
   const [labelDefs, setLabelDefs] = useState<Record<string, any[]>>({});
   const [services, setServices] = useState<Record<string, any>>({});
   const [servicesAvailable, setServicesAvailable] = useState(false);
+  const [labelerProbes, setLabelerProbes] = useState<Record<string, LabelerProbe>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -81,6 +89,18 @@ export function ContentFiltersScreen({
     navigation.setOptions({ title: 'Content filters' });
   }, [navigation]);
 
+  const probeLabelers = useCallback((dids: string[]) => {
+    const checking: Record<string, LabelerProbe> = {};
+    for (const did of dids) checking[did] = checkingLabelerProbe();
+    setLabelerProbes(checking);
+    void Promise.all(
+      dids.map(async (did) => {
+        const result = await probeLabeler(did, { resolveDocument: resolveDidDocument });
+        setLabelerProbes((current) => ({ ...current, [did]: result }));
+      })
+    );
+  }, []);
+
   const load = useCallback(async (showSpinner: boolean) => {
     if (showSpinner) setLoading(true);
     setError(null);
@@ -91,6 +111,7 @@ export function ContentFiltersScreen({
       setLabelDefs(definitions);
 
       const dids = next.moderationPrefs.labelers.map((labeler: any) => labeler.did);
+      probeLabelers(dids);
       try {
         const response = await agent.getLabelers({ dids, detailed: true });
         const byDid: Record<string, any> = {};
@@ -112,7 +133,7 @@ export function ContentFiltersScreen({
     } finally {
       if (showSpinner) setLoading(false);
     }
-  }, []);
+  }, [probeLabelers]);
 
   useEffect(() => {
     void load(true);
@@ -218,10 +239,17 @@ export function ContentFiltersScreen({
       if (prefs.moderationPrefs.labelers.some((labeler: any) => labeler.did === did)) {
         throw new Error('That labeler is already subscribed.');
       }
-      const response = await agent.getLabelers({ dids: [did], detailed: true });
-      if (!(response.data.views || []).length) {
-        throw new Error('That account is not a labeler.');
+      // A third party need not be indexed by this AppView. Accept a DID when
+      // either the AppView lists it or its own DID document advertises a
+      // labeler that answers a public query.
+      const [listed, directCheck] = await Promise.all([
+        agent.getLabelers({ dids: [did], detailed: true }).catch(() => null),
+        probeLabeler(did, { resolveDocument: resolveDidDocument }),
+      ]);
+      if (!(listed?.data.views || []).length && directCheck.state !== 'ok') {
+        throw new Error('Could not verify that DID as a reachable labeler.');
       }
+      setLabelerProbes((current) => ({ ...current, [did]: directCheck }));
       await agent.addLabeler(did);
       setLabelerInput('');
       setAddLabelerOpen(false);
@@ -353,12 +381,16 @@ export function ContentFiltersScreen({
       <Section title="Subscribed labelers" sectionRef={labelersRef}>
         <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, paddingHorizontal: 12, paddingBottom: 8 }}>
           Labels are advisory metadata from services you choose. Anyone can run a
-          labeler. Your local filters keep working if a service is unavailable.
+          labeler. The public endpoint check reads the DID document and queries
+          the advertised service; it does not report queue lag or a service's
+          mute state. Your local filters keep working if a service is unavailable.
         </Text>
         {labelers.map((labeler: any) => {
           const isDefault = labeler.did === BSKY_LABELER_DID;
           const view = services[labeler.did];
-          const reachable = servicesAvailable && (isDefault || Boolean(view));
+          const listedByAppView = servicesAvailable && (isDefault || Boolean(view));
+          const probe = labelerProbes[labeler.did];
+          const probeFailed = probe?.state === 'unavailable' || probe?.state === 'invalid';
           return (
             <View key={labeler.did} style={[styles.labelerRow, { borderBottomColor: p.divider }]}>
               <Avatar
@@ -378,17 +410,27 @@ export function ContentFiltersScreen({
                       : labeler.did}
                 </Text>
                 <Text
-                  accessibilityRole={reachable ? undefined : 'alert'}
                   style={{
-                    color: reachable ? p.secondary : p.danger,
+                    color: p.secondary,
                     fontSize: 11,
                     marginTop: 2,
                   }}
                   numberOfLines={1}
                 >
-                  {reachable
+                  {listedByAppView
                     ? 'Subscribed · listed by the AppView'
                     : 'Subscribed · not listed by the AppView, local rules still apply'}
+                </Text>
+                <Text
+                  accessibilityRole={probeFailed ? 'alert' : undefined}
+                  style={{
+                    color: probeFailed ? p.danger : p.secondary,
+                    fontSize: 11,
+                    marginTop: 1,
+                  }}
+                  numberOfLines={1}
+                >
+                  {labelerProbeText(probe)}
                 </Text>
               </View>
               {isDefault ? (
@@ -428,11 +470,29 @@ export function ContentFiltersScreen({
           );
         })}
 
+        <Pressable
+          onPress={() => probeLabelers(labelers.map((labeler: any) => labeler.did))}
+          disabled={labelers.some(
+            (labeler: any) => labelerProbes[labeler.did]?.state === 'checking'
+          )}
+          accessibilityRole="button"
+          accessibilityLabel="Check labeler endpoints again"
+          style={({ pressed }) => [
+            styles.addRow,
+            { backgroundColor: pressed ? p.bg : 'transparent' },
+          ]}
+        >
+          <Ionicons name="refresh-outline" size={20} color={p.accent} />
+          <Text style={{ color: p.accent, fontSize: 15, fontWeight: '600', marginLeft: 8 }}>
+            Check labeler endpoints again
+          </Text>
+        </Pressable>
+
         {addLabelerOpen ? (
           <View style={{ padding: 12 }}>
             <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginBottom: 8 }}>
-              Enter a labeler’s handle or DID. Balla checks that the account is a labeler
-              before subscribing.
+              Enter a labeler’s handle or DID. Balla checks the AppView listing and the
+              DID’s public label endpoint before subscribing.
             </Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <TextInput

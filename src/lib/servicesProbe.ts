@@ -39,7 +39,7 @@ async function timed(url: string): Promise<{ response: Response | null; latencyM
   }
 }
 
-function statusDetail(status: number): string {
+export function serviceStatusDetail(status: number): string {
   if (status >= 500) return 'Service returned a server error.';
   if (status === 429) return 'Service is rate limiting requests.';
   if (status >= 400) return `Service answered HTTP ${status}; no usable response.`;
@@ -54,7 +54,7 @@ export async function probeResolver(endpoint: string): Promise<ServiceProbe> {
   const url = `${endpoint}/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(RESOLVER_CANARY)}`;
   const { response, latencyMs } = await timed(url);
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not reach this resolver.');
-  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, statusDetail(response.status));
+  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
   try {
     const payload = await response.json() as Record<string, unknown>;
     const did = typeof payload.did === 'string' && DID_RE.test(payload.did) ? payload.did : null;
@@ -79,7 +79,7 @@ export async function probeAppView(actorDid?: string | null): Promise<ServicePro
   if (!endpoint || !documentUrl) return probe('invalid', null, null, null, 'Invalid AppView DID.');
   const { response, latencyMs } = await timed(documentUrl);
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not read the AppView DID document.');
-  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, statusDetail(response.status));
+  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
   try {
     const document = await response.json();
     const advertised = advertisedEndpoint(document, '#bsky_appview');
@@ -88,7 +88,7 @@ export async function probeAppView(actorDid?: string | null): Promise<ServicePro
       const readUrl = `${advertised}/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(actorDid)}`;
       const read = await timed(readUrl);
       if (!read.response) return probe('unavailable', null, read.latencyMs, advertised, 'DID document reachable; profile read failed.');
-      if (!read.response.ok) return probe('unavailable', read.response.status, read.latencyMs, advertised, statusDetail(read.response.status));
+      if (!read.response.ok) return probe('unavailable', read.response.status, read.latencyMs, advertised, serviceStatusDetail(read.response.status));
       try {
         const profile = await read.response.json() as Record<string, unknown>;
         if (typeof profile.did !== 'string' || profile.did !== actorDid) {
@@ -112,7 +112,7 @@ export async function probeChat(): Promise<ServiceProbe> {
   if (!endpoint || !documentUrl) return probe('invalid', null, null, null, 'Invalid chat service DID.');
   const { response, latencyMs } = await timed(documentUrl);
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not read the chat DID document.');
-  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, statusDetail(response.status));
+  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
   try {
     const advertised = advertisedEndpoint(await response.json(), '#bsky_chat');
     return advertised

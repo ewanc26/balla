@@ -1,6 +1,6 @@
 # Moderation model
 
-Last updated: **22 November 2026**.
+Last updated: **23 November 2026**.
 
 Balla renders moderation before content reaches the user. It does not strip
 labels after the fact or rely on a local block list.
@@ -18,6 +18,13 @@ labels after the fact or rely on a local block list.
   a second interpretation of label values.
 - The Bluesky labeler remains in the list even when the user has no custom
   labeler subscriptions.
+- Advanced → Moderation keeps AppView listing and public-endpoint reachability as
+  separate facts. A labeler DID is resolved to its `#atproto_labeler` endpoint and
+  checked with one unauthenticated `com.atproto.label.queryLabels` canary read;
+  a blocked request is reported as unmeasured on this device. The public endpoint
+  does not expose queue lag or a service-side mute state, so Balla does not claim
+  either. Subscribing accepts a DID when the AppView lists it or its own service
+  answers that public check.
 
 ## Rendering rules
 

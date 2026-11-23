@@ -19,6 +19,7 @@ const identityProfile = read('../src/lib/identityProfile.ts');
 const identityScreen = read('../src/screens/IdentitySettingsScreen.tsx');
 const profileScreen = read('../src/screens/ProfileScreen.tsx');
 const chatServiceScreen = read('../src/screens/ChatServiceScreen.tsx');
+const labelerProbe = read('../src/lib/labelerProbe.ts');
 
 test('Advanced is a real stack screen with a stable web path', () => {
   assert.match(app, /<Stack\.Screen name="Advanced" component=\{AdvancedScreen\} \/>/);
@@ -47,6 +48,34 @@ test('the labeler surface shows real per-service state and local-filter resilien
   assert.match(contentFilters, /agent\.getLabelers\(\{ dids: \[did\], detailed: true \}\)/);
   assert.match(contentFilters, /agent\.addLabeler\(did\)/);
   assert.match(contentFilters, /agent\.removeLabeler\(labeler\.did\)/);
+});
+
+test('labeler reachability is a real public check, separate from AppView listing', () => {
+  assert.match(contentFilters, /probeLabelers\(dids\)/);
+  assert.match(contentFilters, /probeLabeler\(did, \{ resolveDocument: resolveDidDocument \}\)/);
+  assert.match(contentFilters, /labelerProbeText\(probe\)/);
+  assert.match(contentFilters, /Check labeler endpoints again/);
+  assert.match(contentFilters, /does not report queue lag or a service's\s+mute state/);
+  assert.match(labelerProbe, /#atproto_labeler/);
+  assert.match(labelerProbe, /com\.atproto\.label\.queryLabels/);
+  assert.match(labelerProbe, /uriPatterns/);
+  assert.match(labelerProbe, /response\.ok/);
+  assert.match(labelerProbe, /serviceStatusDetail/);
+  assert.doesNotMatch(labelerProbe, /\.message\b/);
+  assert.doesNotMatch(labelerProbe, /uriPatterns=\*/);
+  assert.doesNotMatch(labelerProbe, /AsyncStorage/);
+  assert.doesNotMatch(labelerProbe, /authorization/);
+});
+
+test('release notes and version describe the direct labeler check', () => {
+  const pkg = JSON.parse(read('../package.json'));
+  const changelog = read('../CHANGELOG.md');
+  assert.equal(pkg.version, '0.35.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.35.0');
+  assert.match(changelog, /## 0\.35\.0/);
+  assert.match(changelog, /public-endpoint check/);
+  assert.match(changelog, /queue lag or a service-side mute state/);
+  assert.match(changelog, /scope count remains 111/);
 });
 
 test('Advanced exposes a working Media origin screen with a real cache control', () => {

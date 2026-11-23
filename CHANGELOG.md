@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.35.0
+
+- **Advanced → Moderation now measures third-party labelers directly** (#95). Each subscribed service still shows whether the AppView lists it, but that is labelled as exactly that; a separate line now performs a real public-endpoint check: it resolves the labeler DID, reads its `#atproto_labeler` endpoint and runs one unauthenticated `com.atproto.label.queryLabels` canary query. Results show HTTP status and latency, or say plainly that the endpoint could not be reached from this device.
+- Adding a labeler no longer depends solely on the AppView's list. An arbitrary DID is accepted when the AppView lists it **or** its own DID document advertises a labeler that answers the public query; **Check labeler endpoints again** re-runs the check. A blocked CORS request on web is reported as unmeasured, never as proof that the service is down.
+- The public label API does not expose queue lag or a service-side mute state, so Balla says so in the section rather than inventing either. Local filters, reports and subscribed-label preferences still write and render exactly as before.
+- No new OAuth scope or dependency; the scope count remains 111. Provider error text is never read, logged or displayed; failures are classified from HTTP status and structured fields only.
+
 ## 0.34.0
 
 - **Published articles now open in Balla as a read-only Standard.site reader** (#101). Bluesky's enhanced external card publishes a `source` publication, `associatedRefs` strong refs, `createdAt`/`updatedAt` and `readingTime`; the card shows the publication name, author, date and reading time, and opens a dedicated screen. Plain link cards keep their existing browser behaviour, so nothing is inferred from a URL.
