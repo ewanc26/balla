@@ -82,7 +82,7 @@ test('session copy reads non-secret metadata and never renders token values', ()
 
 test('account and privacy settings do not widen the OAuth grant', () => {
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 111);
+  assert.equal(tokens.length, 112);
   // Every repo collection Balla writes must be covered by a narrow repo scope,
   // otherwise real OAuth sessions reject the write even though the mock accepts it.
   for (const collection of [

@@ -121,7 +121,7 @@ test('routed screens keep retry and error copy while calling the seam', () => {
 
 test('the seam introduces no scope, dependency or message-text path', () => {
   const scopes = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(scopes.length, 111);
+  assert.equal(scopes.length, 112);
   assert.equal(/repo:\*|rpc:\*|blob:\*/.test(metadata.scope), false);
   const pkg = JSON.parse(read('../package.json'));
   const dependencyNames = Object.keys(pkg.dependencies || {});

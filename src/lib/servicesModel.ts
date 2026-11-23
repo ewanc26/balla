@@ -5,7 +5,7 @@
  * changed at runtime: the pre-authorisation XRPC handle resolver and the public
  * did:plc directory. Neither needs a token or changes an existing grant. The
  * AppView, chat, video and labeler audiences are written into the OAuth grant
- * scope (111 tokens in oauth-client-metadata.json), so pointing them somewhere
+ * scope (112 tokens in oauth-client-metadata.json), so pointing them somewhere
  * else needs a fresh authorisation. Balla shows those as facts, never as inert
  * toggles. Keeping every default here makes "no host outside config" auditable.
  */

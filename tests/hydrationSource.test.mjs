@@ -56,5 +56,5 @@ test('the release documents the partial #99 slice without new scope', () => {
   assert.match(compliance, /hydration-source/);
   assert.match(features, /hydration source/);
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
-  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
 });

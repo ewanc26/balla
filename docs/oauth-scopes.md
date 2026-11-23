@@ -4,7 +4,7 @@ Last updated: **23 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
-the scope currently has **111 tokens**. Chat is a separate service with its own
+the scope currently has **112 tokens**. Chat is a separate service with its own
 audience, documented below. The composer and reply mention pickers reuse the
 existing `searchActors` grant, so they do not change the token count.
 
@@ -28,6 +28,7 @@ existing `searchActors` grant, so they do not change the token count.
 | `repo:app.bsky.graph.verification?action=create&action=delete` | Trusted verifiers issuing and removing verification records |
 | `repo:app.bsky.actor.status?action=create&action=update&action=delete` | Temporary live status at rkey `self` |
 | `repo:app.bsky.notification.declaration?action=create&action=update` | Activity privacy (who may subscribe to your activity) at rkey `self` |
+| `repo:community.lexicon.calendar.rsvp?action=create&action=update&action=delete` | Writing, changing and removing one public RSVP per community calendar event |
 
 Balla requests a narrow `repo:` scope for every collection it writes, including
 threadgates, postgates, statuses and the notification declaration: because granular grants are honoured, a
@@ -226,6 +227,9 @@ The client metadata has widened over time for profile editing, saved feeds and
 the moderation inbox while staying granular. Sessions authorised before any of
 those changes keep their old grant and must re-authorise before the new
 profile/link/blob, list, saved-feed, inbox, starter-pack or chat-group scopes are available.
+Sessions authorised before Events need that re-authorisation before the first
+`community.lexicon.calendar.rsvp` write; reading event records is public and
+needs no permission.
 Sessions authorised before 0.20.0 need that re-authorisation before starter-pack
 deletion is accepted. Sessions authorised before 0.19.0 need it before threadgate,
 postgate, verification, live-status, activity-privacy, activity-subscription,

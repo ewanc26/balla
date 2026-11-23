@@ -3,7 +3,7 @@
  *
  * A real PDS migration needs account creation, repository import, blob copy,
  * PLC identity operations and account activation. None of those are in this
- * client's 111-scope OAuth grant, so Balla must not show a move button. It can
+ * client's 112-scope OAuth grant, so Balla must not show a move button. It can
  * still read public host facts and export the private preferences this grant
  * is allowed to read, then hand off to tooling that can do the move.
  *

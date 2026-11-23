@@ -69,6 +69,7 @@ product, not a claim that every account looks identical.
 | Post overflow for sharing and safety | `src/components/PostMenu.tsx`: Copy, Share, Quote, Report, Mute, Block and Delete |
 | Settings and privacy cards | `src/screens/SettingsScreen.tsx`: Account, privacy, moderation, notifications, content, feeds, appearance, language, help and legal |
 | Cover, overlapping avatar, bold counts, Posts tab | `src/screens/ProfileScreen.tsx` |
+| Event cards, detail sheet and visible RSVP choices | `src/components/EventCard.tsx`, `src/components/EventSheet.tsx`, `src/components/ProfileEventsStrip.tsx` |
 | Underlined search tabs and result cards | `src/screens/SearchScreen.tsx` |
 | Era-selectable chrome and canvas with nine accent colours and a Dim/Dark choice in dark mode | `src/screens/AppearanceScreen.tsx`, `src/lib/themeModel.ts` |
 | Reason badges on notification avatars | `src/screens/NotificationsScreen.tsx` |
@@ -117,8 +118,14 @@ never mistaken for a real session.
 
 ## What Balla deliberately does not copy
 
-- **Stories, Reels, Marketplace, Groups, Watch and Events.** Balla does not have
-  those features, and drawing empty versions would be dishonest.
+- **Stories, Reels, Marketplace, Groups and Watch.** Balla does not have those
+  features, and drawing empty versions would be dishonest.
+- **Facebook's event universe.** Balla reads the community calendar records a
+  profile publishes and an event strong ref embedded in a post. It shows a
+  compact card and a visible Going / Interested / Not going choice; RSVPs are
+  public records in the viewer's repository, not private Facebook responses.
+  There are no reminders, tickets, friend invitations, recommendations or
+  events invented by Balla.
 - **The reactions picker.** Balla supports Bluesky likes, reposts and replies;
   it does not pretend to have Love, Haha, Wow, Sad or Angry.
 - **Ranking, suggested posts and “people you may know”.** The Following feed is

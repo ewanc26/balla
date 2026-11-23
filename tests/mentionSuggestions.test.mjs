@@ -102,7 +102,7 @@ test('filters duplicate and unusable search results', () => {
 test('both composers use the shared picker and people-search scope', () => {
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 111);
+  assert.equal(tokens.length, 112);
   assert.equal(
     tokens.filter((token) => token.startsWith('rpc:app.bsky.actor.searchActors'))
       .length,

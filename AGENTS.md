@@ -214,7 +214,16 @@ PDS walk of the viewer's own posts per launch day, cached per account, then a
 dismissible Home card with up to three posts and a Memories screen. It is off by
 default, shows only earlier years on the current local date, writes no server
 preference and makes no notification, badge or AppView request; any read error
-leaves Home unchanged.
+leaves Home unchanged. Profiles with public `community.lexicon.calendar.event`
+records show a quiet Events strip, and posts whose raw record embeds an event
+strong ref show the same compact card. The detail sheet renders the local and
+published times, the location union with map or link-outs, and description; a
+visible Going / Interested / Not going choice writes one deterministic public
+`community.lexicon.calendar.rsvp` record, changing it replaces that record, and
+removal deletes it. This is the one added repository scope (112 tokens total);
+sessions authorised before 0.58.0 must sign in again before the first RSVP.
+Reads stay public and unauthenticated, and no reminder, ticket, notification or
+recommendation is involved.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
 mapping and the deliberate omissions (Stories, reactions, ranking) live in

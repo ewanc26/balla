@@ -49,6 +49,6 @@ test('teal reads are bounded, retryable and use the shared external opener', () 
 test('opening teal activity adds no OAuth scope', () => {
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   const scopes = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(scopes.length, 111);
+  assert.equal(scopes.length, 112);
   assert.equal(scopes.some((scope) => scope.includes('fm.teal')), false);
 });

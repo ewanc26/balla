@@ -111,7 +111,7 @@ test('list-feed pinning reuses the existing saved-feed scopes', () => {
     readFileSync(new URL('../oauth-client-metadata.json', import.meta.url), 'utf8')
   );
   const tokens = metadata.scope.split(/\s+/).filter(Boolean);
-  assert.equal(tokens.length, 111);
+  assert.equal(tokens.length, 112);
   assert.equal(
     tokens.includes(
       'rpc:app.bsky.feed.getFeedGenerators?aud=did:web:api.bsky.app#bsky_appview'

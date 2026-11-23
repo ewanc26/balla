@@ -54,5 +54,5 @@ test('the release documents the login check as partial #100', () => {
   assert.match(features, /Pre-login check/);
   assert.match(features, /issues\/100/);
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
-  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
 });

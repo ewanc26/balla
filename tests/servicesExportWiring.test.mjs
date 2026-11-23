@@ -70,5 +70,5 @@ test('the release documents the partial #97 slice honestly', () => {
   assert.match(siteFeatures, /Service configuration export/);
   assert.match(siteFeatures, /issues\/97/);
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
-  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 111);
+  assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
 });
