@@ -18,7 +18,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { useFeeds } from '../lib/feedsContext';
-import type { SavedFeedItem } from '../lib/feedPreferences';
+import { findSavedFeed, type SavedFeedItem } from '../lib/feedPreferences';
 import {
   generatorCreator,
   generatorName,
@@ -26,6 +26,15 @@ import {
   listName,
 } from '../lib/feedSwitcher';
 import { Avatar } from '../components/Avatar';
+import { openExternalUrl } from '../lib/openLink';
+import {
+  RANKED_FEEDS,
+  RANKED_FEED_SHELF_FOOTNOTE,
+  RANKED_FEED_SHELF_INTRO,
+  RANKED_FEED_SHELF_TITLE,
+  rankedFeedLabel,
+  type RankedFeed,
+} from '../lib/rankedFeeds';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 type Palette = ReturnType<typeof usePalette>;
@@ -327,6 +336,55 @@ export function FeedsScreen({ navigation }: { navigation: any }) {
             />
           ))
         )}
+      </Section>
+
+      <Section title={RANKED_FEED_SHELF_TITLE} detail="Optional · ranked by others">
+        <Text
+          style={{
+            color: p.secondary,
+            fontSize: 12,
+            lineHeight: 18,
+            paddingHorizontal: 18,
+            marginBottom: 10,
+          }}
+        >
+          {RANKED_FEED_SHELF_INTRO}
+        </Text>
+        {RANKED_FEEDS.map((feed) => {
+          const saved = findSavedFeed(homeFeeds, feed.uri);
+          return (
+            <RankedFeedRow
+              key={feed.uri}
+              feed={feed}
+              palette={p}
+              saved={!!saved}
+              pinned={!!saved?.pinned}
+              busy={busy === `ranked:${feed.uri}`}
+              disabled={!!busy}
+              onOpen={() =>
+                navigation.navigate('FeedGenerator', { feed: feed.uri })
+              }
+              onSource={() => void openExternalUrl(feed.sourceUrl)}
+              onAction={() =>
+                void run(`ranked:${feed.uri}`, async () => {
+                  if (saved) await removeSource(feed.uri);
+                  else await saveFeed(feed.uri, false);
+                })
+              }
+            />
+          );
+        })}
+        <Text
+          style={{
+            color: p.secondary,
+            fontSize: 12,
+            lineHeight: 18,
+            paddingHorizontal: 20,
+            marginTop: 2,
+          }}
+        >
+          {RANKED_FEED_SHELF_FOOTNOTE}
+        </Text>
       </Section>
 
       <Section
@@ -632,6 +690,169 @@ function SavedFeedRow({
   );
 }
 
+function RankedFeedRow({
+  feed,
+  palette,
+  saved,
+  pinned,
+  busy,
+  disabled,
+  onOpen,
+  onSource,
+  onAction,
+}: {
+  feed: RankedFeed;
+  palette: Palette;
+  saved: boolean;
+  pinned: boolean;
+  busy: boolean;
+  disabled: boolean;
+  onOpen: () => void;
+  onSource: () => void;
+  onAction: () => void;
+}) {
+  return (
+    <View
+      style={[
+        styles.rankedCard,
+        { backgroundColor: palette.card, borderColor: palette.divider },
+        cardShadow,
+      ]}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+        <View style={[styles.rankIcon, { backgroundColor: palette.accentSoft }]}>
+          <Ionicons name="sparkles-outline" size={18} color={palette.accent} />
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+            }}
+          >
+            <Text style={{ color: palette.text, fontSize: 15, fontWeight: '700' }}>
+              {feed.name}
+            </Text>
+            <Text
+              style={[
+                styles.rankedChip,
+                { color: palette.accent, borderColor: palette.accent },
+              ]}
+            >
+              RANKED · THIRD PARTY
+            </Text>
+          </View>
+          <Text style={{ color: palette.secondary, fontSize: 12, marginTop: 2 }}>
+            {feed.creator} · {feed.serviceDid}
+          </Text>
+        </View>
+      </View>
+
+      <Text
+        style={{
+          color: palette.text,
+          fontSize: 13,
+          lineHeight: 19,
+          marginTop: 10,
+        }}
+      >
+        {feed.algorithm}
+      </Text>
+      <Text
+        style={{
+          color: palette.secondary,
+          fontSize: 12,
+          lineHeight: 18,
+          marginTop: 6,
+        }}
+      >
+        {feed.disclosure}
+      </Text>
+
+      <View style={styles.rankedActions}>
+        {saved ? (
+          <ActionButton
+            palette={palette}
+            icon="albums-outline"
+            label="Open feed"
+            disabled={disabled}
+            onPress={onOpen}
+          />
+        ) : null}
+        <ActionButton
+          palette={palette}
+          icon="open-outline"
+          label="Read the algorithm"
+          disabled={disabled}
+          onPress={onSource}
+        />
+        <Pressable
+          onPress={onAction}
+          disabled={disabled}
+          accessibilityRole="button"
+          accessibilityLabel={
+            saved ? `Unsubscribe from ${feed.name}` : `Subscribe to ${feed.name}`
+          }
+          accessibilityHint={
+            saved
+              ? 'Removes this saved feed. Following and Home are unchanged.'
+              : 'Saves this ranked feed. Following and Home are unchanged.'
+          }
+          accessibilityState={{ disabled, selected: saved }}
+          style={({ pressed }) => [
+            styles.rankAction,
+            {
+              backgroundColor: saved ? palette.bg : palette.accent,
+              borderColor: saved ? palette.divider : palette.accent,
+              opacity: pressed || disabled ? 0.65 : 1,
+            },
+          ]}
+        >
+          {busy ? (
+            <ActivityIndicator
+              size="small"
+              color={saved ? palette.accent : palette.onAccent}
+            />
+          ) : (
+            <>
+              <Ionicons
+                name={saved ? 'checkmark' : 'add'}
+                size={16}
+                color={saved ? palette.accent : palette.onAccent}
+              />
+              <Text
+                style={{
+                  color: saved ? palette.accent : palette.onAccent,
+                  fontSize: 13,
+                  fontWeight: '700',
+                }}
+              >
+                {rankedFeedLabel(saved)}
+              </Text>
+            </>
+          )}
+        </Pressable>
+      </View>
+
+      {saved ? (
+        <Text
+          style={{
+            color: palette.secondary,
+            fontSize: 12,
+            lineHeight: 18,
+            marginTop: 8,
+          }}
+        >
+          {pinned
+            ? 'Saved and pinned to Switch feed. Following stays first and newest-first.'
+            : 'Saved to your feeds. It never replaces Following and is never inserted into Home.'}
+        </Text>
+      ) : null}
+    </View>
+  );
+}
+
 function DiscoveryFeedRow({
   feed,
   palette,
@@ -812,6 +1033,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
+  },
+  rankedCard: {
+    marginHorizontal: 8,
+    marginBottom: 10,
+    padding: 14,
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  rankIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: CARD_RADIUS,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 10,
+  },
+  rankedChip: {
+    marginLeft: 6,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    fontSize: 9,
+    fontWeight: '700',
+    letterSpacing: 0.3,
+  },
+  rankedActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 10,
+  },
+  rankAction: {
+    minHeight: 44,
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+    paddingHorizontal: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
   },
   sectionHeading: {
     flexDirection: 'row',
