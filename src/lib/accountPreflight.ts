@@ -47,6 +47,16 @@ export const ACCOUNT_PREFLIGHT_COPY = {
     'A successful check does not grant any scope. AppView, chat and video audiences stay bound to the OAuth grant, so changing them still needs a new authorisation. Account reviews and sign-up approval belong to the host.',
 } as const;
 
+/** Shared result labels so every surface describes the same checks identically. */
+export const ACCOUNT_PREFLIGHT_STATE_LABELS: Record<AccountPreflightState, string> = {
+  invalid: 'Invalid input',
+  unresolved: 'Identity not resolved',
+  'no-pds': 'No PDS advertised',
+  incompatible: 'Not an AT Protocol PDS',
+  'no-oauth': 'No usable OAuth metadata',
+  ok: 'Public checks passed',
+};
+
 const DID_RE = /^did:[a-z]+:[A-Za-z0-9._:%-]+$/i;
 const PLC_RE = /^did:plc:[a-z0-9]+$/i;
 
