@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.41.0
+
+- **Advanced → Account pre-flight adds a real pre-login check (#100, partial).** Enter another account's handle or DID; Balla resolves a handle from its own `/.well-known/atproto-did` first, falls back to the configured public XRPC resolver, reads the DID document from `plc.directory` or the `did:web` well-known path, and follows its `#atproto_pds` endpoint. It then checks `describeServer`, the PDS's `oauth-protected-resource` metadata and its authorization server's published metadata. Each step is a public, unauthenticated read with structured fields only.
+- **The result distinguishes real failure modes.** An unresolved identity, absent PDS, non-AT-Protocol server and missing OAuth metadata are reported separately; provider error prose is never read, logged or shown. The screen says plainly that passing these checks is **not a login, an account creation or a grant**: sign-up approval and the OAuth consent page belong to the host.
+- The host-only check in Advanced → Hosting and the OpenPDS directory remain unchanged. An end-to-end login with an independent account still cannot be verified without credentials, so #100 stays open. App passwords remain out of scope for this OAuth-only client.
+- No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.40.0
 
 - **Advanced → AppView adds a read-only public health check** (#99, partial). The new screen shows the grant-bound AppView DID and OAuth audience as facts, reads its public `did:web` document to find the advertised `#bsky_appview` endpoint, and — when signed in — runs one public profile canary for this account. Results report HTTP status and elapsed time from this device; no provider prose is read, logged or shown.

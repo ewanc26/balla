@@ -70,6 +70,7 @@ import { HostingScreen } from './src/screens/HostingScreen';
 import { PdsDirectoryScreen } from './src/screens/PdsDirectoryScreen';
 import { ServicesScreen } from './src/screens/ServicesScreen';
 import { AppViewScreen } from './src/screens/AppViewScreen';
+import { AccountPreflightScreen } from './src/screens/AccountPreflightScreen';
 import { ChatNotificationSettingsScreen } from './src/screens/ChatNotificationSettingsScreen';
 import { CreateGroupScreen } from './src/screens/CreateGroupScreen';
 import { JoinGroupScreen } from './src/screens/JoinGroupScreen';
@@ -426,6 +427,7 @@ export default function App() {
                           <Stack.Screen name="PdsDirectory" component={PdsDirectoryScreen} />
                           <Stack.Screen name="Services" component={ServicesScreen} />
                           <Stack.Screen name="AppView" component={AppViewScreen} />
+                          <Stack.Screen name="AccountPreflight" component={AccountPreflightScreen} />
                           <Stack.Screen name="Accounts" component={AccountsScreen} />
                           <Stack.Screen name="AddAccount" component={AddAccountScreen} />
                           <Stack.Screen name="Appearance" component={AppearanceScreen} />

@@ -52,6 +52,7 @@ export const WEB_LINKING_CONFIG = {
     PdsDirectory: 'settings/advanced/pds-directory',
     Services: 'settings/advanced/services',
     AppView: 'settings/advanced/appview',
+    AccountPreflight: 'settings/advanced/account-preflight',
     Accounts: 'settings/accounts',
     AddAccount: 'settings/accounts/add',
     Appearance: 'appearance',
