@@ -22,6 +22,12 @@ import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { agent } from '../lib/agent';
 import { postFacets } from '../lib/facets';
 import {
+  activeMentionQuery,
+  applyMention,
+  mentionActors,
+  type MentionActor,
+} from '../lib/mentionSuggestions';
+import {
   dialogAccessibilityProps,
   sheetAnimation,
   useDialogFocus,
@@ -62,6 +68,7 @@ import { describeDraft, type StoredDraft } from '../lib/draftModel';
 import { firstWebUrl, type ExternalView } from '../lib/embedModel';
 import { resolveExternalLink } from '../lib/externalLink';
 import { Avatar } from '../components/Avatar';
+import { MentionSuggestions } from '../components/MentionSuggestions';
 import { useViewer } from '../lib/viewer';
 import { usePreferences } from '../lib/preferences';
 import { useAccountPreferences } from '../lib/accountPreferences';
@@ -296,6 +303,11 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   );
 
   const [text, setText] = useState('');
+  const [selection, setSelection] = useState({ start: 0, end: 0 });
+  const [mentionStatus, setMentionStatus] = useState<
+    'loading' | 'ready' | 'error'
+  >('loading');
+  const [mentionResults, setMentionResults] = useState<MentionActor[]>([]);
   const [images, setImages] = useState<ComposerImage[]>([]);
   const [video, setVideo] = useState<ComposerVideo | null>(null);
   const [videoStatus, setVideoStatus] = useState<VideoJobStatus | null>(null);
@@ -333,11 +345,21 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [savingDraft, setSavingDraft] = useState(false);
   const editorRef = useRef<any>(null);
   const appliedPrimaryLanguage = useRef(preferences.primaryLanguage);
+  const mentionRequest = useRef(0);
 
   const uploadedRef = useRef<Map<string, unknown>>(new Map());
   const uploadAbortRef = useRef<AbortController | null>(null);
   const videoBlobRef = useRef<unknown>(null);
   const videoAbortRef = useRef<AbortController | null>(null);
+
+  const activeMention = activeMentionQuery(text, selection);
+  const mentionQuery =
+    activeMention && activeMention.query.trim().length >= 2
+      ? activeMention.query.trim()
+      : '';
+  const mentionKey = activeMention
+    ? `${activeMention.start}:${activeMention.end}:${activeMention.query}`
+    : '';
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -411,6 +433,42 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     }, 500);
     return () => clearTimeout(timer);
   }, [text, selfLabels, languages, gates, draftChecked, recoverDraft, sending, publishedDone]);
+
+  useEffect(() => {
+    // Search only after a short pause, and ignore any response that belongs to
+    // an older query. A stale result must never replace the current token.
+    const mention = activeMentionQuery(text, selection);
+    const request = mentionRequest.current + 1;
+    mentionRequest.current = request;
+
+    if (!mention || mention.query.trim().length < 2 || sending) {
+      setMentionResults([]);
+      setMentionStatus('loading');
+      return;
+    }
+
+    setMentionResults([]);
+    setMentionStatus('loading');
+    const timer = setTimeout(() => {
+      void agent
+        .searchActors({ q: mention.query.trim(), limit: 6 })
+        .then((response) => {
+          if (mentionRequest.current !== request) return;
+          setMentionResults(mentionActors(response?.data?.actors));
+          setMentionStatus('ready');
+        })
+        .catch(() => {
+          if (mentionRequest.current !== request) return;
+          setMentionResults([]);
+          setMentionStatus('error');
+        });
+    }, 250);
+
+    return () => {
+      clearTimeout(timer);
+      if (mentionRequest.current === request) mentionRequest.current += 1;
+    };
+  }, [mentionKey, sending]);
 
   useEffect(() => {
     return navigation.addListener('beforeRemove', (event: any) => {
@@ -797,6 +855,16 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     setEditingKey(key);
   }
 
+  function chooseMention(actor: MentionActor) {
+    if (!activeMention || !actor.handle) return;
+    const next = applyMention(text, activeMention, actor.handle);
+    setText(next.text);
+    setSelection({ start: next.cursor, end: next.cursor });
+    setMentionResults([]);
+    setMentionStatus('loading');
+    editorRef.current?.focus();
+  }
+
   function openFirstMissingAlt() {
     if (video && !video.alt.trim()) {
       setConfirmWithoutAlt(false);
@@ -861,6 +929,9 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
   function resetEditor() {
     setText('');
+    setSelection({ start: 0, end: 0 });
+    setMentionResults([]);
+    setMentionStatus('loading');
     setImages([]);
     setVideo(null);
     setVideoStatus(null);
@@ -885,6 +956,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     // another screen stays in place, and photos must be added again.
     const restoredLanguages = normaliseLanguages(recoverDraft.languages);
     setText(recoverDraft.text);
+    setSelection({
+      start: recoverDraft.text.length,
+      end: recoverDraft.text.length,
+    });
     setSelfLabels(normaliseSelfLabels(recoverDraft.selfLabels));
     setLanguages(
       restoredLanguages.length ? restoredLanguages : [preferences.primaryLanguage]
@@ -907,6 +982,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
   function loadDraft(draft: PendingPost) {
     setText(draft.text);
+    setSelection({ start: draft.text.length, end: draft.text.length });
     setImages(draft.images);
     setVideo(draft.video || null);
     setCaptions(draft.captions || []);
@@ -970,6 +1046,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   function openServerDraft(view: ServerDraft) {
     const choices = draftViewToChoices(view);
     setText(choices.text);
+    setSelection({ start: choices.text.length, end: choices.text.length });
     setSelfLabels(choices.selfLabels);
     setLanguages(
       choices.languages.length ? choices.languages : [preferences.primaryLanguage]
@@ -1432,6 +1509,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
             placeholderTextColor={p.secondary}
             value={text}
             onChangeText={setText}
+            selection={selection}
+            onSelectionChange={(event) =>
+              setSelection(event.nativeEvent.selection)
+            }
             style={[
               {
                 color: p.text,
@@ -1445,6 +1526,15 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
               webInputReset,
             ]}
           />
+
+          {mentionQuery && !sending ? (
+            <MentionSuggestions
+              query={mentionQuery}
+              status={mentionStatus}
+              results={mentionResults}
+              onSelect={chooseMention}
+            />
+          ) : null}
 
           {images.length > 0 ? (
             <View style={styles.gallery}>

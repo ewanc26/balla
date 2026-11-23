@@ -1,11 +1,12 @@
 # OAuth scope inventory
 
-Last updated: **22 November 2026**.
+Last updated: **23 November 2026**.
 
 Balla no longer requests `repo:*` or `rpc:*` for the AppView. The metadata
 declares only the collections and RPC endpoints the client currently calls:
 the scope currently has **111 tokens**. Chat is a separate service with its own
-audience, documented below.
+audience, documented below. The composer mention picker reuses the existing
+`searchActors` grant, so it does not change the token count.
 
 ## Repository writes
 
@@ -64,7 +65,7 @@ All of these use:
 | `app.bsky.actor.getPreferences` | Label, adult-content and saved-feed preferences |
 | `app.bsky.actor.getProfile` | Profile screens and the viewer chrome |
 | `app.bsky.actor.putPreferences` | Labelers, label filters, adult content, muted words and saved-feed/pin order |
-| `app.bsky.actor.searchActors` | People search |
+| `app.bsky.actor.searchActors` | People search and composer mention suggestions |
 | `app.bsky.bookmark.createBookmark` | Saving a post |
 | `app.bsky.bookmark.deleteBookmark` | Removing a saved post |
 | `app.bsky.bookmark.getBookmarks` | Saved screen |

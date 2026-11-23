@@ -3,6 +3,21 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.21.0
+
+- The composer now suggests matching accounts while a mention is typed.
+  Suggestions appear after `@` and two characters, wait 250 ms before searching,
+  and use the already-authorised `app.bsky.actor.searchActors` AppView call.
+  Choosing a result replaces the whole token with the canonical handle and
+  preserves surrounding whitespace and punctuation. Email-like text and range
+  selections do not trigger the picker.
+- The picker shows explicit loading, empty and failure states, uses 48pt rows and
+  labels every result for assistive technology. No OAuth scope, dependency or
+  automatic mention insertion was added; the AppView scope remains 111 tokens.
+- Add deterministic tests for token detection, replacement, result filtering and
+  composer wiring, and update the README, current-state, OAuth inventory,
+  compliance note, reference inventory and site copy.
+
 ## 0.20.0
 
 - New posts now carry real rich-text facets (`app.bsky.richtext.facet`) for
