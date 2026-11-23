@@ -21,12 +21,8 @@ import { useVideoPlayer, VideoView } from 'expo-video';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { agent } from '../lib/agent';
 import { postFacets } from '../lib/facets';
-import {
-  activeMentionQuery,
-  applyMention,
-  mentionActors,
-  type MentionActor,
-} from '../lib/mentionSuggestions';
+import { applyMention, type MentionActor } from '../lib/mentionSuggestions';
+import { useMentionSuggestions } from '../lib/useMentionSuggestions';
 import {
   dialogAccessibilityProps,
   sheetAnimation,
@@ -304,10 +300,6 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
 
   const [text, setText] = useState('');
   const [selection, setSelection] = useState({ start: 0, end: 0 });
-  const [mentionStatus, setMentionStatus] = useState<
-    'loading' | 'ready' | 'error'
-  >('loading');
-  const [mentionResults, setMentionResults] = useState<MentionActor[]>([]);
   const [images, setImages] = useState<ComposerImage[]>([]);
   const [video, setVideo] = useState<ComposerVideo | null>(null);
   const [videoStatus, setVideoStatus] = useState<VideoJobStatus | null>(null);
@@ -345,21 +337,18 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [savingDraft, setSavingDraft] = useState(false);
   const editorRef = useRef<any>(null);
   const appliedPrimaryLanguage = useRef(preferences.primaryLanguage);
-  const mentionRequest = useRef(0);
 
   const uploadedRef = useRef<Map<string, unknown>>(new Map());
   const uploadAbortRef = useRef<AbortController | null>(null);
   const videoBlobRef = useRef<unknown>(null);
   const videoAbortRef = useRef<AbortController | null>(null);
 
-  const activeMention = activeMentionQuery(text, selection);
-  const mentionQuery =
-    activeMention && activeMention.query.trim().length >= 2
-      ? activeMention.query.trim()
-      : '';
-  const mentionKey = activeMention
-    ? `${activeMention.start}:${activeMention.end}:${activeMention.query}`
-    : '';
+  const {
+    activeMention,
+    query: mentionQuery,
+    status: mentionStatus,
+    results: mentionResults,
+  } = useMentionSuggestions(text, selection, !sending);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -434,41 +423,6 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     return () => clearTimeout(timer);
   }, [text, selfLabels, languages, gates, draftChecked, recoverDraft, sending, publishedDone]);
 
-  useEffect(() => {
-    // Search only after a short pause, and ignore any response that belongs to
-    // an older query. A stale result must never replace the current token.
-    const mention = activeMentionQuery(text, selection);
-    const request = mentionRequest.current + 1;
-    mentionRequest.current = request;
-
-    if (!mention || mention.query.trim().length < 2 || sending) {
-      setMentionResults([]);
-      setMentionStatus('loading');
-      return;
-    }
-
-    setMentionResults([]);
-    setMentionStatus('loading');
-    const timer = setTimeout(() => {
-      void agent
-        .searchActors({ q: mention.query.trim(), limit: 6 })
-        .then((response) => {
-          if (mentionRequest.current !== request) return;
-          setMentionResults(mentionActors(response?.data?.actors));
-          setMentionStatus('ready');
-        })
-        .catch(() => {
-          if (mentionRequest.current !== request) return;
-          setMentionResults([]);
-          setMentionStatus('error');
-        });
-    }, 250);
-
-    return () => {
-      clearTimeout(timer);
-      if (mentionRequest.current === request) mentionRequest.current += 1;
-    };
-  }, [mentionKey, sending]);
 
   useEffect(() => {
     return navigation.addListener('beforeRemove', (event: any) => {
@@ -860,8 +814,6 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     const next = applyMention(text, activeMention, actor.handle);
     setText(next.text);
     setSelection({ start: next.cursor, end: next.cursor });
-    setMentionResults([]);
-    setMentionStatus('loading');
     editorRef.current?.focus();
   }
 
@@ -930,8 +882,6 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   function resetEditor() {
     setText('');
     setSelection({ start: 0, end: 0 });
-    setMentionResults([]);
-    setMentionStatus('loading');
     setImages([]);
     setVideo(null);
     setVideoStatus(null);

@@ -14,10 +14,14 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { postFacets } from '../lib/facets';
+import { applyMention, type MentionActor } from '../lib/mentionSuggestions';
+import { useMentionSuggestions } from '../lib/useMentionSuggestions';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
+import { MentionSuggestions } from '../components/MentionSuggestions';
 import { useViewer } from '../lib/viewer';
 import { replyIndent } from '../lib/layout';
 import { useViewPreferences } from '../lib/viewPreferences';
@@ -214,10 +218,17 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   const [failureMessage, setFailureMessage] = useState<string | null>(null);
   const [replyError, setReplyError] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [replySelection, setReplySelection] = useState({ start: 0, end: 0 });
   const [hiddenUris, setHiddenUris] = useState<string[]>([]);
   const [hiddenOpen, setHiddenOpen] = useState(false);
   const [sending, setSending] = useState(false);
   const replyInput = React.useRef<React.ComponentRef<typeof TextInput>>(null);
+  const {
+    activeMention: replyActiveMention,
+    query: replyMentionQuery,
+    status: replyMentionStatus,
+    results: replyMentionResults,
+  } = useMentionSuggestions(replyText, replySelection, !sending);
 
   function openProfile(did: string) {
     navigation.navigate('UserProfile', { actor: did });
@@ -305,6 +316,14 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
     navigation.setOptions({ title: 'Thread' });
   }, [navigation]);
 
+  function chooseReplyMention(actor: MentionActor) {
+    if (!replyActiveMention || !actor.handle) return;
+    const next = applyMention(replyText, replyActiveMention, actor.handle);
+    setReplyText(next.text);
+    setReplySelection({ start: next.cursor, end: next.cursor });
+    replyInput.current?.focus();
+  }
+
   async function sendReply() {
     if (sending || replyText.trim().length === 0) return;
     setSending(true);
@@ -318,14 +337,18 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
       if (record.reply && record.reply.root) {
         root = record.reply.root;
       }
+      const text = replyText.trim();
+      const facets = await postFacets(text, agent);
       await agent.post({
-        text: replyText.trim(),
+        text,
+        ...(facets ? { facets } : {}),
         reply: {
           root,
           parent: { uri: post.uri, cid: post.cid },
         },
       });
       setReplyText('');
+      setReplySelection({ start: 0, end: 0 });
       await load();
     } catch (err) {
       // Keep the text: a failed send should never eat the reply.
@@ -515,57 +538,71 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
           },
         ]}
       >
-        <Avatar
-          avatar={me && me.avatar}
-          displayName={(me && (me.displayName || me.handle)) || 'You'}
-          size={36}
-        />
-        <View
-          style={[
-            styles.inputWrap,
-            { backgroundColor: p.bg, borderColor: p.divider },
-          ]}
-        >
-          <TextInput
-            ref={replyInput}
-            placeholder="Write a reply…"
-            placeholderTextColor={p.secondary}
-            accessibilityLabel="Write a reply to this thread"
-            value={replyText}
-            onChangeText={setReplyText}
-            multiline
-            style={[
-              {
-                color: p.text,
-                flex: 1,
-                minHeight: 44,
-                paddingHorizontal: 12,
-                paddingVertical: 8,
-                maxHeight: 120,
-                fontSize: 15,
-              },
-              webInputReset,
-            ]}
+        {replyMentionQuery && !sending ? (
+          <MentionSuggestions
+            query={replyMentionQuery}
+            status={replyMentionStatus}
+            results={replyMentionResults}
+            onSelect={chooseReplyMention}
           />
+        ) : null}
+        <View style={styles.composerRow}>
+          <Avatar
+            avatar={me && me.avatar}
+            displayName={(me && (me.displayName || me.handle)) || 'You'}
+            size={36}
+          />
+          <View
+            style={[
+              styles.inputWrap,
+              { backgroundColor: p.bg, borderColor: p.divider },
+            ]}
+          >
+            <TextInput
+              ref={replyInput}
+              placeholder="Write a reply…"
+              placeholderTextColor={p.secondary}
+              accessibilityLabel="Write a reply to this thread"
+              value={replyText}
+              onChangeText={setReplyText}
+              selection={replySelection}
+              onSelectionChange={(event) =>
+                setReplySelection(event.nativeEvent.selection)
+              }
+              multiline
+              style={[
+                {
+                  color: p.text,
+                  flex: 1,
+                  minHeight: 44,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  maxHeight: 120,
+                  fontSize: 15,
+                },
+                webInputReset,
+              ]}
+            />
+          </View>
+          <Pressable
+            onPress={sendReply}
+            disabled={sending || replyText.trim().length === 0}
+            accessibilityRole="button"
+            accessibilityLabel="Reply"
+            style={({ pressed }) => ({
+              backgroundColor: p.accent,
+              opacity: pressed || sending || replyText.trim().length === 0 ? 0.5 : 1,
+              borderRadius: CARD_RADIUS,
+              minHeight: 44,
+              paddingHorizontal: 16,
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginLeft: 8,
+            })}
+          >
+            <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: 15 }}>Reply</Text>
+          </Pressable>
         </View>
-        <Pressable
-          onPress={sendReply}
-          disabled={sending || replyText.trim().length === 0}
-          accessibilityRole="button"
-          accessibilityLabel="Reply"
-          style={({ pressed }) => ({
-            backgroundColor: p.accent,
-            opacity: pressed || sending || replyText.trim().length === 0 ? 0.5 : 1,
-            borderRadius: CARD_RADIUS,
-            minHeight: 44,
-            paddingHorizontal: 16,
-            alignItems: 'center',
-            justifyContent: 'center',
-            marginLeft: 8,
-          })}
-        >
-          <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: 15 }}>Reply</Text>
-        </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
@@ -609,11 +646,13 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   composer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingTop: 8,
+  },
+  composerRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
   },
   inputWrap: {
     flex: 1,

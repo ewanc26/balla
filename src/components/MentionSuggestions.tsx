@@ -8,10 +8,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Avatar } from './Avatar';
-import type { MentionActor } from '../lib/mentionSuggestions';
+import type {
+  MentionActor,
+  MentionStatus,
+} from '../lib/mentionSuggestions';
 import { usePalette } from '../theme';
-
-export type MentionStatus = 'loading' | 'ready' | 'error';
 
 type Props = {
   query: string;
