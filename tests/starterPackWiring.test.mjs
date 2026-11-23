@@ -14,7 +14,7 @@ test('starter-pack writes add exactly one evidence-based repository scope', () =
   );
   assert.ok(
     tokens.includes(
-      'repo:app.bsky.graph.starterpack?action=create&action=update'
+      'repo:app.bsky.graph.starterpack?action=create&action=update&action=delete'
     )
   );
   assert.equal(/repo:\*|rpc:\*|blob:\*/.test(metadata.scope), false);
@@ -42,11 +42,12 @@ test('the starter-pack page has explicit share and feed actions', () => {
   assert.match(screen, /Bluesky supplies\s*\n\s*only this preview/);
 });
 
-test('starter-pack creation and editing use registered screens and real lexicons', () => {
+test('starter-pack creation, editing and deletion use registered screens and real lexicons', () => {
   const app = read('../App.tsx');
   const linking = read('../src/lib/webLinking.ts');
   const profile = read('../src/screens/ProfileScreen.tsx');
   const data = read('../src/lib/starterPacks.ts');
+  const screen = read('../src/screens/StarterPackScreen.tsx');
   const edit = read('../src/screens/StarterPackEditScreen.tsx');
 
   assert.match(app, /import \{ StarterPackEditScreen \}/);
@@ -62,6 +63,15 @@ test('starter-pack creation and editing use registered screens and real lexicons
   assert.match(edit, /accessibilityLabel="Starter pack name"/);
   assert.match(edit, /accessibilityLabel="Starter pack description"/);
   assert.doesNotMatch(data, /rpc:.?app\.bsky\.graph\.(create|edit)StarterPack/);
+
+  assert.match(data, /export async function deleteStarterPack/);
+  assert.match(data, /parseStarterPackListUri/);
+  assert.match(data, /deleteListItems/);
+  assert.match(data, /collection: 'app\.bsky\.graph\.list'/);
+  assert.match(data, /collection: 'app\.bsky\.graph\.starterpack'/);
+  assert.match(screen, /accessibilityLabel="Delete starter pack"/);
+  assert.match(screen, /Delete “\{name\}”\?/);
+  assert.match(screen, /This cannot\s+be undone/);
 });
 
 test('documentation and version copy state the re-authorisation requirement', () => {
@@ -71,11 +81,17 @@ test('documentation and version copy state the re-authorisation requirement', ()
   const site = read('../site/features.html');
 
   assert.match(scopes, /\*\*111 tokens\*\*/);
-  assert.match(scopes, /repo:app\.bsky\.graph\.starterpack\?action=create&action=update/);
+  assert.match(scopes, /repo:app\.bsky\.graph\.starterpack\?action=create&action=update&action=delete/);
   assert.match(scopes, /re-authorise/i);
-  assert.match(changelog, /## 0\.13\.0/);
+  assert.match(scopes, /before 0\.20\.0/);
+  assert.match(changelog, /## 0\.20\.0/);
   assert.match(changelog, /starter pack/i);
+  assert.match(changelog, /rich-text facet/i);
   assert.match(readme, /starter[-\s]+pack/i);
+  assert.match(readme, /creation, editing and deletion/);
+  assert.match(readme, /rich-text facet/i);
   assert.match(site, /starter pack/i);
-  assert.equal(JSON.parse(read('../package.json')).version, '0.19.0');
+  assert.match(site, /creation, editing and deletion/);
+  assert.match(site, /Rich text/);
+  assert.equal(JSON.parse(read('../package.json')).version, '0.20.0');
 });

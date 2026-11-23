@@ -15,8 +15,10 @@ import { Avatar } from '../components/Avatar';
 import { PersonRow } from '../components/PersonRow';
 import { isFeedSaved } from '../lib/feedPreferences';
 import { useFeeds } from '../lib/feedsContext';
+import { deleteStarterPack } from '../lib/starterPacks';
 import {
   isBlockedCreator,
+  starterPackActionError,
   starterPackShareUrl,
 } from '../lib/starterPackModel';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
@@ -42,6 +44,9 @@ export function StarterPackScreen({
   const [shareError, setShareError] = useState<string | null>(null);
   const [feedErrors, setFeedErrors] = useState<Record<string, string>>({});
   const [savingFeed, setSavingFeed] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const load = useCallback(
     async (fresh: boolean) => {
@@ -108,6 +113,27 @@ export function StarterPackScreen({
       }));
     } finally {
       setSavingFeed(null);
+    }
+  }
+
+  async function deleteThisPack() {
+    if (deleting) return;
+    setDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteStarterPack(uri, pack?.list?.uri);
+      setConfirmDelete(false);
+      if (navigation.canGoBack()) navigation.goBack();
+      else navigation.navigate('Tabs', { screen: 'Profile' });
+    } catch (err) {
+      setDeleteError(
+        starterPackActionError(
+          err,
+          'Could not delete this starter pack. Check your connection and try again.'
+        )
+      );
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -286,20 +312,132 @@ export function StarterPackScreen({
           ) : null}
 
           {isOwner ? (
-            <Pressable
-              onPress={() => navigation.navigate('StarterPackEdit', { uri })}
-              accessibilityRole="button"
-              accessibilityLabel="Edit starter pack"
-              style={({ pressed }) => [
-                styles.action,
-                { backgroundColor: p.soft, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <Ionicons name="create-outline" size={18} color={p.text} />
-              <Text style={{ color: p.text, fontWeight: '700', fontSize: 14 }}>
-                Edit starter pack
-              </Text>
-            </Pressable>
+            <View style={{ marginTop: 8, gap: 8 }}>
+              <Pressable
+                onPress={() => navigation.navigate('StarterPackEdit', { uri })}
+                accessibilityRole="button"
+                accessibilityLabel="Edit starter pack"
+                style={({ pressed }) => [
+                  styles.action,
+                  { backgroundColor: p.soft, opacity: pressed ? 0.7 : 1 },
+                ]}
+              >
+                <Ionicons name="create-outline" size={18} color={p.text} />
+                <Text style={{ color: p.text, fontWeight: '700', fontSize: 14 }}>
+                  Edit starter pack
+                </Text>
+              </Pressable>
+
+              {confirmDelete ? (
+                <View
+                  style={[
+                    styles.deleteBox,
+                    { backgroundColor: p.bg, borderColor: p.danger },
+                  ]}
+                >
+                  <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
+                    Delete “{name}”?
+                  </Text>
+                  <Text
+                    style={{
+                      color: p.secondary,
+                      fontSize: 12,
+                      lineHeight: 17,
+                      marginTop: 3,
+                    }}
+                  >
+                    Balla will delete the starter pack and its private reference
+                    list from your PDS. Links to it will stop working. This cannot
+                    be undone.
+                  </Text>
+                  {deleteError ? (
+                    <Text
+                      accessibilityRole="alert"
+                      style={{
+                        color: p.danger,
+                        fontSize: 12,
+                        lineHeight: 17,
+                        marginTop: 6,
+                      }}
+                    >
+                      {deleteError}
+                    </Text>
+                  ) : null}
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
+                    <Pressable
+                      onPress={() => {
+                        setConfirmDelete(false);
+                        setDeleteError(null);
+                      }}
+                      disabled={deleting}
+                      accessibilityRole="button"
+                      accessibilityLabel="Cancel deleting this starter pack"
+                      accessibilityState={{ disabled: deleting }}
+                      style={({ pressed }) => [
+                        styles.confirmButton,
+                        {
+                          backgroundColor: p.card,
+                          borderColor: p.divider,
+                          opacity: deleting ? 0.55 : pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      <Text style={{ color: p.text, fontSize: 14, fontWeight: '600' }}>
+                        Cancel
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => void deleteThisPack()}
+                      disabled={deleting}
+                      accessibilityRole="button"
+                      accessibilityLabel="Delete starter pack permanently"
+                      accessibilityState={{ disabled: deleting, busy: deleting }}
+                      style={({ pressed }) => [
+                        styles.confirmButton,
+                        {
+                          backgroundColor: p.danger,
+                          borderColor: p.danger,
+                          opacity: deleting || pressed ? 0.7 : 1,
+                        },
+                      ]}
+                    >
+                      {deleting ? (
+                        <ActivityIndicator size="small" color={p.onAccent} />
+                      ) : (
+                        <Text
+                          style={{ color: p.onAccent, fontSize: 14, fontWeight: '700' }}
+                        >
+                          Delete
+                        </Text>
+                      )}
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <Pressable
+                  onPress={() => {
+                    setDeleteError(null);
+                    setConfirmDelete(true);
+                  }}
+                  accessibilityRole="button"
+                  accessibilityLabel="Delete starter pack"
+                  style={({ pressed }) => [
+                    styles.action,
+                    {
+                      backgroundColor: 'transparent',
+                      borderWidth: StyleSheet.hairlineWidth,
+                      borderColor: p.danger,
+                      opacity: pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  <Ionicons name="trash-outline" size={18} color={p.danger} />
+                  <Text style={{ color: p.danger, fontWeight: '700', fontSize: 14 }}>
+                    Delete starter pack
+                  </Text>
+                </Pressable>
+              )}
+            </View>
           ) : null}
         </View>
       </View>
@@ -467,6 +605,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  deleteBox: {
+    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: CARD_RADIUS,
+    padding: 12,
+  },
+  confirmButton: {
+    flex: 1,
+    minHeight: 44,
+    borderRadius: CARD_RADIUS,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   card: {
     borderRadius: CARD_RADIUS,

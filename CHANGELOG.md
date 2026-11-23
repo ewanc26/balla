@@ -3,6 +3,25 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.20.0
+
+- New posts now carry real rich-text facets (`app.bsky.richtext.facet`) for
+  links, hashtags and mentions. Mention handles are resolved through the official SDK
+  rich-text detector; an unresolved handle stays plain text instead of being
+  written with an empty DID. No OAuth scope or dependency changed.
+- Starter packs can now be deleted by their owner from the pack page, after an
+  explicit confirmation. Deletion removes the `app.bsky.graph.starterpack`
+  record and the private reference list it owns, including list membership; a
+  pack owned by another account is refused at the data layer. The confirmation
+  says that links will stop working and the action cannot be undone.
+- Add `action=delete` to the existing narrow
+  `repo:app.bsky.graph.starterpack` scope. Sessions authorised before 0.20.0
+  need one re-authorisation before they can delete a pack. No broad repo, RPC or
+  blob scope was added.
+- Add deterministic facet and deletion tests, and update the OAuth scope
+  inventory, compliance note, reference inventory, README, site and
+  current-state docs to match. No new dependency was added.
+
 ## 0.19.0
 
 - Add account-level moderation and preference parity. Settings now reaches a

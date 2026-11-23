@@ -20,6 +20,7 @@ import { File } from 'expo-file-system';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { agent } from '../lib/agent';
+import { postFacets } from '../lib/facets';
 import {
   dialogAccessibilityProps,
   sheetAnimation,
@@ -1159,8 +1160,11 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         );
         const labels = buildSelfLabels(draft.selfLabels);
         const langs = normaliseLanguages(draft.languages);
+        const text = draft.text.trim();
+        const facets = await postFacets(text, agent);
         const created = await agent.post({
-          text: draft.text.trim(),
+          text,
+          ...(facets ? { facets } : {}),
           ...(embed ? { embed } : {}),
           ...(labels ? { labels } : {}),
           ...(langs.length ? { langs } : {}),

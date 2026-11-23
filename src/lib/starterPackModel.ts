@@ -17,6 +17,20 @@ export function parseStarterPackUri(uri: string): StarterPackUri | null {
   return { did: match[1], rkey: match[2] };
 }
 
+export type StarterPackListUri = { did: string; rkey: string };
+
+/** A starter pack's `list` field must point at app.bsky.graph.list, not a pack. */
+export function parseStarterPackListUri(
+  uri: unknown
+): StarterPackListUri | null {
+  const match =
+    typeof uri === 'string'
+      ? /^at:\/\/([^/?#]+)\/app\.bsky\.graph\.list\/([^/?#]+)$/.exec(uri)
+      : null;
+  if (!match) return null;
+  return { did: match[1], rkey: match[2] };
+}
+
 /**
  * Bluesky's official short link uses the creator handle, falling back to the
  * DID when a handle is not present. The rkey comes from the record's AT URI.
@@ -116,6 +130,21 @@ export function diffStarterPackMembers(
     added: next.filter((did) => !currentSet.has(did)),
     removed: current.filter((did) => !nextSet.has(did)),
   };
+}
+
+/**
+ * A retried deletion may find the reference list already gone. Only the PDS's
+ * own RecordNotFound response is safe to treat as success; transport and auth
+ * failures still surface.
+ */
+export function isRecordNotFoundError(cause: unknown): boolean {
+  const error = cause as any;
+  const status = Number(error?.status ?? error?.statusCode);
+  const text = `${error?.error || ''} ${error?.message || ''}`;
+  return (
+    (status === 400 || status === 404) &&
+    /record.?not.?found|could not locate record/i.test(text)
+  );
 }
 
 export function starterPackActionError(

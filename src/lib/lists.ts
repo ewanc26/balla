@@ -161,7 +161,7 @@ export async function updateListRecord(
   );
 }
 
-async function deleteListItems(uri: string) {
+export async function deleteListItems(uri: string) {
   const repo = signedInDid();
   const itemUris: string[] = [];
   let cursor: string | undefined;
