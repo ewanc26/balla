@@ -18,9 +18,11 @@ import {
 } from '../lib/labelerProbe.ts';
 import {
   getHandleResolverEndpoint,
+  getPlcDirectoryEndpoint,
   getServicesConfig,
   resetServicesConfig,
   setHandleResolverEndpoint,
+  setPlcDirectoryEndpoint,
   subscribeServicesConfig,
 } from '../lib/servicesConfig';
 import {
@@ -40,6 +42,7 @@ import {
 import {
   probeAppView,
   probeChat,
+  probePlcDirectory,
   probeResolver,
   probeVideoEndpoint,
   type ServiceProbe,
@@ -64,8 +67,12 @@ export function ServicesScreen() {
   const [endpoint, setEndpoint] = useState<string>(DEFAULT_SERVICES.handleResolver);
   const [input, setInput] = useState('');
   const [isDefault, setIsDefault] = useState(true);
+  const [plcEndpoint, setPlcEndpoint] = useState<string>(DEFAULT_SERVICES.plcDirectory);
+  const [plcInput, setPlcInput] = useState('');
+  const [plcIsDefault, setPlcIsDefault] = useState(true);
   const [busy, setBusy] = useState(false);
   const [resolverProbe, setResolverProbe] = useState<ServiceProbe | null>(null);
+  const [plcProbe, setPlcProbe] = useState<ServiceProbe | null>(null);
   const [appviewProbe, setAppviewProbe] = useState<ServiceProbe | null>(null);
   const [chatProbe, setChatProbe] = useState<ServiceProbe | null>(null);
   const [videoProbe, setVideoProbe] = useState<ServiceProbe | null>(null);
@@ -81,6 +88,9 @@ export function ServicesScreen() {
     setEndpoint(effective);
     setInput(config.handleResolver ?? '');
     setIsDefault(config.handleResolver === null);
+    setPlcEndpoint(await getPlcDirectoryEndpoint());
+    setPlcInput(config.plcDirectory ?? '');
+    setPlcIsDefault(config.plcDirectory === null);
   }, []);
 
   useEffect(() => {
@@ -116,11 +126,43 @@ export function ServicesScreen() {
     setBusy(false);
   }
 
+  async function savePlc() {
+    if (busy) return;
+    const trimmed = plcInput.trim();
+    const valid = normaliseServicesConfig({ plcDirectory: trimmed || null }).plcDirectory;
+    if (trimmed && !valid) {
+      setMessage('Enter an https host without a path, query or credentials.');
+      return;
+    }
+    setBusy(true);
+    await setPlcDirectoryEndpoint(valid);
+    setPlcProbe(null);
+    setMessage(valid ? 'PLC directory updated for identity reads and pre-flight checks.' : 'Default PLC directory restored.');
+    setBusy(false);
+  }
+
+  async function resetPlc() {
+    if (busy) return;
+    setBusy(true);
+    await setPlcDirectoryEndpoint(null);
+    setPlcProbe(null);
+    setMessage('Default PLC directory restored.');
+    setBusy(false);
+  }
+
   async function checkResolver() {
     if (busy) return;
     setBusy(true);
     setResolverProbe({ state: 'checking', status: null, latencyMs: null, endpoint, detail: 'Checking…' });
     setResolverProbe(await probeResolver(await getHandleResolverEndpoint()));
+    setBusy(false);
+  }
+
+  async function checkPlc() {
+    if (busy) return;
+    setBusy(true);
+    setPlcProbe({ state: 'checking', status: null, latencyMs: null, endpoint: null, detail: 'Checking…' });
+    setPlcProbe(await probePlcDirectory(await getPlcDirectoryEndpoint()));
     setBusy(false);
   }
 
@@ -223,6 +265,42 @@ export function ServicesScreen() {
       </SettingSection>
 
       <SettingSection
+        title="Public identity directory"
+        detail="The did:plc directory is a public, token-free read used to resolve did:plc identities and in pre-flight checks. Changing it takes effect on the next read, without a restart, and never alters an existing grant."
+      >
+        <SettingValueRow label={SERVICE_SLOT_COPY.plcDirectory.label} value={plcEndpoint} />
+        <TextInput
+          value={plcInput}
+          onChangeText={setPlcInput}
+          placeholder={DEFAULT_SERVICES.plcDirectory}
+          placeholderTextColor={p.secondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel="did:plc directory host"
+          style={[
+            styles.input,
+            { color: p.text, backgroundColor: p.bg, borderColor: p.divider },
+            webInputReset,
+          ]}
+        />
+        <View style={styles.buttonRow}>
+          <SettingButton label="Save directory" onPress={() => void savePlc()} busy={busy} />
+          <SettingButton label="Use default" onPress={() => void resetPlc()} busy={busy} disabled={plcIsDefault} />
+        </View>
+        <SettingButton label="Test directory" onPress={() => void checkPlc()} busy={busy} />
+        <SettingValueRow label="Directory result" value={probeValue(plcProbe)} />
+        {plcProbe?.detail && plcProbe.state !== 'checking'
+          ? <SettingValueRow label="Detail" value={plcProbe.detail} />
+          : null}
+        <SettingNote>
+          Only an https origin is accepted. The test reads one public DID
+          document and checks its structured id field. A directory that cannot
+          serve known identities will make did:plc lookups and pre-flight checks
+          fail until you restore the default; did:web identities are unaffected.
+        </SettingNote>
+      </SettingSection>
+
+      <SettingSection
         title="Grant-bound services"
         detail="These DIDs and audiences are written into this sign-in’s OAuth scope. They are shown as facts: Balla cannot honestly repoint them without asking you to authorise again."
       >
@@ -257,7 +335,6 @@ export function ServicesScreen() {
 
       <SettingSection title="Discovered from your account">
         <SettingValueRow label={SERVICE_SLOT_COPY.pds.label} value="From this account’s DID document" />
-        <SettingValueRow label="Identity directory" value={DEFAULT_SERVICES.plcDirectory} />
         <SettingNote>
           Advanced → Hosting shows the actual PDS and authorization server for
           the active account, and can read any host’s server description.

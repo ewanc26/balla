@@ -10,12 +10,18 @@
  */
 
 import type { ServicesConfig } from './servicesModel.ts';
-import { DEFAULT_SERVICES, effectiveResolver, isDefaultResolver } from './servicesModel.ts';
+import {
+  DEFAULT_SERVICES,
+  effectivePlcDirectory,
+  effectiveResolver,
+  isDefaultPlcDirectory,
+  isDefaultResolver,
+} from './servicesModel.ts';
 
 export const SERVICES_EXPORT_SCHEMA = 'balla.services.v1';
 
 export const SERVICES_EXPORT_NOTES = [
-  'Only the handle resolver can be changed on this device. It is read before sign-in and takes effect on the next sign-in.',
+  'The handle resolver is read before sign-in and takes effect on the next sign-in. The did:plc directory is used for public identity reads and pre-flight checks and takes effect on the next read. Both are token-free and reversible.',
   'AppView, chat, video and labeler DIDs and audiences are written into this sign-in’s OAuth grant. They are facts here, not editable settings; changing one needs a new authorisation.',
   'The account PDS is discovered from the account’s DID document, not configured.',
   'This file contains no access token, refresh token, password or provider error text. It is a configuration record, not a credential or a backup.',
@@ -35,6 +41,8 @@ export type ServicesExport = {
   changeable: {
     handleResolver: string;
     usingDefaultResolver: boolean;
+    plcDirectory: string;
+    usingDefaultPlcDirectory: boolean;
   };
   defaults: typeof DEFAULT_SERVICES;
   session: {
@@ -62,6 +70,8 @@ export function buildServicesExport(
     changeable: {
       handleResolver: effectiveResolver(config),
       usingDefaultResolver: isDefaultResolver(config),
+      plcDirectory: effectivePlcDirectory(config),
+      usingDefaultPlcDirectory: isDefaultPlcDirectory(config),
     },
     defaults: { ...DEFAULT_SERVICES },
     session: {

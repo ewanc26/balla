@@ -17,7 +17,7 @@ import {
   probeAccount,
   type AccountPreflightResult,
 } from '../lib/accountPreflight.ts';
-import { getHandleResolverEndpoint } from '../lib/servicesConfig';
+import { getHandleResolverEndpoint, getPlcDirectoryEndpoint } from '../lib/servicesConfig';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 import { BrandMark } from '../components/BrandMark';
 
@@ -70,6 +70,7 @@ export function LoginScreen({
     try {
       const result = await probeAccount(input, {
         resolver: await getHandleResolverEndpoint(),
+        plcDirectory: await getPlcDirectoryEndpoint(),
       });
       setCheckResult(result);
     } catch {

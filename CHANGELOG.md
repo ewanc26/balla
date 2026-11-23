@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.50.0
+
+- **The public did:plc directory is now genuinely configurable (#97, partial).** Advanced → Services has an editable **PLC directory** host with **Save directory**, **Use default** and **Test directory** actions. The saved host is persisted on this device, reversible with one tap, and takes effect on the next read without a restart or a new sign-in. It is a distinct setting from the handle resolver: one resolves DNS-only handles before sign-in, the other reads `did:plc` DID documents.
+- **The override is honoured where it matters.** Both `resolveDidDocument` (identity resolution and public profiles) and account pre-flight (both the Advanced screen and the login check) read the saved directory. The public test reads one known DID document from that host and checks its structured `id` field; only an https origin is accepted and provider error prose is never read or shown. The effective host and whether it is still the default are included in the configuration export.
+- **The honest limit stays visible.** This is a public, token-free read host, so it needs no new scope and does not alter an existing grant. AppView, chat, video and labeler remain grant-bound facts, the account PDS remains DID-discovered, and a directory that cannot serve known `did:plc` identities will make those lookups fail until the default is restored (`did:web` identities are unaffected). This is not a completed #97 or a provider switch. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.49.0
 
 - **Corrected an overclaim in the previous release.** v0.48.0's public copy said "Failure messages name no provider," but the shared error helper was only one of many failure paths; search, chat, moderation, video, feeds, link previews and the text-cap validation still named Bluesky as the culprit. Those technical failures now use fixed service-neutral labels across 24 strings in twelve modules. Factual provider references that say where data is stored or who made a moderation decision stay, because those are true and useful.

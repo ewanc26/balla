@@ -51,10 +51,14 @@ export function normaliseIdentityStrategy(value: unknown): IdentityStrategy {
   return IDENTITY_STRATEGIES.find((strategy) => strategy === value) ?? 'auto';
 }
 
-/** The public directory URL for a did:plc identifier. */
-export function plcDirectoryUrl(did: string): string | null {
-  return isDid(did) && did.startsWith('did:plc:')
-    ? `${SERVICE_HOSTS.plcDirectory}/${encodeURIComponent(did)}`
+/**
+ * The public directory URL for a did:plc identifier. `directory` is the
+ * configured override when present; it is validated as an https origin so a
+ * persisted value can never turn the document read into an off-origin request.
+ */
+export function plcDirectoryUrl(did: string, directory: string = SERVICE_HOSTS.plcDirectory): string | null {
+  return isDid(did) && did.startsWith('did:plc:') && /^https:\/\/[a-z0-9.-]+$/i.test(directory)
+    ? `${directory}/${encodeURIComponent(did)}`
     : null;
 }
 

@@ -32,7 +32,12 @@ export const CHAT_DID_DOCUMENT_URL = 'https://api.bsky.chat/.well-known/did.json
 /** Published video lexicon used by both the quota and reachability checks. */
 export const VIDEO_LIMITS_LXM = 'app.bsky.video.getUploadLimits';
 
-/** The public directory URL for a did:plc identifier. */
-export function plcDocumentUrl(did: string): string | null {
-  return /^did:plc:[a-z0-9]+$/i.test(did) ? `${SERVICE_HOSTS.plcDirectory}/${did}` : null;
+/**
+ * The public directory URL for a did:plc identifier. `directory` is the
+ * configured override when present; it is validated as an https origin here so
+ * a persisted value can never turn the path into an off-origin request.
+ */
+export function plcDocumentUrl(did: string, directory: string = SERVICE_HOSTS.plcDirectory): string | null {
+  if (!/^did:plc:[a-z0-9]+$/i.test(did) || !/^https:\/\/[a-z0-9.-]+$/i.test(directory)) return null;
+  return `${directory}/${did}`;
 }

@@ -6,7 +6,9 @@ import {
   SERVICE_SLOT_COPY,
   advertisedEndpoint,
   didWebUrl,
+  effectivePlcDirectory,
   effectiveResolver,
+  isDefaultPlcDirectory,
   isDefaultResolver,
   normaliseServicesConfig,
 } from '../src/lib/servicesModel.ts';
@@ -18,27 +20,55 @@ test('service defaults are the single source of truth for runtime hosts', () => 
   assert.equal(DEFAULT_SERVICES.chatAudience, 'did:web:api.bsky.chat#bsky_chat');
   assert.equal(DEFAULT_SERVICES.videoAudience, 'did:web:video.bsky.app');
   assert.equal(DEFAULT_SERVICES.plcDirectory, 'https://plc.directory');
-  assert.deepEqual(DEFAULT_SERVICES_CONFIG, { handleResolver: null });
+  assert.deepEqual(DEFAULT_SERVICES_CONFIG, { handleResolver: null, plcDirectory: null });
 });
 
 test('only a non-default https host is persisted as an override', () => {
-  assert.deepEqual(normaliseServicesConfig(null), { handleResolver: null });
+  assert.deepEqual(normaliseServicesConfig(null), { handleResolver: null, plcDirectory: null });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'https://bsky.social' }), {
     handleResolver: null,
+    plcDirectory: null,
   });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'selfhosted.social' }), {
     handleResolver: 'https://selfhosted.social',
+    plcDirectory: null,
   });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'http://bad.example' }), {
     handleResolver: null,
+    plcDirectory: null,
   });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'https://bad.example/path' }), {
     handleResolver: null,
+    plcDirectory: null,
   });
   assert.equal(effectiveResolver({ handleResolver: null }), 'https://bsky.social');
   assert.equal(effectiveResolver({ handleResolver: 'https://other.example' }), 'https://other.example');
   assert.equal(isDefaultResolver({ handleResolver: null }), true);
   assert.equal(isDefaultResolver({ handleResolver: 'https://other.example' }), false);
+});
+
+test('only a non-default https PLC directory is persisted as an override', () => {
+  assert.deepEqual(normaliseServicesConfig({ plcDirectory: 'https://plc.directory' }), {
+    handleResolver: null,
+    plcDirectory: null,
+  });
+  assert.deepEqual(normaliseServicesConfig({ plcDirectory: 'plc.example' }), {
+    handleResolver: null,
+    plcDirectory: 'https://plc.example',
+  });
+  assert.deepEqual(normaliseServicesConfig({ plcDirectory: 'http://plc.example' }), {
+    handleResolver: null,
+    plcDirectory: null,
+  });
+  assert.deepEqual(normaliseServicesConfig({ plcDirectory: 'https://plc.example/path' }), {
+    handleResolver: null,
+    plcDirectory: null,
+  });
+  assert.equal(effectivePlcDirectory({ plcDirectory: null }), 'https://plc.directory');
+  assert.equal(effectivePlcDirectory({ plcDirectory: 'https://plc.example' }), 'https://plc.example');
+  assert.equal(isDefaultPlcDirectory({ plcDirectory: null }), true);
+  assert.equal(isDefaultPlcDirectory({ plcDirectory: undefined }), true);
+  assert.equal(isDefaultPlcDirectory({ plcDirectory: 'https://plc.example' }), false);
 });
 
 test('did:web maps to a hostname and optional path segments', () => {
@@ -71,6 +101,8 @@ test('every service slot is labelled with an honest constraint', () => {
     assert.ok(copy.detail.length > 20, slot);
   }
   assert.match(SERVICE_SLOT_COPY.resolver.detail, /Changeable now/);
+  assert.match(SERVICE_SLOT_COPY.plcDirectory.detail, /Changeable now/);
+  assert.match(SERVICE_SLOT_COPY.plcDirectory.detail, /did:plc/);
   assert.match(SERVICE_SLOT_COPY.appview.detail, /Grant-bound/);
   assert.match(SERVICE_SLOT_COPY.pds.detail, /DID document/);
 });

@@ -24,7 +24,10 @@ test('Advanced exposes one registered account pre-flight screen with a stable we
 
 test('the screen runs the real public check with the saved resolver and no inert control', () => {
   assert.match(screen, /Check account/);
-  assert.match(screen, /probeAccount\(input, \{ resolver: await getHandleResolverEndpoint\(\) \}\)/);
+  assert.match(screen, /probeAccount\(input, \{/);
+  assert.match(screen, /resolver: await getHandleResolverEndpoint\(\)/);
+  assert.match(screen, /plcDirectory: await getPlcDirectoryEndpoint\(\)/);
+  assert.match(model, /documentUrl\(identity\.did, plcDirectory\)/);
   assert.match(screen, /ACCOUNT_PREFLIGHT_COPY\.limits/);
   assert.match(model, /No usable OAuth metadata/);
   assert.doesNotMatch(screen, /SettingSwitch|SettingChoice|secureTextEntry|onPress=\{\(\) => \{\}\}/);
@@ -69,13 +72,13 @@ test('no OAuth scope, dependency or message-text path was added', () => {
 test('release notes and the compliance matrix describe the partial check', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.49.0');
-  assert.equal(appJson.expo.version, '0.49.0');
+  assert.equal(pkg.version, '0.50.0');
+  assert.equal(appJson.expo.version, '0.50.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.49\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.50\.0<\/string>/);
   }
-  assert.match(changelog, /^## 0\.49\.0$/m);
+  assert.match(changelog, /^## 0\.50\.0$/m);
   assert.match(changelog, /#100, partial/);
   assert.match(changelog, /not a login/i);
   assert.match(changelog, /scope count remains 111/);
