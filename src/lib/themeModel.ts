@@ -18,16 +18,19 @@ export type FacebookEraId =
   | 'newfacebook';
 
 export type ColourMode = 'system' | 'light' | 'dark';
+export type DarkThemeId = 'dim' | 'dark';
 export type FontScaleId = 'small' | 'default' | 'large';
 
 export type ThemeChoice = {
   accent: AccentId;
   era: FacebookEraId;
   colourMode: ColourMode;
+  darkTheme: DarkThemeId;
   fontScale: FontScaleId;
 };
 
 export const COLOUR_MODES: readonly ColourMode[] = ['system', 'light', 'dark'];
+export const DARK_THEMES: readonly DarkThemeId[] = ['dim', 'dark'];
 export const FONT_SCALES: readonly FontScaleId[] = ['small', 'default', 'large'];
 
 export const FONT_SCALE_FACTORS: Record<FontScaleId, number> = {
@@ -42,6 +45,10 @@ export function isColourMode(value: unknown): value is ColourMode {
 
 export function isFontScaleId(value: unknown): value is FontScaleId {
   return FONT_SCALES.includes(value as FontScaleId);
+}
+
+export function isDarkThemeId(value: unknown): value is DarkThemeId {
+  return DARK_THEMES.includes(value as DarkThemeId);
 }
 
 /** A forced mode wins; 'system' keeps whatever the platform reports. */
@@ -92,6 +99,7 @@ export type Palette = EraBase & {
   onAccent: string;
   accentId: AccentId;
   era: FacebookEraId;
+  darkTheme: DarkThemeId;
   chromeAction: string;
 };
 
@@ -183,8 +191,13 @@ export const DEFAULT_THEME_CHOICE: ThemeChoice = {
   accent: 'facebook',
   era: 'newfacebook',
   colourMode: 'system',
+  darkTheme: 'dim',
   fontScale: 'default',
 };
+
+/** Structural surfaces lift less than accents; both keep the contrast gate green. */
+const DIM_SURFACE_LIFT = 0.06;
+const DIM_ACCENT_LIFT = 0.1;
 
 const THEFACEBOOK_LIGHT: EraBase = {
   bg: '#D8DFEA',
@@ -404,6 +417,9 @@ export function normaliseThemeChoice(value: unknown): ThemeChoice {
     colourMode: isColourMode(candidate.colourMode)
       ? candidate.colourMode
       : DEFAULT_THEME_CHOICE.colourMode,
+    darkTheme: isDarkThemeId(candidate.darkTheme)
+      ? candidate.darkTheme
+      : DEFAULT_THEME_CHOICE.darkTheme,
     fontScale: isFontScaleId(candidate.fontScale)
       ? candidate.fontScale
       : DEFAULT_THEME_CHOICE.fontScale,
@@ -424,14 +440,48 @@ export function eraFor(id: FacebookEraId): FacebookEra {
   );
 }
 
+/** Mix a six-digit hex colour towards white without touching rgba tokens. */
+function liftHex(hex: string, amount: number): string {
+  const value = hex.replace('#', '');
+  if (!/^[0-9a-f]{6}$/i.test(value)) return hex;
+  const parts = [0, 2, 4].map((offset) => parseInt(value.slice(offset, offset + 2), 16));
+  return (
+    '#' +
+    parts
+      .map((channel) =>
+        Math.round(channel + (255 - channel) * amount)
+          .toString(16)
+          .padStart(2, '0')
+      )
+      .join('')
+      .toUpperCase()
+  );
+}
+
+/** Dim lifts only structural surfaces; text and accent-soft tokens stay published. */
+function liftEraBase(base: EraBase): EraBase {
+  return {
+    ...base,
+    bg: liftHex(base.bg, DIM_SURFACE_LIFT),
+    card: liftHex(base.card, DIM_SURFACE_LIFT),
+    soft: liftHex(base.soft, DIM_SURFACE_LIFT),
+    divider: liftHex(base.divider, DIM_SURFACE_LIFT),
+    chrome: liftHex(base.chrome, DIM_SURFACE_LIFT),
+    chromeBorder: liftHex(base.chromeBorder, DIM_SURFACE_LIFT),
+  };
+}
+
 export function buildPalette(
   scheme: ColorScheme,
   choice: ThemeChoice
 ): Palette {
-  const accent = accentFor(choice.accent);
-  const era = eraFor(choice.era);
-  const base = era[scheme];
-  const accentColor = scheme === 'dark' ? accent.dark : accent.light;
+  const theme = normaliseThemeChoice(choice);
+  const accent = accentFor(theme.accent);
+  const era = eraFor(theme.era);
+  const dim = scheme === 'dark' && theme.darkTheme === 'dim';
+  const base = dim ? liftEraBase(era.dark) : era[scheme];
+  const darkAccent = dim ? liftHex(accent.dark, DIM_ACCENT_LIFT) : accent.dark;
+  const accentColor = scheme === 'dark' ? darkAccent : accent.light;
   const darkInk = '#111827';
   const onAccent =
     contrastRatio('#FFFFFF', accentColor) >=
@@ -445,6 +495,7 @@ export function buildPalette(
     onAccent,
     accentId: accent.id,
     era: era.id,
+    darkTheme: scheme === 'dark' ? theme.darkTheme : DEFAULT_THEME_CHOICE.darkTheme,
     chromeAction: base.chromeActionUsesAccent
       ? accentColor
       : base.chromeText,

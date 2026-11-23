@@ -227,6 +227,16 @@ export function messageActionable(message: any): boolean {
   return typeof message?.id === 'string' && message.id.length > 0;
 }
 
+/**
+ * Copy and translate are text-only actions. An embed without text has nothing
+ * to copy, and the exact stored text is returned so the clipboard is never a
+ * trimmed or rewritten version. No caller logs or persists this value.
+ */
+export function messageTextForAction(message: any): string {
+  const text = typeof message?.text === 'string' ? message.text : '';
+  return text.trim() ? text : '';
+}
+
 export function joinLinkLabel(code: string): string {
   const value = (code || '').trim();
   if (!value) return '';

@@ -14,6 +14,7 @@ import {
   normaliseThemeChoice,
   type AccentId,
   type ColourMode,
+  type DarkThemeId,
   type FacebookEraId,
   type FontScaleId,
 } from './themeModel';
@@ -39,6 +40,7 @@ export type AppPreferences = {
   accent: AccentId;
   era: FacebookEraId;
   colourMode: ColourMode;
+  darkTheme: DarkThemeId;
   fontScale: FontScaleId;
   primaryLanguage: string;
   contentLanguages: string[];
@@ -52,6 +54,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   accent: 'facebook',
   era: 'newfacebook',
   colourMode: 'system',
+  darkTheme: 'dim',
   fontScale: 'default',
   primaryLanguage: 'en',
   contentLanguages: [],
@@ -66,6 +69,7 @@ type PreferencesContextValue = {
   setAccent: (value: AccentId) => void;
   setEra: (value: FacebookEraId) => void;
   setColourMode: (value: ColourMode) => void;
+  setDarkTheme: (value: DarkThemeId) => void;
   setFontScale: (value: FontScaleId) => void;
   setPrimaryLanguage: (value: string) => void;
   setContentLanguages: (value: string[]) => void;
@@ -80,6 +84,7 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   setAccent: () => {},
   setEra: () => {},
   setColourMode: () => {},
+  setDarkTheme: () => {},
   setFontScale: () => {},
   setPrimaryLanguage: () => {},
   setContentLanguages: () => {},
@@ -110,6 +115,7 @@ function parseStored(value: string | null): AppPreferences {
       accent: theme.accent,
       era: theme.era,
       colourMode: theme.colourMode,
+      darkTheme: theme.darkTheme,
       fontScale: theme.fontScale,
       primaryLanguage: normaliseLanguages([parsed?.primaryLanguage])[0] || 'en',
       contentLanguages: normaliseLanguages(parsed?.contentLanguages || []),
@@ -124,6 +130,7 @@ function applyTheme(next: AppPreferences): void {
     accent: next.accent,
     era: next.era,
     colourMode: next.colourMode,
+    darkTheme: next.darkTheme,
     fontScale: next.fontScale,
   });
 }
@@ -188,6 +195,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     (value: ColourMode) => update({ colourMode: value }),
     [update]
   );
+  const setDarkTheme = useCallback(
+    (value: DarkThemeId) => update({ darkTheme: value }),
+    [update]
+  );
   const setFontScale = useCallback(
     (value: FontScaleId) => update({ fontScale: value }),
     [update]
@@ -211,6 +222,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setAccent,
       setEra,
       setColourMode,
+      setDarkTheme,
       setFontScale,
       setPrimaryLanguage,
       setContentLanguages,
@@ -224,6 +236,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setAccent,
       setEra,
       setColourMode,
+      setDarkTheme,
       setFontScale,
       setPrimaryLanguage,
       setContentLanguages,

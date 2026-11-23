@@ -32,6 +32,7 @@ export function setThemeChoice(next: ThemeChoice): void {
     normalised.accent === currentChoice.accent &&
     normalised.era === currentChoice.era &&
     normalised.colourMode === currentChoice.colourMode &&
+    normalised.darkTheme === currentChoice.darkTheme &&
     normalised.fontScale === currentChoice.fontScale
   ) {
     return;

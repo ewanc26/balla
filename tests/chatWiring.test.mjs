@@ -190,5 +190,36 @@ test('chat report subjects carry ids only, never message text', () => {
   assert.match(moderation, /reportChatConversation/);
   assert.match(moderation, /buildMessageReportSubject/);
   assert.match(moderation, /buildConvoReportSubject/);
-  assert.doesNotMatch(model, /message\.text|item\.text/);
+  const reportSection = model.slice(
+    model.indexOf('export function buildMessageReportSubject'),
+    model.indexOf('/** A message action is only available')
+  );
+  assert.doesNotMatch(reportSection, /message\.text|item\.text/);
+  assert.doesNotMatch(model, /console\.|AsyncStorage/);
+});
+
+test('message text actions copy exact text and translate to the primary language', () => {
+  const sheet = read('../src/components/MessageActionsSheet.tsx');
+  const model = read('../src/lib/chatGroupModel.ts');
+  assert.match(model, /export function messageTextForAction/);
+  assert.match(sheet, /messageTextForAction\(message\)/);
+  assert.match(sheet, /Clipboard\.setStringAsync\(messageText\)/);
+  assert.match(sheet, /accessibilityLabel="Copy message text"/);
+  assert.match(sheet, /accessibilityLabel="Translate message text"/);
+  assert.match(sheet, /translateText\(messageText, preferences\.primaryLanguage\)/);
+  assert.match(sheet, /'Show the original message'/);
+  assert.match(sheet, /'Show the translation'/);
+  assert.match(sheet, /messageText \? \(/);
+  assert.doesNotMatch(sheet, /console\.(log|info|debug)/);
+  assert.doesNotMatch(sheet, /AsyncStorage/);
+});
+
+test('self-delete uses the conversation id from the route, not the message', () => {
+  const sheet = read('../src/components/MessageActionsSheet.tsx');
+  const call = sheet.match(
+    /deleteMessageForSelf\(\{[\s\S]{0,160}?\}\)/
+  );
+  assert.ok(call, 'deleteMessageForSelf call is present');
+  assert.match(call[0], /convoId: \(convoId \|\| ''\)\.trim\(\)/);
+  assert.doesNotMatch(call[0], /message\?\.convoId/);
 });
