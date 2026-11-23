@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.25.1
+
+- Interaction settings now preserve existing `hiddenReplies` and `detachedEmbeddingUris` when saving reply or quote rules, so editing one gate can no longer silently undo a hidden reply or a detached quote.
+- The inbox now asks the chat service for unread counts with `includeGroupChats: true`, so group conversations are included in the unread totals.
+- Group join previews now read pending join requests from the preview's conversation rather than an invented shape, so the owner's count is real when the service supplies it and omitted otherwise.
+- No dependency or OAuth scope changed.
+
 ## 0.25.0
 
 - Appearance now offers a **Dark theme** choice with **Dim** and **Dark** when the resolved scheme is dark. Dim lifts the era dark surfaces and accent towards white while keeping the published text and accent-soft tokens, and the choice is stored on this device only. Light mode is unchanged.

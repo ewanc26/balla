@@ -13,8 +13,10 @@ import { describeFailure } from '../lib/reliability';
 import {
   DEFAULT_INTERACTION_GATES,
   describeGates,
+  detachedEmbeddingUrisFromRecord,
   gatesEqual,
   gatesFromRecords,
+  hiddenRepliesFromRecord,
   postRkey,
   postgateWrite,
   threadgateWrite,
@@ -48,6 +50,10 @@ export function InteractionSettingsScreen({ route, navigation }: { route: any; n
   const rkey = postRkey(uri);
   const [gates, setGates] = useState<InteractionGates>(DEFAULT_INTERACTION_GATES);
   const [saved, setSaved] = useState<InteractionGates>(DEFAULT_INTERACTION_GATES);
+  // These live in the same records as the gates. Keep them when saving so an
+  // unrelated settings edit cannot undo a hidden reply or a detached quote.
+  const [hiddenReplies, setHiddenReplies] = useState<string[]>([]);
+  const [detachedEmbeddingUris, setDetachedEmbeddingUris] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -92,6 +98,8 @@ export function InteractionSettingsScreen({ route, navigation }: { route: any; n
       const next = gatesFromRecords(threadgate, postgate);
       setGates(next);
       setSaved(next);
+      setHiddenReplies(hiddenRepliesFromRecord(threadgate));
+      setDetachedEmbeddingUris(detachedEmbeddingUrisFromRecord(postgate));
       setLoading(false);
     })();
 
@@ -106,9 +114,12 @@ export function InteractionSettingsScreen({ route, navigation }: { route: any; n
     setError(null);
     setNotice(null);
     try {
+      const createdAt = new Date().toISOString();
       const writes = [
-        { write: threadgateWrite(uri, gates, new Date().toISOString()) },
-        { write: postgateWrite(uri, gates, new Date().toISOString()) },
+        { write: threadgateWrite(uri, gates, createdAt, hiddenReplies) },
+        {
+          write: postgateWrite(uri, gates, createdAt, detachedEmbeddingUris),
+        },
       ];
       for (const { write } of writes) {
         if (!write) continue;

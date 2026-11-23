@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {
   DEFAULT_INTERACTION_GATES,
   describeGates,
+  detachedEmbeddingUrisFromRecord,
   gatesEqual,
   gatesFromRecords,
   hiddenRepliesFromRecord,
@@ -154,6 +155,24 @@ test('hidden replies use the published threadgate field and keep replies open', 
   assert.deepEqual(hiddenRepliesFromRecord(null), []);
   assert.deepEqual(hiddenRepliesFromRecord({ hiddenReplies: [HIDDEN, 3, ''] }), [HIDDEN]);
   assert.equal(threadgateWrite(POST, DEFAULT_INTERACTION_GATES, AT), null);
+});
+
+test('postgate writes preserve detached quotes when the gate itself is open', () => {
+  const DETACHED = 'at://did:plc:other/app.bsky.feed.post/quoted';
+  assert.equal(postgateWrite(POST, DEFAULT_INTERACTION_GATES, AT), null);
+  const write = postgateWrite(POST, DEFAULT_INTERACTION_GATES, AT, [DETACHED, '']);
+  assert.ok(write);
+  assert.equal(write.collection, 'app.bsky.feed.postgate');
+  assert.equal('embeddingRules' in write.record, false);
+  assert.deepEqual(write.record.detachedEmbeddingUris, [DETACHED]);
+  assert.deepEqual(detachedEmbeddingUrisFromRecord(write.record), [DETACHED]);
+  assert.deepEqual(detachedEmbeddingUrisFromRecord({ detachedEmbeddingUris: [DETACHED, 3, ''] }), [DETACHED]);
+  assert.deepEqual(detachedEmbeddingUrisFromRecord(null), []);
+  const closed = postgateWrite(POST, { reply: 'everyone', quote: 'nobody' }, AT, [DETACHED]);
+  assert.deepEqual(closed.record.embeddingRules, [
+    { $type: 'app.bsky.feed.postgate#disableRule' },
+  ]);
+  assert.deepEqual(closed.record.detachedEmbeddingUris, [DETACHED]);
 });
 
 test('toggling a hidden reply preserves existing allow rules and other hidden replies', () => {

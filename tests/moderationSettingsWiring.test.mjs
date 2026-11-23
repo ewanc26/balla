@@ -92,6 +92,14 @@ test('threadgate list rules and hidden replies use published lexicon fields', ()
   assert.match(mock, /mock\.setVerificationPrefs =/);
 });
 
+test('interaction settings preserve hidden replies and detached quotes on save', () => {
+  const interaction = read('../src/screens/InteractionSettingsScreen.tsx');
+  assert.match(interaction, /hiddenRepliesFromRecord\(threadgate\)/);
+  assert.match(interaction, /detachedEmbeddingUrisFromRecord\(postgate\)/);
+  assert.match(interaction, /threadgateWrite\(uri, gates, createdAt, hiddenReplies\)/);
+  assert.match(interaction, /postgateWrite\(uri, gates, createdAt, detachedEmbeddingUris\)/);
+});
+
 test('hidden replies are a real threadgate write, never a local-only hide', () => {
   assert.match(hidden, /app\.bsky\.feed\.threadgate/);
   assert.match(hidden, /hiddenReplyWrite\(/);

@@ -174,17 +174,36 @@ export function hiddenReplyWrite(
   return { collection: 'app.bsky.feed.threadgate', rkey, record };
 }
 
-/** `null` means there should be no postgate record: delete any existing one. */
+export function detachedEmbeddingUrisFromRecord(record: unknown): string[] {
+  if (!record || typeof record !== 'object') return [];
+  const detached = (record as Record<string, unknown>).detachedEmbeddingUris;
+  if (!Array.isArray(detached)) return [];
+  return detached.filter((uri): uri is string => typeof uri === 'string' && uri.length > 0);
+}
+
+/**
+ * `null` means there should be no postgate record: delete any existing one.
+ * Detached quotes are a separate published field, so they are preserved even
+ * when quoting is open again; dropping them would silently re-attach a quote
+ * the author deliberately detached.
+ */
 export function postgateWrite(
   postUri: string,
   gates: InteractionGates,
-  createdAt: string
+  createdAt: string,
+  detachedEmbeddingUris: string[] = []
 ): GateWrite | null {
-  if (normaliseGates(gates).quote === 'everyone') return null;
+  const detached = detachedEmbeddingUris.filter(
+    (uri) => typeof uri === 'string' && uri.length > 0
+  );
+  if (normaliseGates(gates).quote === 'everyone' && detached.length === 0) return null;
   return gateWrite(postUri, 'app.bsky.feed.postgate', {
     $type: 'app.bsky.feed.postgate',
     createdAt,
-    embeddingRules: [{ $type: 'app.bsky.feed.postgate#disableRule' }],
+    ...(normaliseGates(gates).quote === 'nobody'
+      ? { embeddingRules: [{ $type: 'app.bsky.feed.postgate#disableRule' }] }
+      : {}),
+    ...(detached.length > 0 ? { detachedEmbeddingUris: detached } : {}),
   });
 }
 

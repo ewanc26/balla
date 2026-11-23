@@ -154,9 +154,10 @@ export function JoinGroupScreen() {
               </Text>
               {status === 'pending' ? (
                 <Text style={{ color: p.text, fontSize: 14, marginTop: 12 }}>
-                  Request sent. The owner has{' '}
-                  {joinRequestCount({ kind: preview })} pending request(s) to review.
-                  You will see the group if it is approved.
+                  Request sent. You will see the group if it is approved.
+                  {joinRequestCount(preview?.convo) > 0
+                    ? ` The owner has ${joinRequestCount(preview?.convo)} pending request(s) to review.`
+                    : ''}
                 </Text>
               ) : (
                 <Pressable
