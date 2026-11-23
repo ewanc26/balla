@@ -1398,6 +1398,8 @@ export function mockInitialScreen(): string {
     'Topic',
     'VideoFeed',
     'Discover',
+    'News',
+    'NewsBundle',
     'Feeds',
     'EditPost',
   ].includes(requested)
