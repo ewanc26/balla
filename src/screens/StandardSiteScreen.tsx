@@ -17,11 +17,19 @@ import { formatDate } from '../lib/time';
 import { getBlobUrl } from '../lib/blobOriginModel';
 import { resolveDidDocument } from '../lib/identityResolver';
 import { atprotoPdsEndpoint } from '../lib/tealModel';
+import { agent, getActiveDid } from '../lib/agent';
 import { parseAtUri, STANDARD_SITE_COPY, type DocumentBlock, type TextSegment } from '../lib/standardSiteModel';
 import {
   loadStandardSiteDocument,
   type StandardSiteLoad,
 } from '../lib/standardSite';
+import { loadStandardSiteSocialSignals } from '../lib/standardSiteSocial';
+import {
+  NOT_CHECKED_SOCIAL_SIGNALS,
+  SOCIAL_SIGNAL_COPY,
+  socialSignalCounts,
+  type SocialSignalResult,
+} from '../lib/standardSiteSocialModel';
 
 /**
  * Read-only Standard.site article view. Records come from the author's PDS via
@@ -36,6 +44,8 @@ export function StandardSiteScreen({ route }: { route: any }) {
   const uri = typeof route.params?.uri === 'string' ? route.params.uri : '';
   const [result, setResult] = useState<StandardSiteLoad | null>(null);
   const [loading, setLoading] = useState(true);
+  const [social, setSocial] = useState<SocialSignalResult>(NOT_CHECKED_SOCIAL_SIGNALS);
+  const [checkingSocial, setCheckingSocial] = useState(false);
 
   const load = useCallback(async () => {
     if (!uri) {
@@ -44,6 +54,7 @@ export function StandardSiteScreen({ route }: { route: any }) {
       return;
     }
     setLoading(true);
+    setSocial(NOT_CHECKED_SOCIAL_SIGNALS);
     setResult(
       await loadStandardSiteDocument(uri, {
         resolveEndpoint: async (did) => atprotoPdsEndpoint(await resolveDidDocument(did)),
@@ -59,6 +70,35 @@ export function StandardSiteScreen({ route }: { route: any }) {
   useLayoutEffect(() => {
     navigation.setOptions({ title: result?.state === 'ok' ? result.document.title : 'Article' });
   }, [navigation, result]);
+
+  async function checkSocialSignals() {
+    if (!result || result.state !== 'ok' || checkingSocial) return;
+    const actor = getActiveDid();
+    if (!actor) {
+      setSocial({ ...NOT_CHECKED_SOCIAL_SIGNALS, state: 'unavailable' });
+      return;
+    }
+    setCheckingSocial(true);
+    try {
+      setSocial(
+        await loadStandardSiteSocialSignals(result.document.uri, result.publication?.uri ?? null, {
+          listFollows: async () => {
+            const response = await agent.app.bsky.graph.getFollows({ actor, limit: 100 });
+            return (response.data.follows || []).map((follow) => ({
+              did: follow.did,
+              handle: follow.handle,
+            }));
+          },
+          resolveEndpoint: async (did) =>
+            atprotoPdsEndpoint(await resolveDidDocument(did)),
+        }),
+      );
+    } catch {
+      setSocial({ ...NOT_CHECKED_SOCIAL_SIGNALS, state: 'unavailable' });
+    } finally {
+      setCheckingSocial(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -230,6 +270,77 @@ export function StandardSiteScreen({ route }: { route: any }) {
             {STANDARD_SITE_COPY.shortened}
           </Text>
         ) : null}
+      </View>
+
+      <View style={[styles.card, { backgroundColor: p.card, borderColor: p.divider }, cardShadow]}>
+        <Text style={{ color: p.text, fontSize: font(14), fontWeight: '700' }}>
+          {SOCIAL_SIGNAL_COPY.title}
+        </Text>
+        <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 5 }}>
+          {SOCIAL_SIGNAL_COPY.scope}
+        </Text>
+        {!publication ? (
+          <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 5 }}>
+            {SOCIAL_SIGNAL_COPY.noPublication}
+          </Text>
+        ) : null}
+        <Pressable
+          onPress={() => void checkSocialSignals()}
+          disabled={checkingSocial}
+          accessibilityRole="button"
+          accessibilityLabel={SOCIAL_SIGNAL_COPY.action}
+          style={({ pressed }) => [
+            styles.button,
+            { borderColor: p.accent, opacity: pressed || checkingSocial ? 0.65 : 1 },
+          ]}
+        >
+          <Text style={{ color: p.accent, fontSize: font(14), fontWeight: '700' }}>
+            {checkingSocial ? SOCIAL_SIGNAL_COPY.busy : SOCIAL_SIGNAL_COPY.action}
+          </Text>
+        </Pressable>
+        {social.state === 'unavailable' ? (
+          <Text style={{ color: p.danger, fontSize: font(12), lineHeight: font(17), marginTop: 8 }}>
+            Could not read the follows list or the public records from this sign-in.
+          </Text>
+        ) : null}
+        {social.state === 'ok' ? (
+          <View style={{ marginTop: 8 }}>
+            <Text style={{ color: p.text, fontSize: font(13), lineHeight: font(19) }}>
+              {`Subscribed: ${socialSignalCounts(social).subscriptions} · Recommended: ${socialSignalCounts(social).recommends}`}
+            </Text>
+            <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 4 }}>
+              {`Checked ${social.checkedFollows} followed account${social.checkedFollows === 1 ? '' : 's'} · ${social.unreadableFollows} unreadable`}
+            </Text>
+            {social.checkedFollows === 0 ? (
+              <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 4 }}>
+                {social.unreadableFollows ? SOCIAL_SIGNAL_COPY.partial : SOCIAL_SIGNAL_COPY.noFollows}
+              </Text>
+            ) : null}
+            {social.subscriptions.length + social.recommends.length === 0 && social.checkedFollows > 0 ? (
+              <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 4 }}>
+                {SOCIAL_SIGNAL_COPY.noMatches}
+              </Text>
+            ) : null}
+            {social.unreadableFollows || social.unreadableCollections ? (
+              <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 4 }}>
+                {SOCIAL_SIGNAL_COPY.partial}
+              </Text>
+            ) : null}
+            {social.limited ? (
+              <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 4 }}>
+                {SOCIAL_SIGNAL_COPY.limited}
+              </Text>
+            ) : null}
+            {social.firstPageOnly ? (
+              <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 4 }}>
+                {SOCIAL_SIGNAL_COPY.firstPage}
+              </Text>
+            ) : null}
+          </View>
+        ) : null}
+        <Text style={{ color: p.secondary, fontSize: font(11), lineHeight: font(16), marginTop: 10 }}>
+          {SOCIAL_SIGNAL_COPY.readLimit}
+        </Text>
       </View>
 
       <View style={[styles.card, { backgroundColor: p.card, borderColor: p.divider }, cardShadow]}>

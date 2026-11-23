@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.38.0
+
+- **The Standard.site reader now shows real social signals from people you follow** (#101, partial). A visible **Check followed accounts** action reads the granted follows list, then checks each followed account's own public PDS for `site.standard.graph.subscription`, `site.standard.graph.recommend` and their published Leaflet equivalents. Counts are exact AT-URI matches, deduplicated by account; a missing collection means no records on that server.
+- The check is bounded to the first 20 accounts and the first page of each collection, and says so in the app. Unreadable accounts or collections are counted separately and excluded from matches rather than reported as zero. Only DIDs, counts and honest status notes are shown; provider message text is never read, logged or stored.
+- There are still no subscribe or recommend writes: no graph writes are performed. Those need new `site.standard.authSocial` permissions Balla does not request, so the reader says plainly that the signals are public records rather than a network-wide total. No OAuth scope or dependency changed; the scope count remains 111.
+
 ## 0.37.0
 
 - **Advanced → Account now offers a read-only migration pre-flight** (#104, partial). **Move to another PDS** shows the current DID, PDS, authorization server and scope count, then lets the user filter the public OpenPDS host directory and run a real `com.atproto.server.describeServer` check on a listed or custom destination. Host details are third-party or server-published facts, not a promise of sign-up or a migration result.
