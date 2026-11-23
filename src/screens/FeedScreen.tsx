@@ -24,6 +24,8 @@ import {
   filterByContentLanguages,
   filterFeedItems,
 } from '../lib/viewPreferencesModel';
+import { filterSnoozedItems } from '../lib/snoozeModel';
+import { useSnoozedAccounts } from '../lib/snooze';
 import { PostCard } from '../components/PostCard';
 import { Avatar } from '../components/Avatar';
 import { FeedSwitcherSheet } from '../components/FeedSwitcherSheet';
@@ -42,6 +44,7 @@ export function FeedScreen() {
   const { homeFeeds, generators, lists } = useFeeds();
   const { preferences } = usePreferences();
   const { feedFilters } = useViewPreferences();
+  const snoozedAccounts = useSnoozedAccounts();
   const [activeFeed, setActiveFeed] = useState<string | null>(null);
   const [posts, setPosts] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>(undefined);
@@ -159,16 +162,18 @@ export function FeedScreen() {
 
   // Only Following is filtered here. Custom and list feeds keep the order
   // their service returns; filters are the home feedViewPref, not a global rule.
-  const visiblePosts = useMemo(
-    () =>
-      activeFeed
-        ? posts
-        : filterByContentLanguages(
-            filterFeedItems(posts, feedFilters),
-            preferences.contentLanguages
-          ),
-    [activeFeed, posts, feedFilters, preferences.contentLanguages]
-  );
+  const visiblePosts = useMemo(() => {
+    // Snoozes apply only here: every other surface (notifications, profiles,
+    // threads and chat) still shows the account. Expiry is read on each render,
+    // and a feed refresh always produces one. Order is untouched.
+    const unsnoozed = filterSnoozedItems(posts, snoozedAccounts, Date.now());
+    return activeFeed
+      ? unsnoozed
+      : filterByContentLanguages(
+          filterFeedItems(unsnoozed, feedFilters),
+          preferences.contentLanguages
+        );
+  }, [activeFeed, posts, feedFilters, preferences.contentLanguages, snoozedAccounts]);
 
   const activeGenerator =
     activeFeed && !activeIsList ? generators[activeFeed] : undefined;
