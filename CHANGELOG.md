@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.60.4
+
+- **Reaction chips now read public community-lexicon records.** Post cards show a compact emoji and count row from `community.lexicon.interaction.reaction` records in the subject's repository, rendered beside the existing like count and absent when there are none. A visible 44pt reaction palette opens and closes with buttons and states plainly that reaction records are public. Moderation parity follows the card's existing gate; no new OAuth scope or dependency is added and the scope count remains 112. Writes remain deferred until the lexicon settles.
+- CI's full gate passed: deterministic tests (761), typecheck, Expo dependency drift, advisory audit, icon sync and site build.
+
 ## 0.60.3
 
 - **Default infrastructure now follows Eurosky where Eurosky operates the role.** Fresh installs use `api.eurosky.network` as the AppView and `eurosky.social` as the fallback/signup PDS, while handle resolution, chat, video, the labeler and `plc.directory` keep their existing defaults. Existing grants are honoured by reading the AppView audience from the session's token scope. Advanced → Services and AppView name Eurosky-operated versus Bluesky-fallback roles and state that an AppView outage is reported as unavailable rather than marking the whole app offline. Scope count remains 112; no new dependency.
