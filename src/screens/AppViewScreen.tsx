@@ -75,9 +75,11 @@ export function AppViewScreen() {
       <SettingSection title="What this does not do">
         <SettingNote>{APPVIEW_HEALTH_COPY.limits}</SettingNote>
         <SettingNote>
-          No picker, mirror, failover, hydration-source label or per-function
-          routing is offered here. Those need a different OAuth audience and a
-          new authorisation; this screen only measures the current grant.
+          No picker, mirror, failover or per-function routing is offered here.
+          Those need a different OAuth audience and a new authorisation; this
+          screen only measures the current grant. The feed’s hydration-source
+          label names that same grant-bound AppView; it is a fact, not a switch
+          or a live measurement of one response.
         </SettingNote>
       </SettingSection>
 
