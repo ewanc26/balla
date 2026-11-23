@@ -204,7 +204,12 @@ the same label, mute, block and snooze gates, and a reversible device-local
 hide in Appearance. The Thread menu offers wall-to-wall, a filtered view of the
 loaded tree for the viewer and one other visible author; it preserves thread
 order, keeps the full-thread exit and makes no extra request or write. The
-composer and full thread remain unchanged.
+composer and full thread remain unchanged. Feed cards with replies show one
+compact first direct reply when the card is viewable. Selection follows the
+configured thread order; the author and View all replies controls use the
+existing destinations; and label, mute and block gates suppress the preview.
+Reads are depth-one, capped and session-cached; the reply count stays the post
+view's total.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
 mapping and the deliberate omissions (Stories, reactions, ranking) live in

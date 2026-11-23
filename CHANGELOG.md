@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.56.0
+
+- **Feed cards now preview the first direct reply (#155).** A compact row under the actions shows one reply's author, up to two lines of text, and **View all replies**. It is fetched only when FlashList reports the card viewable, with one depth-1 `getPostThread` read, at most two reads in flight, cancellation when the card leaves the viewport, and a 40-post session cache. The configured thread order chooses the reply; engagement ranking is never consulted. Label, mute, block, list-block and warning gates suppress the preview, the author opens their profile, and the Thread destination is the same as the comment button. A failed or offline read leaves the honest count-only row exactly as before.
+- No new OAuth scope or dependency; the scope count remains 111. CI's full gate passed: deterministic tests, typecheck, Expo dependency drift, advisory audit, icon sync and site build. Browser checks covered the feed at 320, 390, 820, 1000, 1300 and 1440 pixels, and Thread at 390, 820 and 1440.
+
 ## 0.55.0
 
 - **The desktop right rail now shows Recent activity (#154).** A fixed twelve-row card lists the newest replies and reposts from accounts you follow, built from the Following page already in memory. It adds no request, reads no likes and sends no notifications. Label, mute, block and snooze gates apply, and each row opens its thread. **Hide this card** writes only a device-local preference, reversible in Appearance, and the rail scrolls instead of pushing its other cards off screen.
