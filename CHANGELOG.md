@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.26.0
+
+- Profiles with public teal.fm scrobbles now show a compact **Recently played** strip: a small horizontal row of track chips with the title, artist and real relative time. Tapping a chip opens a light detail sheet with the record's metadata and a link out to the profile on teal.fm; there is no player, no music tab and no listening stats.
+- Both `fm.teal.feed.play` and the removed-but-still-present `fm.teal.alpha.feed.play` are read from the profile's own repository. The DID is resolved first so reads work against whichever PDS hosts that repository, and every read is bounded and retryable. Accounts with no plays see nothing new.
+- Appearance gains one **Show recent plays** switch. It is on by default, stored on this device only, and hides the strip and skips the reads when off. Balla never writes to a teal collection and adds no OAuth scope or dependency.
+- Add deterministic tests for both lexicon spellings, record normalisation, ordering, DID-document PDS extraction, the visibility toggle and the no-write/no-storage guard, plus a live read against a real PDS during development. No dependency or OAuth scope changed.
+
 ## 0.25.1
 
 - Interaction settings now preserve existing `hiddenReplies` and `detachedEmbeddingUris` when saving reply or quote rules, so editing one gate can no longer silently undo a hidden reply or a detached quote.

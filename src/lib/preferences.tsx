@@ -44,6 +44,8 @@ export type AppPreferences = {
   fontScale: FontScaleId;
   primaryLanguage: string;
   contentLanguages: string[];
+  /** Whether the subtle teal.fm recent-plays strip appears on profiles. */
+  showMusicActivity: boolean;
 };
 
 export const DEFAULT_PREFERENCES: AppPreferences = {
@@ -58,6 +60,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   fontScale: 'default',
   primaryLanguage: 'en',
   contentLanguages: [],
+  showMusicActivity: true,
 };
 
 type PreferencesContextValue = {
@@ -73,6 +76,7 @@ type PreferencesContextValue = {
   setFontScale: (value: FontScaleId) => void;
   setPrimaryLanguage: (value: string) => void;
   setContentLanguages: (value: string[]) => void;
+  setShowMusicActivity: (value: boolean) => void;
 };
 
 const PreferencesContext = createContext<PreferencesContextValue>({
@@ -88,6 +92,7 @@ const PreferencesContext = createContext<PreferencesContextValue>({
   setFontScale: () => {},
   setPrimaryLanguage: () => {},
   setContentLanguages: () => {},
+  setShowMusicActivity: () => {},
 });
 
 function parseStored(value: string | null): AppPreferences {
@@ -119,6 +124,10 @@ function parseStored(value: string | null): AppPreferences {
       fontScale: theme.fontScale,
       primaryLanguage: normaliseLanguages([parsed?.primaryLanguage])[0] || 'en',
       contentLanguages: normaliseLanguages(parsed?.contentLanguages || []),
+      showMusicActivity:
+        typeof parsed?.showMusicActivity === 'boolean'
+          ? parsed.showMusicActivity
+          : DEFAULT_PREFERENCES.showMusicActivity,
     };
   } catch {
     return DEFAULT_PREFERENCES;
@@ -211,6 +220,10 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     (value: string[]) => update({ contentLanguages: normaliseLanguages(value) }),
     [update]
   );
+  const setShowMusicActivity = useCallback(
+    (value: boolean) => update({ showMusicActivity: value }),
+    [update]
+  );
 
   const value = useMemo(
     () => ({
@@ -226,6 +239,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setFontScale,
       setPrimaryLanguage,
       setContentLanguages,
+      setShowMusicActivity,
     }),
     [
       preferences,
@@ -240,6 +254,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
       setFontScale,
       setPrimaryLanguage,
       setContentLanguages,
+      setShowMusicActivity,
     ]
   );
 

@@ -25,6 +25,7 @@ import { BrandMark } from '../components/BrandMark';
 import {
   SettingChoice,
   SettingSection,
+  SettingSwitch,
 } from '../components/SettingControls';
 
 export function AppearanceScreen({ navigation }: { navigation: any }) {
@@ -36,6 +37,7 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
     setColourMode,
     setDarkTheme,
     setFontScale,
+    setShowMusicActivity,
   } = usePreferences();
   const scheme: ColorScheme = useResolvedScheme();
   const selectedEra = eraFor(preferences.era);
@@ -110,6 +112,15 @@ export function AppearanceScreen({ navigation }: { navigation: any }) {
           }))}
           value={preferences.fontScale}
           onChange={(value: FontScaleId) => setFontScale(value)}
+        />
+      </SettingSection>
+
+      <SettingSection title="Music activity" detail="On profiles">
+        <SettingSwitch
+          label="Show recent plays"
+          detail="A compact strip from public teal.fm records in a profile’s repository. Nothing is written or stored by Balla."
+          value={preferences.showMusicActivity}
+          onChange={setShowMusicActivity}
         />
       </SettingSection>
 
