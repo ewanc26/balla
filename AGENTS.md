@@ -161,7 +161,9 @@ viewer (visible close and step buttons, alt text caption, the fullsize
 render). The feed's What's-on-your-mind row opens a composer; failed sends
 keep the text rather than eating it. New posts write rich-text facets for links,
 hashtags and mentions whose handles resolve to DIDs; an unresolvable mention
-stays plain text rather than being stored with an empty DID. The composer supports threads, photos with
+stays plain text rather than being stored with an empty DID. The composer
+suggests matching accounts while an `@handle` is typed, using the existing
+people-search scope. It supports threads, photos with
 alt text, MP4/GIF video with optional WebVTT captions and honest processing
 states, link cards, quotes, self-applied content warnings, up to three post
 languages per post, and reply and quote controls written to real threadgate and

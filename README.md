@@ -71,8 +71,9 @@ text, an optional requirement to describe every image, cancellable uploads and
 retries; MP4 video and animated GIF posts with visible processing states, a
 100 MB / 10-minute Balla limit, optional WebVTT captions and Bluesky's own GIF
 presentation in the feed; rich-text facets for links, hashtags and mentions
-whose handles resolve to DIDs, with unresolved mentions left as plain text;
-content warnings from the Bluesky self-label
+whose handles resolve to DIDs, with unresolved mentions left as plain text; the
+composer suggests matching accounts while a handle is typed; content warnings
+from the Bluesky self-label
 vocabulary and up to three post languages per post; local draft recovery with a Restore or Discard prompt plus account drafts saved to your private Bluesky stash through the real `app.bsky.draft.*` RPCs (reopen, update, delete and clear-on-publish);
 reply and quote controls written to Bluesky's real threadgate and postgate
 records, editable from any post you authored; profile editing for name, bio, pronouns, links,
