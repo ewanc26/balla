@@ -22,6 +22,8 @@ jobs:
         run: npx tsc --noEmit
       - name: Dependency drift
         run: npx expo install --check
+      - name: Dependency advisories
+        run: npm audit --audit-level=moderate
 
   tests:
     name: Deterministic test suite

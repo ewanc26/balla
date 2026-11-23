@@ -3,6 +3,16 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.23.3
+
+- The CI job named "dependency audit" now actually audits published advisories
+  with `npm audit --audit-level=moderate`, in addition to checking Expo SDK
+  drift. A newly disclosed moderate or high advisory fails the CI gate until it
+  is fixed or deliberately overridden.
+- Extend the deterministic workflow test and update the README and contributing
+  guide so the documented check matches the enforced one. No dependency or
+  OAuth scope changed.
+
 ## 0.23.2
 
 - Clear both open lockfile advisories with pinned transitive overrides:

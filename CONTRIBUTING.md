@@ -7,9 +7,10 @@ with none of the dark patterns. Thanks for wanting to help!
 ## Getting started
 
 Set up Node 22 and Expo per the [README](README.md). CI installs from
-`package-lock.json`, runs the typecheck, dependency audit, deterministic test
-suite (`npm test`), static-site build (`npm run site:build`) and icon sync on
-every push and pull request; on-device behaviour is verified by the maintainer.
+`package-lock.json`, runs the typecheck, dependency drift check, advisory audit
+(`npm audit --audit-level=moderate`), deterministic test suite (`npm test`),
+static-site build (`npm run site:build`) and icon sync on every push and pull
+request; on-device behaviour is verified by the maintainer.
 
 ## Notes for this project
 
