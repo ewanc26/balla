@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.57.0
+
+- **Home can now show an opt-in On this day card (#152).** Following preferences gains a per-account, device-local toggle, off by default. When on, Balla reads the viewer's own `app.bsky.feed.post` records from their configured PDS with one bounded `listRecords` walk per launch day, cached per account. The card shows up to three compact posts from this local calendar date in earlier years, newest first, with the exact date and years in the copy; **See all** opens a Memories screen with the whole set, and every row opens Thread. Dismissal is remembered for the rest of the day.
+- No AppView, engagement data, notifications, badges, writes or new OAuth scope are involved. Deleted records are excluded by the repository read, reposts are excluded by collection, and any read error, empty day or off toggle leaves Home exactly as it was. The bounded walk caps at 2,000 records and the Memories screen says when older posts are outside it. No new dependency; the scope count remains 111.
+- CI's full gate passed: deterministic tests (697), typecheck, Expo dependency drift, advisory audit, icon sync and site build. Browser checks covered Home, Following preferences and Memories at 320, 390, 820, 1000, 1300 and 1440; the off state, dismiss persistence, See all and a memory tap into Thread were exercised.
+
 ## 0.56.0
 
 - **Feed cards now preview the first direct reply (#155).** A compact row under the actions shows one reply's author, up to two lines of text, and **View all replies**. It is fetched only when FlashList reports the card viewable, with one depth-1 `getPostThread` read, at most two reads in flight, cancellation when the card leaves the viewport, and a 40-post session cache. The configured thread order chooses the reply; engagement ranking is never consulted. Label, mute, block, list-block and warning gates suppress the preview, the author opens their profile, and the Thread destination is the same as the comment button. A failed or offline read leaves the honest count-only row exactly as before.
