@@ -57,7 +57,9 @@ export function ChatScreen() {
         readWithRetry(() =>
           chat.chat.bsky.convo.listConvoRequests({ limit: CHAT_PAGE_SIZE })
         ).catch(() => null),
-        readWithRetry(() => chat.chat.bsky.convo.getUnreadCounts({})).catch(() => null),
+        readWithRetry(() =>
+          chat.chat.bsky.convo.getUnreadCounts({ includeGroupChats: true })
+        ).catch(() => null),
       ]);
       setConvos(list.data.convos || []);
       setConvoCursor(list.data.cursor);

@@ -119,7 +119,8 @@ test('chat screens call the chat proxy, never log message content', () => {
   assert.doesNotMatch(settings, /console\.(log|debug|info)/);
   assert.match(inbox, /listConvos\(/);
   assert.match(inbox, /listConvoRequests\(/);
-  assert.match(inbox, /getUnreadCounts\(/);
+  assert.match(inbox, /getUnreadCounts\(\{\s*includeGroupChats: true\s*\}\)|includeGroupChats: true/);
+  assert.doesNotMatch(inbox, /getUnreadCounts\(\{\}\)/);
   assert.match(inbox, /updateAllRead\(/);
   assert.match(convo, /getMessages\(/);
   assert.match(convo, /sendMessage\(/);
@@ -141,6 +142,8 @@ test('chat screens call the chat proxy, never log message content', () => {
   assert.match(createGroup, /createGroup\(/);
   assert.match(joinGroup, /getJoinLinkPreviews\(/);
   assert.match(joinGroup, /requestJoin\(/);
+  assert.match(joinGroup, /joinRequestCount\(preview\?\.convo\)/);
+  assert.doesNotMatch(joinGroup, /joinRequestCount\(\{\s*kind:\s*preview\s*\}/);
   assert.match(joinRequests, /listJoinRequests\(/);
   assert.match(joinRequests, /approveJoinRequest\(/);
   assert.match(joinRequests, /rejectJoinRequest\(/);
