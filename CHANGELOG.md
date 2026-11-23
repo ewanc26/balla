@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.23.2
+
+- Clear both open lockfile advisories with pinned transitive overrides:
+  minimatch 11.0.9 and zod 4.6.6. `npm audit` now reports zero vulnerabilities.
+- Add deterministic tests that verify the patched versions in the committed
+  lockfile and exercise the installed zod against real AT Protocol records, so
+  an upstream regression cannot pass CI silently. No OAuth scope changed.
+
 ## 0.23.1
 
 - CI now runs the deterministic test suite and the static-site build on every
