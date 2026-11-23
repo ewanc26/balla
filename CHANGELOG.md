@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.53.0
+
+- **Image and video fallbacks now honour the configured did:plc directory (#97, partial).** When a post image or video has to be read straight from its author's PDS, Balla first resolves the author's DID document. That read still called the agent's default Bluesky `resolveDid` endpoint, so a saved directory host was ignored on the media path even after v0.50.0–v0.52.0 fixed the other public reads.
+- **What changed.** The media fallback now reuses the same strategy-aware resolver as profiles and labeler lookups: it consults the configured, persisted did:plc directory (or `did:web` and the PDS, in strategy order), validates the DID and keeps the existing on-device cache. Independent-PDS media resolves without asking Bluesky, and a directory change applies on the next unresolved read. The blob bytes are still fetched directly from the PDS, never through the AppView proxy.
+- **Why this is still partial #97.** This is a token-free public read path, not provider failover or a grant change. AppView, chat, video and labeler remain grant-bound, the PDS stays DID-discovered, and a cached DID document still wins under the default `auto` strategy. No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.52.0
 
 - **The configured handle resolver now applies to the in-app public handle fallback (#97, partial).** The resolver override was already used for sign-in and account pre-flight, but `resolveHandleToDid` — the offline profile path taken when the AppView cannot serve `getProfile` — still called the agent's default Bluesky XRPC endpoint. A changed resolver was therefore ignored precisely where it mattered most.

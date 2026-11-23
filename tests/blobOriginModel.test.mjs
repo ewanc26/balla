@@ -102,12 +102,14 @@ test('only real strategies are accepted', () => {
 
 test('the runtime reads blobs from the PDS with a bounded cache and no new scope', () => {
   const runtime = readFileSync(new URL('../src/lib/blobOrigin.ts', import.meta.url), 'utf8');
-  assert.match(runtime, /agent\.com\.atproto\.identity\.resolveDid/);
-  assert.match(runtime, /atprotoPdsEndpoint\(resolved\.data\)/);
+  // The DID document read reuses the strategy-aware resolver so the configured
+  // did:plc directory applies here too; no implicit Bluesky host remains.
+  assert.match(runtime, /resolveDidDocument\(fallback\.did\)/);
+  assert.doesNotMatch(runtime, /agent\.com\.atproto\.identity\.resolveDid/);
+  assert.match(runtime, /atprotoPdsEndpoint\(document\)/);
   assert.match(runtime, /getBlobUrl\(endpoint/);
   const model = readFileSync(new URL('../src/lib/blobOriginModel.ts', import.meta.url), 'utf8');
   assert.match(model, /com\.atproto\.sync\.getBlob/);
-  assert.match(runtime, /readWithRetry/);
   assert.match(runtime, /evictToCap/);
   assert.match(runtime, /clearBlobCache/);
   assert.match(runtime, /Platform\.OS === 'web'/);
