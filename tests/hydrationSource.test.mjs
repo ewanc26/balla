@@ -47,9 +47,9 @@ test('the release documents the partial #99 slice without new scope', () => {
   const changelog = read('../CHANGELOG.md');
   const compliance = read('../docs/bluesky-compliance.md');
   const features = read('../site/features.html');
-  assert.equal(pkg.version, '0.57.0');
-  assert.equal(appJson.expo.version, '0.57.0');
-  assert.match(changelog, /^## 0\.57\.0$/m);
+  assert.equal(pkg.version, '0.58.0');
+  assert.equal(appJson.expo.version, '0.58.0');
+  assert.match(changelog, /^## 0\.58\.0$/m);
   assert.match(changelog, /#99, partial/);
   assert.match(changelog, /hydration-source/);
   assert.match(changelog, /scope count remains 111/);
