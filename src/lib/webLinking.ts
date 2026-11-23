@@ -43,6 +43,7 @@ export const WEB_LINKING_CONFIG = {
     Compose: 'compose',
     Settings: 'settings',
     Advanced: 'settings/advanced',
+    Backend: 'settings/advanced/backend',
     MediaOrigin: 'settings/advanced/media',
     IdentitySettings: 'settings/advanced/identity',
     ChatService: 'settings/advanced/chat',

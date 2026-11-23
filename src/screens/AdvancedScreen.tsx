@@ -48,6 +48,12 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
           detail="Changeable resolver endpoint, grant-bound service facts and connection checks"
           onPress={() => navigation.navigate('Services')}
         />
+        <Row
+          icon="cloud-outline"
+          label="Backend"
+          detail="Network backend seam: registered AT Protocol adapter and routed verb inventory"
+          onPress={() => navigation.navigate('Backend')}
+        />
       </Section>
 
       <Section title="Moderation">

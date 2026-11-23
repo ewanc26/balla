@@ -13,6 +13,7 @@ import { moderateNotification } from '@atproto/api';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { networkBackend } from '../lib/networkBackend';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useModeration } from '../lib/moderationContext';
@@ -152,8 +153,10 @@ export function NotificationsScreen() {
     setError(null);
     try {
       const [res, follows] = await Promise.all([
-        readWithRetry(() => agent.listNotifications({ limit: 50 })),
-        readWithRetry(() => agent.getFollows({ actor: did, limit: 100 })).catch(() => null),
+        readWithRetry(() => networkBackend.notifications.listNotifications({ limit: 50 })),
+        readWithRetry(() =>
+          networkBackend.notifications.getFollows({ actor: did, limit: 100 })
+        ).catch(() => null),
       ]);
       setItems(res.data.notifications || []);
       if (follows?.data?.follows) {

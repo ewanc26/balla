@@ -14,6 +14,7 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { networkBackend } from '../lib/networkBackend';
 import { postFacets } from '../lib/facets';
 import {
   measurePostText,
@@ -272,7 +273,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
     setFailureMessage(null);
     try {
       const res = await readWithRetry(() =>
-        agent.getPostThread({ uri, depth: 10 })
+        networkBackend.thread.getPostThread({ uri, depth: 10 })
       );
       const t = res.data.thread;
       if (isThreadViewPost(t)) {

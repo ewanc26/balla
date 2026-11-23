@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.39.0
+
+- **Advanced → Backend exposes a partial seam** (#98, partial). A typed contract covers all nine verb groups named in the issue — session, timeline, thread, notifications, profile, compose, media, moderation and search — with one registered AT Protocol adapter, the only registered backend in this build. The adapter resolves the live Agent binding when called, so session changes, the AppView proxy and preview-mode patches behave exactly as before.
+- **Five read groups are genuinely routed.** Home timeline, generator and list feeds, thread hydration, notification and follow reads, profile and tab-post reads, and all Search/Discovery result reads now call the seam. Retry, pagination, failure copy and state handling stay in their existing screens; this is a mechanical refactor, not a behaviour change.
+- **The screen states what is not routed.** Sign-in, compose/reply, media upload and moderation remain direct screen call sites, and the inventory says so. It is not a completed migration, a second backend, a bridge or an identity-mapping tool; no provider switch is offered. #98 stays open until every screen consumes the contract.
+- No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.38.0
 
 - **The Standard.site reader now shows real social signals from people you follow** (#101, partial). A visible **Check followed accounts** action reads the granted follows list, then checks each followed account's own public PDS for `site.standard.graph.subscription`, `site.standard.graph.recommend` and their published Leaflet equivalents. Counts are exact AT-URI matches, deduplicated by account; a missing collection means no records on that server.

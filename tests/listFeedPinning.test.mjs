@@ -11,7 +11,8 @@ test('list feeds use the published saved-feed type and list endpoints', () => {
   assert.match(context, /findSavedListItem/);
 
   const feed = read('../src/screens/FeedScreen.tsx');
-  assert.match(feed, /agent\.app\.bsky\.feed\.getListFeed\(\{/);
+  assert.match(feed, /networkBackend\.timeline\.getListFeed\(\{/);
+  assert.match(read('../src/lib/networkBackend.ts'), /agent\.app\.bsky\.feed\.getListFeed\(/);
   assert.match(feed, /activeIsList/);
   assert.match(feed, /feedChoices\(homeFeeds, generators, lists\)/);
   assert.match(feed, /activeIsList\s*\? undefined/);

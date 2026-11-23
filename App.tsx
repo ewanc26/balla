@@ -28,6 +28,7 @@ import { StandardSiteScreen } from './src/screens/StandardSiteScreen';
 import { ComposeScreen } from './src/screens/ComposeScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { AdvancedScreen } from './src/screens/AdvancedScreen';
+import { BackendScreen } from './src/screens/BackendScreen';
 import { MediaOriginScreen } from './src/screens/MediaOriginScreen';
 import { IdentitySettingsScreen } from './src/screens/IdentitySettingsScreen';
 import { AccountsScreen } from './src/screens/AccountsScreen';
@@ -416,6 +417,7 @@ export default function App() {
                           <Stack.Screen name="UserProfile" component={ProfileScreen} />
                           <Stack.Screen name="Settings" component={SettingsScreen} />
                           <Stack.Screen name="Advanced" component={AdvancedScreen} />
+                          <Stack.Screen name="Backend" component={BackendScreen} />
                           <Stack.Screen name="MediaOrigin" component={MediaOriginScreen} />
                           <Stack.Screen name="IdentitySettings" component={IdentitySettingsScreen} />
                           <Stack.Screen name="ChatService" component={ChatServiceScreen} />

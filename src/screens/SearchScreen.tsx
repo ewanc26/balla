@@ -13,7 +13,7 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
-import { agent } from '../lib/agent';
+import { networkBackend } from '../lib/networkBackend';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
@@ -66,13 +66,13 @@ async function fetchSearchPage(
     const params = buildPostSearchParams(
       query,
       filters,
-      agent.did || '',
+      networkBackend.did || '',
       tab
     );
     // An account scope from a profile is fixed: it overrides any author typed
     // into the filter sheet so the results cannot quietly widen.
     if (author) params.authors = [author];
-    const res = await agent.app.bsky.feed.searchPostsV2({
+    const res = await networkBackend.search.searchPosts({
       ...params,
       limit: 30,
       ...(cursor ? { cursor } : {}),
@@ -85,7 +85,7 @@ async function fetchSearchPage(
   }
 
   if (tab === 'people') {
-    const res = await agent.searchActors({
+    const res = await networkBackend.search.searchActors({
       q: query,
       limit: 30,
       ...(cursor ? { cursor } : {}),
@@ -94,7 +94,7 @@ async function fetchSearchPage(
   }
 
   if (tab === 'feeds') {
-    const res = await agent.app.bsky.unspecced.getPopularFeedGenerators({
+    const res = await networkBackend.search.searchFeeds({
       query,
       limit: 25,
       ...(cursor ? { cursor } : {}),
@@ -102,7 +102,7 @@ async function fetchSearchPage(
     return { items: res.data.feeds || [], cursor: res.data.cursor };
   }
 
-  const res = await agent.app.bsky.graph.searchStarterPacksV2({
+  const res = await networkBackend.search.searchStarterPacks({
     q: query,
     limit: 25,
     ...(cursor ? { cursor } : {}),
