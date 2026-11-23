@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.60.0
+
+- **Discover now carries News bundles (#159).** Pick one of five topics — Politics, Climate, Culture, Technology or Sport — and a region (Global, UK, US or Europe), then review the exact publisher roster before anything is written. Confirming adds one ordinary Balla curation list with a public `app.bsky.graph.list` record and one `app.bsky.graph.listitem` per publisher in a single atomic `applyWrites`, so a failed write cannot leave a half-filled bundle. Every handle and DID in the compiled pack was resolved against the public AppView on 23 November 2026; the pack is validated at load and fails closed to an honest empty state.
+- **The bundle is a list, not a follow.** No follow, like, repost, block, mute or feed preference is written, and Following and Home are unchanged. The picker says so beside the roster, and the roster names every account before the **Create bundle** button. An existing bundle is recognised by name and offered as **Open list** or **Remove bundle**; creation stays disabled until the list check succeeds, so Balla never writes a second copy. The list feed is newest-first like every other list; there is no ranking input, no new OAuth scope (112 tokens remain) and no new dependency.
+- CI's full gate passed: deterministic tests (753), typecheck, Expo dependency drift, advisory audit, icon sync and site build. Mock browser checks covered the News picker, the Global-to-UK switch, the roster and the create success state at 320, 390, 820, 1000, 1300 and 1440 pixels, in dark and light at 390, and at 640, 844 and 1000 pixels of height. Every capture had zero horizontal overflow and zero sub-44pt buttons.
+
 ## 0.59.0
 
 - **Feed discovery now has an opt-in For you shelf (#158).** fu is first, at `at://did:plc:ooensn4mr5mhznzypvxelfa3/app.bsky.feed.generator/fu` on `did:web:feed1.eurosky.network`, followed by any future curated entry. Each row names the operator, its published algorithm and a source link; **Subscribe** saves the feed and **Unsubscribe** removes it in one tap. The shelf says plainly that a third party selects and ranks those posts, that Balla ranks nothing, and that Following and Home stay chronological. It adds no ranking code, no feed injection, no notification and no OAuth scope.
