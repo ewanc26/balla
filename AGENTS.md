@@ -198,7 +198,13 @@ The post and profile menus offer a device-local 30-day snooze: Home skips that
 account's posts and reposts, every other surface is untouched, and Following
 preferences lists and ends active snoozes. About carries the one static
 Supporters card and the shared creator byline; no feed, thread or notification
-surface links the support page.
+surface links the support page. The desktop right rail carries a Recent activity
+card built from the Following page already in memory: replies and reposts only,
+the same label, mute, block and snooze gates, and a reversible device-local
+hide in Appearance. The Thread menu offers wall-to-wall, a filtered view of the
+loaded tree for the viewer and one other visible author; it preserves thread
+order, keeps the full-thread exit and makes no extra request or write. The
+composer and full thread remain unchanged.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
 mapping and the deliberate omissions (Stories, reactions, ranking) live in
