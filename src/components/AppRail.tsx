@@ -328,6 +328,9 @@ const styles = StyleSheet.create({
   },
   right: {
     width: 300,
+    flexGrow: 0,
+    flexShrink: 0,
+    flexBasis: 300,
     alignSelf: 'stretch',
     borderLeftWidth: StyleSheet.hairlineWidth,
   },

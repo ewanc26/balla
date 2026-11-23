@@ -130,6 +130,7 @@ function makePost({
   embed,
   recordEmbed,
   recordExtras,
+  replyTo,
 }: {
   uri: string;
   author: any;
@@ -142,6 +143,7 @@ function makePost({
   embed?: any;
   recordEmbed?: any;
   recordExtras?: Record<string, any>;
+  replyTo?: any;
 }) {
   const indexedAt = minutesAgo(minutes);
   return {
@@ -153,6 +155,14 @@ function makePost({
       text,
       createdAt: indexedAt,
       ...(recordEmbed ? { embed: recordEmbed } : {}),
+      ...(replyTo
+        ? {
+            reply: {
+              root: { uri: replyTo.uri, cid: replyTo.cid },
+              parent: { uri: replyTo.uri, cid: replyTo.cid },
+            },
+          }
+        : {}),
       ...(recordExtras || {}),
     },
     indexedAt,
@@ -314,7 +324,21 @@ const notifications = [
   },
 ];
 
-const feed = posts.map((post) => ({ post }));
+const feedReply = makePost({
+  uri: 'at://did:plc:mockailsa/app.bsky.feed.post/feed-reply',
+  author: ailsa,
+  minutes: 8,
+  likeCount: 1,
+  repostCount: 0,
+  replyCount: 0,
+  text: "The garden chair is already out. I'll bring the shortbread.",
+  replyTo: posts[0],
+});
+
+const feed = [
+  { post: feedReply, reply: { root: posts[0], parent: posts[0] } },
+  ...posts.map((post) => ({ post })),
+];
 
 // Preview-only posts. They are not added to the timeline, so the feed fixture
 // and its counts stay exactly as the other screens expect.
@@ -1382,6 +1406,8 @@ export function mockInitialScreen(): string {
     'ConversationSettings',
     'UserProfile',
     'Settings',
+    'Advanced',
+    'AppView',
     'Accounts',
     'Appearance',
     'AccessibilitySettings',

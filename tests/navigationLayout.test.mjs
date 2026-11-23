@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   COMPACT_TAB_LABEL_MAX_WIDTH,
   DESKTOP_MIN_WIDTH,
@@ -54,6 +55,17 @@ test('the reading column and header breakpoints stay in one place', () => {
     'header search should appear only when both the rail and the pill fit'
   );
   assert.ok(COMPACT_TAB_LABEL_MAX_WIDTH < DESKTOP_MIN_WIDTH);
+});
+
+test('the desktop right rail keeps its fixed width instead of stretching', () => {
+  const rail = readFileSync(
+    new URL('../src/components/AppRail.tsx', import.meta.url),
+    'utf8'
+  );
+  assert.match(
+    rail,
+    /right: \{\s*width: 300,\s*flexGrow: 0,\s*flexShrink: 0,\s*flexBasis: 300,/
+  );
 });
 
 test('reply indentation keeps a readable text column on phones', () => {

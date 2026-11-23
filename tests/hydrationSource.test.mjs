@@ -24,24 +24,23 @@ test('the hydration source is the one audited grant-bound AppView, with no secon
   assert.match(HYDRATION_SOURCE_COPY.note, /not a live check/);
 });
 
-test('the feed shows the real DID as a tappable source label, not a fake control', () => {
-  assert.match(feed, /from '\.\.\/lib\/hydrationSource\.ts'/);
-  assert.match(feed, /HYDRATION_SOURCE_COPY\.label/);
-  assert.match(feed, /hydrationSourceText\(\)/);
-  assert.match(feed, /navigation\.navigate\('AppView'\)/);
-  assert.match(feed, /HYDRATION_SOURCE_COPY\.buttonLabel/);
-  assert.match(feed, /accessibilityRole="button"/);
-  assert.doesNotMatch(feed, /onPress=\{\(\) => \{\}\}/);
+test('the Home feed does not repeat a hydration-source banner', () => {
+  assert.doesNotMatch(feed, /hydrationSource|HYDRATION_SOURCE/);
+  assert.doesNotMatch(feed, /AppView source details/);
+  assert.doesNotMatch(feed, /navigation\.navigate\('AppView'\)/);
 });
 
-test('the AppView and health copy now name the label without claiming failover', () => {
+test('Advanced → AppView is the one place that lists the hydration source', () => {
+  assert.match(appViewScreen, /from '\.\.\/lib\/hydrationSource\.ts'/);
+  assert.match(appViewScreen, /HYDRATION_SOURCE_COPY\.label/);
+  assert.match(appViewScreen, /hydrationSourceText\(\)/);
+  assert.match(appViewScreen, /Home timeline no longer/);
   assert.match(appViewScreen, /No picker, mirror, failover or per-function routing/);
-  assert.match(appViewScreen, /hydration-source/);
-  assert.match(health, /static hydration-source label/);
+  assert.match(health, /shown only on this screen/);
   assert.match(health, /not a switch or a live check/);
 });
 
-test('the release documents the partial #99 slice without new scope', () => {
+test('the release and public copy describe the settings-only facts', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
   const changelog = read('../CHANGELOG.md');
@@ -51,10 +50,8 @@ test('the release documents the partial #99 slice without new scope', () => {
   assert.equal(appJson.expo.version, '0.60.0');
   assert.match(changelog, /^## 0\.60\.0$/m);
   assert.match(changelog, /#99, partial/);
-  assert.match(changelog, /hydration-source/);
-  assert.match(changelog, /scope count remains 111/);
-  assert.match(compliance, /hydration-source/);
-  assert.match(features, /hydration source/);
+  assert.match(compliance, /Home feed no longer repeats/);
+  assert.match(features, /Home feed no longer repeats/);
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);
 });

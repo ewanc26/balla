@@ -18,6 +18,10 @@ import {
   type AppViewHealthProbe,
 } from '../lib/appViewHealth.ts';
 import { openExternalUrl } from '../lib/openLink';
+import {
+  HYDRATION_SOURCE_COPY,
+  hydrationSourceText,
+} from '../lib/hydrationSource.ts';
 import { usePalette } from '../theme';
 
 const ISSUE_URL = 'https://github.com/ewanc26/balla/issues/99';
@@ -59,6 +63,10 @@ export function AppViewScreen() {
         <SettingValueRow label="AppView DID" value={APPVIEW_HEALTH_DID} />
         <SettingValueRow label="OAuth audience" value={APPVIEW_HEALTH_AUDIENCE} />
         <SettingValueRow
+          label={HYDRATION_SOURCE_COPY.label}
+          value={hydrationSourceText()}
+        />
+        <SettingValueRow
           label="Advertised endpoint"
           value={probe?.endpoint ?? 'Not checked'}
         />
@@ -77,9 +85,10 @@ export function AppViewScreen() {
         <SettingNote>
           No picker, mirror, failover or per-function routing is offered here.
           Those need a different OAuth audience and a new authorisation; this
-          screen only measures the current grant. The feed’s hydration-source
-          label names that same grant-bound AppView; it is a fact, not a switch
-          or a live measurement of one response.
+          screen only measures the current grant. The Home timeline no longer
+          carries a hydration-source banner: these grant facts live here. They
+          are a fixed fact of the grant, not a switch or a live measurement of
+          one response.
         </SettingNote>
       </SettingSection>
 
