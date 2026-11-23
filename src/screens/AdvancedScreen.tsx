@@ -49,6 +49,12 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
           onPress={() => navigation.navigate('Services')}
         />
         <Row
+          icon="pulse-outline"
+          label="AppView"
+          detail="Grant-bound AppView facts and a public health check"
+          onPress={() => navigation.navigate('AppView')}
+        />
+        <Row
           icon="cloud-outline"
           label="Backend"
           detail="Network backend seam: registered AT Protocol adapter and routed verb inventory"

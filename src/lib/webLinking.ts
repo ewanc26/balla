@@ -51,6 +51,7 @@ export const WEB_LINKING_CONFIG = {
     MigrationPreflight: 'settings/advanced/migration-preflight',
     PdsDirectory: 'settings/advanced/pds-directory',
     Services: 'settings/advanced/services',
+    AppView: 'settings/advanced/appview',
     Accounts: 'settings/accounts',
     AddAccount: 'settings/accounts/add',
     Appearance: 'appearance',

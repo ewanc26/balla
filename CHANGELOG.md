@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.40.0
+
+- **Advanced → AppView adds a read-only public health check** (#99, partial). The new screen shows the grant-bound AppView DID and OAuth audience as facts, reads its public `did:web` document to find the advertised `#bsky_appview` endpoint, and — when signed in — runs one public profile canary for this account. Results report HTTP status and elapsed time from this device; no provider prose is read, logged or shown.
+- **The screen states its limits.** The public reads expose no sync lag or feed freshness, so neither is invented. This build offers **no failover, no mirror or primary picker, no hydration-source label and no per-function routing**: those need a different OAuth audience and a new authorisation. #99 stays open until its acceptance test can serve feeds, threads and notifications from an alternative AppView.
+- The public site now lists starter packs under Here today rather than Planned, and describes the shipped network backend seam and AppView health check without claiming either is a completed migration or a provider switch.
+- No new OAuth scope or dependency; the scope count remains 111. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.39.0
 
 - **Advanced → Backend exposes a partial seam** (#98, partial). A typed contract covers all nine verb groups named in the issue — session, timeline, thread, notifications, profile, compose, media, moderation and search — with one registered AT Protocol adapter, the only registered backend in this build. The adapter resolves the live Agent binding when called, so session changes, the AppView proxy and preview-mode patches behave exactly as before.

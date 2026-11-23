@@ -39,7 +39,7 @@ test('the site loads no analytics, ads or tracking scripts', () => {
 
 test('the roadmap page links to the open issues it names', () => {
   const features = read('features.html');
-  for (const issue of [34, 35, 14, 15, 16, 25, 26, 28, 20, 27, 37, 76, 79, 81, 83, 85]) {
+  for (const issue of [34, 35, 14, 15, 16, 25, 26, 28, 20, 27, 37, 76, 79, 81, 83, 85, 98, 99]) {
     assert.ok(features.includes(`https://github.com/ewanc26/balla/issues/${issue}"`), `issue ${issue} is linked`);
   }
   assert.ok(features.includes('docs/bluesky-compliance.md'), 'the compliance note is linked');
