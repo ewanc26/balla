@@ -12,6 +12,7 @@ import { FlashList } from '@shopify/flash-list';
 import { Ionicons } from '@expo/vector-icons';
 import { moderateProfile } from '@atproto/api';
 import { agent } from '../lib/agent';
+import { networkBackend } from '../lib/networkBackend';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { readProfileFromPds } from '../lib/identityProfile';
 import { noteProfileHandle } from '../lib/identityResolver';
@@ -71,11 +72,11 @@ import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 /** Load a profile tab from the published author-feed filters or actor-likes RPC. */
 async function loadTabPosts(actor: string, tab: ProfileFeedTab): Promise<any[]> {
   if (usesActorLikes(tab)) {
-    const res = await agent.getActorLikes({ actor, limit: 30 });
+    const res = await networkBackend.profile.getActorLikes({ actor, limit: 30 });
     return (res.data.feed || []).map((item: any) => item.post);
   }
   const filter = filterForTab(tab) || undefined;
-  const res = await agent.getAuthorFeed({ actor, limit: 30, filter });
+  const res = await networkBackend.profile.getAuthorFeed({ actor, limit: 30, filter });
   return (res.data.feed || []).map((item: any) => item.post);
 }
 
@@ -143,7 +144,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
 
     (async () => {
       try {
-        const prof = await readWithRetry(() => agent.getProfile({ actor }));
+        const prof = await readWithRetry(() => networkBackend.profile.getProfile({ actor }));
         if (!active) return;
         const detail = prof.data;
         // Remember the handle -> DID mapping seen during a normal AppView read

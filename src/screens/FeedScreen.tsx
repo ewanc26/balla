@@ -10,7 +10,7 @@ import {
 import { FlashList } from '@shopify/flash-list';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
-import { agent } from '../lib/agent';
+import { networkBackend } from '../lib/networkBackend';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { useFeeds } from '../lib/feedsContext';
@@ -64,18 +64,18 @@ export function FeedScreen() {
         const readPage = activeFeed
           ? activeIsList
             ? () =>
-                agent.app.bsky.feed.getListFeed({
+                networkBackend.timeline.getListFeed({
                   list: activeFeed,
                   limit: 25,
                   cursor: target,
                 })
             : () =>
-                agent.app.bsky.feed.getFeed({
+                networkBackend.timeline.getFeed({
                   feed: activeFeed,
                   limit: 25,
                   cursor: target,
                 })
-          : () => agent.getTimeline({ limit: 25, cursor: target });
+          : () => networkBackend.timeline.getTimeline({ limit: 25, cursor: target });
         // Both calls are reads, so bounded backoff is safe here. Writes are
         // never replayed by this helper.
         const res = await readWithRetry(readPage);

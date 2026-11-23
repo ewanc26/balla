@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { agent } from '../lib/agent';
+import { networkBackend } from '../lib/networkBackend';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { subscribeActorHidden } from '../lib/moderation';
 import { PostCard } from '../components/PostCard';
@@ -70,7 +70,7 @@ export function DiscoveryScreen({ route, navigation }: { route?: any; navigation
 
     try {
       const res = await readWithRetry(() =>
-        agent.app.bsky.feed.searchPostsV2({
+        networkBackend.search.searchPosts({
           ...params,
           ...(nextCursor ? { cursor: nextCursor } : {}),
         })
