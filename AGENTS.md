@@ -164,7 +164,8 @@ hashtags and mentions whose handles resolve to DIDs; an unresolvable mention
 stays plain text rather than being stored with an empty DID. The composer
 suggests matching accounts while an `@handle` is typed, using the existing
 people-search scope, and thread replies write the same facets and use the same
-picker. It supports threads, photos with
+picker. Both composers enforce Bluesky's 300-grapheme and 3,000-byte text caps
+with a live counter. It supports threads, photos with
 alt text, MP4/GIF video with optional WebVTT captions and honest processing
 states, link cards, quotes, self-applied content warnings, up to three post
 languages per post, and reply and quote controls written to real threadgate and

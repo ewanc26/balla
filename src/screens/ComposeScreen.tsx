@@ -90,6 +90,10 @@ import {
   normaliseSelfLabels,
 } from '../lib/postOptions';
 import {
+  measurePostText,
+  POST_TEXT_MAX_GRAPHEMES,
+} from '../lib/postTextLimit';
+import {
   DEFAULT_INTERACTION_GATES,
   describeGates,
   gatesEqual,
@@ -102,9 +106,6 @@ import { CARD_RADIUS, cardShadow, useFontScale, usePalette, webInputReset } from
 import { REPLY_OPTIONS, QUOTE_OPTIONS } from '../lib/gateOptions';
 import { ReplyListPicker } from '../components/ReplyListPicker';
 
-// Bluesky caps posts at 300 graphemes; the counter is honest and always
-// visible rather than a colour shift you have to notice.
-const LIMIT = 300;
 const MAX_LONG_EDGE = 2048;
 
 type ComposerImage = {
@@ -436,9 +437,10 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     });
   }, [navigation, sending, uploadProgress]);
 
-  const trimmed = text.trim();
-  const count = countGraphemes(trimmed);
-  const over = count > LIMIT;
+  const textLimit = measurePostText(text);
+  const trimmed = textLimit.text;
+  const count = textLimit.graphemes;
+  const over = textLimit.over;
   const missingAlt =
     missingAltTextCount(images) + (video && !video.alt.trim() ? 1 : 0);
   const tooLongAlt =
@@ -2065,15 +2067,14 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
               <Text
                 style={{ color: over ? p.danger : p.secondary, fontSize: 13 }}
               >
-                {count}/{LIMIT}
+                {count}/{POST_TEXT_MAX_GRAPHEMES}
               </Text>
               {over ? (
                 <Text
                   accessibilityRole="alert"
                   style={{ color: p.danger, fontSize: 12, marginTop: 2 }}
                 >
-                  {count - LIMIT} grapheme{count - LIMIT === 1 ? '' : 's'} over the
-                  limit.
+                  {textLimit.message}
                 </Text>
               ) : preparingVideo ? (
                 <Text

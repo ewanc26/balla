@@ -15,6 +15,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import { postFacets } from '../lib/facets';
+import {
+  measurePostText,
+  POST_TEXT_MAX_GRAPHEMES,
+} from '../lib/postTextLimit';
 import { applyMention, type MentionActor } from '../lib/mentionSuggestions';
 import { useMentionSuggestions } from '../lib/useMentionSuggestions';
 import { describeFailure, readWithRetry } from '../lib/reliability';
@@ -229,6 +233,8 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
     status: replyMentionStatus,
     results: replyMentionResults,
   } = useMentionSuggestions(replyText, replySelection, !sending);
+  const replyLimit = measurePostText(replyText);
+  const canSendReply = replyLimit.text.length > 0 && !replyLimit.over;
 
   function openProfile(did: string) {
     navigation.navigate('UserProfile', { actor: did });
@@ -325,7 +331,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
   }
 
   async function sendReply() {
-    if (sending || replyText.trim().length === 0) return;
+    if (sending || !canSendReply) return;
     setSending(true);
     setReplyError(null);
     try {
@@ -337,7 +343,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
       if (record.reply && record.reply.root) {
         root = record.reply.root;
       }
-      const text = replyText.trim();
+      const text = replyLimit.text;
       const facets = await postFacets(text, agent);
       await agent.post({
         text,
@@ -565,6 +571,7 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
               accessibilityLabel="Write a reply to this thread"
               value={replyText}
               onChangeText={setReplyText}
+              editable={!sending}
               selection={replySelection}
               onSelectionChange={(event) =>
                 setReplySelection(event.nativeEvent.selection)
@@ -586,12 +593,13 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
           </View>
           <Pressable
             onPress={sendReply}
-            disabled={sending || replyText.trim().length === 0}
+            disabled={sending || !canSendReply}
             accessibilityRole="button"
             accessibilityLabel="Reply"
+            accessibilityState={{ disabled: sending || !canSendReply, busy: sending }}
             style={({ pressed }) => ({
               backgroundColor: p.accent,
-              opacity: pressed || sending || replyText.trim().length === 0 ? 0.5 : 1,
+              opacity: pressed || sending || !canSendReply ? 0.5 : 1,
               borderRadius: CARD_RADIUS,
               minHeight: 44,
               paddingHorizontal: 16,
@@ -602,6 +610,30 @@ export function ThreadScreen({ route, navigation }: { route: any; navigation: an
           >
             <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: 15 }}>Reply</Text>
           </Pressable>
+        </View>
+        <View style={styles.composerMeta}>
+          <Text
+            style={{
+              color: replyLimit.over ? p.danger : p.secondary,
+              fontSize: 12,
+            }}
+          >
+            {replyLimit.graphemes}/{POST_TEXT_MAX_GRAPHEMES}
+          </Text>
+          {replyLimit.over ? (
+            <Text
+              accessibilityRole="alert"
+              numberOfLines={2}
+              style={{
+                color: p.danger,
+                fontSize: 12,
+                marginLeft: 8,
+                flex: 1,
+              }}
+            >
+              {replyLimit.message}
+            </Text>
+          ) : null}
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -653,6 +685,12 @@ const styles = StyleSheet.create({
   composerRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
+  },
+  composerMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    minHeight: 20,
+    paddingTop: 4,
   },
   inputWrap: {
     flex: 1,
