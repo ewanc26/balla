@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.24.0
+
+- The post overflow now has **Mute words & tags** immediately after Mute thread. It opens Content filters with the muted-words section in view.
+- Other people's profile menus now offer **Share via…**, **Copy link to profile**, **Hide reposts in feeds** / **Show reposts in feeds**, and **Report a link** when the profile has reportable link records. Sharing uses the canonical public profile URL with the existing native and browser clipboard fallbacks; repost muting uses `onlyReposts` on the real actor-mute RPC; link reports use the published `app.bsky.actor.defs#profileLinkView` subject and leave the usual local-only receipt.
+- Add deterministic tests for profile URLs, menu wiring, scoped repost muting and link-report subjects. No dependency or OAuth scope changed.
+
 ## 0.23.3
 
 - The CI job named "dependency audit" now actually audits published advisories

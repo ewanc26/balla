@@ -6,8 +6,8 @@ Last updated: **21 November 2026**.
 
 A report is an AT Protocol request sent from Balla to Bluesky’s moderation
 labeler through `com.atproto.moderation.createReport`. It contains the reported
-post strongRef or account repoRef, a reason category and optional free-text
-detail.
+post strongRef, account repoRef or profile-link view, a reason category and
+optional free-text detail.
 
 Balla does not operate its own moderation queue. The labeler receives the report
 and decides what happens next.
@@ -16,6 +16,8 @@ and decides what happens next.
 
 - Post report: `com.atproto.repo.strongRef` with the post URI and CID.
 - Account report: `com.atproto.admin.defs#repoRef` with the account DID.
+- Profile-link report: `app.bsky.actor.defs#profileLinkView` with the link's URI,
+  CID and URL, available only when the record has a strong ref.
 - Transport: `atproto-proxy: did:plc:ar7c4by46qjdydhdevvrndac#atproto_labeler`.
 - OAuth: the client requests the report audience for that labeler. Sessions
   authorised before 21 November 2026 need one fresh sign-in.

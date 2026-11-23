@@ -6,6 +6,7 @@ import {
   Platform,
   Pressable,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   TextInput,
@@ -13,6 +14,7 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import {
   dialogAccessibilityProps,
@@ -24,6 +26,7 @@ import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 import {
   blockActor,
   muteActor,
+  muteRepostsActor,
   notifyActorHidden,
   reportProfile,
   REPORT_REASONS,
@@ -31,6 +34,8 @@ import {
   unmuteActor,
 } from '../lib/moderation';
 import type { ReportReason } from '../lib/moderation';
+import { buildProfileShareUrl, profileShareText } from '../lib/profileShareModel';
+import { reportableProfileLinks } from '../lib/reportModel';
 import { agent } from '../lib/agent';
 import { useViewer } from '../lib/viewer';
 import {
@@ -66,6 +71,7 @@ interface ProfileMenuProps {
   onClose: () => void;
   onViewerChange: (viewer: Record<string, any>) => void;
   onReload: () => void;
+  onReportLink?: () => void;
 }
 
 export function ProfileMenu({
@@ -74,6 +80,7 @@ export function ProfileMenu({
   onClose,
   onViewerChange,
   onReload,
+  onReportLink,
 }: ProfileMenuProps) {
   const p = usePalette();
   const insets = useSafeAreaInsets();
@@ -84,6 +91,7 @@ export function ProfileMenu({
   const [details, setDetails] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
   const [reportSent, setReportSent] = useState(false);
   const [liveActive, setLiveActive] = useState(false);
   const [liveLink, setLiveLink] = useState('');
@@ -105,6 +113,7 @@ export function ProfileMenu({
     setDetails('');
     setBusy(false);
     setError(null);
+    setNotice(null);
     setReportSent(false);
     if (agent.did && profile?.did === agent.did) {
       void loadMyLiveStatus()
@@ -127,6 +136,9 @@ export function ProfileMenu({
 
   const viewer = profile.viewer || {};
   const isMuted = !!viewer.muted;
+  const isMutedOnlyReposts = !!viewer.mutedOnlyReposts && !isMuted;
+  const reportableLinks = reportableProfileLinks(profile.links);
+  const profileUrl = buildProfileShareUrl(profile);
   const blockingUri =
     typeof viewer.blocking === 'string' ? viewer.blocking : undefined;
   const handle = profile.handle || 'this account';
@@ -172,11 +184,11 @@ export function ProfileMenu({
     try {
       if (isMuted) {
         await unmuteActor(profile.did);
-        onViewerChange({ muted: false });
+        onViewerChange({ muted: false, mutedOnlyReposts: false });
         onReload();
       } else {
         await muteActor(profile.did);
-        onViewerChange({ muted: true });
+        onViewerChange({ muted: true, mutedOnlyReposts: false });
         notifyActorHidden(profile.did);
       }
       close();
@@ -184,6 +196,70 @@ export function ProfileMenu({
       setError(`Could not ${isMuted ? 'unmute' : 'mute'} @${handle}. Try again.`);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleToggleRepostMute() {
+    if (busy || isMuted) return;
+    setBusy(true);
+    setError(null);
+    try {
+      if (isMutedOnlyReposts) {
+        await unmuteActor(profile.did);
+        onViewerChange({ muted: false, mutedOnlyReposts: false });
+      } else {
+        await muteRepostsActor(profile.did);
+        onViewerChange({ muted: false, mutedOnlyReposts: true });
+      }
+      onReload();
+      close();
+    } catch {
+      setError(
+        `Could not ${isMutedOnlyReposts ? 'show' : 'hide'} reposts from @${handle}. Try again.`
+      );
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCopyProfileLink() {
+    setError(null);
+    setNotice(null);
+    if (!profileUrl) {
+      setError('This profile has no shareable address.');
+      return;
+    }
+    try {
+      await Clipboard.setStringAsync(profileUrl);
+      setNotice('Profile link copied to the clipboard.');
+    } catch {
+      setError('Could not copy the profile link. Try again.');
+    }
+  }
+
+  async function handleShareProfile() {
+    setError(null);
+    setNotice(null);
+    if (!profileUrl) {
+      setError('This profile has no shareable address.');
+      return;
+    }
+    const text = profileShareText(profile);
+    try {
+      if (Platform.OS === 'web') {
+        const webNavigator = (globalThis as any).navigator;
+        if (webNavigator && typeof webNavigator.share === 'function') {
+          await webNavigator.share({ title: text, text, url: profileUrl });
+        } else {
+          await Clipboard.setStringAsync(profileUrl);
+          setNotice('Sharing is not available in this browser. Link copied instead.');
+        }
+      } else {
+        await Share.share({ message: `${text}\n\n${profileUrl}`, url: profileUrl });
+      }
+    } catch (err) {
+      if (err instanceof Error && err.name === 'AbortError') return;
+      setError('Could not share this profile. Try copying the link instead.');
     }
   }
 
@@ -623,12 +699,55 @@ export function ProfileMenu({
         {isOwn ? null : (
           <>
             <MenuRow
+              icon="share-outline"
+              label="Share via…"
+              detail="Send a link to this profile elsewhere."
+              onPress={() => void handleShareProfile()}
+              disabled={busy}
+            />
+            <MenuRow
+              icon="link-outline"
+              label="Copy link to profile"
+              detail="Copy this profile’s public address."
+              onPress={() => void handleCopyProfileLink()}
+              disabled={busy}
+            />
+            <MenuRow
               icon="flag-outline"
               label="Report account"
               detail="Send this account to Bluesky moderation."
               onPress={() => openMode('report')}
               disabled={busy}
             />
+            {reportableLinks.length ? (
+              <MenuRow
+                icon="alert-circle-outline"
+                label="Report a link"
+                detail="Choose one of this profile’s links to report."
+                onPress={() => {
+                  onClose();
+                  onReportLink?.();
+                }}
+                disabled={busy || !onReportLink}
+              />
+            ) : null}
+            {isMuted ? null : (
+              <MenuRow
+                icon="repeat-outline"
+                label={
+                  isMutedOnlyReposts
+                    ? 'Show reposts in feeds'
+                    : 'Hide reposts in feeds'
+                }
+                detail={
+                  isMutedOnlyReposts
+                    ? 'Show reposts from this account in your feeds again.'
+                    : 'Hide only this account’s reposts from your feeds.'
+                }
+                onPress={() => void handleToggleRepostMute()}
+                disabled={busy}
+              />
+            )}
             <MenuRow
               icon={isMuted ? 'volume-high-outline' : 'volume-mute-outline'}
               label={isMuted ? 'Unmute account' : 'Mute account'}
@@ -654,6 +773,14 @@ export function ProfileMenu({
             />
           </>
         )}
+        {notice ? (
+          <Text
+            accessibilityRole="alert"
+            style={{ color: p.green, fontSize: 13, lineHeight: 19, marginTop: 8 }}
+          >
+            {notice}
+          </Text>
+        ) : null}
         {error ? <ErrorNote message={error} /> : null}
         {busy ? <ActivityIndicator color={p.accent} style={{ marginTop: 8 }} /> : null}
         <Pressable

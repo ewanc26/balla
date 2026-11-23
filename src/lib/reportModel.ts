@@ -40,6 +40,7 @@ export type ReportReason = (typeof REPORT_REASONS)[number]['value'];
 export type ReportSubjectKind =
   | 'post'
   | 'profile'
+  | 'profile-link'
   | 'list'
   | 'feed'
   | 'chat-message'
@@ -63,11 +64,40 @@ export const MAX_REPORT_RECEIPTS = 50;
 const SUBJECT_KINDS: ReportSubjectKind[] = [
   'post',
   'profile',
+  'profile-link',
   'list',
   'feed',
   'chat-message',
   'chat-convo',
 ];
+
+/** Only link records with a strong ref can be reported through the labeler. */
+export function reportableProfileLinks(links: any): any[] {
+  if (!Array.isArray(links)) return [];
+  return links.filter(
+    (link: any) =>
+      link &&
+      typeof link.uri === 'string' &&
+      link.uri.trim() &&
+      typeof link.cid === 'string' &&
+      link.cid.trim() &&
+      typeof link.url === 'string' &&
+      link.url.trim()
+  );
+}
+
+/**
+ * Profile links are records on the actor's repo, but the published report
+ * subject is the link view, not a generic strong ref.
+ */
+export function buildProfileLinkReportSubject(link: any) {
+  return {
+    $type: 'app.bsky.actor.defs#profileLinkView',
+    uri: link.uri,
+    cid: link.cid,
+    url: link.url,
+  };
+}
 
 export function reasonLabel(reasonType: string): string {
   return (

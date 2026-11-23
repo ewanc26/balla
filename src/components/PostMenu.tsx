@@ -749,6 +749,16 @@ export function PostMenu({
           onPress={() => void handleToggleThreadMute()}
           disabled={busy}
         />
+        <MenuRow
+          icon="text-outline"
+          label="Mute words & tags"
+          detail="Open Content filters to manage muted words and hashtags."
+          onPress={() => {
+            onClose();
+            navigation.navigate('ContentFilters', { section: 'muted-words' });
+          }}
+          disabled={busy}
+        />
         {onFeedback ? (
           <>
             <MenuRow

@@ -79,13 +79,14 @@ warnings from the Bluesky self-label
 vocabulary and up to three post languages per post; local draft recovery with a Restore or Discard prompt plus account drafts saved to your private Bluesky stash through the real `app.bsky.draft.*` RPCs (reopen, update, delete and clear-on-publish);
 reply and quote controls written to Bluesky's real threadgate and postgate
 records, editable from any post you authored; profile editing for name, bio, pronouns, links,
-avatar and banner; a Search tab with Top, Latest, People, Feeds and Starter
+avatar and banner; other people's profile menus share or copy the public profile link, hide only that account's reposts, and report one of its links; a Search tab with Top, Latest, People, Feeds and Starter
 Packs, structured filters and local history; starter-pack landing pages with explicit follow, add-feed and share actions, plus creation, editing and deletion for packs you own using a narrow `repo:app.bsky.graph.starterpack` scope (sessions authorised before 0.20.0 need to sign in again before deleting a pack); a Feeds screen for saved and pinned custom feeds and list feeds, with discovery, search, pin/unpin, reorder and removal; hashtag, topic and video pages plus an opt-in Discover surface, each an explicit destination that never enters Following, with newest-first pages and a clearly ranked Discover; lists with create/edit, membership, list feeds (pinnable to Home), subscribe/block states and profile links; appearance settings with System/Light/Dark, post text size, four Facebook-era chrome presets and nine solid accent colours; accessibility settings for the alt-text requirement and larger description badges; language settings for a primary post/translation language and content-language filters; Following filters for replies, reposts and quote posts, and thread reply ordering, saved through Bluesky's `app.bsky.actor` preferences; a Saved tab for private bookmarks; temporary live status on your own profile through `app.bsky.actor.status` with a LIVE badge on active profiles; per-account activity notifications with a profile bell and a management list, plus account activity privacy, both stored in published records; per-post copy link, copy text, share sheet, send via direct message and
 translation with a show-original toggle; Content and media settings for the
 in-app browser choice and autoplay, with external links opening through one
 opener that always leaves mailto, tel and SMS links with the system handler;
 labeler subscriptions with per-label
-filters, an adult-content gate and muted words; per-category notification
+filters, an adult-content gate and muted words with a post-menu shortcut into
+the visible section; repost-only account mutes; per-category notification
 preferences; a generated icon set;
 multi-account support with a labelled Accounts screen to switch, add and remove OAuth sessions, each kept separate by DID with no shared tokens or carried-over state; account and security settings for the identity Balla can read, birthday and automation-label self-labels, privacy controls and non-secret OAuth session facts, with provider links for email, password, 2FA, app passwords and account lifecycle; account export, deactivation and deletion guidance that links to the PDS controls;
 a moderation inbox for reports, decisions, notices, account standing and appeals;
