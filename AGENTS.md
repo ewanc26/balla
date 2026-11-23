@@ -235,8 +235,11 @@ Reads stay public and unauthenticated, and no reminder, ticket, notification or
 recommendation is involved.
 The visual shell follows Facebook's current white chrome and card system: a
 top bar, desktop shortcuts/context rails and a mobile bottom tab bar. The
-mapping and the deliberate omissions (Stories, reactions, ranking) live in
+mapping and the deliberate omissions (Stories, ranking) live in
 `docs/facebook-ui.md`.
+Post reaction chips read public `community.lexicon.interaction.reaction`
+records from the subject's repository; the palette is visible, opens and
+closes with buttons, and writes stay deferred until the lexicon settles.
 
 ## Working rules
 

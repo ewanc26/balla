@@ -131,8 +131,8 @@ is always visible so the data is never mistaken for a real session.
   public records in the viewer's repository, not private Facebook responses.
   There are no reminders, tickets, friend invitations, recommendations or
   events invented by Balla.
-- **The reactions picker.** Balla supports Bluesky likes, reposts and replies;
-  it does not pretend to have Love, Haha, Wow, Sad or Angry.
+- **The reactions picker.** Balla now reads community-lexicon reaction records
+  and shows a visible emoji palette; Like remains `app.bsky.feed.like`.
 - **Ranking, suggested posts and “people you may know”.** The Following feed is
   chronological, and the app has no injection points.
 - **The blue top bar as the default.** Facebook itself retired it; Balla's

@@ -47,8 +47,7 @@ became a job title. The name keeps the good half of that history.
 ## Non-goals
 
 - Engagement ranking, suggested posts, or ads of any kind. Ever.
-- A Facebook clone: no pages, no reactions palette, no dark patterns, no
-  "people you may know".
+- A Facebook clone: no pages, no dark patterns, no "people you may know".
 - Scope beyond the Bluesky app lexicons.
 
 ## Status
