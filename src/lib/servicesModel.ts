@@ -1,9 +1,10 @@
 /**
  * Framework-free service facts and defaults.
  *
- * AT Protocol splits a session into roles. Two read-only hosts can honestly be
- * changed at runtime: the pre-authorisation XRPC handle resolver and the public
- * did:plc directory. Neither needs a token or changes an existing grant. The
+ * AT Protocol splits a session into roles. Three read-only hosts can honestly be
+ * changed at runtime: the pre-authorisation XRPC handle resolver, the public
+ * did:plc directory and the token-free places provider used for typed search.
+ * None needs a token or changes an existing grant. The
  * AppView, chat, video and labeler audiences are written into the OAuth grant
  * scope (112 tokens in oauth-client-metadata.json), so pointing them somewhere
  * else needs a fresh authorisation. Balla shows those as facts, never as inert
@@ -27,6 +28,7 @@ export const DEFAULT_SERVICES = {
   labelerDid: SERVICE_HOSTS.labelerDid,
   labelerAudience: SERVICE_HOSTS.labelerAudience,
   plcDirectory: SERVICE_HOSTS.plcDirectory,
+  places: SERVICE_HOSTS.places,
 } as const;
 
 export const SERVICES_STORAGE_KEY = 'balla.services.v1';
@@ -35,9 +37,14 @@ export const SERVICES_STORAGE_KEY = 'balla.services.v1';
 export type ServicesConfig = {
   handleResolver: string | null;
   plcDirectory: string | null;
+  places: string | null;
 };
 
-export const DEFAULT_SERVICES_CONFIG: ServicesConfig = { handleResolver: null, plcDirectory: null };
+export const DEFAULT_SERVICES_CONFIG: ServicesConfig = {
+  handleResolver: null,
+  plcDirectory: null,
+  places: null,
+};
 
 function override(value: unknown, fallback: string): string | null {
   const endpoint = typeof value === 'string' ? normaliseHostUrl(value) : null;
@@ -51,6 +58,7 @@ export function normaliseServicesConfig(raw: unknown): ServicesConfig {
   return {
     handleResolver: override(value.handleResolver, DEFAULT_SERVICES.handleResolver),
     plcDirectory: override(value.plcDirectory, DEFAULT_SERVICES.plcDirectory),
+    places: override(value.places, DEFAULT_SERVICES.places),
   };
 }
 
@@ -70,6 +78,15 @@ export function isDefaultPlcDirectory(config: ServicesConfig): boolean {
   // Treat a missing field as "default" so config persisted before this setting
   // existed, and partial diagnostic fixtures, stay on the safe compiled host.
   return config.plcDirectory == null;
+}
+
+export function effectivePlaces(config: ServicesConfig): string {
+  return config.places ?? DEFAULT_SERVICES.places;
+}
+
+export function isDefaultPlaces(config: ServicesConfig): boolean {
+  // Config persisted before this setting existed has no field: keep the default.
+  return config.places == null;
 }
 
 const DID_WEB_RE = /^did:web:([a-z0-9.-]+)(?::(.+))?$/i;
@@ -103,7 +120,7 @@ export function advertisedEndpoint(document: unknown, fragment: string): string 
   return null;
 }
 
-export type ServiceSlot = 'resolver' | 'plcDirectory' | 'appview' | 'chat' | 'pds' | 'video' | 'labeler';
+export type ServiceSlot = 'resolver' | 'plcDirectory' | 'places' | 'appview' | 'chat' | 'pds' | 'video' | 'labeler';
 
 export const SERVICE_SLOT_COPY: Record<ServiceSlot, { label: string; detail: string }> = {
   resolver: {
@@ -113,6 +130,10 @@ export const SERVICE_SLOT_COPY: Record<ServiceSlot, { label: string; detail: str
   plcDirectory: {
     label: 'PLC directory',
     detail: 'Bluesky fallback. Public did:plc DID document directory for identity resolution and pre-flight checks. Changeable now.',
+  },
+  places: {
+    label: 'Places provider',
+    detail: 'Eurosky default. Typed place search only; Balla never sends your device position. No check-in record is written while the pin lexicon is a draft.',
   },
   appview: {
     label: 'AppView',

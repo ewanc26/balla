@@ -11,8 +11,9 @@ import {
 } from './servicesModel.ts';
 
 /**
- * Persisted service choices. Only the two public, token-free read hosts are
- * editable: the pre-auth resolver and the did:plc directory. Every other slot
+ * Persisted service choices. Only the three public, token-free read hosts are
+ * editable: the pre-auth resolver, the did:plc directory and the places
+ * provider used for typed search. Every other slot
  * is derived from the OAuth grant or the account's DID document. Storage
  * failures are non-fatal: the app falls back to the compiled default.
  */
@@ -53,6 +54,12 @@ export async function getPlcDirectoryEndpoint(fallback: string = DEFAULT_SERVICE
   return config.plcDirectory ?? fallback;
 }
 
+/** The public places host used for typed search; no position is ever stored. */
+export async function getPlacesEndpoint(fallback: string = DEFAULT_SERVICES.places): Promise<string> {
+  const config = await getServicesConfig();
+  return config.places ?? fallback;
+}
+
 async function persist(config: ServicesConfig): Promise<void> {
   cached = normaliseServicesConfig(config);
   try {
@@ -81,6 +88,13 @@ export async function setPlcDirectoryEndpoint(endpoint: string | null): Promise<
   const after = await getServicesConfig();
   if (effectivePlcDirectory(after) !== before) await forgetDirectoryDidDocuments();
   return after;
+}
+
+/** Pass null to restore the compiled default places provider. */
+export async function setPlacesEndpoint(endpoint: string | null): Promise<ServicesConfig> {
+  const config = await getServicesConfig();
+  await persist({ ...config, places: endpoint });
+  return getServicesConfig();
 }
 
 export async function resetServicesConfig(): Promise<ServicesConfig> {
