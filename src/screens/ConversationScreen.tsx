@@ -24,9 +24,11 @@ import {
   canSendMessage,
   chatErrorCopy,
   convoTitle,
+  isGroup,
   isPostUri,
   messageKind,
   sendBlockedCopy,
+  senderName,
   systemMessageCopy,
   validateMessageText,
 } from '../lib/chatModel';
@@ -60,6 +62,10 @@ export function ConversationScreen() {
   const convoId = String(route.params?.convoId || '');
   const [convo, setConvo] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
+  // Profiles for the people who authored or reacted to the loaded messages.
+  // getMessages returns these as relatedProfiles; without them a group
+  // message's sender DID cannot be turned into a name.
+  const [relatedProfiles, setRelatedProfiles] = useState<any[]>([]);
   const [cursor, setCursor] = useState<string | undefined>();
   const [draft, setDraft] = useState('');
   const [postUri, setPostUri] = useState('');
@@ -102,6 +108,7 @@ export function ConversationScreen() {
       ]);
       setConvo(convoRes.data.convo);
       setMessages(chronological(messageRes.data.messages || []));
+      setRelatedProfiles(messageRes.data.relatedProfiles || []);
       setCursor(messageRes.data.cursor);
       navigation.setOptions({ title: convoTitle(convoRes.data.convo, agent.did) });
       // Opening a conversation marks it read up to the latest message.
@@ -133,6 +140,13 @@ export function ConversationScreen() {
         })
       );
       setMessages((prev) => chronological([...(res.data.messages || []), ...prev]));
+      setRelatedProfiles((prev) => {
+        const seen = new Set(prev.map((profile: any) => profile?.did));
+        const fresh = (res.data.relatedProfiles || []).filter(
+          (profile: any) => profile?.did && !seen.has(profile.did)
+        );
+        return fresh.length ? [...prev, ...fresh] : prev;
+      });
       setCursor(res.data.cursor);
     } catch (err) {
       setError(describeFailure(err, 'Could not load older messages.'));
@@ -230,6 +244,10 @@ export function ConversationScreen() {
   }
 
   const viewerDid = agent.did || '';
+  // Sender DIDs resolve against the convo's member subset and every profile
+  // the loaded message pages referred to.
+  const senderProfiles = [...(convo?.members || []), ...relatedProfiles];
+  const group = isGroup(convo);
   const blocked = !canSendMessage(convo);
   const blockedCopy = sendBlockedCopy(convo);
 
@@ -350,6 +368,10 @@ export function ConversationScreen() {
           const mine = !!viewerDid && item?.sender?.did === viewerDid;
           const reactions = groupReactions(item, viewerDid);
           const replyText = replyPreview(item?.replyTo);
+          // In a group, a bubble without a name could be anyone. The sender
+          // is named from the profiles the message pages returned; a direct
+          // conversation needs no label, as the header already names them.
+          const sender = group && !mine ? senderName(item, senderProfiles, viewerDid) : '';
           return (
             <View style={[styles.bubbleRow, mine ? styles.mine : styles.theirs]}>
               <View
@@ -358,6 +380,13 @@ export function ConversationScreen() {
                   { backgroundColor: mine ? p.accent : p.card, borderColor: p.divider },
                 ]}
               >
+                {sender ? (
+                  <Text
+                    style={{ color: p.secondary, fontSize: 11, fontWeight: '700', marginBottom: 2 }}
+                  >
+                    {sender}
+                  </Text>
+                ) : null}
                 {replyText ? (
                   <Text
                     style={{
@@ -465,7 +494,10 @@ export function ConversationScreen() {
           <View style={[styles.replyBanner, { borderColor: p.divider }]}>
             <View style={{ flex: 1, minWidth: 0 }}>
               <Text style={{ color: p.secondary, fontSize: 11, fontWeight: '700' }}>
-                Replying to {replyTo?.sender?.did === viewerDid ? 'your message' : 'a message'}
+                Replying to{' '}
+                {replyTo?.sender?.did === viewerDid
+                  ? 'your message'
+                  : senderName(replyTo, senderProfiles, viewerDid) || 'a message'}
               </Text>
               <Text numberOfLines={1} style={{ color: p.text, fontSize: 13 }}>
                 {replyPreview(replyTo)}

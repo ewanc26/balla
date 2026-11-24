@@ -17,6 +17,7 @@ import {
   messageKind,
   messagePreview,
   sendBlockedCopy,
+  senderName,
   systemMessageCopy,
   unreadLabel,
   validateMessageText,
@@ -50,6 +51,23 @@ test('conversation titles name the other person or the group', () => {
   assert.equal(convoTitle(group, 'did:plc:me'), 'Family');
   assert.equal(convoSubtitle(group, 'did:plc:me'), 'Group · 4 members');
   assert.equal(convoTitle({}, 'did:plc:me'), 'Conversation');
+});
+
+test('group message senders resolve to a name from the page profiles', () => {
+  // A message view carries only the sender DID. The names come from the
+  // relatedProfiles a getMessages page returns, plus the convo member subset.
+  const profiles = [
+    { did: 'did:plc:me', handle: 'me.test', displayName: 'Me' },
+    { did: 'did:plc:mum', handle: 'mum.test', displayName: 'Mum' },
+    { did: 'did:plc:ailsa', handle: 'ailsa.test' },
+  ];
+  assert.equal(senderName({ sender: { did: 'did:plc:mum' } }, profiles, 'did:plc:me'), 'Mum');
+  assert.equal(senderName({ sender: { did: 'did:plc:ailsa' } }, profiles, 'did:plc:me'), '@ailsa.test');
+  assert.equal(senderName({ sender: { did: 'did:plc:me' } }, profiles, 'did:plc:me'), 'You');
+  // An unresolvable sender is left blank, never given an invented name.
+  assert.equal(senderName({ sender: { did: 'did:plc:unknown' } }, profiles, 'did:plc:me'), '');
+  assert.equal(senderName({ sender: { did: 'did:plc:mum' } }, undefined, 'did:plc:me'), '');
+  assert.equal(senderName({}, profiles, 'did:plc:me'), '');
 });
 
 test('request, join-request and locked states are named honestly', () => {
