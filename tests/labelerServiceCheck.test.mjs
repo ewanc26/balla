@@ -60,9 +60,9 @@ test('the release documents the labeler check as partial #97 without new scope',
   const changelog = read('../CHANGELOG.md');
   const compliance = read('../docs/bluesky-compliance.md');
   const features = read('../site/features.html');
-  assert.equal(pkg.version, '0.60.5');
-  assert.equal(appJson.expo.version, '0.60.5');
-  assert.match(changelog, /^## 0\.60\.4$/m);
+  assert.equal(pkg.version, '0.61.0');
+  assert.equal(appJson.expo.version, '0.61.0');
+  assert.match(changelog, /^## 0\.61\.0$/m);
   assert.match(changelog, /#97, partial/);
   assert.match(changelog, /labeler/i);
   assert.match(changelog, /scope count remains 111/);

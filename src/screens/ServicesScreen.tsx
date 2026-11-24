@@ -18,13 +18,16 @@ import {
 } from '../lib/labelerProbe.ts';
 import {
   getHandleResolverEndpoint,
+  getPlacesEndpoint,
   getPlcDirectoryEndpoint,
   getServicesConfig,
   resetServicesConfig,
   setHandleResolverEndpoint,
+  setPlacesEndpoint,
   setPlcDirectoryEndpoint,
   subscribeServicesConfig,
 } from '../lib/servicesConfig';
+import { probePlaces } from '../lib/placesProbe.ts';
 import {
   DEFAULT_SERVICES,
   SERVICE_SLOT_COPY,
@@ -70,9 +73,13 @@ export function ServicesScreen() {
   const [plcEndpoint, setPlcEndpoint] = useState<string>(DEFAULT_SERVICES.plcDirectory);
   const [plcInput, setPlcInput] = useState('');
   const [plcIsDefault, setPlcIsDefault] = useState(true);
+  const [placesEndpoint, setPlacesEndpointView] = useState<string>(DEFAULT_SERVICES.places);
+  const [placesInput, setPlacesInput] = useState('');
+  const [placesIsDefault, setPlacesIsDefault] = useState(true);
   const [busy, setBusy] = useState(false);
   const [resolverProbe, setResolverProbe] = useState<ServiceProbe | null>(null);
   const [plcProbe, setPlcProbe] = useState<ServiceProbe | null>(null);
+  const [placesProbe, setPlacesProbe] = useState<ServiceProbe | null>(null);
   const [appviewProbe, setAppviewProbe] = useState<ServiceProbe | null>(null);
   const [chatProbe, setChatProbe] = useState<ServiceProbe | null>(null);
   const [videoProbe, setVideoProbe] = useState<ServiceProbe | null>(null);
@@ -91,6 +98,9 @@ export function ServicesScreen() {
     setPlcEndpoint(await getPlcDirectoryEndpoint());
     setPlcInput(config.plcDirectory ?? '');
     setPlcIsDefault(config.plcDirectory === null);
+    setPlacesEndpointView(await getPlacesEndpoint());
+    setPlacesInput(config.places ?? '');
+    setPlacesIsDefault(config.places == null);
   }, []);
 
   useEffect(() => {
@@ -163,6 +173,38 @@ export function ServicesScreen() {
     setBusy(true);
     setPlcProbe({ state: 'checking', status: null, latencyMs: null, endpoint: null, detail: 'Checking…' });
     setPlcProbe(await probePlcDirectory(await getPlcDirectoryEndpoint()));
+    setBusy(false);
+  }
+
+  async function savePlaces() {
+    if (busy) return;
+    const trimmed = placesInput.trim();
+    const valid = normaliseServicesConfig({ places: trimmed || null }).places;
+    if (trimmed && !valid) {
+      setMessage('Enter an https host without a path, query or credentials.');
+      return;
+    }
+    setBusy(true);
+    await setPlacesEndpoint(valid);
+    setPlacesProbe(null);
+    setMessage(valid ? 'Places provider updated for typed search.' : 'Default places provider restored.');
+    setBusy(false);
+  }
+
+  async function resetPlaces() {
+    if (busy) return;
+    setBusy(true);
+    await setPlacesEndpoint(null);
+    setPlacesProbe(null);
+    setMessage('Default places provider restored.');
+    setBusy(false);
+  }
+
+  async function checkPlaces() {
+    if (busy) return;
+    setBusy(true);
+    setPlacesProbe({ state: 'checking', status: null, latencyMs: null, endpoint: null, detail: 'Checking…' });
+    setPlacesProbe(await probePlaces(await getPlacesEndpoint()));
     setBusy(false);
   }
 
@@ -301,6 +343,42 @@ export function ServicesScreen() {
       </SettingSection>
 
       <SettingSection
+        title="Places provider"
+        detail="A public, token-free typed place search. Balla sends only the words you type: no device position, no nearby lookup, no OAuth scope. Changing the host takes effect on the next search."
+      >
+        <SettingValueRow label={SERVICE_SLOT_COPY.places.label} value={placesEndpoint} />
+        <TextInput
+          value={placesInput}
+          onChangeText={setPlacesInput}
+          placeholder={DEFAULT_SERVICES.places}
+          placeholderTextColor={p.secondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel="Places provider host"
+          style={[
+            styles.input,
+            { color: p.text, backgroundColor: p.bg, borderColor: p.divider },
+            webInputReset,
+          ]}
+        />
+        <View style={styles.buttonRow}>
+          <SettingButton label="Save places" onPress={() => void savePlaces()} busy={busy} />
+          <SettingButton label="Use default" onPress={() => void resetPlaces()} busy={busy} disabled={placesIsDefault} />
+        </View>
+        <SettingButton label="Test typed search" onPress={() => void checkPlaces()} busy={busy} />
+        <SettingValueRow label="Places result" value={probeValue(placesProbe)} />
+        {placesProbe?.detail && placesProbe.state !== 'checking'
+          ? <SettingValueRow label="Detail" value={placesProbe.detail} />
+          : null}
+        <SettingNote>
+          The test searches a fixed word and checks the structured results. No
+          check-in record is written: the pin lexicon is still a draft whose
+          name can change, so Balla writes no place records and renders no place
+          chips yet.
+        </SettingNote>
+      </SettingSection>
+
+      <SettingSection
         title="Grant-bound services"
         detail="These DIDs and audiences are written into this sign-in’s OAuth scope. They are shown as facts: Balla cannot honestly repoint them without asking you to authorise again."
       >
@@ -343,7 +421,7 @@ export function ServicesScreen() {
 
       <SettingSection
         title="Configuration record"
-        detail="Export the resolver choice, the grant-bound service facts and this session's non-secret metadata. The file contains no token, password or provider message text."
+        detail="Export the three changeable public hosts, the grant-bound service facts and this session's non-secret metadata. The file contains no token, password or provider message text."
       >
         <SettingButton
           label={servicesExportAction()}
@@ -352,8 +430,9 @@ export function ServicesScreen() {
         />
         {exportMessage ? <SettingValueRow label="Export" value={exportMessage} /> : null}
         <SettingNote>
-          The export is a record, not an import: only the handle resolver can be
-          changed here, and grant-bound services need a new authorisation.
+          The export is a record, not an import: the resolver, did:plc directory
+          and places host can be changed here, and grant-bound services need a
+          new authorisation.
         </SettingNote>
       </SettingSection>
 
@@ -368,8 +447,9 @@ export function ServicesScreen() {
       </SettingSection>
 
       <SettingNote>
-        {SERVICE_SLOT_COPY.resolver.detail} {SERVICE_SLOT_COPY.appview.detail}{' '}
-        {SERVICE_SLOT_COPY.chat.detail} {SERVICE_SLOT_COPY.pds.detail}
+        {SERVICE_SLOT_COPY.resolver.detail} {SERVICE_SLOT_COPY.places.detail}{' '}
+        {SERVICE_SLOT_COPY.appview.detail} {SERVICE_SLOT_COPY.chat.detail}{' '}
+        {SERVICE_SLOT_COPY.pds.detail}
       </SettingNote>
     </ScrollView>
   );

@@ -23,6 +23,8 @@ export const SERVICE_HOSTS = {
   labelerDid: 'did:plc:ar7c4by46qjdydhdevvrndac',
   labelerAudience: 'did:plc:ar7c4by46qjdydhdevvrndac#atproto_labeler',
   plcDirectory: 'https://plc.directory',
+  /** Public places provider for typed search; nearby search needs a device position and is not used. */
+  places: 'https://places.eurosky.tech',
 } as const;
 
 /** The reader support page (#163), beside the hosts so the URL has one home. */
