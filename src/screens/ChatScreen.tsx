@@ -29,8 +29,10 @@ import {
   chatErrorCopy,
   convoSubtitle,
   convoTitle,
+  isGroup,
   isJoinRequest,
   messagePreview,
+  otherMember,
   unreadLabel,
 } from '../lib/chatModel';
 
@@ -396,7 +398,17 @@ export function ChatScreen() {
       }
       renderItem={({ item }) => {
         const joinRequest = isJoinRequest(item);
-        const member = Array.isArray(item?.members) ? item.members[0] : null;
+        // A direct row shows the other person. A group has no single other
+        // person: ConvoView.members is an unordered subset of "important"
+        // members that can start with the viewer, so members[0] would put a
+        // random participant's (or the viewer's own) face on the group.
+        // Group rows fall back to the group name's initial instead. A join
+        // request names the group's owner, who the row is about.
+        const member = joinRequest
+          ? item?.owner || null
+          : isGroup(item)
+            ? null
+            : otherMember(item, agent.did);
         const title = joinRequest
           ? String(item?.name || '').trim() || 'Group'
           : convoTitle(item, agent.did);

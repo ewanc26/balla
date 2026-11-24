@@ -68,6 +68,32 @@ export function convoTitle(convo: any, viewerDid?: string): string {
   return handle || 'Conversation';
 }
 
+/**
+ * The name to show for a message's sender. A message view carries only the
+ * sender's DID, so the name is resolved against the profiles a caller has:
+ * the convo's member subset plus the relatedProfiles a getMessages page
+ * returns (the set of members who authored or reacted to those messages).
+ * The viewer's own messages are labelled "You". A sender that cannot be
+ * resolved returns '' so callers fall back rather than invent a name. In a
+ * direct conversation this is never needed; in a group it is the only way
+ * to tell participants apart.
+ */
+export function senderName(
+  message: any,
+  profiles: any[] | undefined,
+  viewerDid?: string
+): string {
+  const did = String(message?.sender?.did || '');
+  if (!did) return '';
+  if (viewerDid && did === viewerDid) return 'You';
+  const list = Array.isArray(profiles) ? profiles : [];
+  const profile = list.find((item: any) => item?.did === did);
+  const name = String(profile?.displayName || '').trim();
+  if (name) return name;
+  const handle = String(profile?.handle || '').trim();
+  return handle ? `@${handle}` : '';
+}
+
 export function convoSubtitle(convo: any, viewerDid?: string): string {
   if (isGroup(convo)) {
     const count = convo?.kind?.memberCount;
