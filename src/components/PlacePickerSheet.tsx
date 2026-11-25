@@ -17,6 +17,8 @@ import {
   useDialogFocus,
   useReducedMotion,
 } from '../lib/accessibility';
+import { openExternalUrl } from '../lib/openLink';
+import { openStreetMapSearchUrl } from '../lib/mapLinks';
 import { getPlacesEnabled, getPlacesEndpoint } from '../lib/servicesConfig';
 import {
   placesSearchCopy,
@@ -60,12 +62,16 @@ export function PlacePickerSheet({
       .then((value) => {
         if (!active) return;
         setEnabled(value);
-        if (!value) setState('off');
+        if (!value) {
+          setState('off');
+          setHits([]);
+        }
       })
       .catch(() => {
         if (!active) return;
         setEnabled(false);
         setState('off');
+        setHits([]);
       });
     return () => {
       active = false;
@@ -83,6 +89,7 @@ export function PlacePickerSheet({
       setEnabled(allowed);
       if (!allowed) {
         setState('off');
+        setHits([]);
         return;
       }
       const result = await searchPlaces(q, await getPlacesEndpoint(), { enabled: allowed });
@@ -142,7 +149,9 @@ export function PlacePickerSheet({
           </View>
           <Text style={{ color: p.secondary, fontSize: 13, marginTop: 4 }}>
             Balla sends only the words you type. No device position, no nearby
-            lookup. Choosing a result adds its name as plain text; Balla writes
+            lookup. Choosing a result adds its name as plain text. The map button
+            searches OpenStreetMap by name in your browser; it sends no position
+            and is not an exact place match. Balla writes
             no check-in record while the place-pin lexicon is a draft.
           </Text>
           <View style={styles.searchRow}>
@@ -199,37 +208,56 @@ export function PlacePickerSheet({
           ) : null}
           <ScrollView style={styles.results} keyboardShouldPersistTaps="handled">
             {hits.map((hit) => (
-              <Pressable
+              <View
                 key={`${hit.origin ?? hit.name}:${hit.name}`}
-                onPress={() => onPick(hit.name)}
-                disabled={searching}
-                accessibilityRole="button"
-                accessibilityLabel={`Add ${hit.name} as plain text`}
-                style={({ pressed }) => [
-                  styles.row,
-                  { backgroundColor: pressed ? p.bg : 'transparent' },
-                ]}
+                style={styles.row}
               >
-                <View style={[styles.glyph, { backgroundColor: p.accentSoft }]}>
-                  <Ionicons
-                    name={hit.kind === 'area' ? 'map-outline' : 'location-outline'}
-                    size={18}
-                    color={p.accent}
-                  />
-                </View>
-                <View style={{ flex: 1, minWidth: 0 }}>
-                  <Text
-                    style={{ color: p.text, fontSize: 15, fontWeight: '600' }}
-                    numberOfLines={1}
-                  >
-                    {hit.name}
-                  </Text>
-                  <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
-                    {hit.category || hit.subtype || (hit.kind === 'area' ? 'Area' : 'Place')}
-                    {hit.country ? ` · ${hit.country}` : ''}
-                  </Text>
-                </View>
-              </Pressable>
+                <Pressable
+                  onPress={() => onPick(hit.name)}
+                  disabled={searching}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Add ${hit.name} as plain text`}
+                  style={({ pressed }) => [
+                    styles.rowMain,
+                    { backgroundColor: pressed ? p.bg : 'transparent' },
+                  ]}
+                >
+                  <View style={[styles.glyph, { backgroundColor: p.accentSoft }]}>
+                    <Ionicons
+                      name={hit.kind === 'area' ? 'map-outline' : 'location-outline'}
+                      size={18}
+                      color={p.accent}
+                    />
+                  </View>
+                  <View style={{ flex: 1, minWidth: 0 }}>
+                    <Text
+                      style={{ color: p.text, fontSize: 15, fontWeight: '600' }}
+                      numberOfLines={1}
+                    >
+                      {hit.name}
+                    </Text>
+                    <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
+                      {hit.category || hit.subtype || (hit.kind === 'area' ? 'Area' : 'Place')}
+                      {hit.country ? ` · ${hit.country}` : ''}
+                    </Text>
+                  </View>
+                </Pressable>
+                <Pressable
+                  onPress={() => {
+                    const url = openStreetMapSearchUrl(hit.name);
+                    if (url) void openExternalUrl(url).catch(() => {});
+                  }}
+                  disabled={searching}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Search OpenStreetMap for ${hit.name} by name`}
+                  style={({ pressed }) => [
+                    styles.mapButton,
+                    { backgroundColor: pressed ? p.bg : 'transparent' },
+                  ]}
+                >
+                  <Ionicons name="map-outline" size={20} color={p.accent} />
+                </Pressable>
+              </View>
             ))}
           </ScrollView>
           <Pressable
@@ -309,10 +337,26 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 56,
+    borderRadius: CARD_RADIUS,
+    paddingRight: 8,
+  },
+  rowMain: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 10,
     minHeight: 56,
     borderRadius: CARD_RADIUS,
     paddingHorizontal: 8,
+  },
+  mapButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: CARD_RADIUS,
   },
   glyph: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
   plainButton: {

@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.66.0
+
+- **Place results now have an honest map link-out (#156, partial).** Every result in the typed place-name picker has a visible 44pt map button that opens an OpenStreetMap name search in the browser. The button says it searches by name, is not an exact place match and sends no device position. One shared `openStreetMapSearchUrl` builder now serves both the picker and Events, so the link shape has one home.
+- **Switching Places off now clears stale results in the open sheet.** The off state removes results already on screen as well as blocking new requests, so an off sheet cannot imply a search it did not make. No check-in record, chip, granularity choice, in-app map, new scope or dependency is involved; the scope count remains 112.
+- No provider prose is read, logged or stored. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.65.0
 
 - **Official Bluesky web links now have one home (#97, partial).** The `bsky.app` and `bsky.social` origins, control-panel paths and canonical profile/post/feed/list/starter-pack/invite shapes live in `src/lib/serviceHosts.ts` beside the protocol hosts. Every link-out derives from those builders, so no screen or model carries a second copy of a canonical URL. A deterministic source scan enforces that only `serviceHosts.ts` holds those literals; the single placeholder in the search filter remains an example, not a link.
