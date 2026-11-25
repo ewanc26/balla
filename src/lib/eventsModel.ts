@@ -5,6 +5,7 @@
  * and never infer fields from a particular server response.
  */
 import { TID } from '@atproto/common-web';
+import { openStreetMapSearchUrl } from './mapLinks.ts';
 
 export const EVENT_COLLECTION = 'community.lexicon.calendar.event';
 export const RSVP_COLLECTION = 'community.lexicon.calendar.rsvp';
@@ -119,10 +120,6 @@ function osmCoordinates(latitude: unknown, longitude: unknown): string | null {
   return `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`;
 }
 
-function osmSearch(text: string): string | null {
-  return text ? `https://www.openstreetmap.org/search?query=${encodeURIComponent(text)}` : null;
-}
-
 function addressLocation(value: Record<string, unknown>): EventLocation | null {
   const parts = [
     cleanText(value.name),
@@ -134,7 +131,7 @@ function addressLocation(value: Record<string, unknown>): EventLocation | null {
   ].filter(Boolean);
   if (parts.length === 0) return null;
   const text = parts.join(', ');
-  return { kind: 'address', text, link: osmSearch(text), linkLabel: 'Open map' };
+  return { kind: 'address', text, link: openStreetMapSearchUrl(text), linkLabel: 'Open map' };
 }
 
 function uriLocation(value: Record<string, unknown>): EventLocation | null {
@@ -151,7 +148,7 @@ function fsqLocation(value: Record<string, unknown>): EventLocation | null {
   const name = cleanText(value.name);
   const text = name || `Foursquare place ${id}`;
   const link =
-    osmCoordinates(value.latitude, value.longitude) || (name ? osmSearch(name) : null);
+    osmCoordinates(value.latitude, value.longitude) || openStreetMapSearchUrl(name);
   return { kind: 'fsq', text, link, linkLabel: link ? 'Open map' : null };
 }
 
