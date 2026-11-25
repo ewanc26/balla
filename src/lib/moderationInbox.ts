@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { agent } from './agent';
+import { errorCode, isAuthFailure, statusCode } from './failureCopyModel.ts';
 import { BSKY_LABELER_DID } from './moderation';
 import type { InboxFilter, InboxSection } from './moderationInboxModel';
 
@@ -123,37 +124,37 @@ export async function appealInboxSubject(
 }
 
 export function describeInboxError(err: unknown, fallback: string): string {
-  const message = err instanceof Error ? err.message : String(err);
-  if (/scope|permission|unauthor|forbidden|auth/i.test(message)) {
+  // No provider message is read. Only structured status and error codes can
+  // select one of Balla's own sentences.
+  if (isAuthFailure(err)) {
     return 'Your session needs renewing before it can read the moderation inbox. Sign out, sign in again, and retry.';
   }
-  if (/network|fetch|offline|connection/i.test(message)) {
+  const status = statusCode(err);
+  const code = errorCode(err) ?? '';
+  if (status === 1 || /network|offline|fetch|abort|timeout|connection/.test(code)) {
     return 'Could not reach the moderation service. Check your connection and try again.';
   }
-  if (/not.?found/i.test(message)) {
+  if (code === 'not_found' || /not.?found|missing/.test(code)) {
     return 'That moderation record is no longer available.';
   }
   return fallback;
 }
 
 export function describeAppealError(err: unknown): string {
-  const code =
-    (err && typeof err === 'object' && 'error' in err
-      ? String((err as { error?: unknown }).error)
-      : '') || (err instanceof Error ? err.message : '');
-  if (/AlreadyAppealed/i.test(code)) {
+  const code = errorCode(err) ?? '';
+  if (/alreadyappealed/.test(code)) {
     return 'This decision has already been appealed.';
   }
-  if (/AppealWindowExpired/i.test(code)) {
+  if (/appealwindowexpired/.test(code)) {
     return 'The appeal window has closed.';
   }
-  if (/NotAppealable/i.test(code)) {
+  if (/notappealable/.test(code)) {
     return 'This decision can no longer be appealed.';
   }
-  if (/InvalidAppealSubject/i.test(code)) {
+  if (/invalidappealsubject/.test(code)) {
     return 'This content could not be appealed. Reload the notice and try again.';
   }
-  if (/scope|permission|unauthor|forbidden|auth/i.test(code)) {
+  if (isAuthFailure(err)) {
     return 'Your session needs renewing before it can submit an appeal. Sign out, sign in again, and retry.';
   }
   return describeInboxError(

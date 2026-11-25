@@ -24,9 +24,9 @@ test('rate limits, offline errors, auth failures and server errors are distingui
   assert.equal(classifyFailure(xrpcError(403)), 'auth-expired');
   assert.equal(classifyFailure(xrpcError(500)), 'server');
   assert.equal(classifyFailure(xrpcError(503)), 'server');
-  assert.equal(classifyFailure(new Error('Network request failed')), 'offline');
-  assert.equal(classifyFailure(new Error('Insufficient scope')), 'auth-expired');
-  assert.equal(classifyFailure(new Error('Too Many Requests')), 'rate-limited');
+  assert.equal(classifyFailure({ error: 'NetworkError' }), 'offline');
+  assert.equal(classifyFailure({ error: 'InsufficientScope' }), 'auth-expired');
+  assert.equal(classifyFailure({ error: 'RateLimitExceeded' }), 'rate-limited');
   assert.equal(classifyFailure(new Error('something odd')), 'unknown');
 });
 

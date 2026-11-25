@@ -17,6 +17,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { manipulateAsync, SaveFormat } from 'expo-image-manipulator';
 import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { agent } from '../lib/agent';
+import { isAuthFailure } from '../lib/failureCopyModel.ts';
 import { useViewer } from '../lib/viewer';
 import { Avatar } from '../components/Avatar';
 import {
@@ -594,8 +595,7 @@ export function EditProfileScreen({ navigation }: { navigation: any }) {
     } catch (err) {
       if (linkWrite) await linkWrite.rollback();
       updateProfile(previousViewerProfile || initial.profile);
-      const message = err instanceof Error ? err.message : String(err);
-      const permissionIssue = /scope|permission|unauthor|forbidden|auth/i.test(message);
+      const permissionIssue = isAuthFailure(err);
       setSaveError(
         permissionIssue
           ? 'Your session needs renewing before it can save profile changes. Sign out, sign in again, and retry. Your edits are still here.'

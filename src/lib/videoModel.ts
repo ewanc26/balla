@@ -6,8 +6,11 @@
  * transcode locally.
  *
  * Before a post is published the upload job must reach JOB_STATE_COMPLETED and
- * supply a blob. There is no optimistic "posted" state.
+ * supply a blob. There is no optimistic "posted" state. Provider `message`
+ * text is never kept: only allowlisted structured job fields reach app state.
  */
+
+import { videoJobFailureCopy } from './videoFailureModel.ts';
 
 export type ComposerVideo = {
   key: string;
@@ -132,6 +135,34 @@ export function buildVideoEmbed(
   };
 }
 
+export type VideoJobStatus = {
+  jobId?: string;
+  state?: string;
+  progress?: number;
+  blob?: unknown;
+  error?: string;
+  failureCode?: string;
+};
+
+/**
+ * Keep only allowlisted job fields. In particular, a provider's free-text
+ * `message` never reaches app state or a progress/failure label.
+ */
+export function normaliseVideoJobStatus(input: unknown): VideoJobStatus | null {
+  if (!input || typeof input !== 'object') return null;
+  const value = input as Record<string, unknown>;
+  const status: VideoJobStatus = {};
+  if (typeof value.jobId === 'string') status.jobId = value.jobId;
+  if (typeof value.state === 'string') status.state = value.state;
+  if (typeof value.progress === 'number' && Number.isFinite(value.progress)) {
+    status.progress = value.progress;
+  }
+  if (value.blob !== undefined && value.blob !== null) status.blob = value.blob;
+  if (typeof value.error === 'string') status.error = value.error;
+  if (typeof value.failureCode === 'string') status.failureCode = value.failureCode;
+  return Object.keys(status).length ? status : null;
+}
+
 /**
  * The upload endpoint can answer 409 `already_exists` with a BlobRef for the
  * previously processed file. That blob is as authoritative as a completed job;
@@ -143,42 +174,22 @@ export function videoStatusFromUpload(body: unknown): VideoJobStatus | null {
   const nested = record.jobStatus;
   const candidate =
     nested && typeof nested === 'object' ? (nested as Record<string, unknown>) : record;
-  const blob = candidate.blob ?? record.blob;
-  const error = candidate.error ?? record.error;
-  const message = candidate.message ?? record.message;
-  const alreadyExists =
-    error === 'already_exists' ||
-    (typeof message === 'string' && message.includes('already_exists'));
+  const status = normaliseVideoJobStatus(candidate);
+  if (!status) return null;
+  const code = status.error ?? (typeof record.error === 'string' ? record.error : '');
 
-  if (alreadyExists && blob) {
+  if (code === 'already_exists') {
+    const blob = status.blob ?? (record.blob !== undefined ? record.blob : undefined);
+    if (blob === undefined || blob === null) return null;
     return {
-      ...(typeof candidate.jobId === 'string'
-        ? { jobId: candidate.jobId }
-        : typeof record.jobId === 'string'
-          ? { jobId: record.jobId }
-          : {}),
+      ...(status.jobId ? { jobId: status.jobId } : {}),
       state: 'JOB_STATE_COMPLETED',
       blob,
     };
   }
-  if (
-    typeof candidate.jobId === 'string' &&
-    typeof candidate.state === 'string'
-  ) {
-    return candidate as unknown as VideoJobStatus;
-  }
+  if (status.jobId && status.state) return status;
   return null;
 }
-
-export type VideoJobStatus = {
-  jobId?: string;
-  state?: string;
-  progress?: number;
-  blob?: unknown;
-  error?: string;
-  failureCode?: string;
-  message?: string;
-};
 
 export function videoJobDone(status: VideoJobStatus | null | undefined): boolean {
   return status?.state === 'JOB_STATE_COMPLETED' && !!status.blob;
@@ -193,10 +204,7 @@ export function describeVideoJob(status: VideoJobStatus | null | undefined): str
   if (!status) return 'Starting upload…';
   const state = status.state || '';
   if (videoJobDone(status)) return 'Ready to post';
-  if (videoJobFailed(status)) {
-    const reason = status.message || status.error || status.failureCode;
-    return reason ? `The video service could not process this file: ${reason}` : 'The video service could not process this file.';
-  }
+  if (videoJobFailed(status)) return videoJobFailureCopy();
   if (state === 'JOB_STATE_ENCODING') {
     const percent = Math.round((status.progress || 0) * 100);
     return percent > 0 && percent < 100 ? `Encoding… ${percent}%` : 'Encoding…';

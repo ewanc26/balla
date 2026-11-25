@@ -133,11 +133,13 @@ test('only a completed job with a blob counts as ready', () => {
   assert.equal(videoJobFailed({ state: 'JOB_STATE_COMPLETED' }), false);
 });
 
-test('progress copy never claims success early', () => {
+test('progress copy never claims success early or echoes provider prose', () => {
   assert.equal(describeVideoJob(null), 'Starting upload…');
   assert.equal(describeVideoJob({ state: 'JOB_STATE_ENCODING', progress: 0.42 }), 'Encoding… 42%');
   assert.equal(describeVideoJob({ state: 'JOB_STATE_UPLOADING' }), 'Uploading…');
   assert.equal(describeVideoJob({ state: 'JOB_STATE_COMPLETED', blob }), 'Ready to post');
   assert.equal(describeVideoJob({ state: 'JOB_STATE_COMPLETED' }), 'Processing…');
-  assert.match(describeVideoJob({ state: 'JOB_STATE_FAILED', message: 'bad codec' }), /bad codec/);
+  const failed = describeVideoJob({ state: 'JOB_STATE_FAILED', message: 'bad codec' });
+  assert.equal(failed, 'The video service could not process this file.');
+  assert.doesNotMatch(failed, /bad codec/);
 });

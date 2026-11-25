@@ -234,8 +234,9 @@ export async function restore(): Promise<boolean> {
         await setActive(callbackSession);
         return true;
       }
-    } catch (err) {
-      console.warn('Balla OAuth callback failed', err);
+    } catch {
+      // Fixed Balla copy only: provider error prose is never logged.
+      console.warn('Balla OAuth callback failed');
     }
   }
 

@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DEFAULT_SERVICE, login } from '../lib/agent';
+import { signInFailureCopy } from '../lib/failureCopyModel.ts';
 import {
   ACCOUNT_PREFLIGHT_COPY,
   ACCOUNT_PREFLIGHT_STATE_LABELS,
@@ -51,11 +52,10 @@ export function LoginScreen({
       await login(input);
       onLoggedIn();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      console.warn('Balla OAuth sign-in failed', err);
-      if (!/cancel/i.test(message)) {
-        setError('Could not sign in. Check the handle and try again.');
-      }
+      // A cancelled approval page is not a failure. Every other failure is
+      // described from structured fields only; no provider text is logged.
+      const copy = signInFailureCopy(err);
+      if (copy) setError(copy);
       setBusy(false);
     }
   }

@@ -12,6 +12,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
 import {
+  labelerFailureCopy,
+  labelerInputError,
+} from '../lib/failureCopyModel.ts';
+import {
   dialogAccessibilityProps,
   dialogAnimation,
   useDialogFocus,
@@ -234,10 +238,10 @@ export function ContentFiltersScreen({
         ? raw
         : (await agent.getProfile({ actor: raw })).data.did;
       if (did === BSKY_LABELER_DID) {
-        throw new Error('The moderation service is already subscribed.');
+        throw labelerInputError('default_subscribed');
       }
       if (prefs.moderationPrefs.labelers.some((labeler: any) => labeler.did === did)) {
-        throw new Error('That labeler is already subscribed.');
+        throw labelerInputError('already_subscribed');
       }
       // A third party need not be indexed by this AppView. Accept a DID when
       // either the AppView lists it or its own DID document advertises a
@@ -247,7 +251,7 @@ export function ContentFiltersScreen({
         probeLabeler(did, { resolveDocument: resolveDidDocument }),
       ]);
       if (!(listed?.data.views || []).length && directCheck.state !== 'ok') {
-        throw new Error('Could not verify that DID as a reachable labeler.');
+        throw labelerInputError('unreachable');
       }
       setLabelerProbes((current) => ({ ...current, [did]: directCheck }));
       await agent.addLabeler(did);
@@ -256,9 +260,7 @@ export function ContentFiltersScreen({
       await load(false);
       reload();
     } catch (err) {
-      setError(
-        err instanceof Error ? err.message : 'Could not add that labeler. Try again.'
-      );
+      setError(labelerFailureCopy(err));
     } finally {
       setAddLabelerBusy(false);
     }
