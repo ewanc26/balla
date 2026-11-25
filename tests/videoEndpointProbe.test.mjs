@@ -73,8 +73,8 @@ test('the release documents the video check as partial #97', () => {
   const appJson = JSON.parse(readFileSync(new URL('../app.json', import.meta.url), 'utf8'));
   const changelog = readFileSync(new URL('../CHANGELOG.md', import.meta.url), 'utf8');
   const compliance = readFileSync(new URL('../docs/bluesky-compliance.md', import.meta.url), 'utf8');
-  assert.equal(pkg.version, '0.76.0');
-  assert.equal(appJson.expo.version, '0.76.0');
+  assert.equal(pkg.version, '0.77.0');
+  assert.equal(appJson.expo.version, '0.77.0');
   assert.match(changelog, /^## 0\.72\.0$/m);
   assert.match(changelog, /#97, partial/);
   assert.match(changelog, /video endpoint/);

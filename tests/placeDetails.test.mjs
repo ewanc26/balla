@@ -139,7 +139,7 @@ test('Escape steps back from details before closing the picker', () => {
 test('Android hardware back steps back from details before closing the picker', () => {
   assert.match(sheet, /onRequestClose=\{detailHit \? closeDetails : onClose\}/);
   assert.match(sheet, /useDialogFocus\(\{\s*visible,\s*onClose: detailHit \? closeDetails : onClose,/);
-  assert.match(changelog, /^## 0\.76\.0$/m);
+  assert.match(changelog, /^## 0\.77\.0$/m);
   assert.match(changelog, /Android hardware back steps back from place details/);
   assert.match(compliance, /Android hardware back and the Apple TV menu button use the same step-back handler/);
   assert.match(features, /Android's hardware back button does the same/);
@@ -179,7 +179,7 @@ test('details fail closed with fixed copy and no writes', () => {
 });
 
 test('docs, release copy and OAuth facts match the details slice', () => {
-  assert.match(changelog, /^## 0\.76\.0$/m);
+  assert.match(changelog, /^## 0\.77\.0$/m);
   assert.match(changelog, /inspectable detail view/);
   assert.match(changelog, /scope count stays 112/);
   assert.match(compliance, /detail view inside the same sheet/);
@@ -187,11 +187,11 @@ test('docs, release copy and OAuth facts match the details slice', () => {
   assert.match(features, /detail view inside the same sheet/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.76.0');
-  assert.equal(appJson.expo.version, '0.76.0');
+  assert.equal(pkg.version, '0.77.0');
+  assert.equal(appJson.expo.version, '0.77.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.76\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.77\.0<\/string>/);
   }
   assert.equal(
     createHash('sha256').update(metadataRaw).digest('hex'),
