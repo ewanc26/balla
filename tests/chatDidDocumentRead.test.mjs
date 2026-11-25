@@ -85,18 +85,18 @@ test('the chat screen has no raw public fetch and delegates the DID read', () =>
   assert.doesNotMatch(reader, /await fetch\(/);
 });
 
-test('v0.94.0 records the bounded chat DID read with parity and unchanged metadata', () => {
+test('v0.95.0 records the bounded chat DID read with parity and unchanged metadata', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.94.0');
-  assert.equal(appJson.expo.version, '0.94.0');
+  assert.equal(pkg.version, '0.95.0');
+  assert.equal(appJson.expo.version, '0.95.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.94\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.95\.0<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
-  const section = changelog.slice(changelog.indexOf('## 0.94.0'), changelog.indexOf('## 0.92.0'));
+  const section = changelog.slice(changelog.indexOf('## 0.95.0'), changelog.indexOf('## 0.92.0'));
   assert.match(section, /Advanced → Chat DID-document read is now bounded/);
   assert.match(section, /#97\/#99, partial/);
   assert.match(section, /scope count stays 112/);

@@ -24,8 +24,9 @@ test('Hosting exposes a registered directory screen with a stable web path', () 
 test('the directory reads the public index and checks a chosen host for real', () => {
   assert.match(model, /PDS_DIRECTORY_API = 'https:\/\/openpds\.tijs\.org\/api\/servers'/);
   assert.match(model, /value\.is_open !== true/);
-  assert.match(loader, /response\.ok/);
-  assert.match(loader, /normalisePdsDirectory\(payload\)/);
+  assert.match(loader, /readBoundedPublic<unknown>\(PDS_DIRECTORY_API,/);
+  assert.doesNotMatch(loader, /await fetch\(/);
+  assert.match(loader, /normalisePdsDirectory\(outcome\.value\)/);
   assert.match(screen, /loadPdsDirectory\(fetch, fresh\)/);
   assert.match(screen, /probeHost\(chosen\.url\)/);
   assert.match(screen, /Check host compatibility/);
