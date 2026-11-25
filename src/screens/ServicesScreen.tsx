@@ -23,6 +23,7 @@ import {
   getPlacesEndpoint,
   getPlcDirectoryEndpoint,
   getServicesConfig,
+  replaceServicesConfig,
   resetServicesConfig,
   setHandleResolverEndpoint,
   setPlacesEnabled,
@@ -42,6 +43,10 @@ import {
   serialiseServicesExport,
   servicesExportName,
 } from '../lib/servicesExportModel.ts';
+import {
+  parseServicesImport,
+  SERVICES_IMPORT_INVALID_DETAIL,
+} from '../lib/servicesImportModel.ts';
 import {
   exportServicesJson,
   servicesExportAction,
@@ -92,6 +97,8 @@ export function ServicesScreen() {
   const [message, setMessage] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [exportMessage, setExportMessage] = useState<string | null>(null);
+  const [importText, setImportText] = useState('');
+  const [importMessage, setImportMessage] = useState<string | null>(null);
   const { summary } = useSessionSummary();
 
   const refresh = useCallback(async () => {
@@ -298,6 +305,29 @@ export function ServicesScreen() {
     }
   }
 
+  async function importConfiguration() {
+    if (busy) return;
+    setBusy(true);
+    setImportMessage(null);
+    try {
+      const parsed = parseServicesImport(importText);
+      if (parsed.state === 'invalid') {
+        setImportMessage(parsed.detail);
+        return;
+      }
+      await replaceServicesConfig(parsed.config);
+      setImportText('');
+      setResolverProbe(null);
+      setPlcProbe(null);
+      setPlacesProbe(null);
+      setImportMessage('Changeable public hosts restored. Session facts and grant-bound services were ignored.');
+    } catch {
+      setImportMessage('Could not apply the configuration on this device.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: p.bg }}
@@ -472,7 +502,7 @@ export function ServicesScreen() {
 
       <SettingSection
         title="Configuration record"
-        detail="Export the three changeable public hosts, the grant-bound service facts and this session's non-secret metadata. The file contains no token, password or provider message text."
+        detail="Export the three changeable public hosts, the grant-bound service facts and this session's non-secret metadata. You can paste a Balla export back here to restore only the changeable hosts and the places switch. The record contains no token, password or provider message text."
       >
         <SettingButton
           label={servicesExportAction()}
@@ -480,10 +510,35 @@ export function ServicesScreen() {
           busy={exporting}
         />
         {exportMessage ? <SettingValueRow label="Export" value={exportMessage} /> : null}
+        <TextInput
+          value={importText}
+          onChangeText={setImportText}
+          placeholder="Paste a Balla service configuration record"
+          placeholderTextColor={p.secondary}
+          multiline
+          numberOfLines={6}
+          autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel="Exported service configuration JSON"
+          style={[
+            styles.input,
+            styles.importInput,
+            { color: p.text, backgroundColor: p.bg, borderColor: p.divider },
+            webInputReset,
+          ]}
+        />
+        <SettingButton
+          label="Import configuration"
+          onPress={() => void importConfiguration()}
+          busy={busy}
+          disabled={!importText.trim()}
+        />
+        {importMessage ? <SettingValueRow label="Import" value={importMessage} /> : null}
         <SettingNote>
-          The export is a record, not an import: the resolver, did:plc directory
-          and places host can be changed here, and grant-bound services need a
-          new authorisation.
+          The importer reads only the resolver, did:plc directory, places host
+          and places switch from a valid Balla record. Session facts,
+          grant-bound services and every other field are ignored. A malformed
+          record changes nothing and shows fixed Balla copy.
         </SettingNote>
       </SettingSection>
 
@@ -521,5 +576,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     paddingHorizontal: 14,
     paddingVertical: 12,
+  },
+  importInput: {
+    minHeight: 120,
+    paddingTop: 12,
+    textAlignVertical: 'top',
   },
 });

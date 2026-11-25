@@ -111,8 +111,17 @@ export async function setPlacesEnabled(enabled: boolean): Promise<ServicesConfig
 }
 
 export async function resetServicesConfig(): Promise<ServicesConfig> {
+  return replaceServicesConfig(DEFAULT_SERVICES_CONFIG);
+}
+
+/**
+ * Apply a validated import in one write. The caller must pass a fully parsed
+ * ServicesConfig; changing the directory also drops cached did:plc documents,
+ * matching Save directory and Use default.
+ */
+export async function replaceServicesConfig(next: ServicesConfig): Promise<ServicesConfig> {
   const before = effectivePlcDirectory(await getServicesConfig());
-  await persist({ ...DEFAULT_SERVICES_CONFIG });
+  await persist(next);
   const after = await getServicesConfig();
   if (effectivePlcDirectory(after) !== before) await forgetDirectoryDidDocuments();
   return after;

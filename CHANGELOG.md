@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.82.0
+
+- **An exported service configuration can now be restored (#97, partial).** Advanced → Services keeps the existing local export and adds a visible paste field with an Import configuration button. The importer accepts only a valid `balla.services.v1` record, applies the three changeable public hosts and the places switch in one write, and ignores session facts, grant-bound service facts and every other field. A malformed record changes nothing and reports one fixed Balla message; no provider prose is shown, logged or stored. Changing the did:plc directory also clears its cached DID documents, matching the Save and Use default paths.
+- This is not a provider picker or a grant change: AppView, chat, video and labeler remain grant-bound, the PDS remains DID-discovered, and no independent host was verified. No new dependency or OAuth scope; scope count stays 112 and OAuth client metadata is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.81.0
 
 - **Every public service check now has a bounded deadline (#97/#99, partial).** The shared, injectable deadline first added for places now covers the handle resolver, did:plc directory, AppView check, video endpoint, chat DID document and Advanced → AppView health. A provider that accepts a request but never answers is aborted and reported in fixed Balla copy — "The service did not answer in time." — with measured latency instead of leaving Advanced busy or the health line stuck on Checking. Provider prose is never read, logged or displayed; tests inject the clock and signal so no real waiting is needed. No request shape, grant, provider switch, dependency or OAuth scope changes; scope count stays 112.
