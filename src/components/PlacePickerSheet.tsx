@@ -25,7 +25,7 @@ import {
   searchPlaces,
   type PlacesSearchState,
 } from '../lib/placesSearch';
-import type { PlaceHit } from '../lib/placesModel';
+import { normalisePlacesEndpoint, type PlaceHit } from '../lib/placesModel';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 /**
@@ -50,6 +50,8 @@ export function PlacePickerSheet({
   const [state, setState] = useState<PlacesSearchState | null>(null);
   const [searching, setSearching] = useState(false);
   const [enabled, setEnabled] = useState(true);
+  const [endpointLabel, setEndpointLabel] = useState<string | null>(null);
+  const [endpointChecked, setEndpointChecked] = useState(false);
   const containerRef = useRef<any>(null);
   const closeRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -58,21 +60,29 @@ export function PlacePickerSheet({
   useEffect(() => {
     if (!visible) return;
     let active = true;
-    void getPlacesEnabled()
-      .then((value) => {
+    void (async () => {
+      try {
+        const [value, endpoint] = await Promise.all([
+          getPlacesEnabled(),
+          getPlacesEndpoint(),
+        ]);
         if (!active) return;
         setEnabled(value);
+        // Show only a validated https origin, never the raw persisted value.
+        setEndpointLabel(normalisePlacesEndpoint(endpoint));
+        setEndpointChecked(true);
         if (!value) {
           setState('off');
           setHits([]);
         }
-      })
-      .catch(() => {
+      } catch {
         if (!active) return;
         setEnabled(false);
         setState('off');
         setHits([]);
-      });
+        setEndpointChecked(true);
+      }
+    })();
     return () => {
       active = false;
     };
@@ -92,7 +102,10 @@ export function PlacePickerSheet({
         setHits([]);
         return;
       }
-      const result = await searchPlaces(q, await getPlacesEndpoint(), { enabled: allowed });
+      const endpoint = await getPlacesEndpoint();
+      setEndpointLabel(normalisePlacesEndpoint(endpoint));
+      setEndpointChecked(true);
+      const result = await searchPlaces(q, endpoint, { enabled: allowed });
       setState(result.state);
       setHits(result.hits);
     } catch {
@@ -154,6 +167,13 @@ export function PlacePickerSheet({
             and is not an exact place match. Balla writes
             no check-in record while the place-pin lexicon is a draft.
           </Text>
+          {endpointChecked ? (
+            <Text style={{ color: p.secondary, fontSize: 12, marginTop: 6 }}>
+              {endpointLabel
+                ? `${enabled ? 'Places host' : 'Configured places host (off)'}: ${endpointLabel}. Change it in Advanced → Services.`
+                : 'Places host needs an https address. Change it in Advanced → Services.'}
+            </Text>
+          ) : null}
           <View style={styles.searchRow}>
             <TextInput
               value={query}

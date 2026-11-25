@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.68.0
+
+- **The place picker now names its configured host (#156, partial).** When the sheet opens, it reads the saved places endpoint and shows only the validated https origin, for example `https://places.eurosky.tech`, with a visible pointer to Advanced → Services. An invalid saved host is named as invalid, never rendered as raw text; when Places is off, the label says the host is configured but unused. The same sanitised label refreshes when Search runs.
+- No request, provider prose, position, check-in record, chip, new scope or dependency is involved; scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.67.0
 
 - **DID documents now have one did:web document URL builder (#97, partial).** `didWebDocumentUrl` lives with the service host facts and derives both published AppView and chat document URLs from those hosts. Account pre-flight, the Services checks, the AppView health check and identity resolution all use that one builder instead of assembling `/.well-known/did.json` locally. A path-bearing `did:web` identifier now resolves to its own `/path/did.json`, as the identity module already did; no request, grant or setting changes.
