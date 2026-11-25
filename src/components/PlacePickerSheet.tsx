@@ -19,6 +19,7 @@ import {
 } from '../lib/accessibility';
 import { openExternalUrl } from '../lib/openLink';
 import { openStreetMapSearchUrl } from '../lib/mapLinks';
+import { placeRecordUrl } from '../lib/placeRecordLinks.ts';
 import { getPlacesEnabled, getPlacesEndpoint } from '../lib/servicesConfig';
 import {
   placesSearchCopy,
@@ -50,6 +51,8 @@ export function PlacePickerSheet({
   const [state, setState] = useState<PlacesSearchState | null>(null);
   const [searching, setSearching] = useState(false);
   const [enabled, setEnabled] = useState(true);
+  // Raw configured value is never rendered; the link builder validates it.
+  const [placesEndpoint, setPlacesEndpoint] = useState('');
   const [endpointLabel, setEndpointLabel] = useState<string | null>(null);
   const [endpointChecked, setEndpointChecked] = useState(false);
   const containerRef = useRef<any>(null);
@@ -68,6 +71,7 @@ export function PlacePickerSheet({
         ]);
         if (!active) return;
         setEnabled(value);
+        setPlacesEndpoint(value ? endpoint : '');
         // One shared, fail-closed label: never echo the raw persisted value.
         setEndpointLabel(placesHostLabel(endpoint, value));
         setEndpointChecked(true);
@@ -80,6 +84,7 @@ export function PlacePickerSheet({
         setEnabled(false);
         setState('off');
         setHits([]);
+        setPlacesEndpoint('');
         setEndpointLabel(placesHostLabel('', false));
         setEndpointChecked(true);
       }
@@ -101,6 +106,7 @@ export function PlacePickerSheet({
         getPlacesEndpoint(),
       ]);
       setEnabled(allowed);
+      setPlacesEndpoint(allowed ? endpoint : '');
       setEndpointLabel(placesHostLabel(endpoint, allowed));
       setEndpointChecked(true);
       if (!allowed) {
@@ -114,6 +120,7 @@ export function PlacePickerSheet({
     } catch {
       // Configuration read failed: fail closed with the fixed failure copy.
       setEnabled(false);
+      setPlacesEndpoint('');
       setState('unavailable');
       setEndpointLabel(placesHostLabel('', false));
       setEndpointChecked(true);
@@ -169,7 +176,8 @@ export function PlacePickerSheet({
             Balla sends only the words you type. No device position, no nearby
             lookup. Choosing a result adds its name as plain text. The map button
             searches OpenStreetMap by name in your browser; it sends no position
-            and is not an exact place match. Result labels come from the
+            and is not an exact place match. The info button opens the result's
+            public gazetteer record in your browser. Result labels come from the
             provider's published fields, including its city-state rule; no
             popularity is shown. Balla writes
             no check-in record while the place-pin lexicon is a draft.
@@ -232,57 +240,74 @@ export function PlacePickerSheet({
             </Text>
           ) : null}
           <ScrollView style={styles.results} keyboardShouldPersistTaps="handled">
-            {hits.map((hit, index) => (
-              <View
-                key={`${index}:${hit.origin ?? hit.name}`}
-                style={styles.row}
-              >
-                <Pressable
-                  onPress={() => onPick(hit.name)}
-                  disabled={searching}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Add ${hit.name} as plain text`}
-                  style={({ pressed }) => [
-                    styles.rowMain,
-                    { backgroundColor: pressed ? p.bg : 'transparent' },
-                  ]}
+            {hits.map((hit, index) => {
+              const recordUrl = placeRecordUrl(placesEndpoint, hit.origin);
+              return (
+                <View
+                  key={`${index}:${hit.origin ?? hit.name}`}
+                  style={styles.row}
                 >
-                  <View style={[styles.glyph, { backgroundColor: p.accentSoft }]}>
-                    <Ionicons
-                      name={hit.kind === 'area' ? 'map-outline' : 'location-outline'}
-                      size={18}
-                      color={p.accent}
-                    />
-                  </View>
-                  <View style={{ flex: 1, minWidth: 0 }}>
-                    <Text
-                      style={{ color: p.text, fontSize: 15, fontWeight: '600' }}
-                      numberOfLines={1}
+                  <Pressable
+                    onPress={() => onPick(hit.name)}
+                    disabled={searching}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Add ${hit.name} as plain text`}
+                    style={({ pressed }) => [
+                      styles.rowMain,
+                      { backgroundColor: pressed ? p.bg : 'transparent' },
+                    ]}
+                  >
+                    <View style={[styles.glyph, { backgroundColor: p.accentSoft }]}>
+                      <Ionicons
+                        name={hit.kind === 'area' ? 'map-outline' : 'location-outline'}
+                        size={18}
+                        color={p.accent}
+                      />
+                    </View>
+                    <View style={{ flex: 1, minWidth: 0 }}>
+                      <Text
+                        style={{ color: p.text, fontSize: 15, fontWeight: '600' }}
+                        numberOfLines={1}
+                      >
+                        {hit.name}
+                      </Text>
+                      <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
+                        {placeResultDetail(hit)}
+                      </Text>
+                    </View>
+                  </Pressable>
+                  {recordUrl ? (
+                    <Pressable
+                      onPress={() => void openExternalUrl(recordUrl).catch(() => {})}
+                      disabled={searching}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Open the public place record for ${hit.name}`}
+                      style={({ pressed }) => [
+                        styles.recordButton,
+                        { backgroundColor: pressed ? p.bg : 'transparent' },
+                      ]}
                     >
-                      {hit.name}
-                    </Text>
-                    <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
-                      {placeResultDetail(hit)}
-                    </Text>
-                  </View>
-                </Pressable>
-                <Pressable
-                  onPress={() => {
-                    const url = openStreetMapSearchUrl(hit.name);
-                    if (url) void openExternalUrl(url).catch(() => {});
-                  }}
-                  disabled={searching}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Search OpenStreetMap for ${hit.name} by name`}
-                  style={({ pressed }) => [
-                    styles.mapButton,
-                    { backgroundColor: pressed ? p.bg : 'transparent' },
-                  ]}
-                >
-                  <Ionicons name="map-outline" size={20} color={p.accent} />
-                </Pressable>
-              </View>
-            ))}
+                      <Ionicons name="information-circle-outline" size={20} color={p.accent} />
+                    </Pressable>
+                  ) : null}
+                  <Pressable
+                    onPress={() => {
+                      const url = openStreetMapSearchUrl(hit.name);
+                      if (url) void openExternalUrl(url).catch(() => {});
+                    }}
+                    disabled={searching}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Search OpenStreetMap for ${hit.name} by name`}
+                    style={({ pressed }) => [
+                      styles.mapButton,
+                      { backgroundColor: pressed ? p.bg : 'transparent' },
+                    ]}
+                  >
+                    <Ionicons name="map-outline" size={20} color={p.accent} />
+                  </Pressable>
+                </View>
+              );
+            })}
           </ScrollView>
           <Pressable
             onPress={() => onPick(query)}
@@ -376,6 +401,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   mapButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: CARD_RADIUS,
+  },
+  recordButton: {
     width: 44,
     height: 44,
     alignItems: 'center',
