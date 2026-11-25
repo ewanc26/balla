@@ -37,6 +37,17 @@ export function normalisePlacesEndpoint(value: unknown): string | null {
   return typeof value === 'string' ? normaliseHostUrl(value) : null;
 }
 
+/**
+ * One fail-closed label for the configured places host, shared by the composer
+ * sheet and Advanced → Services. An unsupported saved value is described in
+ * Balla's words; the raw value is never rendered on either surface.
+ */
+export function placesHostLabel(endpoint: string, enabled: boolean): string {
+  const host = normalisePlacesEndpoint(endpoint);
+  if (!host) return 'Places host needs an https address';
+  return enabled ? `Places host: ${host}` : `Configured places host (off): ${host}`;
+}
+
 /** The query travels in the POST body, so the URL never carries a position. */
 export function placesSearchUrl(endpoint: string, query: string): string | null {
   if (!normalisePlacesEndpoint(endpoint)) return null;
