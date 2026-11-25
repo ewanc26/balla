@@ -120,16 +120,16 @@ test('one shared deadline covers places and every service check', () => {
 });
 
 test('docs and version parity match the bounded-check slice', () => {
-  assert.match(changelog, /^## 0\.84\.0$/m);
+  assert.match(changelog, /^## 0\.85\.0$/m);
   assert.match(changelog, /bounded deadline/);
   assert.match(compliance, /bounded deadline/);
   assert.match(features, /bounded deadline/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.84.0');
-  assert.equal(appJson.expo.version, '0.84.0');
+  assert.equal(pkg.version, '0.85.0');
+  assert.equal(appJson.expo.version, '0.85.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.84\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.85\.0<\/string>/);
   }
 });

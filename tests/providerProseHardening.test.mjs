@@ -4,13 +4,20 @@ import { readFileSync } from 'node:fs';
 import {
   SIGN_IN_FALLBACK,
   LABELER_FALLBACK,
+  classifyStructuredFailure,
+  hasErrorCode,
   isAuthFailure,
   isExpoOAuthCancellation,
+  isInvalidSwapError,
+  isRecordNotFoundError,
   labelerFailureCopy,
   labelerInputError,
   signInFailureCopy,
   structuredFailureCopy,
 } from '../src/lib/failureCopyModel.ts';
+import { listActionError } from '../src/lib/listModel.ts';
+import { starterPackActionError } from '../src/lib/starterPackModel.ts';
+import { chatErrorCopy, chatFailureFrom } from '../src/lib/chatModel.ts';
 import {
   VIDEO_JOB_FAILURE,
   videoJobFailureCopy,
@@ -75,6 +82,70 @@ test('auth classification is structured-only for profile and report errors', () 
   assert.equal(isAuthFailure({ code: 'InsufficientScope' }), true);
   assert.equal(isAuthFailure(new Error(HOSTILE)), false);
   assert.equal(isAuthFailure({ message: HOSTILE }), false);
+  assert.equal(isAuthFailure({ error: `${HOSTILE} insufficient scope` }), false);
+});
+
+test('structured codes are exact allowlisted fields, not hostile prose', () => {
+  assert.equal(hasErrorCode({ error: 'InvalidSwap', message: HOSTILE }, ['InvalidSwap']), true);
+  assert.equal(hasErrorCode({ code: 'invalid swap', message: HOSTILE }, ['InvalidSwap']), false);
+  assert.equal(hasErrorCode({ message: 'InvalidSwap' }, ['InvalidSwap']), false);
+  assert.equal(hasErrorCode(new Error('InvalidSwap'), ['InvalidSwap']), false);
+  assert.equal(classifyStructuredFailure({ error: 'TooManyRequests', message: HOSTILE }), 'rate-limited');
+  assert.equal(classifyStructuredFailure({ message: `${HOSTILE} network` }), 'unknown');
+});
+
+test('list and starter-pack auth copy ignores provider prose', () => {
+  const listCopy = listActionError({ code: 'InsufficientScope', message: HOSTILE }, 'Try again.');
+  assert.match(listCopy, /Sign out, sign in again/);
+  assert.equal(listCopy.includes(HOSTILE), false);
+  assert.equal(listActionError({ message: `${HOSTILE} insufficient scope` }, 'Try again.'), 'Try again.');
+  assert.equal(listActionError(new Error('insufficient scope'), 'Try again.'), 'Try again.');
+
+  const packCopy = starterPackActionError(
+    { status: 403, message: `${HOSTILE} forbidden` },
+    'Fallback'
+  );
+  assert.match(packCopy, /Sign out, sign in again/);
+  assert.equal(packCopy.includes(HOSTILE), false);
+  assert.equal(
+    starterPackActionError({ message: `${HOSTILE} forbidden` }, 'Fallback'),
+    'Fallback'
+  );
+});
+
+test('record-not-found retry control uses only status and structured codes', () => {
+  assert.equal(
+    isRecordNotFoundError({ status: 400, error: 'RecordNotFound', message: HOSTILE }),
+    true
+  );
+  assert.equal(isRecordNotFoundError({ status: 404, code: 'NotFound', message: HOSTILE }), true);
+  assert.equal(isRecordNotFoundError({ status: 404, message: 'RecordNotFound' }), false);
+  assert.equal(isRecordNotFoundError({ status: 400, error: `${HOSTILE} RecordNotFound` }), false);
+  assert.equal(isRecordNotFoundError({ error: 'RecordNotFound' }), false);
+  assert.equal(isRecordNotFoundError(new Error('RecordNotFound')), false);
+});
+
+test('chat failure copy ignores messages and classifies only published codes', () => {
+  assert.equal(chatFailureFrom({ error: 'MessagesDisabled', message: HOSTILE }), 'disabled');
+  assert.equal(chatFailureFrom({ error: 'BlockedActor', message: HOSTILE }), 'blocked');
+  assert.equal(chatFailureFrom({ error: 'RecipientNotFound', message: HOSTILE }), 'not-found');
+  assert.equal(chatFailureFrom({ error: 'ConvoLockedByModeration', message: HOSTILE }), 'locked');
+  assert.equal(chatFailureFrom({ error: 'NetworkError', message: HOSTILE }), 'offline');
+  assert.equal(chatFailureFrom({ message: 'offline' }), 'unknown');
+  assert.equal(chatFailureFrom(new Error('offline')), 'unknown');
+  assert.equal(chatFailureFrom({ error: `${HOSTILE} blocked` }), 'unknown');
+  const copy = chatErrorCopy({ error: 'BlockedActor', message: HOSTILE });
+  assert.match(copy, /block/);
+  assert.equal(copy.includes(HOSTILE), false);
+});
+
+test('live-status compare-and-swap and deletion use exact structured codes', () => {
+  assert.equal(isInvalidSwapError({ error: 'InvalidSwap', message: HOSTILE }), true);
+  assert.equal(isInvalidSwapError({ status: 400, code: 'InvalidSwap', message: HOSTILE }), true);
+  assert.equal(isInvalidSwapError({ message: 'InvalidSwap' }), false);
+  assert.equal(isInvalidSwapError({ error: `${HOSTILE} InvalidSwap` }), false);
+  assert.equal(isRecordNotFoundError({ status: 404, error: 'RecordNotFound', message: HOSTILE }), true);
+  assert.equal(isRecordNotFoundError({ status: 404, message: 'Could not find record' }), false);
 });
 
 test('labeler failures use fixed copy for allowlisted codes and hostile prose falls back', () => {
@@ -147,6 +218,10 @@ test('no audited source reads, logs or stores provider error prose', () => {
   const agent = read('../src/lib/agent.ts');
   const contentFilters = read('../src/screens/ContentFiltersScreen.tsx');
   const videoUpload = read('../src/lib/videoUpload.ts');
+  const listModel = read('../src/lib/listModel.ts');
+  const starterPackModel = read('../src/lib/starterPackModel.ts');
+  const chatModel = read('../src/lib/chatModel.ts');
+  const liveStatus = read('../src/lib/liveStatus.ts');
 
   assert.doesNotMatch(reliability, /messageOf|err\.message|String\(err\)/);
   assert.doesNotMatch(moderation, /err\.message|String\(err\)/);
@@ -160,4 +235,15 @@ test('no audited source reads, logs or stores provider error prose', () => {
   assert.match(contentFilters, /labelerFailureCopy\(err\)/);
   assert.doesNotMatch(videoUpload, /body\.message|status\.message|\.message \|\|/);
   assert.match(videoUpload, /videoUploadErrorCopy\(body, response\.status, fallback\)/);
+
+  assert.doesNotMatch(listModel, /cause\.message|String\(cause/);
+  assert.match(listModel, /isAuthFailure\(cause\)/);
+  assert.doesNotMatch(starterPackModel, /\.message|String\(cause/);
+  assert.match(starterPackModel, /isRecordNotFoundError/);
+  assert.match(starterPackModel, /isAuthFailure\(cause\)/);
+  assert.doesNotMatch(chatModel, /err as any|\?\.message|String\(raw/);
+  assert.match(chatModel, /hasErrorCode\(err/);
+  assert.doesNotMatch(liveStatus, /err\?\.message|String\(err/);
+  assert.match(liveStatus, /isInvalidSwapError\(err\)/);
+  assert.match(liveStatus, /isRecordNotFoundError\(err\)/);
 });

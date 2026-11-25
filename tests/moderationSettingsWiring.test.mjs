@@ -182,7 +182,8 @@ test('verifier actions are real repo writes wired into the profile menu', () => 
 test('live status is a real self-rkey status write with a visible indicator', () => {
   assert.match(liveStatus, /com\.atproto\.repo\.putRecord/);
   assert.match(liveStatus, /com\.atproto\.repo\.deleteRecord/);
-  assert.match(liveStatus, /InvalidSwap/i);
+  assert.match(liveStatus, /isInvalidSwapError\(err\)/);
+  assert.doesNotMatch(liveStatus, /\.message/);
   assert.match(profileMenu, /Go live/);
   assert.match(profileMenu, /End live status/);
   assert.match(profileMenu, /upsertLiveStatus/);

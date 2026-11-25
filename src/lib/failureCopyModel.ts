@@ -44,38 +44,129 @@ export function errorCode(err: unknown): string | null {
   return null;
 }
 
+/**
+ * Exact structured-code checks. Codes are protocol fields, not prose: a code
+ * must be on Balla's allowlist before it can change copy or control flow.
+ */
+export function hasErrorCode(err: unknown, codes: readonly string[]): boolean {
+  const code = errorCode(err);
+  return code !== null && codes.some((allowed) => allowed.toLowerCase() === code);
+}
+
+export const RATE_LIMIT_ERROR_CODES = [
+  'ratelimitexceeded',
+  'ratelimited',
+  'rate_limited',
+  'toomanyrequests',
+  'too_many_requests',
+] as const;
+
+export const OFFLINE_ERROR_CODES = [
+  'networkerror',
+  'networkrequestfailed',
+  'fetchfailed',
+  'connectionerror',
+  'offline',
+  'abort',
+  'aborterror',
+  'timeout',
+  'timedout',
+  'timed_out',
+] as const;
+
+export const AUTH_ERROR_CODES = [
+  'authenticationrequired',
+  'authrequired',
+  'authorizationrequired',
+  'unauthorized',
+  'unauthorised',
+  'forbidden',
+  'insufficientscope',
+  'permissiondenied',
+  'invalidtoken',
+  'expiredtoken',
+  'tokenexpired',
+  'sessionexpired',
+  'oauthauthorizationrequired',
+] as const;
+
+export const SERVER_ERROR_CODES = [
+  'internalservererror',
+  'serviceunavailable',
+  'badgateway',
+  'bad_gateway',
+  'upstreamfailure',
+  'upstreamtimeout',
+  'servererror',
+] as const;
+
+export const RECORD_NOT_FOUND_ERROR_CODES = ['recordnotfound', 'notfound'] as const;
+export const INVALID_SWAP_ERROR_CODES = ['invalidswap'] as const;
+
+export type StructuredFailureKind =
+  | 'rate-limited'
+  | 'offline'
+  | 'auth-expired'
+  | 'server'
+  | 'unknown';
+
 /** True for the structured signals that mean a session must be renewed. */
 export function isAuthFailure(err: unknown): boolean {
   const status = statusCode(err);
-  const code = errorCode(err) ?? '';
   return (
     status === 401 ||
     status === 403 ||
-    /auth|permission|scope|unauthori[sz]ed|forbidden/.test(code)
+    hasErrorCode(err, AUTH_ERROR_CODES)
   );
+}
+
+/**
+ * A missing record is inferred only from an explicit structured code beside a
+ * record-status. A free-text message is never used, so an unfamiliar provider
+ * cannot make a real failure look like a successful deletion.
+ */
+export function isRecordNotFoundError(err: unknown): boolean {
+  const status = statusCode(err);
+  return (
+    (status === 400 || status === 404) &&
+    hasErrorCode(err, RECORD_NOT_FOUND_ERROR_CODES)
+  );
+}
+
+/** The published repo-write compare-and-swap error, matched exactly. */
+export function isInvalidSwapError(err: unknown): boolean {
+  return hasErrorCode(err, INVALID_SWAP_ERROR_CODES);
+}
+
+/** Classify from structured fields only; never inspect or echo error prose. */
+export function classifyStructuredFailure(err: unknown): StructuredFailureKind {
+  const status = statusCode(err);
+  if (status === 429 || hasErrorCode(err, RATE_LIMIT_ERROR_CODES)) return 'rate-limited';
+  if (status === 1 || hasErrorCode(err, OFFLINE_ERROR_CODES)) return 'offline';
+  if (isAuthFailure(err)) return 'auth-expired';
+  if (
+    (status !== null && status >= 500) ||
+    hasErrorCode(err, SERVER_ERROR_CODES)
+  ) {
+    return 'server';
+  }
+  return 'unknown';
 }
 
 /** Classify from structured fields only; never inspect or echo error prose. */
 export function structuredFailureCopy(err: unknown, fallback: string): string {
-  const status = statusCode(err);
-  const code = errorCode(err) ?? '';
-  if (status === 429 || /rate.?limit|too_?many_?requests/.test(code)) {
-    return 'The service is limiting requests. Wait a moment and try again.';
+  switch (classifyStructuredFailure(err)) {
+    case 'rate-limited':
+      return 'The service is limiting requests. Wait a moment and try again.';
+    case 'offline':
+      return 'Could not reach the service. Check your connection and try again.';
+    case 'auth-expired':
+      return 'Your session needs renewing. Sign out, sign in again, then retry.';
+    case 'server':
+      return 'The service is having trouble. Try again shortly.';
+    default:
+      return fallback;
   }
-  if (status === 1 || /network|offline|abort|timeout|timed_out/.test(code)) {
-    return 'Could not reach the service. Check your connection and try again.';
-  }
-  if (
-    status === 401 ||
-    status === 403 ||
-    /auth|permission|scope|unauthori[sz]ed|forbidden/.test(code)
-  ) {
-    return 'Your session needs renewing. Sign out, sign in again, then retry.';
-  }
-  if ((status !== null && status >= 500) || /server|unavailable|bad_gateway/.test(code)) {
-    return 'The service is having trouble. Try again shortly.';
-  }
-  return fallback;
 }
 
 /** A cancelled sign-in is not a failure; null means show no error. */

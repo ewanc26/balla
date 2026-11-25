@@ -7,6 +7,10 @@
  * here are shown only inside the signed-in conversation list.
  */
 
+import {
+  classifyStructuredFailure,
+  hasErrorCode,
+} from './failureCopyModel.ts';
 import { SERVICE_HOSTS } from './serviceHosts.ts';
 
 export const CHAT_PAGE_SIZE = 30;
@@ -170,31 +174,41 @@ export function buildPostEmbed(uri: string, cid: string): {
   };
 }
 
+/** Published chat XRPC codes, matched exactly; provider prose is never read. */
+const CHAT_DISABLED_CODES = ['messagesdisabled', 'messagesdisablederror', 'chatdisabled'];
+const CHAT_BLOCKED_CODES = [
+  'blockedactor',
+  'blockedactorerror',
+  'blockedsubject',
+  'blockedsubjecterror',
+];
+const CHAT_NOT_FOLLOWED_CODES = ['notfollowedbysender', 'notfollowedbysendererror'];
+const CHAT_SUSPENDED_CODES = ['accountsuspended', 'accountsuspendederror'];
+const CHAT_NOT_FOUND_CODES = [
+  'recipientnotfound',
+  'recipientnotfounderror',
+  'replytargetnotfound',
+  'invalidconvo',
+  'invalidconvoerror',
+];
+const CHAT_LOCKED_CODES = [
+  'convolocked',
+  'convolockederror',
+  'convolockedbymoderation',
+  'convolockedbymoderationerror',
+];
+
 export function chatFailureFrom(err: unknown): string {
-  const raw =
-    (err as any)?.error ??
-    (err as any)?.message ??
-    (err as any)?.name ??
-    err;
-  const code = String(raw || '').toLowerCase();
-  if (code.includes('messagesdisabled') || code.includes('chatdisabled')) return 'disabled';
-  if (code.includes('blockedactor') || code.includes('blockedsubject') || code.includes('blocked')) {
-    return 'blocked';
-  }
-  if (code.includes('notfollowedbysender')) return 'not-followed';
-  if (code.includes('accountsuspended') || code.includes('suspended')) return 'suspended';
-  if (
-    code.includes('recipientnotfound') ||
-    code.includes('invalidconvo') ||
-    code.includes('notfound')
-  ) {
-    return 'not-found';
-  }
-  if (code.includes('convolocked') || code.includes('locked')) return 'locked';
-  if (code.includes('ratelimit') || code === '429') return 'rate-limited';
-  if (code.includes('offline') || code.includes('network') || code.includes('fetch')) {
-    return 'offline';
-  }
+  if (hasErrorCode(err, CHAT_DISABLED_CODES)) return 'disabled';
+  if (hasErrorCode(err, CHAT_BLOCKED_CODES)) return 'blocked';
+  if (hasErrorCode(err, CHAT_NOT_FOLLOWED_CODES)) return 'not-followed';
+  if (hasErrorCode(err, CHAT_SUSPENDED_CODES)) return 'suspended';
+  if (hasErrorCode(err, CHAT_NOT_FOUND_CODES)) return 'not-found';
+  if (hasErrorCode(err, CHAT_LOCKED_CODES)) return 'locked';
+
+  const generic = classifyStructuredFailure(err);
+  if (generic === 'rate-limited') return 'rate-limited';
+  if (generic === 'offline') return 'offline';
   return 'unknown';
 }
 

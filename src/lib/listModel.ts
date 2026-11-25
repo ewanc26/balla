@@ -1,4 +1,5 @@
 import { countGraphemes } from 'unicode-segmenter/grapheme';
+import { isAuthFailure } from './failureCopyModel.ts';
 
 export const CURATE_LIST = 'app.bsky.graph.defs#curatelist';
 export const MOD_LIST = 'app.bsky.graph.defs#modlist';
@@ -156,8 +157,7 @@ export function listSharePath(list: any): string | null {
 }
 
 export function listActionError(cause: unknown, fallback: string): string {
-  const message = cause instanceof Error ? cause.message : String(cause || '');
-  if (/\b(scope|permission|unauthorised|unauthorized|forbidden|authentication|authorization)\b/i.test(message)) {
+  if (isAuthFailure(cause)) {
     return 'Your session needs renewing before Balla can manage lists. Sign out, sign in again, and retry.';
   }
   return fallback;

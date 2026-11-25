@@ -74,10 +74,21 @@ test('local list search matches names, descriptions and creators', () => {
 
 test('missing list permissions point to renewing the OAuth session', () => {
   assert.match(
-    listActionError(new Error('insufficient scope'), 'Try again.'),
+    listActionError({ error: 'InsufficientScope' }, 'Try again.'),
     /Sign out, sign in again/
   );
-  assert.equal(listActionError(new Error('offline'), 'Try again.'), 'Try again.');
+  assert.match(
+    listActionError({ status: 403, message: 'insufficient scope' }, 'Try again.'),
+    /Sign out, sign in again/
+  );
+  assert.equal(
+    listActionError(new Error('insufficient scope'), 'Try again.'),
+    'Try again.'
+  );
+  assert.equal(
+    listActionError({ message: 'insufficient scope' }, 'Try again.'),
+    'Try again.'
+  );
 });
 
 test('the list feature adds exact OAuth scopes and no wildcards', () => {

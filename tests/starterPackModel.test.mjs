@@ -127,9 +127,11 @@ test('only the PDS record-not-found error is treated as an already-deleted list'
     }),
     true
   );
-  assert.equal(isRecordNotFoundError({ status: 404, message: 'RecordNotFound' }), true);
-  assert.equal(isRecordNotFoundError({ status: 500, message: 'Internal error' }), false);
-  assert.equal(isRecordNotFoundError(new Error('offline')), false);
+  assert.equal(isRecordNotFoundError({ status: 404, error: 'NotFound' }), true);
+  assert.equal(isRecordNotFoundError({ status: 404, message: 'RecordNotFound' }), false);
+  assert.equal(isRecordNotFoundError({ status: 500, error: 'RecordNotFound' }), false);
+  assert.equal(isRecordNotFoundError({ error: 'RecordNotFound' }), false);
+  assert.equal(isRecordNotFoundError(new Error('RecordNotFound')), false);
 });
 
 test('member diffs and scope errors stay deterministic', () => {
@@ -139,8 +141,19 @@ test('member diffs and scope errors stay deterministic', () => {
   );
   assert.deepEqual(diffStarterPackMembers([], []), { added: [], removed: [] });
   assert.match(
-    starterPackActionError(new Error('Bad token scope'), 'Fallback'),
+    starterPackActionError({ code: 'InsufficientScope' }, 'Fallback'),
     /Sign out, sign in again/
   );
-  assert.equal(starterPackActionError(new Error('offline'), 'Fallback'), 'Fallback');
+  assert.match(
+    starterPackActionError({ status: 403, message: 'Bad token scope' }, 'Fallback'),
+    /Sign out, sign in again/
+  );
+  assert.equal(
+    starterPackActionError(new Error('Bad token scope'), 'Fallback'),
+    'Fallback'
+  );
+  assert.equal(
+    starterPackActionError({ message: 'Bad token scope' }, 'Fallback'),
+    'Fallback'
+  );
 });
