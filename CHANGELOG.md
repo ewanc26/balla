@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.74.0
+
+- **Place details respect keyboard and back navigation (#156, partial).** Escape now steps back from a result's detail view to the search results before it closes the picker. The visible Back to results control does the same, and focus returns to the picker's close control rather than being lost. The shared dialog hook already keeps the latest handler, so no remount or extra focus jump was added.
+- This is an accessibility correction to the v0.73.0 detail view only. No request, provider prose, position, check-in record, place chip, new dependency or new OAuth scope; scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.73.0
 
 - **Place results now have an inspectable detail view (#156, partial).** The info button on each result opens a detail view inside the same sheet, with only the structured fields the provider actually published: type, category, group, subtype, provider class, country, matched name, match kind and the validated ATGeo place ID. Absent fields are omitted; coordinates, check-in counts, rank, popularity and provider prose never reach it.

@@ -119,6 +119,23 @@ test('the details view reuses the one field builder and both verified link-outs'
   assert.equal((sheet.match(/<Modal\b/g) || []).length, 1, 'one modal, no nested detail dialog');
 });
 
+test('Escape steps back from details before closing the picker', () => {
+  const accessibility = read('../src/lib/accessibility.ts');
+  assert.match(
+    sheet,
+    /useDialogFocus\(\{\s*visible,\s*onClose: detailHit \? closeDetails : onClose,/,
+  );
+  assert.match(sheet, /function closeDetails\(\)/);
+  // The shared hook always calls the latest handler, so the detail-state
+  // change takes effect without remounting the dialog or losing focus.
+  assert.match(accessibility, /const closeRef = useRef\(onClose\);\s*closeRef\.current = onClose;/);
+  assert.match(accessibility, /closeRef\.current\(\)/);
+  assert.match(sheet, /accessibilityLabel="Back to place results"/);
+  assert.match(changelog, /Escape now steps back from a result's detail view/);
+  assert.match(compliance, /Escape and the visible Back to results control step back/);
+  assert.match(features, /Escape or the Back to results control returns to the result list/);
+});
+
 test('details fail closed with fixed copy and no writes', () => {
   assert.match(sheet, /No further place fields are published for this result\./);
   assert.match(sheet, /No public gazetteer record is available for this result\./);
@@ -133,7 +150,7 @@ test('details fail closed with fixed copy and no writes', () => {
 });
 
 test('docs, release copy and OAuth facts match the details slice', () => {
-  assert.match(changelog, /^## 0\.73\.0$/m);
+  assert.match(changelog, /^## 0\.74\.0$/m);
   assert.match(changelog, /inspectable detail view/);
   assert.match(changelog, /scope count stays 112/);
   assert.match(compliance, /detail view inside the same sheet/);
@@ -141,11 +158,11 @@ test('docs, release copy and OAuth facts match the details slice', () => {
   assert.match(features, /detail view inside the same sheet/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.73.0');
-  assert.equal(appJson.expo.version, '0.73.0');
+  assert.equal(pkg.version, '0.74.0');
+  assert.equal(appJson.expo.version, '0.74.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.73\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.74\.0<\/string>/);
   }
   assert.equal(
     createHash('sha256').update(metadataRaw).digest('hex'),

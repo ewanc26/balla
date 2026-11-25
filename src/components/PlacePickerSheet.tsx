@@ -65,7 +65,14 @@ export function PlacePickerSheet({
   const containerRef = useRef<any>(null);
   const closeRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
-  useDialogFocus({ visible, onClose, containerRef, initialFocusRef: closeRef });
+  // Escape steps back from the detail view to the results before it closes
+  // the picker. The hook keeps the latest handler without refocusing.
+  useDialogFocus({
+    visible,
+    onClose: detailHit ? closeDetails : onClose,
+    containerRef,
+    initialFocusRef: closeRef,
+  });
 
   useEffect(() => {
     if (!visible) {
