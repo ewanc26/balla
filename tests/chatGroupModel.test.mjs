@@ -20,6 +20,10 @@ import {
   lockStatusLabel,
   memberRole,
   notificationIncludeLabel,
+  orderedParticipants,
+  participantCount,
+  participantLabel,
+  participantSubtitle,
   replyPreview,
   validateGroupName,
   validateJoinCode,
@@ -122,6 +126,52 @@ test('chat notification preferences use real include values', () => {
   assert.equal(notificationIncludeLabel('follows'), 'People I follow');
   assert.equal(notificationIncludeLabel('all'), 'Everyone');
   assert.equal(notificationIncludeLabel('unknown'), 'Not set');
+});
+
+test('participant labels use only real member fields', () => {
+  const viewer = 'did:plc:viewer';
+  assert.equal(participantLabel(null, viewer), '');
+  assert.equal(participantLabel({ did: viewer }, viewer), 'You');
+  assert.equal(
+    participantLabel({ did: 'did:plc:a', displayName: 'Ada', handle: 'ada.test' }, viewer),
+    'Ada'
+  );
+  assert.equal(participantLabel({ did: 'did:plc:a', handle: 'ada.test' }, viewer), '@ada.test');
+  assert.equal(participantLabel({ did: 'did:plc:a' }, viewer), 'did:plc:a');
+  assert.equal(participantSubtitle({ did: 'did:plc:a', displayName: 'Ada', handle: 'ada.test' }), '@ada.test');
+  assert.equal(
+    participantSubtitle({
+      did: 'did:plc:a',
+      displayName: 'Ada',
+      kind: { $type: 'chat.bsky.actor.defs#groupConvoMember', role: 'owner' },
+    }),
+    'Owner'
+  );
+  assert.equal(participantSubtitle(null), '');
+});
+
+test('the full roster is de-duplicated, owner first, then viewer, then named', () => {
+  const viewer = 'did:plc:viewer';
+  const members = [
+    { did: 'did:plc:zed', displayName: 'Zed' },
+    { did: viewer, displayName: 'You' },
+    {
+      did: 'did:plc:owner',
+      displayName: 'Owner',
+      kind: { $type: 'chat.bsky.actor.defs#groupConvoMember', role: 'owner' },
+    },
+    { did: 'did:plc:ada', displayName: 'Ada' },
+    { did: 'did:plc:zed', displayName: 'Zed duplicate' },
+    { did: '', displayName: 'No DID' },
+  ];
+  assert.deepEqual(
+    orderedParticipants(members, viewer).map((member) => member.did),
+    ['did:plc:owner', viewer, 'did:plc:ada', 'did:plc:zed']
+  );
+  assert.deepEqual(orderedParticipants(undefined, viewer), []);
+  assert.equal(participantCount(members), 4);
+  assert.equal(participantCount(members, { kind: { memberCount: 12 } }), 12);
+  assert.equal(participantCount(undefined), 0);
 });
 
 test('chat report subjects use the documented open-union chat refs', () => {
