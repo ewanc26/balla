@@ -41,23 +41,26 @@ test('no public PDS JSON object reader makes a raw unbounded fetch', () => {
   }
 
   const helper = read('../src/lib/publicJsonRead.ts');
-  assert.match(helper, /withDeadline\(async \(signal\)/);
-  assert.match(helper, /signal,/);
+  assert.match(helper, /readBoundedPublic<unknown>\(url/);
+  assert.doesNotMatch(helper, /await fetch\(/);
+  const core = read('../src/lib/boundedPublicFetch.ts');
+  assert.match(core, /withDeadline\(async \(signal\)/);
+  assert.match(core, /signal,/);
 });
 
-test('v0.91.1 records the correction and the completed reader coverage', () => {
+test('v0.92.0 records the correction and the completed reader coverage', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.91.1');
-  assert.equal(appJson.expo.version, '0.91.1');
+  assert.equal(pkg.version, '0.92.0');
+  assert.equal(appJson.expo.version, '0.92.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.91\.1<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.92\.0<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
   const section = changelog.slice(
-    changelog.indexOf('## 0.91.1'),
+    changelog.indexOf('## 0.92.0'),
     changelog.indexOf('## 0.91.0'),
   );
   assert.match(section, /last raw public PDS JSON reads are now bounded/);

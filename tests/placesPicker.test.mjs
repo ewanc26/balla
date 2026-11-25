@@ -194,10 +194,10 @@ test('docs and release notes match the partial place picker', () => {
   assert.match(features, /place-name picker/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.91.1');
-  assert.equal(appJson.expo.version, '0.91.1');
+  assert.equal(pkg.version, '0.92.0');
+  assert.equal(appJson.expo.version, '0.92.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.91\.1<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.92\.0<\/string>/);
   }
 });

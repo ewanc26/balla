@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.92.0
+
+- **The remaining token-free public reads are now bounded (#96/#97/#100, partial).** The direct PDS blob fallback and the user-initiated translation read still used raw, unbounded `fetch`. A PDS that accepted a connection but never finished the image bytes, or a translation service that never answered, could leave an image placeholder or the post/message menu waiting indefinitely.
+- One `readBoundedPublic()` core now owns the deadline, abort signal and body read for every token-free public service. `fetchPublicJsonObject()` delegates to it, so JSON objects, JSON arrays (translation) and image bytes (blob fallback) share exactly one timing rule. Each caller still makes its own fail-closed decision and keeps its own fixed copy; structured HTTP status and parser failures stay separate, and provider prose is never read, logged, stored or shown.
+- A timed-out blob keeps its placeholder, a timed-out translation reports a fixed message, and the earlier JSON readers behave exactly as before. No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free reads, not provider failover, a grant change or a verified independent-PDS login.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.91.1
 
 - **The last raw public PDS JSON reads are now bounded too (#96/#97/#100, partial).** `teal.ts` and `reactions.ts` still fetched play and reaction records with raw, unbounded `fetch` against the PDS in a DID document. A PDS that accepted a connection but never completed it could leave a profile's play strip or a post's reaction chips waiting indefinitely. Both now use `fetchPublicJsonObject()`, so one helper owns the deadline, abort signal and structured-object rule for every public PDS JSON object read.

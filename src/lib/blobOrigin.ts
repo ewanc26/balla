@@ -1,6 +1,8 @@
 import { Platform } from 'react-native';
 import { File, Paths } from 'expo-file-system';
+import { readBoundedPublic } from './boundedPublicFetch.ts';
 import { resolveDidDocument } from './identityResolver';
+import type { TimeoutDeps } from './requestTimeout.ts';
 import { atprotoPdsEndpoint } from './tealModel';
 import {
   MAX_BLOB_CACHE_BYTES,
@@ -86,7 +88,12 @@ async function displayUri(
  * failures are always non-fatal so a broken CDN URL can keep its placeholder.
  * The HTTP read is public and unauthenticated: getBlob needs no OAuth scope.
  */
-export async function resolveBlobUri(fallback: BlobFallback): Promise<string | null> {
+export type BlobReadDeps = { fetchImpl?: typeof fetch } & TimeoutDeps;
+
+export async function resolveBlobUri(
+  fallback: BlobFallback,
+  deps: BlobReadDeps = {}
+): Promise<string | null> {
   if (!fallback?.did || !fallback?.cid) return null;
   const key = blobCacheKey(fallback.did, fallback.cid);
   const hit = cache.get(key);
@@ -101,15 +108,23 @@ export async function resolveBlobUri(fallback: BlobFallback): Promise<string | n
     if (!endpoint) return null;
 
     // A plain fetch avoids the AppView proxy that the SDK agent attaches to
-    // every XRPC call; getBlob must be read from the PDS itself.
-    const response = await fetch(getBlobUrl(endpoint, fallback.did, fallback.cid), {
-      headers: { Accept: 'image/*' },
-    });
-    if (!response.ok) return null;
-    const bytes = new Uint8Array(await response.arrayBuffer());
-    if (!bytes.byteLength) return null;
+    // every XRPC call; getBlob must be read from the PDS itself. The shared
+    // bounded reader cancels a PDS that never finishes the byte stream, so a
+    // broken image cannot leave a placeholder waiting forever.
+    const result = await readBoundedPublic(
+      getBlobUrl(endpoint, fallback.did, fallback.cid),
+      {
+        ...deps,
+        accept: 'image/*',
+        parse: async (response) => ({
+          bytes: new Uint8Array(await response.arrayBuffer()),
+          contentType: response.headers.get('Content-Type')?.split(';')[0] ?? '',
+        }),
+      },
+    );
+    if (result.state !== 'value' || !result.value.bytes.byteLength) return null;
+    const { bytes, contentType } = result.value;
 
-    const contentType = response.headers.get('Content-Type')?.split(';')[0];
     const mime = fallback.mimeType || contentType || 'image/jpeg';
     const stored = await displayUri(bytes, mime, key);
     cache.set(key, { uri: stored.uri, bytes: bytes.byteLength, release: stored.release });

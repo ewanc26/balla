@@ -17,7 +17,8 @@
  * without turning one hung host into a retry loop.
  */
 
-import { withDeadline, type TimeoutDeps } from './requestTimeout.ts';
+import { readBoundedPublic } from './boundedPublicFetch.ts';
+import type { TimeoutDeps } from './requestTimeout.ts';
 
 export type PublicJsonReadDeps = {
   fetchImpl?: typeof fetch;
@@ -35,33 +36,24 @@ export async function fetchPublicJsonObject(
   deps: PublicJsonReadDeps = {},
 ): Promise<Record<string, unknown> | null> {
   if (typeof url !== 'string' || !url) return null;
+  const result = await readBoundedPublic<unknown>(url, {
+    ...deps,
+    parse: async (response) => {
+      const body = await response.json();
+      if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        throw new Error('Public read returned an invalid body.');
+      }
+      return body;
+    },
+  });
 
-  const outcome = await withDeadline(async (signal) => {
-    let response: Response;
-    try {
-      response = await (deps.fetchImpl ?? fetch)(url, {
-        headers: { Accept: deps.accept ?? 'application/json' },
-        signal,
-      });
-    } catch {
-      // No provider text is copied. The fixed error has no classification
-      // field, so a network failure stays non-retryable as it was before.
-      throw new Error('Could not reach the public service.');
-    }
-
-    if (!response.ok) throw statusError(response.status);
-
-    let body: unknown;
-    try {
-      body = await response.json();
-    } catch {
-      throw new Error('Public read returned an invalid body.');
-    }
-    if (!body || typeof body !== 'object' || Array.isArray(body)) {
-      throw new Error('Public read returned an invalid body.');
-    }
-    return body as Record<string, unknown>;
-  }, deps);
-
-  return outcome.state === 'timeout' ? null : outcome.value;
+  if (result.state === 'timeout') return null;
+  if (result.state === 'value') return result.value as Record<string, unknown>;
+  if (result.state === 'status') throw statusError(result.status);
+  if (result.state === 'invalid') {
+    throw new Error('Public read returned an invalid body.');
+  }
+  // A transport failure gets a fixed error with no classification field, so
+  // it stays non-retryable exactly as before. No provider prose is copied.
+  throw new Error('Could not reach the public service.');
 }
