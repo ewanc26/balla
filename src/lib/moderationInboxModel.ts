@@ -3,6 +3,7 @@
 // or described as unknown.
 
 import { formatDate, formatDateTime } from './time.ts';
+import { BLUESKY_WEB } from './serviceHosts.ts';
 
 export type InboxFilter = 'all' | 'pending' | 'resolved' | 'unread';
 export type InboxSection = 'reports' | 'subjects' | 'accountStatus';
@@ -164,20 +165,19 @@ export function subjectLabel(
 export function subjectWebUrl(subject: any): string | undefined {
   const descriptor = describeSubject(subject);
   if (descriptor.kind === 'account' && descriptor.did) {
-    return `https://bsky.app/profile/${descriptor.did}`;
+    return BLUESKY_WEB.profile(descriptor.did);
   }
   if (!descriptor.did || !descriptor.rkey) return undefined;
-  const base = `https://bsky.app/profile/${descriptor.did}`;
   switch (descriptor.kind) {
     case 'post':
     case 'status':
-      return `${base}/post/${descriptor.rkey}`;
+      return BLUESKY_WEB.post(descriptor.did, descriptor.rkey);
     case 'feed':
-      return `${base}/feed/${descriptor.rkey}`;
+      return BLUESKY_WEB.feed(descriptor.did, descriptor.rkey);
     case 'list':
-      return `${base}/lists/${descriptor.rkey}`;
+      return BLUESKY_WEB.list(descriptor.did, descriptor.rkey);
     case 'starterPack':
-      return `${base}/starter-pack/${descriptor.rkey}`;
+      return BLUESKY_WEB.starterPack(descriptor.did, descriptor.rkey);
     default:
       return undefined;
   }

@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.65.0
+
+- **Official Bluesky web links now have one home (#97, partial).** The `bsky.app` and `bsky.social` origins, control-panel paths and canonical profile/post/feed/list/starter-pack/invite shapes live in `src/lib/serviceHosts.ts` beside the protocol hosts. Every link-out derives from those builders, so no screen or model carries a second copy of a canonical URL. A deterministic source scan enforces that only `serviceHosts.ts` holds those literals; the single placeholder in the search filter remains an example, not a link.
+- **The places provider default derives from the same host table.** `DEFAULT_PLACES_ENDPOINT` now comes from `SERVICE_HOSTS.places` instead of repeating the literal. This changes no URL, request, setting or OAuth grant: the scope count remains 112 and full #97 (grant-bound service changes) is still outstanding.
+- No new OAuth scope or dependency; no provider prose is logged or stored. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.64.0
 
 - **Places search can be switched off (#156, partial).** Advanced → Services has a visible, reversible Places search switch. Off stops every typed place request, including the Services check and the composer, keeps the configured host, and says plainly in the composer that search is off. The typed name still works as plain text. On restores the saved provider without a restart.

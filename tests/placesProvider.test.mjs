@@ -156,7 +156,7 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(exporter, /places: effectivePlaces\(config\)/);
   assert.match(exporter, /usingDefaultPlaces/);
   assert.match(exporter, /placesEnabled: isPlacesEnabled\(config\)/);
-  assert.match(changelog, /^## 0\.64\.0$/m);
+  assert.match(changelog, /^## 0\.65\.0$/m);
   assert.match(changelog, /switched off/);
   assert.match(changelog, /#156, partial/);
   assert.match(changelog, /scope count remains 112/);
@@ -164,10 +164,10 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(features, /switch typed search off/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.64.0');
-  assert.equal(appJson.expo.version, '0.64.0');
+  assert.equal(pkg.version, '0.65.0');
+  assert.equal(appJson.expo.version, '0.65.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.64\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.65\.0<\/string>/);
   }
 });

@@ -27,6 +27,42 @@ export const SERVICE_HOSTS = {
   places: 'https://places.eurosky.tech',
 } as const;
 
+/**
+ * Official Bluesky web links are link-outs, not service endpoints: they are
+ * canonical pages for a person post or control panel, and never decide which
+ * host Balla calls. Keeping them here (#97) makes every `bsky.app` / `bsky.social`
+ * literal auditable in one file without implying that those pages are configurable.
+ */
+const BLUESKY_WEB_ORIGIN = 'https://bsky.app';
+const BLUESKY_SOCIAL_ORIGIN = 'https://bsky.social';
+
+const blueskyProfileUrl = (actor: string) =>
+  `${BLUESKY_WEB_ORIGIN}/profile/${actor}`;
+
+export const BLUESKY_WEB = {
+  host: 'bsky.app',
+  origin: BLUESKY_WEB_ORIGIN,
+  accountSettings: `${BLUESKY_WEB_ORIGIN}/settings/account`,
+  privacySettings: `${BLUESKY_WEB_ORIGIN}/settings/privacy-and-security`,
+  appPasswords: `${BLUESKY_WEB_ORIGIN}/settings/app-passwords`,
+  chatSettings: `${BLUESKY_WEB_ORIGIN}/settings/chat`,
+  profile: blueskyProfileUrl,
+  post: (actor: string, rkey: string) => `${blueskyProfileUrl(actor)}/post/${rkey}`,
+  feed: (actor: string, rkey: string) => `${blueskyProfileUrl(actor)}/feed/${rkey}`,
+  list: (actor: string, rkey: string) => `${blueskyProfileUrl(actor)}/lists/${rkey}`,
+  starterPack: (actor: string, rkey: string) =>
+    `${blueskyProfileUrl(actor)}/starter-pack/${rkey}`,
+  starterPackShort: (name: string, rkey: string) =>
+    `${BLUESKY_WEB_ORIGIN}/start/${name}/${rkey}`,
+  chatInvite: (code: string) => `${BLUESKY_WEB_ORIGIN}/chat/${code}`,
+} as const;
+
+export const BLUESKY_SOCIAL = {
+  host: 'bsky.social',
+  origin: BLUESKY_SOCIAL_ORIGIN,
+  communityGuidelines: `${BLUESKY_SOCIAL_ORIGIN}/about/support/community-guidelines`,
+} as const;
+
 /** The reader support page (#163), beside the hosts so the URL has one home. */
 export const SUPPORT_URL = 'https://ewancroft.uk/support';
 
@@ -39,7 +75,7 @@ export const CREATOR = {
   name: 'Ewan Croft',
   handle: 'ewancroft.uk',
   site: 'https://ewancroft.uk',
-  webProfile: 'https://bsky.app/profile/ewancroft.uk',
+  webProfile: BLUESKY_WEB.profile('ewancroft.uk'),
   supportUrl: SUPPORT_URL,
 } as const;
 

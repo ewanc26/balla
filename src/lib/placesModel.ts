@@ -12,8 +12,10 @@
  */
 
 import { normaliseHostUrl } from './hostingModel.ts';
+import { SERVICE_HOSTS } from './serviceHosts.ts';
 
-export const DEFAULT_PLACES_ENDPOINT = 'https://places.eurosky.tech';
+/** Derive the public provider default from the one host table (#97). */
+export const DEFAULT_PLACES_ENDPOINT = SERVICE_HOSTS.places;
 export const PLACES_SEARCH_PATH = '/v1/search';
 export const PLACES_SEARCH_CANARY = 'Berlin';
 export const PLACES_SEARCH_LIMIT = 10;
