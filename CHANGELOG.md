@@ -3,7 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
-## 0.85.0
+## 0.86.0
+
+- **Place results are bounded before they reach app state (#156, partial).** Every provider-supplied display field — name, category, group, subtype, country and matched name — now passes through one bounded, single-line cleaner: hidden controls and line breaks are removed, and each field is capped at 100 characters. An ATGeo origin is capped at 512 characters and still fails closed on whitespace or hidden controls, so a hostile or broken provider cannot put a huge string or a spoofing control into a row, an accessibility label, a browser link or the composer. The words Balla sends in `q` use the same bound.
+- Deterministic hostile-field tests and static audits cover the parser, the query body and the typed-name insertion path. Ordinary non-ASCII place names are preserved.
+- No new scope, dependency, grant, provider claim or endpoint change; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is parser hardening, not a granularity chooser, check-in record, place chip or per-media binding.
+
+## 0.86.0
 
 - **The last provider-message failure checks are now structured-only (#97/#34, partial).** List and starter-pack actions renew-session copy from HTTP status and allowlisted error codes; chat failures map only published chat codes plus status/rate-limit/offline signals; live-status compare-and-swap retries and missing-record deletion use exact `InvalidSwap` / `RecordNotFound` codes. Provider free-text `message` no longer changes any copy, retry or control flow in these paths. The shared failure model now owns the exact code allowlists, so retry classification, sign-in, labeler, video, moderation and report failures use one rule set.
 - Hostile-string tests cover list, starter-pack, chat and live-status copy and control flow, including strings that previously matched by substring. Static audits assert those modules no longer read a message field or stringify the error. A chat error carrying only a message text now uses the honest unknown fallback rather than being guessed from prose.

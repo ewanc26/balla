@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync } from 'node:fs';
 import {
   DEFAULT_PLACES_ENDPOINT,
+  MAX_PLACE_FIELD_LENGTH,
+  MAX_PLACE_URN_LENGTH,
   PLACES_SEARCH_PATH,
+  cleanPlaceText,
   normalisePlacesEndpoint,
   parsePlacesSearch,
   placeResultDetail,
@@ -22,6 +25,7 @@ import {
 
 const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 const config = read('../src/lib/servicesConfig.ts');
+const model = read('../src/lib/placesModel.ts');
 const exporter = read('../src/lib/servicesExportModel.ts');
 const screen = read('../src/screens/ServicesScreen.tsx');
 const changelog = read('../CHANGELOG.md');
@@ -94,6 +98,33 @@ test('only structured display fields survive parsing', () => {
   assert.doesNotMatch(JSON.stringify(hits), /lat|lng|52\.506|checkins/i);
   assert.deepEqual(parsePlacesSearch(null), []);
   assert.deepEqual(parsePlacesSearch({ results: 'no' }), []);
+});
+
+test('provider display fields are bounded and stripped of hidden controls', () => {
+  const huge = 'A'.repeat(MAX_PLACE_FIELD_LENGTH + 500);
+  const hostile = `${huge}\nsecond\u0000line\u202E`;
+  const hits = parsePlacesSearch({
+    results: [{
+      kind: 'place',
+      name: hostile,
+      category: hostile,
+      group: hostile,
+      subtype: hostile,
+      country: hostile,
+      matched: hostile,
+      origin: `urn:atgeo:x:y:${'z'.repeat(MAX_PLACE_URN_LENGTH)}`,
+    }],
+  });
+  assert.equal(hits.length, 1);
+  for (const field of ['name', 'category', 'group', 'subtype', 'country', 'matched']) {
+    assert.equal(hits[0][field].length, MAX_PLACE_FIELD_LENGTH, field);
+    assert.doesNotMatch(hits[0][field], /[\u0000-\u001F\u202A-\u202E]/, field);
+  }
+  assert.equal(hits[0].origin, null);
+  assert.equal(cleanPlaceText('  Café  Zürich  '), 'Café Zürich');
+  assert.equal(cleanPlaceText('\u0000\u202E'), null);
+  assert.equal(cleanPlaceText('x', 3), 'x');
+  assert.equal(JSON.parse(placesSearchBody(hostile)).q.length, MAX_PLACE_FIELD_LENGTH);
 });
 
 test('result details use fixed labels from published fields only', () => {
@@ -210,6 +241,10 @@ test('the screen, export and release notes describe the partial feature', () => 
     placesHostLabel('https://places.eurosky.tech/path', true),
     'Places host needs an https address',
   );
+  assert.match(model, /export function cleanPlaceText\(value: unknown/);
+  assert.match(model, /const name = cleanPlaceText\(value\.name\)/);
+  assert.match(model, /origin: atgeoUrn\(value\.origin\)/);
+  assert.match(compliance, /bounded, single-line cleaner/);
   assert.match(exporter, /places: effectivePlaces\(config\)/);
   assert.match(exporter, /usingDefaultPlaces/);
   assert.match(exporter, /placesEnabled: isPlacesEnabled\(config\)/);
@@ -224,10 +259,10 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(features, /switch typed search off/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.85.0');
-  assert.equal(appJson.expo.version, '0.85.0');
+  assert.equal(pkg.version, '0.86.0');
+  assert.equal(appJson.expo.version, '0.86.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.85\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.86\.0<\/string>/);
   }
 });
