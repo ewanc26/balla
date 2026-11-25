@@ -36,11 +36,11 @@ test('the identity strategy copy no longer hardcodes a directory host', () => {
 test('release notes and public docs describe the change honestly', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.85.0');
-  assert.equal(appJson.expo.version, '0.85.0');
+  assert.equal(pkg.version, '0.86.0');
+  assert.equal(appJson.expo.version, '0.86.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.85\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.86\.0<\/string>/);
   }
   assert.match(changelog, /^## 0\.72\.0$/m);
   assert.match(changelog, /#97, partial/);

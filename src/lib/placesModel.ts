@@ -20,6 +20,10 @@ export const PLACES_SEARCH_PATH = '/v1/search';
 export const PLACES_SEARCH_CANARY = 'Berlin';
 export const PLACES_SEARCH_LIMIT = 10;
 const MAX_QUERY_LENGTH = 100;
+/** Every provider-supplied display string is bounded before it reaches state. */
+export const MAX_PLACE_FIELD_LENGTH = 100;
+/** An ATGeo origin is an identifier, never a free-text field; bound it too. */
+export const MAX_PLACE_URN_LENGTH = 512;
 
 /** The four match kinds published by the typed-search endpoint. */
 export const PLACE_MATCH_KINDS = ['start', 'word', 'other_name', 'approximate'] as const;
@@ -63,19 +67,40 @@ export function placesSearchUrl(endpoint: string, query: string): string | null 
 
 export function placesSearchBody(query: string, limit: number = PLACES_SEARCH_LIMIT): string {
   const bounded = Math.min(Math.max(Math.trunc(limit) || PLACES_SEARCH_LIMIT, 1), 30);
-  return JSON.stringify({ q: query.trim().slice(0, MAX_QUERY_LENGTH), limit: bounded });
+  // The same bound and control filter as every other place string; only the
+  // person's words are sent, never a position or a hidden formatting control.
+  return JSON.stringify({ q: cleanPlaceText(query, MAX_QUERY_LENGTH) ?? '', limit: bounded });
 }
 
-function text(value: unknown): string | null {
-  return typeof value === 'string' && value.trim() ? value : null;
+/**
+ * Display controls that can hide text or reverse its order. They are dropped
+ * before any provider string reaches a row, an accessibility label or the
+ * composer; ordinary non-ASCII names are left intact.
+ */
+const HIDDEN_CONTROLS = /[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g;
+
+/**
+ * The one bounded, single-line cleaner for provider-supplied display strings.
+ * A hostile or broken provider cannot put a huge string, hidden control or
+ * line break into state: every field is collapsed, capped and trimmed here.
+ */
+export function cleanPlaceText(value: unknown, limit: number = MAX_PLACE_FIELD_LENGTH): string | null {
+  if (typeof value !== 'string') return null;
+  const cleaned = value
+    .replace(HIDDEN_CONTROLS, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, limit)
+    .trim();
+  return cleaned || null;
 }
 
 /** The one ATGeo origin check, shared by result parsing and record links. */
 export function atgeoUrn(value: unknown): string | null {
-  // A URN carries no whitespace; a trailing phrase is not part of an ID.
-  return typeof value === 'string' && /^urn:atgeo:[a-z0-9.-]+:[a-z0-9.-]+:[^\s]+$/i.test(value)
-    ? value
-    : null;
+  if (typeof value !== 'string' || !value || value.length > MAX_PLACE_URN_LENGTH) return null;
+  // A URN is an identifier: no whitespace, hidden control or trailing phrase.
+  if (value.replace(HIDDEN_CONTROLS, '') !== value) return null;
+  return /^urn:atgeo:[a-z0-9.-]+:[a-z0-9.-]+:[^\s]+$/i.test(value) ? value : null;
 }
 
 /** Only a published match kind is accepted; an unknown value stays null. */
@@ -94,20 +119,20 @@ export function parsePlacesSearch(payload: unknown): PlaceHit[] {
   for (const item of results.slice(0, PLACES_SEARCH_LIMIT)) {
     if (!item || typeof item !== 'object') continue;
     const value = item as Record<string, unknown>;
-    const name = text(value.name);
+    const name = cleanPlaceText(value.name);
     const kind = value.kind === 'place' || value.kind === 'area' ? value.kind : null;
     if (!name || !kind) continue;
     hits.push({
       kind,
       origin: atgeoUrn(value.origin),
       name,
-      category: text(value.category),
-      group: text(value.group),
-      subtype: text(value.subtype),
+      category: cleanPlaceText(value.category),
+      group: cleanPlaceText(value.group),
+      subtype: cleanPlaceText(value.subtype),
       cityState: value.cityState === true,
-      country: text(value.country),
+      country: cleanPlaceText(value.country),
       match: matchKind(value.match),
-      matched: text(value.matched)?.slice(0, MAX_QUERY_LENGTH) ?? null,
+      matched: cleanPlaceText(value.matched, MAX_QUERY_LENGTH),
     });
   }
   return hits;
@@ -178,9 +203,7 @@ export type PlaceSelection = { start: number; end: number };
 
 /** A place name is ordinary text: no URN, coordinate or check-in count travels. */
 export function normalisePlaceName(value: unknown): string | null {
-  if (typeof value !== 'string') return null;
-  const name = value.replace(/\s+/g, ' ').trim().slice(0, MAX_QUERY_LENGTH);
-  return name || null;
+  return cleanPlaceText(value);
 }
 
 /** Insert a picked name at the cursor, keeping surrounding punctuation intact. */

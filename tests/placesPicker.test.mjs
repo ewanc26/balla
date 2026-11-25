@@ -22,6 +22,7 @@ const features = read('../site/features.html');
 test('a picked place is inserted as plain text at the cursor', () => {
   assert.equal(normalisePlaceName('  Olympiastadion  '), 'Olympiastadion');
   assert.equal(normalisePlaceName('  two\nlines '), 'two lines');
+  assert.equal(normalisePlaceName('a\u0000b\u202Ec'), 'a b c');
   assert.equal(normalisePlaceName('   '), null);
   assert.deepEqual(insertPlaceName('Met at ', { start: 7, end: 7 }, 'Berlin'), {
     text: 'Met at Berlin ',
@@ -193,10 +194,10 @@ test('docs and release notes match the partial place picker', () => {
   assert.match(features, /place-name picker/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.85.0');
-  assert.equal(appJson.expo.version, '0.85.0');
+  assert.equal(pkg.version, '0.86.0');
+  assert.equal(appJson.expo.version, '0.86.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.85\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.86\.0<\/string>/);
   }
 });
