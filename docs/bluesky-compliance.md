@@ -3,8 +3,11 @@
 Research date: **20 November 2026**. Implementation update: **23 November 2026**.
 
 This is an engineering research note, not a claim of certification. Bluesky does
-not run a general client certification programme. “Fully compliant” here means
-three separate things that can each be tested:
+not run a general client certification programme. The Facebook-era concept map
+that pairs each surface with its AT Protocol concept is maintained separately in
+[docs/facebook-translation.md](facebook-translation.md) and tracked in
+[issue #149](https://github.com/ewanc26/balla/issues/149). “Fully compliant”
+here means three separate things that can each be tested:
 
 1. **Protocol correctness** — AT Protocol lexicons, OAuth, DPoP, service routing,
    pagination and error handling.
