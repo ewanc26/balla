@@ -79,9 +79,36 @@ export const CREATOR = {
   supportUrl: SUPPORT_URL,
 } as const;
 
+/**
+ * The one did:web document URL builder (#97). A did:web identifier maps to an
+ * https host with optional path segments; a bare host uses /.well-known. Only
+ * the structured identifier is parsed here: no provider prose is read or stored.
+ */
+export function didWebDocumentUrl(did: string): string | null {
+  if (typeof did !== 'string' || !/^did:[a-z]+:[A-Za-z0-9._:%-]+$/i.test(did)) return null;
+  if (!did.startsWith('did:web:')) return null;
+  try {
+    const raw = did.slice('did:web:'.length).replace(/%3A/gi, ':');
+    const [host, ...path] = raw.split(':');
+    if (!host || !/^[a-z0-9.-]+$/i.test(host)) return null;
+    const suffix = path.length ? `/${path.map(encodeURIComponent).join('/')}` : '/.well-known';
+    return `https://${host}${suffix}/did.json`;
+  } catch {
+    return null;
+  }
+}
+
+function requiredDidWebDocumentUrl(did: string): string {
+  const url = didWebDocumentUrl(did);
+  // These are compile-time host facts; a malformed one is a build error, not a
+  // runtime failure that could be mistaken for an unreachable provider.
+  if (!url) throw new Error(`Invalid did:web service host: ${did}`);
+  return url;
+}
+
 /** Public DID documents read by the informational service checks. */
-export const APPVIEW_DID_DOCUMENT_URL = 'https://api.eurosky.network/.well-known/did.json';
-export const CHAT_DID_DOCUMENT_URL = 'https://api.bsky.chat/.well-known/did.json';
+export const APPVIEW_DID_DOCUMENT_URL = requiredDidWebDocumentUrl(SERVICE_HOSTS.appviewDid);
+export const CHAT_DID_DOCUMENT_URL = requiredDidWebDocumentUrl(SERVICE_HOSTS.chatDid);
 
 /** Published video lexicon used by both the quota and reachability checks. */
 export const VIDEO_LIMITS_LXM = 'app.bsky.video.getUploadLimits';

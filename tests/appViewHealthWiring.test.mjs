@@ -34,7 +34,7 @@ test('the AppView screen offers a real public check, not a provider picker', () 
 });
 
 test('the probe uses public reads, structured fields and status-only failures', () => {
-  assert.match(model, /\.well-known\/did\.json/);
+  assert.match(model, /didWebDocumentUrl/);
   assert.match(model, /advertisedEndpoint\([^\n]*#bsky_appview/);
   assert.match(model, /app\.bsky\.actor\.getProfile/);
   assert.match(model, /serviceStatusDetail/);
@@ -56,13 +56,13 @@ test('no OAuth scope, dependency or message-text path was added', () => {
 test('release notes and the compliance matrix describe the partial slice', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.66.0');
-  assert.equal(appJson.expo.version, '0.66.0');
+  assert.equal(pkg.version, '0.67.0');
+  assert.equal(appJson.expo.version, '0.67.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.66\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.67\.0<\/string>/);
   }
-  assert.match(changelog, /^## 0\.66\.0$/m);
+  assert.match(changelog, /^## 0\.67\.0$/m);
   assert.match(changelog, /#99, partial/);
   assert.match(changelog, /no failover/i);
   assert.match(changelog, /sync lag/i);

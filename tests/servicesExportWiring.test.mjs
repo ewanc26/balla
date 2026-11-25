@@ -40,13 +40,15 @@ test('defaults are declared in one host module and the rest derive from it', () 
   const hosts = read('../src/lib/serviceHosts.ts');
   for (const host of [
     'https://bsky.social',
-    'https://api.eurosky.network/.well-known/did.json',
-    'https://api.bsky.chat/.well-known/did.json',
+    'did:web:api.eurosky.network',
+    'did:web:api.bsky.chat',
     'https://video.bsky.app',
     'https://plc.directory',
   ]) {
     assert.ok(hosts.includes(host), `default host ${host} lives in serviceHosts.ts`);
   }
+  assert.match(hosts, /requiredDidWebDocumentUrl\(SERVICE_HOSTS\.appviewDid\)/);
+  assert.match(hosts, /requiredDidWebDocumentUrl\(SERVICE_HOSTS\.chatDid\)/);
   const services = read('../src/lib/servicesModel.ts');
   assert.match(services, /SERVICE_HOSTS\.handleResolver/);
   assert.doesNotMatch(services, /'https:\/\/bsky\.social'/);
@@ -55,13 +57,13 @@ test('defaults are declared in one host module and the rest derive from it', () 
 test('the release documents the partial #97 slice honestly', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.66.0');
-  assert.equal(appJson.expo.version, '0.66.0');
+  assert.equal(pkg.version, '0.67.0');
+  assert.equal(appJson.expo.version, '0.67.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.66\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.67\.0<\/string>/);
   }
-  assert.match(changelog, /^## 0\.66\.0$/m);
+  assert.match(changelog, /^## 0\.67\.0$/m);
   assert.match(changelog, /#97, partial/);
   assert.match(changelog, /export/);
   assert.match(changelog, /scope count remains 111/);

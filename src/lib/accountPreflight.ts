@@ -16,8 +16,8 @@ import {
   wellKnownUrl,
   type ServerFacts,
 } from './hostingModel.ts';
-import { plcDocumentUrl } from './serviceHosts.ts';
-import { DEFAULT_SERVICES, didWebUrl } from './servicesModel.ts';
+import { didWebDocumentUrl, plcDocumentUrl } from './serviceHosts.ts';
+import { DEFAULT_SERVICES } from './servicesModel.ts';
 import { atprotoPdsEndpoint } from './tealModel.ts';
 
 export type AccountPreflightState =
@@ -138,10 +138,7 @@ async function readJson(fetchImpl: typeof fetch, url: string): Promise<unknown |
 }
 
 function documentUrl(did: string, plcDirectory: string): string | null {
-  if (did.startsWith('did:web:')) {
-    const base = didWebUrl(did);
-    return base ? `${base}/.well-known/did.json` : null;
-  }
+  if (did.startsWith('did:web:')) return didWebDocumentUrl(did);
   if (PLC_RE.test(did)) return plcDocumentUrl(did, plcDirectory);
   return null;
 }

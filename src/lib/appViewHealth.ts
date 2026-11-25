@@ -8,6 +8,7 @@
  * feed freshness, because these public reads do not expose either.
  */
 
+import { didWebDocumentUrl } from './serviceHosts.ts';
 import {
   DEFAULT_SERVICES,
   advertisedEndpoint,
@@ -99,11 +100,10 @@ export async function probeAppViewHealth(
   const now = deps.now ?? Date.now;
   const did = deps.did ?? APPVIEW_HEALTH_DID;
   const base = didWebUrl(did);
-  if (!base) {
+  const documentUrl = didWebDocumentUrl(did);
+  if (!base || !documentUrl) {
     return result('invalid', null, null, null, null, null, 'Grant-bound AppView DID has no did:web document URL.');
   }
-
-  const documentUrl = `${base}/.well-known/did.json`;
   const documentRead = await timedFetch(fetchImpl, now, documentUrl);
   if (!documentRead.response) {
     return result('unavailable', null, documentRead.latencyMs, base, documentRead.latencyMs, null, 'Could not read the AppView DID document from this device.');
