@@ -496,6 +496,14 @@ export function PlacePickerSheet({
                     : placesSearchCopy(state)}
                 </Text>
               ) : null}
+              {linkError && !detailHit ? (
+                <Text
+                  accessibilityRole="alert"
+                  style={{ color: p.danger, fontSize: 13, marginTop: 8 }}
+                >
+                  {linkError}
+                </Text>
+              ) : null}
               <ScrollView style={styles.results} keyboardShouldPersistTaps="handled">
                 {hits.map((hit, index) => (
                   <View
@@ -546,7 +554,7 @@ export function PlacePickerSheet({
                     <Pressable
                       onPress={() => {
                         const url = openStreetMapSearchUrl(hit.name);
-                        if (url) void openExternalUrl(url).catch(() => {});
+                        if (url) void openLink(url);
                       }}
                       disabled={searching}
                       accessibilityRole="button"

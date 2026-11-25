@@ -32,7 +32,24 @@ test('Events and the Places picker share one OSM name-search builder', () => {
   assert.doesNotMatch(events, /function osmSearch/);
   assert.match(sheet, /import \{ openStreetMapSearchUrl \} from '\.\.\/lib\/mapLinks'/);
   assert.match(sheet, /openStreetMapSearchUrl\(hit\.name\)/);
-  assert.match(sheet, /openExternalUrl\(url\)/);
+  assert.match(sheet, /if \(url\) void openLink\(url\)/);
+  assert.doesNotMatch(sheet, /openExternalUrl\(url\)\.catch\(\(\) => \{\}\)/);
+});
+
+test('a failed browser open is shown on the results view, not swallowed', () => {
+  assert.match(sheet, /async function openLink\(url: string\) \{/);
+  assert.match(sheet, /await openExternalUrl\(url\)/);
+  assert.match(
+    sheet,
+    /Could not open your browser\. Check your device settings; Balla has not changed the link\./,
+  );
+  // The inline result row and the detail view share one handler and one copy.
+  assert.equal((sheet.match(/void openLink\(/g) || []).length >= 3, true);
+  assert.match(sheet, /\{linkError && !detailHit \? \([\s\S]*?accessibilityRole="alert"[\s\S]*?\{linkError\}/);
+  assert.match(changelog, /^## 0\.79\.0$/m);
+  assert.match(changelog, /browser-open failure/);
+  assert.match(compliance, /inline map button and the detail view share/);
+  assert.match(features, /inline map button and the detail view use/);
 });
 
 test('the map button is visible, named and honest about its limits', () => {
@@ -59,10 +76,10 @@ test('docs and release notes match the map link-out slice', () => {
   assert.match(features, /map button opening an OpenStreetMap search by name/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.78.0');
-  assert.equal(appJson.expo.version, '0.78.0');
+  assert.equal(pkg.version, '0.79.0');
+  assert.equal(appJson.expo.version, '0.79.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.78\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.79\.0<\/string>/);
   }
 });

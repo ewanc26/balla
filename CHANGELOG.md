@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.79.0
+
+- **A failed place map link-out now says so on the results view (#156, partial).** The inline map button and the detail view share one browser-open handler, so a browser-open failure uses the same fixed copy in Balla's words instead of being swallowed. The error appears beside the results as an alert, is cleared on a new search or dismissal, and the name can still be added as plain text. No request, position, place-pin record, dependency or OAuth scope changes; scope count stays 112.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.78.0
 
 - **Every place-details dismissal path steps back before closing the picker (#156, partial).** The backdrop and the header close control step back from the detail view to the search results before the picker can close. Escape, the visible Back to results control and Android hardware back already did so; all five now call one shared handler, so no path skips the results. Focus, copy, links and the validated-ID clipboard action are unchanged. No request, position, write, place-pin record, dependency or OAuth scope; scope count stays 112.
