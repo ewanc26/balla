@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.94.0
+
+- **The pre-auth public reads are now bounded (#100/#97, partial).** Advanced → Hosting and the login check read a handle's well-known file, the public resolver, the DID document, `describeServer`, the protected-resource metadata and the authorization-server metadata with raw, unbounded `fetch`. A host that accepted a connection but never finished a body could leave the check spinning indefinitely.
+- All six reads now go through the one `readBoundedPublic()` core, so they share its deadline, abort signal and body rule. A timeout, transport failure, HTTP error or malformed body fails closed to the same structured state as before — unresolved, no PDS, incompatible or no OAuth — with the existing fixed copy. Provider prose is still never read, logged or shown.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free public reads, not a verified independent-PDS sign-in, provider failover or a grant change.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.93.0
 
 - **The Advanced → Chat DID-document read is now bounded (#97/#99, partial).** The chat service screen fetched `did:web:api.bsky.chat`'s public DID document with a raw, unbounded `fetch`. A host that accepted the request but never answered could leave the availability line on "Checking…" indefinitely.

@@ -70,7 +70,12 @@ test('a handle on an independent PDS passes every public check', async () => {
   assert.equal(result.authorizationServer, PDS);
   assert.equal(result.facts?.did, serverDescription.did);
   assert.deepEqual(calls.map((call) => call.url), [WELL_KNOWN, DID_DOC, DESCRIBE, PROTECTED, AS_METADATA]);
-  assert.deepEqual(calls[0].init, { headers: { Accept: 'application/json' } });
+  assert.deepEqual(calls[0].init.headers, { Accept: 'application/json' });
+  assert.ok(calls[0].init.signal instanceof AbortSignal, 'each public read carries the shared deadline signal');
+  assert.ok(
+    calls.every((call) => call.init.signal instanceof AbortSignal),
+    'every pre-auth read is bounded',
+  );
 });
 
 test('a DNS-only handle falls back to the configured public resolver', async () => {

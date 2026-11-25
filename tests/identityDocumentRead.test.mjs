@@ -83,15 +83,15 @@ test('DID documents use the one bounded public JSON reader on both routes', () =
 test('public copy and version parity match the bounded identity-read slice', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.93.0');
-  assert.equal(appJson.expo.version, '0.93.0');
+  assert.equal(pkg.version, '0.94.0');
+  assert.equal(appJson.expo.version, '0.94.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.93\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.94\.0<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
-  assert.match(changelog, /^## 0\.93\.0$/m);
+  assert.match(changelog, /^## 0\.94\.0$/m);
   assert.match(changelog, /bounded deadline/);
   assert.match(changelog, /#96\/#97\/#100, partial/);
   assert.match(read('../docs/bluesky-compliance.md'), /DID-document reads now share the one bounded deadline/);
