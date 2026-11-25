@@ -25,7 +25,7 @@ import {
   searchPlaces,
   type PlacesSearchState,
 } from '../lib/placesSearch';
-import { placesHostLabel, type PlaceHit } from '../lib/placesModel';
+import { placeResultDetail, placesHostLabel, type PlaceHit } from '../lib/placesModel.ts';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 /**
@@ -169,7 +169,9 @@ export function PlacePickerSheet({
             Balla sends only the words you type. No device position, no nearby
             lookup. Choosing a result adds its name as plain text. The map button
             searches OpenStreetMap by name in your browser; it sends no position
-            and is not an exact place match. Balla writes
+            and is not an exact place match. Result labels come from the
+            provider's published fields, including its city-state rule; no
+            popularity is shown. Balla writes
             no check-in record while the place-pin lexicon is a draft.
           </Text>
           {endpointChecked && endpointLabel ? (
@@ -230,9 +232,9 @@ export function PlacePickerSheet({
             </Text>
           ) : null}
           <ScrollView style={styles.results} keyboardShouldPersistTaps="handled">
-            {hits.map((hit) => (
+            {hits.map((hit, index) => (
               <View
-                key={`${hit.origin ?? hit.name}:${hit.name}`}
+                key={`${index}:${hit.origin ?? hit.name}`}
                 style={styles.row}
               >
                 <Pressable
@@ -260,8 +262,7 @@ export function PlacePickerSheet({
                       {hit.name}
                     </Text>
                     <Text style={{ color: p.secondary, fontSize: 12 }} numberOfLines={1}>
-                      {hit.category || hit.subtype || (hit.kind === 'area' ? 'Area' : 'Place')}
-                      {hit.country ? ` · ${hit.country}` : ''}
+                      {placeResultDetail(hit)}
                     </Text>
                   </View>
                 </Pressable>

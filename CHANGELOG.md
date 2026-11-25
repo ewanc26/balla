@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.70.0
+
+- **Place results now carry honest provider detail (#156, partial).** The typed-search parser keeps the published `match` and `matched` fields alongside the existing structured fields, and one shared `placeResultDetail()` renders them as fixed Balla labels. An area marked `cityState` by the provider is labelled City rather than by its raw Overture subtype; a result found through another name says which name matched; an approximate match says so. No rank, rating, distance or check-in count is shown, and no provider prose is read or displayed.
+- Same-named results now get distinct row keys, so two places with the same name no longer collapse into one rendered row. Still no check-in record, place chip, granularity choice, new request, new scope or dependency; scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.69.0
 
 - **One fail-closed places-host label (#156, partial).** The composer sheet and Advanced → Services now derive the displayed host from the same helper. A valid https origin appears with the same wording on both surfaces; an invalid saved value is described as invalid and never echoed, and an off state says the host is configured but unused. The sheet refreshes the label when it opens, after Search and when a configuration read fails.
