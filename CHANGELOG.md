@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.90.0
+
+- **Public handle resolution can no longer hang forever (#96/#97/#100, partial).** The in-app handle→DID fallback called the native-first resolver without a deadline. A handle's own well-known host or the configured XRPC resolver could accept a request and never complete it, leaving sign-in pre-flight, the offline profile fallback, the creator byline and any loading card waiting indefinitely.
+- One `resolveHandleWithDeadline()` helper now provides bounded handle resolution with the same `withDeadline` clock as the other public reads and passes its abort signal through to both the well-known read and the XRPC fallback. A timeout is an unavailable source, so the existing cached-handle fallback still applies; a structured resolver error still reaches the shared retry classifier. Provider prose is never read, logged, stored or shown, and an empty handle makes no request.
+- No new scope, dependency, grant or endpoint change; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free identity reads, not provider failover, a grant change or a verified independent-PDS login.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.89.0
 
 - **Public DID-document reads can no longer hang forever (#96/#97/#100, partial).** `identityResolver.ts` fetched `did:plc` directory documents and `did:web` documents with a raw, unbounded `fetch`. A directory host that accepted a connection but never completed it could stall sign-in pre-flight, the identity directory check, public profile fallback, events, reactions and memories reads indefinitely.
