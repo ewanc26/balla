@@ -13,6 +13,8 @@ export const PLACES_TIMEOUT_MS = DEFAULT_TIMEOUT_MS;
 export const PLACES_TIMEOUT_DETAIL = 'The places provider did not answer in time.';
 /** Fixed copy for the other public service checks in Advanced. */
 export const SERVICE_TIMEOUT_DETAIL = 'The service did not answer in time.';
+/** Fixed copy for the public host check in Hosting, PDS directory and migration. */
+export const HOST_TIMEOUT_DETAIL = 'This host did not answer in time. Check the address and try again.';
 
 export type TimeoutDeps = {
   timeoutMs?: number;
