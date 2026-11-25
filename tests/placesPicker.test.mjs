@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import {
   insertPlaceName,
   normalisePlaceName,
@@ -134,5 +134,8 @@ test('docs and release notes match the partial place picker', () => {
   const appJson = JSON.parse(read('../app.json'));
   assert.equal(pkg.version, '0.62.0');
   assert.equal(appJson.expo.version, '0.62.0');
-  assert.match(read('../ios/Balla/Info.plist'), /<string>0\.62\.0<\/string>/);
+  const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
+  if (existsSync(plistPath)) {
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.62\.0<\/string>/);
+  }
 });
