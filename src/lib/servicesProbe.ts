@@ -11,6 +11,11 @@ import {
   advertisedEndpoint,
   didWebUrl,
 } from './servicesModel.ts';
+import {
+  SERVICE_TIMEOUT_DETAIL,
+  withDeadline,
+  type TimeoutDeps,
+} from './requestTimeout.ts';
 
 export type ProbeState = 'checking' | 'ok' | 'unavailable' | 'invalid';
 
@@ -30,16 +35,32 @@ function probe(state: ProbeState, status: number | null, latencyMs: number | nul
   return { state, status, latencyMs, endpoint, detail };
 }
 
-export type ServiceProbeDeps = { fetchImpl?: typeof fetch };
+export type ServiceProbeDeps = { fetchImpl?: typeof fetch } & TimeoutDeps;
 
-async function timed(url: string, fetchImpl: typeof fetch = fetch): Promise<{ response: Response | null; latencyMs: number }> {
+type TimedRead = { response: Response | null; latencyMs: number; timedOut: boolean };
+
+function timedOut(endpoint: string | null, latencyMs: number): ServiceProbe {
+  return probe('unavailable', null, latencyMs, endpoint, SERVICE_TIMEOUT_DETAIL);
+}
+
+/** One bounded public GET; the signal cancels a real fetch when the deadline expires. */
+async function timed(url: string, deps: ServiceProbeDeps = {}): Promise<TimedRead> {
   const started = Date.now();
-  try {
-    const response = await fetchImpl(url, { headers: { Accept: 'application/json' } });
-    return { response, latencyMs: Date.now() - started };
-  } catch {
-    return { response: null, latencyMs: Date.now() - started };
+  const outcome = await withDeadline(async (signal) => {
+    try {
+      const response = await (deps.fetchImpl ?? fetch)(url, {
+        headers: { Accept: 'application/json' },
+        signal,
+      });
+      return { response, latencyMs: Date.now() - started };
+    } catch {
+      return { response: null, latencyMs: Date.now() - started };
+    }
+  }, deps);
+  if (outcome.state === 'timeout') {
+    return { response: null, latencyMs: Date.now() - started, timedOut: true };
   }
+  return { ...outcome.value, timedOut: false };
 }
 
 export function serviceStatusDetail(status: number): string {
@@ -50,12 +71,14 @@ export function serviceStatusDetail(status: number): string {
 }
 
 /** Public handle → DID through the configured XRPC resolver. */
-export async function probeResolver(endpoint: string): Promise<ServiceProbe> {
+export async function probeResolver(endpoint: string, deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
   if (!/^https:\/\/[a-z0-9.-]+$/i.test(endpoint)) {
     return probe('invalid', null, null, endpoint, 'Enter an https host without a path.');
   }
   const url = `${endpoint}/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(RESOLVER_CANARY)}`;
-  const { response, latencyMs } = await timed(url);
+  const read = await timed(url, deps);
+  if (read.timedOut) return timedOut(endpoint, read.latencyMs);
+  const { response, latencyMs } = read;
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not reach this resolver.');
   if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
   try {
@@ -80,7 +103,9 @@ export async function probePlcDirectory(directory: string, deps: ServiceProbeDep
   const canary = DEFAULT_SERVICES.labelerDid;
   const url = plcDocumentUrl(canary, base);
   if (!url) return probe('invalid', null, null, base, 'Invalid directory address.');
-  const { response, latencyMs } = await timed(url, deps.fetchImpl);
+  const read = await timed(url, deps);
+  if (read.timedOut) return timedOut(base, read.latencyMs);
+  const { response, latencyMs } = read;
   if (!response) return probe('unavailable', null, latencyMs, base, 'Could not reach this directory.');
   if (!response.ok) return probe('unavailable', response.status, latencyMs, base, serviceStatusDetail(response.status));
   try {
@@ -94,11 +119,13 @@ export async function probePlcDirectory(directory: string, deps: ServiceProbeDep
 }
 
 /** AppView DID document plus an optional public profile read for this account. */
-export async function probeAppView(actorDid?: string | null): Promise<ServiceProbe> {
+export async function probeAppView(actorDid?: string | null, deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
   const endpoint = didWebUrl(DEFAULT_SERVICES.appviewDid);
   const documentUrl = didWebDocumentUrl(DEFAULT_SERVICES.appviewDid);
   if (!endpoint || !documentUrl) return probe('invalid', null, null, null, 'Invalid AppView DID.');
-  const { response, latencyMs } = await timed(documentUrl);
+  const documentRead = await timed(documentUrl, deps);
+  if (documentRead.timedOut) return timedOut(endpoint, documentRead.latencyMs);
+  const { response, latencyMs } = documentRead;
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not read the AppView DID document.');
   if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
   try {
@@ -107,7 +134,8 @@ export async function probeAppView(actorDid?: string | null): Promise<ServicePro
     if (!advertised) return probe('unavailable', response.status, latencyMs, endpoint, 'No AppView service in the DID document.');
     if (actorDid && DID_RE.test(actorDid)) {
       const readUrl = `${advertised}/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(actorDid)}`;
-      const read = await timed(readUrl);
+      const read = await timed(readUrl, deps);
+      if (read.timedOut) return timedOut(advertised, read.latencyMs);
       if (!read.response) return probe('unavailable', null, read.latencyMs, advertised, 'DID document reachable; profile read failed.');
       if (!read.response.ok) return probe('unavailable', read.response.status, read.latencyMs, advertised, serviceStatusDetail(read.response.status));
       try {
@@ -134,7 +162,9 @@ export async function probeAppView(actorDid?: string | null): Promise<ServicePro
 export async function probeVideoEndpoint(deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
   const endpoint = DEFAULT_SERVICES.videoService;
   const url = `${endpoint}/xrpc/${VIDEO_LIMITS_LXM}`;
-  const { response, latencyMs } = await timed(url, deps.fetchImpl);
+  const read = await timed(url, deps);
+  if (read.timedOut) return timedOut(endpoint, read.latencyMs);
+  const { response, latencyMs } = read;
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not reach the video endpoint.');
   if (response.status === 401 || response.status === 403) {
     return probe('ok', response.status, latencyMs, endpoint, 'Endpoint reachable; quota needs a sign-in token.');
@@ -144,11 +174,13 @@ export async function probeVideoEndpoint(deps: ServiceProbeDeps = {}): Promise<S
 }
 
 /** Chat service DID document advertises a bsky_chat proxy endpoint. */
-export async function probeChat(): Promise<ServiceProbe> {
+export async function probeChat(deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
   const endpoint = didWebUrl(DEFAULT_SERVICES.chatDid);
   const documentUrl = didWebDocumentUrl(DEFAULT_SERVICES.chatDid);
   if (!endpoint || !documentUrl) return probe('invalid', null, null, null, 'Invalid chat service DID.');
-  const { response, latencyMs } = await timed(documentUrl);
+  const read = await timed(documentUrl, deps);
+  if (read.timedOut) return timedOut(endpoint, read.latencyMs);
+  const { response, latencyMs } = read;
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not read the chat DID document.');
   if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
   try {

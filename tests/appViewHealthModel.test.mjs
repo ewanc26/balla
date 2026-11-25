@@ -50,7 +50,8 @@ test('a signed-in check measures the document and the public profile canary', as
   assert.equal(result.documentLatencyMs, 10);
   assert.equal(result.profileLatencyMs, 10);
   assert.deepEqual(calls.map((call) => call.url), [DOCUMENT_URL, PROFILE_URL]);
-  assert.deepEqual(calls[0].init, { headers: { Accept: 'application/json' } });
+  assert.deepEqual(calls[0].init.headers, { Accept: 'application/json' });
+  assert.ok(calls[0].init.signal instanceof AbortSignal);
   assert.match(appViewHealthText(result), /OK · HTTP 200 · DID document 10 ms · profile read 10 ms/);
 });
 
