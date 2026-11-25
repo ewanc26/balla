@@ -70,8 +70,10 @@ function text(value: unknown): string | null {
   return typeof value === 'string' && value.trim() ? value : null;
 }
 
-function urn(value: unknown): string | null {
-  return typeof value === 'string' && /^urn:atgeo:[a-z0-9.-]+:[a-z0-9.-]+:.+$/i.test(value)
+/** The one ATGeo origin check, shared by result parsing and record links. */
+export function atgeoUrn(value: unknown): string | null {
+  // A URN carries no whitespace; a trailing phrase is not part of an ID.
+  return typeof value === 'string' && /^urn:atgeo:[a-z0-9.-]+:[a-z0-9.-]+:[^\s]+$/i.test(value)
     ? value
     : null;
 }
@@ -97,7 +99,7 @@ export function parsePlacesSearch(payload: unknown): PlaceHit[] {
     if (!name || !kind) continue;
     hits.push({
       kind,
-      origin: urn(value.origin),
+      origin: atgeoUrn(value.origin),
       name,
       category: text(value.category),
       group: text(value.group),

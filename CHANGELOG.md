@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.71.0
+
+- **A result's real place identity is inspectable (#156, partial).** A second 44pt button on each result opens the public `org.atgeo.getPlace` gazetteer record for that result's validated `origin` URN in the browser, on the configured places host. The URL is built in one fail-closed function from the same validated host and URN the search uses; Balla makes no request itself, reads no provider prose and sends no device position. A result without a valid URN, or a saved host that is not an https origin, gets no button.
+- The ATGeo origin check is now shared by result parsing and the link builder, so both accept exactly the same URNs. No check-in record, place chip, new request, new dependency or new OAuth scope; scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.70.0
 
 - **Place results now carry honest provider detail (#156, partial).** The typed-search parser keeps the published `match` and `matched` fields alongside the existing structured fields, and one shared `placeResultDetail()` renders them as fixed Balla labels. An area marked `cityState` by the provider is labelled City rather than by its raw Overture subtype; a result found through another name says which name matched; an approximate match says so. No rank, rating, distance or check-in count is shown, and no provider prose is read or displayed.

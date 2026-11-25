@@ -135,11 +135,11 @@ test('release notes describe the partial seam honestly', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
-  assert.equal(pkg.version, '0.70.0');
-  assert.equal(appJson.expo.version, '0.70.0');
+  assert.equal(pkg.version, '0.71.0');
+  assert.equal(appJson.expo.version, '0.71.0');
   // Native projects are generated locally and are not tracked in this repo.
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.70\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.71\.0<\/string>/);
   }
   assert.match(changelog, /^## 0\.39\.0$/m);
   assert.match(changelog, /partial seam/i);
