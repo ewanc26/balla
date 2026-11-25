@@ -156,3 +156,36 @@ export function providerLinkDetail(service: string, panel: string): string {
     ? `This account uses bsky.social, so this opens the correct ${panel} control.`
     : `This account may use another provider. Use that provider’s control panel; the Bluesky link only applies to bsky.social accounts.`;
 }
+
+/**
+ * A canonical Bluesky panel is only opened for a bsky.social account. Any
+ * other session keeps its link closed rather than being sent to the wrong
+ * provider's control panel.
+ */
+export function providerControlPanelUrl(
+  service: string,
+  canonicalUrl: string
+): string | null {
+  return isBlueskyService(service) ? canonicalUrl : null;
+}
+
+/**
+ * A failed link-out may only name the canonical Bluesky address for a
+ * bsky.social account. For every other provider Balla does not know the
+ * control-panel address and says so instead of echoing a saved host.
+ */
+export function controlPanelFailureText(
+  service: string,
+  panel: string,
+  canonicalUrl: string
+): string {
+  if (isBlueskyService(service)) {
+    return `Could not open ${panel}. Visit ${canonicalUrl.replace(/^https:\/\//, '')} in a browser.`;
+  }
+  return `Could not open ${panel}. Use your account provider’s control panel in a browser; Balla cannot infer its address.`;
+}
+
+/** A blocked provider-owned link still needs a visible, honest explanation. */
+export function providerOwnedPanelText(panel: string): string {
+  return `This account may use another provider. Open that provider’s ${panel} control panel; Balla cannot infer its address.`;
+}

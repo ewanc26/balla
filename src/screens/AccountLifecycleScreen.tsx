@@ -11,7 +11,14 @@ import {
 import { openExternalUrl } from '../lib/openLink';
 import { BLUESKY_WEB } from '../lib/serviceHosts.ts';
 import { Ionicons } from '@expo/vector-icons';
+import { useSessionSummary } from '../lib/sessionInfo';
 import { useViewer } from '../lib/viewer';
+import {
+  controlPanelFailureText,
+  providerControlPanelUrl,
+  providerLinkDetail,
+  providerOwnedPanelText,
+} from '../lib/accountSettingsModel';
 import {
   dialogAccessibilityProps,
   dialogAnimation,
@@ -31,6 +38,8 @@ type ConfirmKind = 'deactivate' | 'delete' | null;
 export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
   const p = usePalette();
   const { profile } = useViewer();
+  const { summary } = useSessionSummary();
+  const service = summary?.resourceServer || '';
   const [confirm, setConfirm] = useState<ConfirmKind>(null);
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -50,15 +59,19 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
 
   async function openAccountSettings() {
     if (opening) return;
+    const url = providerControlPanelUrl(service, ACCOUNT_SETTINGS);
+    if (!url) {
+      setConfirm(null);
+      setError(providerOwnedPanelText('account settings'));
+      return;
+    }
     setOpening(true);
     setError(null);
     try {
-      await openExternalUrl(ACCOUNT_SETTINGS);
+      await openExternalUrl(url);
       setConfirm(null);
     } catch {
-      setError(
-        'Could not open account settings. Visit bsky.app/settings/account in a browser.'
-      );
+      setError(controlPanelFailureText(service, 'account settings', url));
     } finally {
       setOpening(false);
     }
@@ -92,7 +105,7 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
         <ActionRow
           icon="download-outline"
           label="Export my data"
-          detail="Opens Bluesky’s account settings, where the data export control lives. On another PDS, use that provider’s control panel."
+          detail={providerLinkDetail(service, 'account data export')}
           onPress={() => void openAccountSettings()}
         />
       </Section>
@@ -101,7 +114,7 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
         <ActionRow
           icon="pause-circle-outline"
           label="Deactivate account"
-          detail="Hides your account until you sign in again. Balla asks for confirmation, then opens the official control."
+          detail="Hides your account until you sign in again. Balla asks for confirmation; the account control stays with your provider."
           onPress={() => setConfirm('deactivate')}
         />
         <ActionRow
@@ -185,9 +198,10 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
               {isDelete ? 'Delete account permanently?' : 'Deactivate account?'}
             </Text>
             <Text style={{ color: p.text, fontSize: 14, lineHeight: 20, marginTop: 10 }}>
+              {providerLinkDetail(service, 'account')}{' '}
               {isDelete
-                ? 'This opens Bluesky’s account settings. Deleting an account there is permanent and removes the account from its PDS. Balla cannot undo it or perform it for you.'
-                : 'This opens Bluesky’s account settings. Deactivation hides the account until you sign in again. Balla cannot deactivate or reactivate it for you.'}
+                ? 'Deleting an account in that control is permanent and removes the account from its PDS. Balla cannot undo it or perform it for you.'
+                : 'Deactivation in that control hides the account until you sign in again. Balla cannot deactivate or reactivate it for you.'}
             </Text>
             <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 18, marginTop: 10 }}>
               Nothing changes until you complete the step on your PDS. If your account
