@@ -16,6 +16,8 @@ import {
   wellKnownUrl,
   type ServerFacts,
 } from './hostingModel.ts';
+import { readBoundedPublic } from './boundedPublicFetch.ts';
+import type { TimeoutDeps } from './requestTimeout.ts';
 import { didWebDocumentUrl, plcDocumentUrl } from './serviceHosts.ts';
 import { DEFAULT_SERVICES } from './servicesModel.ts';
 import { atprotoPdsEndpoint } from './tealModel.ts';
@@ -119,22 +121,35 @@ function result(
   };
 }
 
-async function request(fetchImpl: typeof fetch, url: string): Promise<Response | null> {
-  try {
-    return await fetchImpl(url, { headers: { Accept: 'application/json' } });
-  } catch {
-    return null;
-  }
+type PreflightReadDeps = { fetchImpl?: typeof fetch } & TimeoutDeps;
+
+/**
+ * Every pre-auth read now shares readBoundedPublic()'s deadline and abort
+ * signal. A host that accepts a connection but never finishes its body is
+ * cancelled and fails closed to the same structured "could not read" result as
+ * an HTTP error or a malformed body, so each existing state label stays honest.
+ * The JSON parser is unchanged and no provider prose is ever read.
+ */
+async function readText(url: string, deps: PreflightReadDeps): Promise<string | null> {
+  const outcome = await readBoundedPublic(url, {
+    fetchImpl: deps.fetchImpl,
+    parse: (response) => response.text(),
+    timeoutMs: deps.timeoutMs,
+    setTimeoutImpl: deps.setTimeoutImpl,
+    clearTimeoutImpl: deps.clearTimeoutImpl,
+  });
+  return outcome.state === 'value' ? outcome.value : null;
 }
 
-async function readJson(fetchImpl: typeof fetch, url: string): Promise<unknown | null> {
-  const response = await request(fetchImpl, url);
-  if (!response?.ok) return null;
-  try {
-    return await response.json();
-  } catch {
-    return null;
-  }
+async function readJson(url: string, deps: PreflightReadDeps): Promise<unknown | null> {
+  const outcome = await readBoundedPublic(url, {
+    fetchImpl: deps.fetchImpl,
+    parse: (response) => response.json(),
+    timeoutMs: deps.timeoutMs,
+    setTimeoutImpl: deps.setTimeoutImpl,
+    clearTimeoutImpl: deps.clearTimeoutImpl,
+  });
+  return outcome.state === 'value' ? outcome.value : null;
 }
 
 function documentUrl(did: string, plcDirectory: string): string | null {
@@ -228,30 +243,26 @@ export type AccountPreflightDeps = {
   resolver?: string;
   /** Public did:plc directory; the screen passes the saved override. */
   plcDirectory?: string;
-};
+} & TimeoutDeps;
 
 /** Resolve a handle from its own host first, then through the public resolver. */
 async function resolveHandle(
   handle: string,
-  fetchImpl: typeof fetch,
+  deps: PreflightReadDeps,
   resolver: string,
 ): Promise<{ did: string; source: AccountPreflightSource } | null> {
   const ownUrl = wellKnownUrl(handle);
   if (ownUrl) {
-    const response = await request(fetchImpl, ownUrl);
-    if (response?.ok) {
-      try {
-        const did = didFromWellKnown(await response.text());
-        if (did && DID_RE.test(did)) return { did, source: 'well-known' };
-      } catch {
-        // An unreadable well-known file simply falls through to the resolver.
-      }
+    const contents = await readText(ownUrl, deps);
+    if (contents !== null) {
+      const did = didFromWellKnown(contents);
+      if (did && DID_RE.test(did)) return { did, source: 'well-known' };
     }
   }
   const base = normaliseHostUrl(resolver);
   if (!base) return null;
   const url = `${base}/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(handle)}`;
-  const payload = await readJson(fetchImpl, url);
+  const payload = await readJson(url, deps);
   if (!payload || typeof payload !== 'object') return null;
   const did = (payload as Record<string, unknown>).did;
   return typeof did === 'string' && DID_RE.test(did)
@@ -267,7 +278,6 @@ export async function probeAccount(
   input: string,
   deps: AccountPreflightDeps = {},
 ): Promise<AccountPreflightResult> {
-  const fetchImpl = deps.fetchImpl ?? fetch;
   const resolver = deps.resolver ?? DEFAULT_SERVICES.handleResolver;
   const plcDirectory = deps.plcDirectory ?? DEFAULT_SERVICES.plcDirectory;
   const classified = classifyHandleInput(input);
@@ -276,7 +286,7 @@ export async function probeAccount(
   if (classified.kind === 'did') {
     identity = { did: classified.value, source: 'did' };
   } else if (classified.kind === 'handle') {
-    identity = await resolveHandle(classified.value, fetchImpl, resolver);
+    identity = await resolveHandle(classified.value, deps, resolver);
   } else {
     return result(
       'invalid',
@@ -287,13 +297,13 @@ export async function probeAccount(
 
   const url = documentUrl(identity.did, plcDirectory);
   if (!url) return result('unresolved', 'This DID method is not resolved by the public pre-flight.', { ...identity });
-  const document = await readJson(fetchImpl, url);
+  const document = await readJson(url, deps);
   if (!document) return result('unresolved', 'The DID document could not be read from a public directory.', { ...identity });
 
   const pds = normaliseHostUrl(atprotoPdsEndpoint(document) ?? '');
   if (!pds) return result('no-pds', 'The DID document does not advertise an https #atproto_pds endpoint.', { ...identity });
 
-  const server = await readJson(fetchImpl, `${pds}/xrpc/com.atproto.server.describeServer`);
+  const server = await readJson(`${pds}/xrpc/com.atproto.server.describeServer`, deps);
   const facts = serverFacts(server);
   if (!facts) {
     return result('incompatible', 'The PDS answered, but not with a valid AT Protocol server description.', {
@@ -302,7 +312,7 @@ export async function probeAccount(
     });
   }
 
-  const protectedResource = await readJson(fetchImpl, `${pds}/.well-known/oauth-protected-resource`);
+  const protectedResource = await readJson(`${pds}/.well-known/oauth-protected-resource`, deps);
   const servers = declaredAuthorizationServers(protectedResource);
   if (!servers.length) {
     return result('no-oauth', 'The PDS did not publish an authorization server for OAuth sign-in.', {
@@ -313,7 +323,7 @@ export async function probeAccount(
   }
 
   const authorizationServer = servers[0];
-  const metadata = await readJson(fetchImpl, `${authorizationServer}/.well-known/oauth-authorization-server`);
+  const metadata = await readJson(`${authorizationServer}/.well-known/oauth-authorization-server`, deps);
   if (!authorizationServerOk(metadata, authorizationServer)) {
     return result('no-oauth', 'The PDS declares OAuth, but its authorization server metadata could not be read.', {
       ...identity,
