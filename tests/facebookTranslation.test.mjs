@@ -75,11 +75,11 @@ test('release copy links the canonical map without changing the contract', () =>
 
 test('version parity and unchanged OAuth metadata', () => {
   const pkg = JSON.parse(read('../package.json'));
-  assert.equal(pkg.version, '0.88.0');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.88.0');
+  assert.equal(pkg.version, '0.89.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.89.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.88\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.89\.0<\/string>/);
   }
   assert.equal(metadata.scope.split(' ').filter(Boolean).length, 112);
   assert.deepEqual(pkg.overrides, { minimatch: '11.0.9', zod: '4.6.6' });

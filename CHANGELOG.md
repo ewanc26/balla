@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.89.0
+
+- **Public DID-document reads can no longer hang forever (#96/#97/#100, partial).** `identityResolver.ts` fetched `did:plc` directory documents and `did:web` documents with a raw, unbounded `fetch`. A directory host that accepted a connection but never completed it could stall sign-in pre-flight, the identity directory check, public profile fallback, events, reactions and memories reads indefinitely.
+- One `fetchIdentityDocument()` helper now owns both routes. It shares the bounded `withDeadline` clock used by the other public probes, passes its abort signal to `fetch`, and keeps only a structured JSON object or null. A timeout is an unavailable source, so the existing fail-closed behaviour still applies: a cached document or the next configured source wins. Provider prose is never read, logged, stored or shown, and empty URLs make no request.
+- No new scope, dependency, grant or endpoint change; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free identity reads, not provider failover, a grant change or a verified independent-PDS login.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.88.0
 
 - **The public host check can no longer hang forever (#97/#100, partial).** Advanced → Hosting, the PDS directory and migration pre-flight all share `probeHost`, which was the only public probe still using a raw unbounded `fetch`. A host that accepted a connection but never answered left the check spinner running indefinitely. It now uses the same bounded `withDeadline` clock as the resolver, directory, places and AppView checks, and passes the abort signal to `fetch` so a real request is cancelled instead of left running.
