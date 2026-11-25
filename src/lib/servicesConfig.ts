@@ -6,6 +6,7 @@ import {
   SERVICES_STORAGE_KEY,
   effectivePlcDirectory,
   effectiveResolver,
+  isPlacesEnabled,
   normaliseServicesConfig,
   type ServicesConfig,
 } from './servicesModel.ts';
@@ -13,8 +14,8 @@ import {
 /**
  * Persisted service choices. Only the three public, token-free read hosts are
  * editable: the pre-auth resolver, the did:plc directory and the places
- * provider used for typed search. Every other slot
- * is derived from the OAuth grant or the account's DID document. Storage
+ * provider used for typed search, which can also be switched off. Every other
+ * slot is derived from the OAuth grant or the account's DID document. Storage
  * failures are non-fatal: the app falls back to the compiled default.
  */
 let cached: ServicesConfig | null = null;
@@ -60,6 +61,11 @@ export async function getPlacesEndpoint(fallback: string = DEFAULT_SERVICES.plac
   return config.places ?? fallback;
 }
 
+/** Whether typed place search is allowed at all. Legacy config stays on. */
+export async function getPlacesEnabled(): Promise<boolean> {
+  return isPlacesEnabled(await getServicesConfig());
+}
+
 async function persist(config: ServicesConfig): Promise<void> {
   cached = normaliseServicesConfig(config);
   try {
@@ -94,6 +100,13 @@ export async function setPlcDirectoryEndpoint(endpoint: string | null): Promise<
 export async function setPlacesEndpoint(endpoint: string | null): Promise<ServicesConfig> {
   const config = await getServicesConfig();
   await persist({ ...config, places: endpoint });
+  return getServicesConfig();
+}
+
+/** Switch typed place search off without touching the configured host. */
+export async function setPlacesEnabled(enabled: boolean): Promise<ServicesConfig> {
+  const config = await getServicesConfig();
+  await persist({ ...config, placesEnabled: enabled });
   return getServicesConfig();
 }
 

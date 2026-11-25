@@ -6,6 +6,7 @@ import {
   SettingLinkRow,
   SettingNote,
   SettingSection,
+  SettingSwitch,
   SettingValueRow,
 } from '../components/SettingControls';
 import { getActiveDid } from '../lib/agent';
@@ -18,11 +19,13 @@ import {
 } from '../lib/labelerProbe.ts';
 import {
   getHandleResolverEndpoint,
+  getPlacesEnabled,
   getPlacesEndpoint,
   getPlcDirectoryEndpoint,
   getServicesConfig,
   resetServicesConfig,
   setHandleResolverEndpoint,
+  setPlacesEnabled,
   setPlacesEndpoint,
   setPlcDirectoryEndpoint,
   subscribeServicesConfig,
@@ -76,6 +79,7 @@ export function ServicesScreen() {
   const [placesEndpoint, setPlacesEndpointView] = useState<string>(DEFAULT_SERVICES.places);
   const [placesInput, setPlacesInput] = useState('');
   const [placesIsDefault, setPlacesIsDefault] = useState(true);
+  const [placesEnabled, setPlacesEnabledView] = useState(true);
   const [busy, setBusy] = useState(false);
   const [resolverProbe, setResolverProbe] = useState<ServiceProbe | null>(null);
   const [plcProbe, setPlcProbe] = useState<ServiceProbe | null>(null);
@@ -101,6 +105,7 @@ export function ServicesScreen() {
     setPlacesEndpointView(await getPlacesEndpoint());
     setPlacesInput(config.places ?? '');
     setPlacesIsDefault(config.places == null);
+    setPlacesEnabledView(await getPlacesEnabled());
   }, []);
 
   useEffect(() => {
@@ -200,8 +205,30 @@ export function ServicesScreen() {
     setBusy(false);
   }
 
+  async function togglePlaces(next: boolean) {
+    if (busy) return;
+    setBusy(true);
+    await setPlacesEnabled(next);
+    setPlacesEnabledView(next);
+    setPlacesProbe(null);
+    setMessage(
+      next
+        ? 'Places search turned on. The configured provider is used again.'
+        : 'Places search turned off. No place request will be made.',
+    );
+    setBusy(false);
+  }
+
   async function checkPlaces() {
     if (busy) return;
+    // Read the persisted switch again: a just-toggled state must not race a tap.
+    const allowed = await getPlacesEnabled();
+    setPlacesEnabledView(allowed);
+    if (!allowed) {
+      setPlacesProbe(null);
+      setMessage('Places search is off. Turn it on before testing typed search.');
+      return;
+    }
     setBusy(true);
     setPlacesProbe({ state: 'checking', status: null, latencyMs: null, endpoint: null, detail: 'Checking…' });
     setPlacesProbe(await probePlaces(await getPlacesEndpoint()));
@@ -344,9 +371,19 @@ export function ServicesScreen() {
 
       <SettingSection
         title="Places provider"
-        detail="A public, token-free typed place search. Balla sends only the words you type: no device position, no nearby lookup, no OAuth scope. Changing the host takes effect on the next search."
+        detail="A public, token-free typed place search that can be switched off. When it is on, Balla sends only the words you type: no device position, no nearby lookup, no OAuth scope. Changing the host takes effect on the next search."
       >
-        <SettingValueRow label={SERVICE_SLOT_COPY.places.label} value={placesEndpoint} />
+        <SettingSwitch
+          label="Places search"
+          detail="Off: no typed search request leaves this device and the composer says the search is off. The name you type still works as plain text."
+          value={placesEnabled}
+          onChange={(value) => void togglePlaces(value)}
+          busy={busy}
+        />
+        <SettingValueRow
+          label={SERVICE_SLOT_COPY.places.label}
+          value={placesEnabled ? placesEndpoint : 'Off — no place request is made'}
+        />
         <TextInput
           value={placesInput}
           onChangeText={setPlacesInput}
@@ -354,27 +391,40 @@ export function ServicesScreen() {
           placeholderTextColor={p.secondary}
           autoCapitalize="none"
           autoCorrect={false}
+          editable={placesEnabled}
           accessibilityLabel="Places provider host"
           style={[
             styles.input,
             { color: p.text, backgroundColor: p.bg, borderColor: p.divider },
             webInputReset,
+            !placesEnabled && { opacity: 0.5 },
           ]}
         />
         <View style={styles.buttonRow}>
-          <SettingButton label="Save places" onPress={() => void savePlaces()} busy={busy} />
-          <SettingButton label="Use default" onPress={() => void resetPlaces()} busy={busy} disabled={placesIsDefault} />
+          <SettingButton label="Save places" onPress={() => void savePlaces()} busy={busy} disabled={!placesEnabled} />
+          <SettingButton
+            label="Use default"
+            onPress={() => void resetPlaces()}
+            busy={busy}
+            disabled={!placesEnabled || placesIsDefault}
+          />
         </View>
-        <SettingButton label="Test typed search" onPress={() => void checkPlaces()} busy={busy} />
-        <SettingValueRow label="Places result" value={probeValue(placesProbe)} />
-        {placesProbe?.detail && placesProbe.state !== 'checking'
+        <SettingButton
+          label="Test typed search"
+          onPress={() => void checkPlaces()}
+          busy={busy}
+          disabled={!placesEnabled}
+        />
+        <SettingValueRow label="Places result" value={placesEnabled ? probeValue(placesProbe) : 'Off — no request was made'} />
+        {placesEnabled && placesProbe?.detail && placesProbe.state !== 'checking'
           ? <SettingValueRow label="Detail" value={placesProbe.detail} />
           : null}
         <SettingNote>
-          The test searches a fixed word and checks the structured results. No
-          check-in record is written: the pin lexicon is still a draft whose
-          name can change, so Balla writes no place records and renders no place
-          chips yet.
+          Turning search off stops every typed place request, including this
+          check and the composer. The configured host is kept, and turning
+          search on restores it. No check-in record is written either way: the
+          pin lexicon is still a draft whose name can change, so Balla writes no
+          place records and renders no place chips yet.
         </SettingNote>
       </SettingSection>
 

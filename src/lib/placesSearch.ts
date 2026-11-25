@@ -14,7 +14,7 @@ import {
   type PlaceHit,
 } from './placesModel.ts';
 
-export type PlacesSearchState = 'ready' | 'invalid' | 'unavailable';
+export type PlacesSearchState = 'ready' | 'invalid' | 'unavailable' | 'off';
 
 export type PlacesSearchResult = {
   state: PlacesSearchState;
@@ -22,13 +22,14 @@ export type PlacesSearchResult = {
   hits: PlaceHit[];
 };
 
-export type PlacesSearchDeps = { fetchImpl?: typeof fetch };
+export type PlacesSearchDeps = { fetchImpl?: typeof fetch; enabled?: boolean };
 
 export async function searchPlaces(
   query: string,
   endpoint: string,
   deps: PlacesSearchDeps = {},
 ): Promise<PlacesSearchResult> {
+  if (deps.enabled === false) return { state: 'off', status: null, hits: [] };
   const url = placesSearchUrl(endpoint, query);
   if (!url) return { state: 'invalid', status: null, hits: [] };
 
@@ -59,6 +60,9 @@ export async function searchPlaces(
 
 /** Fixed, provider-neutral copy so a failed service cannot write Balla's UI. */
 export function placesSearchCopy(state: PlacesSearchState): string {
+  if (state === 'off') {
+    return 'Places search is off. Turn it on in Advanced → Services, or use the name you typed as plain text.';
+  }
   if (state === 'invalid') {
     return 'Enter an https provider without a path in Advanced → Services.';
   }

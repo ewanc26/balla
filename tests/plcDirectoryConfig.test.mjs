@@ -160,5 +160,7 @@ test('identity resolution, the UI and the export all use the configured director
   assert.match(screen, /setPlcDirectoryEndpoint\(valid\)/);
   assert.match(screen, /probePlcDirectory\(await getPlcDirectoryEndpoint\(\)\)/);
   assert.match(screen, /takes effect on the next read/);
-  assert.doesNotMatch(screen, /SettingSwitch|onPress=\{\(\) => \{\}\}/);
+  assert.equal((screen.match(/<SettingSwitch\b/g) || []).length, 1);
+  assert.match(screen, /label="Places search"/);
+  assert.doesNotMatch(screen, /onPress=\{\(\) => \{\}\}/);
 });

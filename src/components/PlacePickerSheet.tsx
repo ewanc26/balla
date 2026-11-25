@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Modal,
@@ -17,7 +17,7 @@ import {
   useDialogFocus,
   useReducedMotion,
 } from '../lib/accessibility';
-import { getPlacesEndpoint } from '../lib/servicesConfig';
+import { getPlacesEnabled, getPlacesEndpoint } from '../lib/servicesConfig';
 import {
   placesSearchCopy,
   searchPlaces,
@@ -47,10 +47,30 @@ export function PlacePickerSheet({
   const [hits, setHits] = useState<PlaceHit[]>([]);
   const [state, setState] = useState<PlacesSearchState | null>(null);
   const [searching, setSearching] = useState(false);
+  const [enabled, setEnabled] = useState(true);
   const containerRef = useRef<any>(null);
   const closeRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
   useDialogFocus({ visible, onClose, containerRef, initialFocusRef: closeRef });
+
+  useEffect(() => {
+    if (!visible) return;
+    let active = true;
+    void getPlacesEnabled()
+      .then((value) => {
+        if (!active) return;
+        setEnabled(value);
+        if (!value) setState('off');
+      })
+      .catch(() => {
+        if (!active) return;
+        setEnabled(false);
+        setState('off');
+      });
+    return () => {
+      active = false;
+    };
+  }, [visible]);
 
   async function search() {
     const q = query.trim();
@@ -59,11 +79,18 @@ export function PlacePickerSheet({
     setState(null);
     setHits([]);
     try {
-      const result = await searchPlaces(q, await getPlacesEndpoint());
+      const allowed = await getPlacesEnabled();
+      setEnabled(allowed);
+      if (!allowed) {
+        setState('off');
+        return;
+      }
+      const result = await searchPlaces(q, await getPlacesEndpoint(), { enabled: allowed });
       setState(result.state);
       setHits(result.hits);
     } catch {
       // Configuration read failed: fail closed with the fixed failure copy.
+      setEnabled(false);
       setState('unavailable');
     } finally {
       setSearching(false);
@@ -136,14 +163,14 @@ export function PlacePickerSheet({
             />
             <Pressable
               onPress={() => void search()}
-              disabled={searching || !query.trim()}
+              disabled={searching || !query.trim() || !enabled}
               accessibilityRole="button"
               accessibilityLabel="Search for this place name"
               style={({ pressed }) => [
                 styles.searchButton,
                 {
                   backgroundColor: p.accent,
-                  opacity: pressed || searching || !query.trim() ? 0.5 : 1,
+                  opacity: pressed || searching || !query.trim() || !enabled ? 0.5 : 1,
                 },
               ]}
             >

@@ -4,6 +4,7 @@
  * AT Protocol splits a session into roles. Three read-only hosts can honestly be
  * changed at runtime: the pre-authorisation XRPC handle resolver, the public
  * did:plc directory and the token-free places provider used for typed search.
+ * The places provider can also be switched off entirely, which makes no request.
  * None needs a token or changes an existing grant. The
  * AppView, chat, video and labeler audiences are written into the OAuth grant
  * scope (112 tokens in oauth-client-metadata.json), so pointing them somewhere
@@ -38,12 +39,15 @@ export type ServicesConfig = {
   handleResolver: string | null;
   plcDirectory: string | null;
   places: string | null;
+  /** False stops every typed place request, including the reachability test. */
+  placesEnabled: boolean;
 };
 
 export const DEFAULT_SERVICES_CONFIG: ServicesConfig = {
   handleResolver: null,
   plcDirectory: null,
   places: null,
+  placesEnabled: true,
 };
 
 function override(value: unknown, fallback: string): string | null {
@@ -59,6 +63,8 @@ export function normaliseServicesConfig(raw: unknown): ServicesConfig {
     handleResolver: override(value.handleResolver, DEFAULT_SERVICES.handleResolver),
     plcDirectory: override(value.plcDirectory, DEFAULT_SERVICES.plcDirectory),
     places: override(value.places, DEFAULT_SERVICES.places),
+    // Config persisted before this switch existed keeps its previous behaviour.
+    placesEnabled: value.placesEnabled !== false,
   };
 }
 
@@ -87,6 +93,11 @@ export function effectivePlaces(config: ServicesConfig): string {
 export function isDefaultPlaces(config: ServicesConfig): boolean {
   // Config persisted before this setting existed has no field: keep the default.
   return config.places == null;
+}
+
+/** A missing field means the provider was never turned off. */
+export function isPlacesEnabled(config: ServicesConfig): boolean {
+  return config.placesEnabled !== false;
 }
 
 const DID_WEB_RE = /^did:web:([a-z0-9.-]+)(?::(.+))?$/i;
@@ -133,7 +144,7 @@ export const SERVICE_SLOT_COPY: Record<ServiceSlot, { label: string; detail: str
   },
   places: {
     label: 'Places provider',
-    detail: 'Eurosky default. Typed place search only; Balla never sends your device position. No check-in record is written while the pin lexicon is a draft.',
+    detail: 'Eurosky default. Typed place search can be switched off; Balla never sends your device position. No check-in record is written while the pin lexicon is a draft.',
   },
   appview: {
     label: 'AppView',

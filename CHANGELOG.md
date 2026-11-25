@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.64.0
+
+- **Places search can be switched off (#156, partial).** Advanced → Services has a visible, reversible Places search switch. Off stops every typed place request, including the Services check and the composer, keeps the configured host, and says plainly in the composer that search is off. The typed name still works as plain text. On restores the saved provider without a restart.
+- The off state is persisted with the service configuration and recorded in the configuration export. No device position, check-in record, place chip or new OAuth scope is involved; the scope count remains 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.63.0
 
 - **Group conversations now show every participant (#193).** The conversation header has a visible Participants button for groups. It opens a light sheet listing the complete roster from `chat.bsky.convo.getConvoMembers`, not the "important members" subset on `ConvoView`. Each name comes only from real member fields: display name, then `@handle`, then DID; the viewer is "You", an owner is labelled Owner. No membership is invented from a DID prefix, and no presence or ranking state is shown. A failed roster read falls back to the subset already on the conversation and the sheet says plainly when the list is unavailable, without blocking reading or sending.

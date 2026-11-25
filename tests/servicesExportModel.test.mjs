@@ -38,6 +38,25 @@ test('the export records the effective PLC directory and whether it is the defau
   assert.equal(legacy.changeable.usingDefaultPlcDirectory, true);
 });
 
+test('the export records whether typed place search is switched off', () => {
+  const on = buildServicesExport({ handleResolver: null, plcDirectory: null }, null, AT);
+  assert.equal(on.changeable.placesEnabled, true);
+
+  const off = buildServicesExport({
+    handleResolver: null,
+    plcDirectory: null,
+    places: 'https://places.example',
+    placesEnabled: false,
+  }, null, AT);
+  assert.equal(off.changeable.placesEnabled, false);
+  assert.equal(off.changeable.places, 'https://places.example');
+
+  // Config persisted before the switch existed keeps its previous behaviour.
+  const legacy = buildServicesExport({ handleResolver: null }, null, AT);
+  assert.equal(legacy.changeable.placesEnabled, true);
+  assert.ok(SERVICES_EXPORT_NOTES.some((note) => /switched off, which stops every place request/.test(note)));
+});
+
 test('grant-bound defaults are exported verbatim as facts', () => {
   const value = buildServicesExport({ handleResolver: null }, null, AT);
   assert.deepEqual(value.defaults, { ...DEFAULT_SERVICES });
