@@ -1,4 +1,5 @@
 import { agent } from './agent';
+import { fetchIdentityDocument } from './identityDocumentRead.ts';
 import { createNativeFirstHandleResolver } from './nativeHandleResolver';
 import { getPlcDirectoryEndpoint } from './servicesConfig.ts';
 import { DEFAULT_SERVICES } from './servicesModel.ts';
@@ -55,19 +56,6 @@ export function subscribeIdentitySource(listener: () => void): () => void {
   };
 }
 
-async function fetchDocument(url: string): Promise<unknown | null> {
-  try {
-    const response = await fetch(url, {
-      headers: { Accept: 'application/did+ld+json, application/json' },
-    });
-    if (!response.ok) return null;
-    const document = await response.json();
-    return document && typeof document === 'object' ? document : null;
-  } catch {
-    return null;
-  }
-}
-
 /** Read a DID document, honouring the configured strategy and caching result. */
 export async function resolveDidDocument(did: string): Promise<unknown | null> {
   if (!isDid(did)) {
@@ -94,10 +82,10 @@ export async function resolveDidDocument(did: string): Promise<unknown | null> {
     try {
       if (source === 'plc') {
         const url = plcDirectoryUrl(did, await getPlcDirectoryEndpoint());
-        if (url) document = await readWithRetry(() => fetchDocument(url));
+        if (url) document = await readWithRetry(() => fetchIdentityDocument(url));
       } else if (source === 'web') {
         const url = didWebDocumentUrl(did);
-        if (url) document = await readWithRetry(() => fetchDocument(url));
+        if (url) document = await readWithRetry(() => fetchIdentityDocument(url));
       } else {
         const resolved = await readWithRetry(() =>
           agent.com.atproto.identity.resolveDid({ did })
