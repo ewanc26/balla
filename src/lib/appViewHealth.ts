@@ -15,6 +15,11 @@ import {
   didWebUrl,
 } from './servicesModel.ts';
 import { serviceStatusDetail, type ProbeState } from './servicesProbe.ts';
+import {
+  SERVICE_TIMEOUT_DETAIL,
+  withDeadline,
+  type TimeoutDeps,
+} from './requestTimeout.ts';
 
 export const APPVIEW_HEALTH_DID = DEFAULT_SERVICES.appviewDid;
 export const APPVIEW_HEALTH_AUDIENCE = DEFAULT_SERVICES.appviewAudience;
@@ -72,20 +77,30 @@ export type AppViewHealthDeps = {
   actorDid?: string | null;
   fetchImpl?: typeof fetch;
   now?: () => number;
-};
+} & TimeoutDeps;
 
 async function timedFetch(
   fetchImpl: typeof fetch,
   now: () => number,
   url: string,
-): Promise<{ response: Response | null; latencyMs: number }> {
+  deps: TimeoutDeps,
+): Promise<{ response: Response | null; latencyMs: number; timedOut: boolean }> {
   const started = now();
-  try {
-    const response = await fetchImpl(url, { headers: { Accept: 'application/json' } });
-    return { response, latencyMs: Math.max(0, now() - started) };
-  } catch {
-    return { response: null, latencyMs: Math.max(0, now() - started) };
+  const outcome = await withDeadline(async (signal) => {
+    try {
+      const response = await fetchImpl(url, {
+        headers: { Accept: 'application/json' },
+        signal,
+      });
+      return { response, latencyMs: Math.max(0, now() - started) };
+    } catch {
+      return { response: null, latencyMs: Math.max(0, now() - started) };
+    }
+  }, deps);
+  if (outcome.state === 'timeout') {
+    return { response: null, latencyMs: Math.max(0, now() - started), timedOut: true };
   }
+  return { ...outcome.value, timedOut: false };
 }
 
 /**
@@ -104,7 +119,10 @@ export async function probeAppViewHealth(
   if (!base || !documentUrl) {
     return result('invalid', null, null, null, null, null, 'Grant-bound AppView DID has no did:web document URL.');
   }
-  const documentRead = await timedFetch(fetchImpl, now, documentUrl);
+  const documentRead = await timedFetch(fetchImpl, now, documentUrl, deps);
+  if (documentRead.timedOut) {
+    return result('unavailable', null, documentRead.latencyMs, base, documentRead.latencyMs, null, SERVICE_TIMEOUT_DETAIL);
+  }
   if (!documentRead.response) {
     return result('unavailable', null, documentRead.latencyMs, base, documentRead.latencyMs, null, 'Could not read the AppView DID document from this device.');
   }
@@ -129,7 +147,10 @@ export async function probeAppViewHealth(
   }
 
   const readUrl = `${endpoint}/xrpc/app.bsky.actor.getProfile?actor=${encodeURIComponent(actorDid)}`;
-  const profileRead = await timedFetch(fetchImpl, now, readUrl);
+  const profileRead = await timedFetch(fetchImpl, now, readUrl, deps);
+  if (profileRead.timedOut) {
+    return result('unavailable', null, profileRead.latencyMs, endpoint, documentRead.latencyMs, profileRead.latencyMs, SERVICE_TIMEOUT_DETAIL);
+  }
   if (!profileRead.response) {
     return result('unavailable', null, profileRead.latencyMs, endpoint, documentRead.latencyMs, profileRead.latencyMs, 'DID document reachable; profile canary could not be read.');
   }

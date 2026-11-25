@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.81.0
+
+- **Every public service check now has a bounded deadline (#97/#99, partial).** The shared, injectable deadline first added for places now covers the handle resolver, did:plc directory, AppView check, video endpoint, chat DID document and Advanced → AppView health. A provider that accepts a request but never answers is aborted and reported in fixed Balla copy — "The service did not answer in time." — with measured latency instead of leaving Advanced busy or the health line stuck on Checking. Provider prose is never read, logged or displayed; tests inject the clock and signal so no real waiting is needed. No request shape, grant, provider switch, dependency or OAuth scope changes; scope count stays 112.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.80.0
 
 - **A hung places provider now fails closed instead of spinning forever (#156, partial).** Both the composer's typed search and Advanced → Services' places check use one bounded, injectable deadline. On timeout the request is aborted, the picker shows fixed Balla copy saying the provider did not answer in time (while the typed name can still be used), and the Services check reports the same detail with a measured latency. No provider prose is read, logged or shown. No request shape, device position, place-pin record, dependency or OAuth scope changes; scope count stays 112.
