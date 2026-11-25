@@ -124,9 +124,18 @@ test('post embeds only accept post AT URIs and use the record shape', () => {
 test('chat errors map to honest, content-free copy', () => {
   assert.equal(chatFailureFrom({ error: 'MessagesDisabled' }), 'disabled');
   assert.equal(chatFailureFrom({ error: 'BlockedActor' }), 'blocked');
+  assert.equal(chatFailureFrom({ error: 'BlockedSubject' }), 'blocked');
   assert.equal(chatFailureFrom({ error: 'NotFollowedBySender' }), 'not-followed');
+  assert.equal(chatFailureFrom({ error: 'AccountSuspended' }), 'suspended');
+  assert.equal(chatFailureFrom({ error: 'RecipientNotFound' }), 'not-found');
+  assert.equal(chatFailureFrom({ error: 'ConvoLockedByModeration' }), 'locked');
+  assert.equal(chatFailureFrom({ error: 'RateLimitExceeded' }), 'rate-limited');
+  assert.equal(chatFailureFrom({ error: 'NetworkError' }), 'offline');
+  assert.equal(chatFailureFrom({ status: 429 }), 'rate-limited');
+  assert.equal(chatFailureFrom(new Error('offline')), 'unknown');
   assert.match(chatErrorCopy({ error: 'MessagesDisabled' }), /turned off/);
   assert.match(chatErrorCopy({ error: 'BlockedSubject' }), /block/);
-  assert.match(chatErrorCopy(new Error('offline')), /offline/);
+  assert.match(chatErrorCopy({ error: 'NetworkError' }), /offline/);
+  assert.match(chatErrorCopy({ message: 'offline' }), /could not be loaded/);
   assert.match(chatErrorCopy({}), /could not be loaded/);
 });

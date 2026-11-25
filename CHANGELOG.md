@@ -3,10 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
-## 0.84.0
+## 0.85.0
 
-- **Failure text is now Balla-authored end to end (#97/#34, partial).** Video upload errors select fixed copy from HTTP status and the structured `error` and `blob` fields; a provider's free-text `message` is never returned to the composer, kept in job state, logged or shown. Job status parsing allowlists its fields, so hostile `message` text reaches neither progress labels nor stored state. Sign-in cancellation uses the Expo client's local sentinels only, and raw OAuth sign-in/callback errors are no longer logged. Labeler, moderation-inbox, appeal, profile-save and report errors choose fixed Balla sentences from structured statuses and codes instead of reading provider prose. Shared retry classification is structured-only too.
-- Deterministic hostile-string tests cover UI copy, logs and stored state. No new scope, dependency, grant or provider claim; scope count stays 112 and OAuth client metadata is byte-identical.
+- **The last provider-message failure checks are now structured-only (#97/#34, partial).** List and starter-pack actions renew-session copy from HTTP status and allowlisted error codes; chat failures map only published chat codes plus status/rate-limit/offline signals; live-status compare-and-swap retries and missing-record deletion use exact `InvalidSwap` / `RecordNotFound` codes. Provider free-text `message` no longer changes any copy, retry or control flow in these paths. The shared failure model now owns the exact code allowlists, so retry classification, sign-in, labeler, video, moderation and report failures use one rule set.
+- Hostile-string tests cover list, starter-pack, chat and live-status copy and control flow, including strings that previously matched by substring. Static audits assert those modules no longer read a message field or stringify the error. A chat error carrying only a message text now uses the honest unknown fallback rather than being guessed from prose.
+- No new scope, dependency, grant, provider claim or endpoint change; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is failure-copy hardening, not provider failover or a new backend.
 - Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
 
 ## 0.83.0

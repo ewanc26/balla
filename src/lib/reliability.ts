@@ -5,7 +5,7 @@
 // is never mistaken for success. Classification uses only HTTP status and
 // structured error codes; provider prose is never read.
 
-import { errorCode, statusCode as failureStatusCode } from './failureCopyModel.ts';
+import { classifyStructuredFailure } from './failureCopyModel.ts';
 
 export type FailureKind =
   | 'rate-limited'
@@ -75,27 +75,9 @@ export function retryAfterMsFrom(err: unknown, now = Date.now()): number | null 
 }
 
 export function classifyFailure(err: unknown): FailureKind {
-  const status = failureStatusCode(err);
-  if (status === 429) return 'rate-limited';
-  // @atproto/xrpc uses status 1 for a network failure that never got a reply.
-  if (status === 1) return 'offline';
-  if (status === 401 || status === 403) return 'auth-expired';
-  if (status !== null && status >= 500) return 'server';
-
-  // Only structured codes are read here. A provider's free-text message may
-  // contain any of these words; it must not influence Balla's retry decision.
-  const code = errorCode(err) ?? '';
-  if (/rate.?limit|too_many_requests/.test(code)) return 'rate-limited';
-  if (/network|offline|abort|timeout|timed_out|connection/.test(code)) {
-    return 'offline';
-  }
-  if (
-    /auth|permission|scope|unauthori[sz]ed|forbidden|expired|token/.test(code)
-  ) {
-    return 'auth-expired';
-  }
-  if (/server|unavailable|bad_gateway|upstream/.test(code)) return 'server';
-  return 'unknown';
+  // The shared classifier reads only HTTP status and allowlisted structured
+  // codes. A provider's free-text message can never influence a retry.
+  return classifyStructuredFailure(err);
 }
 
 function waitSeconds(retryAfterMs: number | null): string {

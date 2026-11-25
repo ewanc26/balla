@@ -1,6 +1,9 @@
 import { countGraphemes } from 'unicode-segmenter/grapheme';
+import { isAuthFailure, isRecordNotFoundError } from './failureCopyModel.ts';
 import { REFERENCE_LIST } from './listModel.ts';
 import { BLUESKY_WEB } from './serviceHosts.ts';
+
+export { isRecordNotFoundError } from './failureCopyModel.ts';
 
 export const STARTER_PACK_NAME_MAX = 64;
 export const STARTER_PACK_DESCRIPTION_MAX = 300;
@@ -134,30 +137,15 @@ export function diffStarterPackMembers(
 }
 
 /**
- * A retried deletion may find the reference list already gone. Only the PDS's
- * own RecordNotFound response is safe to treat as success; transport and auth
- * failures still surface.
+ * A retried deletion may find the reference list already gone. The shared
+ * helper uses only a record status and an explicit structured error code;
+ * transport, auth and unrecognised failures still surface.
  */
-export function isRecordNotFoundError(cause: unknown): boolean {
-  const error = cause as any;
-  const status = Number(error?.status ?? error?.statusCode);
-  const text = `${error?.error || ''} ${error?.message || ''}`;
-  return (
-    (status === 400 || status === 404) &&
-    /record.?not.?found|could not locate record/i.test(text)
-  );
-}
-
 export function starterPackActionError(
   cause: unknown,
   fallback: string
 ): string {
-  const message = cause instanceof Error ? cause.message : String(cause || '');
-  if (
-    /\b(scope|permission|unauthorised|unauthorized|forbidden|authentication|authorization)\b/i.test(
-      message
-    )
-  ) {
+  if (isAuthFailure(cause)) {
     return 'Your session needs renewing before Balla can manage starter packs. Sign out, sign in again, and retry.';
   }
   return fallback;

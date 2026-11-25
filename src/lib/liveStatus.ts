@@ -4,6 +4,7 @@
  * `swapRecord` so a second device cannot silently overwrite a newer status.
  */
 import { agent } from './agent';
+import { isInvalidSwapError, isRecordNotFoundError } from './failureCopyModel';
 import {
   DEFAULT_DURATION_MINUTES,
   LIVE_STATUS,
@@ -87,9 +88,8 @@ export async function upsertLiveStatus(
         swapRecord,
       } as any);
       return;
-    } catch (err: any) {
-      const message = String(err?.message || err?.error || err || '');
-      if (!/InvalidSwap/i.test(message)) throw err;
+    } catch (err) {
+      if (!isInvalidSwapError(err)) throw err;
       // A newer status exists; re-read its CID on the next attempt.
     }
   }
@@ -105,10 +105,9 @@ export async function endLiveStatus(): Promise<void> {
       collection: STATUS_COLLECTION,
       rkey: STATUS_RKEY,
     });
-  } catch (err: any) {
+  } catch (err) {
     // A missing record already means the status is over.
-    const message = String(err?.message || err?.error || err || '');
-    if (!/NotFound|Could not find|RecordNotFound/i.test(message)) throw err;
+    if (!isRecordNotFoundError(err)) throw err;
   }
 }
 
