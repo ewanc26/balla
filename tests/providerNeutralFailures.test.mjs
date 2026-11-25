@@ -47,7 +47,7 @@ const NEW_FAILURE_STRINGS = [
   ['../src/lib/chatModel.ts', 'The service is limiting requests just now'],
   ['../src/lib/moderationInbox.ts', 'Could not reach the moderation service'],
   ['../src/lib/videoUpload.ts', 'The video service could not check your quota'],
-  ['../src/lib/videoModel.ts', 'The video service could not process this file'],
+  ['../src/lib/videoFailureModel.ts', 'The video service could not process this file'],
   ['../src/lib/feedsContext.tsx', 'The service returned no details'],
   ['../src/lib/externalLink.ts', 'The service could not build a preview'],
   ['../src/lib/postTextLimit.ts', 'bytes over the 3,000-byte text cap'],
@@ -93,8 +93,8 @@ test('the release documents the correction with no new scope', () => {
   const appJson = JSON.parse(read('../app.json'));
   const changelog = read('../CHANGELOG.md');
   const features = read('../site/features.html');
-  assert.equal(pkg.version, '0.83.0');
-  assert.equal(appJson.expo.version, '0.83.0');
+  assert.equal(pkg.version, '0.84.0');
+  assert.equal(appJson.expo.version, '0.84.0');
   assert.match(changelog, /^## 0\.72\.0$/m);
   assert.match(changelog, /scope count stays 112/);
   assert.match(features, /Failure messages name no provider/);

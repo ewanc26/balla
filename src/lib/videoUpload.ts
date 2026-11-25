@@ -23,12 +23,17 @@ import {
   videoQuotaProblem,
 } from './videoServiceProbe.ts';
 import {
+  normaliseVideoJobStatus,
   videoJobDone,
   videoJobFailed,
   videoStatusFromUpload,
   type ComposerVideo,
   type VideoJobStatus,
 } from './videoModel.ts';
+import {
+  videoJobFailureCopy,
+  videoUploadErrorCopy,
+} from './videoFailureModel.ts';
 const POLL_MS = 2000;
 const MAX_POLLS = 150;
 const SERVICE_AUTH_TTL_SECONDS = 30 * 60;
@@ -68,29 +73,10 @@ function serviceUrl(method: string, params?: Record<string, string>): string {
 }
 
 async function readError(response: Response, fallback: string): Promise<string> {
-  try {
-    const body = await response.json();
-    const error = body && typeof body.error === 'string' ? body.error : '';
-    const message = body && typeof body.message === 'string' ? body.message : '';
-    if (response.status === 409 && error === 'already_exists') {
-      return body?.blob
-        ? 'This video was uploaded before. Balla is using its existing result.'
-        : 'The video service saw this video before but did not return its result, so it cannot be reused.';
-    }
-    if (error === 'unconfirmed_email' || message.includes('unconfirmed email')) {
-      return 'The video service needs a verified email address before this account can upload video.';
-    }
-    const detail = `${error} ${message}`.toLowerCase();
-    if (
-      (response.status === 401 || response.status === 403) &&
-      detail.includes('scope')
-    ) {
-      return 'This sign-in does not allow video uploads. Sign out and back in to grant the video permission.';
-    }
-    return message || error || fallback;
-  } catch {
-    return fallback;
-  }
+  // Only the structured code is read. A provider's `message` is never parsed,
+  // logged, stored or shown; unknown answers get the caller's fixed sentence.
+  const body = await response.json().catch(() => null);
+  return videoUploadErrorCopy(body, response.status, fallback);
 }
 
 async function serviceToken(
@@ -157,7 +143,13 @@ function parseJobStatus(body: unknown): VideoJobStatus {
       'The video service returned a video job status Balla cannot read.'
     );
   }
-  return result.value as VideoJobStatus;
+  const status = normaliseVideoJobStatus(result.value);
+  if (!status) {
+    throw new VideoUploadError(
+      'The video service returned a video job status Balla cannot read.'
+    );
+  }
+  return status;
 }
 
 async function fetchJson(
@@ -280,12 +272,7 @@ export async function uploadComposerVideo({
   }
 
   if (videoJobFailed(status)) {
-    throw new VideoUploadError(
-      status.message ||
-        status.error ||
-        status.failureCode ||
-        'The video service could not process this video.'
-    );
+    throw new VideoUploadError(videoJobFailureCopy());
   }
   if (!videoJobDone(status)) {
     throw new VideoUploadError(

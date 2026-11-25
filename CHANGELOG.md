@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.84.0
+
+- **Failure text is now Balla-authored end to end (#97/#34, partial).** Video upload errors select fixed copy from HTTP status and the structured `error` and `blob` fields; a provider's free-text `message` is never returned to the composer, kept in job state, logged or shown. Job status parsing allowlists its fields, so hostile `message` text reaches neither progress labels nor stored state. Sign-in cancellation uses the Expo client's local sentinels only, and raw OAuth sign-in/callback errors are no longer logged. Labeler, moderation-inbox, appeal, profile-save and report errors choose fixed Balla sentences from structured statuses and codes instead of reading provider prose. Shared retry classification is structured-only too.
+- Deterministic hostile-string tests cover UI copy, logs and stored state. No new scope, dependency, grant or provider claim; scope count stays 112 and OAuth client metadata is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.83.0
 
 - **Configuration restore now shows a preview before writing (#97, partial).** Advanced → Services still validates a pasted `balla.services.v1` record with the same strict parser, but Preview configuration now lists only the four changeable values that would change — handle resolver, did:plc directory, places host and places search — using each effective host already shown in this screen. Nothing is written until Apply previewed configuration is pressed. Editing the record clears the preview; a malformed record changes nothing behind fixed Balla copy. Session facts, grant-bound service values, notes and every other field stay out of the preview.

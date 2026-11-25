@@ -37,6 +37,7 @@ import type { ReportReason } from '../lib/moderation';
 import { buildProfileShareUrl, profileShareText } from '../lib/profileShareModel';
 import { reportableProfileLinks } from '../lib/reportModel';
 import { agent } from '../lib/agent';
+import { isAuthFailure } from '../lib/failureCopyModel.ts';
 import { useViewer } from '../lib/viewer';
 import {
   canVerifyProfile,
@@ -412,10 +413,7 @@ export function ProfileMenu({
       await reportProfile(profile, reason, details);
       setReportSent(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      const permissionIssue = /scope|permission|unauthor|forbidden|auth/i.test(
-        message
-      );
+      const permissionIssue = isAuthFailure(err);
       setError(
         permissionIssue
           ? 'Your session needs renewing before it can send reports. Sign out, sign in again, and retry.'

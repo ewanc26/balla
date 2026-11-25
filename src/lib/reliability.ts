@@ -2,7 +2,10 @@
 //
 // Reads may be retried with bounded backoff; writes are never repeated here.
 // Everything that reaches the UI is described in plain language so a failure
-// is never mistaken for success.
+// is never mistaken for success. Classification uses only HTTP status and
+// structured error codes; provider prose is never read.
+
+import { errorCode, statusCode as failureStatusCode } from './failureCopyModel.ts';
 
 export type FailureKind =
   | 'rate-limited'
@@ -27,24 +30,6 @@ type HeadersLike = {
   forEach?: (callback: (value: unknown, key: string) => void) => void;
   [key: string]: unknown;
 };
-
-function messageOf(err: unknown): string {
-  if (err instanceof Error) return err.message || err.name;
-  if (typeof err === 'string') return err;
-  if (err && typeof err === 'object' && 'message' in err) {
-    return String((err as { message?: unknown }).message || '');
-  }
-  return '';
-}
-
-function statusOf(err: unknown): number | null {
-  if (!err || typeof err !== 'object') return null;
-  const candidate =
-    (err as { status?: unknown }).status ?? (err as { statusCode?: unknown }).statusCode;
-  return typeof candidate === 'number' && Number.isFinite(candidate)
-    ? candidate
-    : null;
-}
 
 function headerOf(err: unknown, name: string): string | null {
   if (!err || typeof err !== 'object') return null;
@@ -90,36 +75,26 @@ export function retryAfterMsFrom(err: unknown, now = Date.now()): number | null 
 }
 
 export function classifyFailure(err: unknown): FailureKind {
-  const status = statusOf(err);
+  const status = failureStatusCode(err);
   if (status === 429) return 'rate-limited';
   // @atproto/xrpc uses status 1 for a network failure that never got a reply.
   if (status === 1) return 'offline';
   if (status === 401 || status === 403) return 'auth-expired';
   if (status !== null && status >= 500) return 'server';
 
-  const message = messageOf(err).toLowerCase();
-  if (/rate.?limit|too many requests|\b429\b/.test(message)) return 'rate-limited';
-  if (
-    /offline|network|fetch failed|failed to fetch|connection|timed? ?out|econn|enotfound|abort/.test(
-      message
-    )
-  ) {
+  // Only structured codes are read here. A provider's free-text message may
+  // contain any of these words; it must not influence Balla's retry decision.
+  const code = errorCode(err) ?? '';
+  if (/rate.?limit|too_many_requests/.test(code)) return 'rate-limited';
+  if (/network|offline|abort|timeout|timed_out|connection/.test(code)) {
     return 'offline';
   }
   if (
-    /\b(scope|permission|unauthori[sz]ed|forbidden|authentication|authorization|expired|token)\b/.test(
-      message
-    )
+    /auth|permission|scope|unauthori[sz]ed|forbidden|expired|token/.test(code)
   ) {
     return 'auth-expired';
   }
-  if (
-    /server error|unavailable|bad gateway|upstream|\b500\b|\b502\b|\b503\b|\b504\b/.test(
-      message
-    )
-  ) {
-    return 'server';
-  }
+  if (/server|unavailable|bad_gateway|upstream/.test(code)) return 'server';
   return 'unknown';
 }
 
