@@ -259,10 +259,10 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(features, /switch typed search off/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.91.0');
-  assert.equal(appJson.expo.version, '0.91.0');
+  assert.equal(pkg.version, '0.91.1');
+  assert.equal(appJson.expo.version, '0.91.1');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.91\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.91\.1<\/string>/);
   }
 });

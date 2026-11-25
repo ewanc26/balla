@@ -127,15 +127,15 @@ test('all three host-check screens keep using the shared probe', () => {
 test('release documents the bounded host check honestly without changing the grant', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.91.0');
-  assert.equal(appJson.expo.version, '0.91.0');
+  assert.equal(pkg.version, '0.91.1');
+  assert.equal(appJson.expo.version, '0.91.1');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.91\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.91\.1<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
-  assert.match(changelog, /^## 0\.91\.0$/m);
+  assert.match(changelog, /^## 0\.91\.1$/m);
   assert.match(changelog, /bounded deadline/);
   assert.match(changelog, /#97\/#100, partial/);
   assert.match(read('../docs/bluesky-compliance.md'), /bounded deadline/);

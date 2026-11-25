@@ -139,7 +139,14 @@ test('every public JSON read now uses the one bounded helper', () => {
   assert.doesNotMatch(helper, /response\.text\(\)/);
   assert.doesNotMatch(helper, /\.message\b/);
 
-  for (const file of ['events.ts', 'memories.ts', 'identityProfile.ts', 'identityDocumentRead.ts']) {
+  for (const file of [
+    'events.ts',
+    'memories.ts',
+    'identityProfile.ts',
+    'identityDocumentRead.ts',
+    'reactions.ts',
+    'teal.ts',
+  ]) {
     const source = read(`../src/lib/${file}`);
     assert.match(source, /fetchPublicJsonObject\(/, `${file} uses the bounded helper`);
     assert.doesNotMatch(source, /await fetch\(/, `${file} has no raw unbounded fetch`);
@@ -147,19 +154,19 @@ test('every public JSON read now uses the one bounded helper', () => {
   }
 });
 
-test('v0.91.0 copy and version parity match the bounded public reads', () => {
+test('v0.91.1 copy and version parity match the bounded public reads', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.91.0');
-  assert.equal(appJson.expo.version, '0.91.0');
+  assert.equal(pkg.version, '0.91.1');
+  assert.equal(appJson.expo.version, '0.91.1');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.91\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.91\.1<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
   const section = changelog.slice(
-    changelog.indexOf('## 0.91.0'),
+    changelog.indexOf('## 0.91.1'),
     changelog.indexOf('## 0.90.0'),
   );
   assert.match(section, /Public PDS repository reads can no longer hang forever/);
