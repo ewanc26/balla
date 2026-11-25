@@ -8,6 +8,7 @@
  * post outside the walk is claimed to be a complete archive.
  */
 import { resolveDidDocument } from './identityResolver';
+import { fetchPublicJsonObject } from './publicJsonRead.ts';
 import { atprotoPdsEndpoint } from './tealModel';
 import { readWithRetry } from './reliability';
 import {
@@ -26,22 +27,15 @@ type Page = {
 const walkCache = new Map<string, Promise<MemoriesDay | null>>();
 
 async function fetchPage(url: string): Promise<Page> {
-  const response = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!response.ok) {
-    const error = new Error(`PDS listRecords failed with ${response.status}`);
-    (error as Error & { status?: number }).status = response.status;
-    throw error;
-  }
-  const body = await response.json();
-  if (!body || typeof body !== 'object') {
-    throw new Error('PDS listRecords returned an invalid body');
-  }
-  const value = body as Record<string, unknown>;
+  const body = await fetchPublicJsonObject(url);
+  // No cursor means the bounded walk ends here, so a timed-out page fails
+  // closed as an empty walk instead of becoming a retry loop.
+  if (!body) return { records: [] };
   return {
-    records: Array.isArray(value.records) ? value.records : [],
+    records: Array.isArray(body.records) ? body.records : [],
     cursor:
-      typeof value.cursor === 'string' && value.cursor.length > 0
-        ? value.cursor
+      typeof body.cursor === 'string' && body.cursor.length > 0
+        ? body.cursor
         : undefined,
   };
 }

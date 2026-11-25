@@ -3,36 +3,27 @@
  *
  * A directory or `did:web` host that accepts a request but never completes it
  * must not leave sign-in pre-flight, identity checks or a loading card waiting
- * forever. The read shares the fixed deadline used by the other public probes,
- * passes its abort signal to `fetch`, and keeps only the structured JSON object
- * or null. Provider error prose is never read, logged or displayed.
+ * forever. This is the public JSON reader with the DID Accept type, so the
+ * deadline, abort signal and "never read provider prose" rule live in one
+ * place. A failed read fails closed to null and the caller's own cached
+ * document or next source still applies.
  */
 
-import { withDeadline, type TimeoutDeps } from './requestTimeout.ts';
+import { fetchPublicJsonObject } from './publicJsonRead.ts';
+import type { TimeoutDeps } from './requestTimeout.ts';
 
 export type IdentityDocumentReadDeps = { fetchImpl?: typeof fetch } & TimeoutDeps;
+
+const DID_ACCEPT = 'application/did+ld+json, application/json';
 
 export async function fetchIdentityDocument(
   url: string,
   deps: IdentityDocumentReadDeps = {},
 ): Promise<unknown | null> {
   if (typeof url !== 'string' || !url) return null;
-
-  const outcome = await withDeadline(async (signal) => {
-    try {
-      const response = await (deps.fetchImpl ?? fetch)(url, {
-        headers: { Accept: 'application/did+ld+json, application/json' },
-        signal,
-      });
-      if (!response.ok) return null;
-      const document = await response.json();
-      return document && typeof document === 'object' ? document : null;
-    } catch {
-      return null;
-    }
-  }, deps);
-
-  // A timeout is an unavailable source, not a copy-worthy event. The caller's
-  // own fail-closed fallback (cached document or next source) still applies.
-  return outcome.state === 'timeout' ? null : outcome.value;
+  try {
+    return await fetchPublicJsonObject(url, { ...deps, accept: DID_ACCEPT });
+  } catch {
+    return null;
+  }
 }

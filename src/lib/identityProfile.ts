@@ -10,6 +10,7 @@ import {
   resolveDidDocument,
   resolveHandleToDid,
 } from './identityResolver';
+import { fetchPublicJsonObject } from './publicJsonRead.ts';
 import { atprotoPdsEndpoint } from './tealModel';
 import { handleFromDidDoc, profileViewFromRecord } from './identityProfileModel';
 
@@ -36,13 +37,12 @@ export async function readProfileFromPds(actor: string): Promise<OfflineProfile 
     '&rkey=self';
 
   try {
-    const response = await fetch(url, { headers: { Accept: 'application/json' } });
-    if (!response.ok) return null;
-    const body = await response.json();
+    const body = await fetchPublicJsonObject(url);
+    if (!body) return null;
     const view = profileViewFromRecord(
       did,
       handleFromDidDoc(document),
-      body && typeof body === 'object' ? (body as Record<string, unknown>).value : null,
+      body.value,
       endpoint
     );
     return view ? { profile: view, identityFromCache } : null;
