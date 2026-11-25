@@ -55,8 +55,8 @@ test('no new scope or dependency is introduced', () => {
 test('release notes describe the honest boundary', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.77.0');
-  assert.equal(appJson.expo.version, '0.77.0');
+  assert.equal(pkg.version, '0.78.0');
+  assert.equal(appJson.expo.version, '0.78.0');
   assert.match(changelog, /## 0\.38\.0/);
   assert.match(changelog, /social signals/);
   assert.match(changelog, /no graph writes/);

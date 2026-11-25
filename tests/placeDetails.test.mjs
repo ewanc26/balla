@@ -123,7 +123,7 @@ test('Escape steps back from details before closing the picker', () => {
   const accessibility = read('../src/lib/accessibility.ts');
   assert.match(
     sheet,
-    /useDialogFocus\(\{\s*visible,\s*onClose: detailHit \? closeDetails : onClose,/,
+    /useDialogFocus\(\{\s*visible,\s*onClose: dismissDetailsOrPicker,/,
   );
   assert.match(sheet, /function closeDetails\(\)/);
   // The shared hook always calls the latest handler, so the detail-state
@@ -136,10 +136,18 @@ test('Escape steps back from details before closing the picker', () => {
   assert.match(features, /Escape or the Back to results control returns to the result list/);
 });
 
-test('Android hardware back steps back from details before closing the picker', () => {
-  assert.match(sheet, /onRequestClose=\{detailHit \? closeDetails : onClose\}/);
-  assert.match(sheet, /useDialogFocus\(\{\s*visible,\s*onClose: detailHit \? closeDetails : onClose,/);
-  assert.match(changelog, /^## 0\.77\.0$/m);
+test('every dismissal path steps back from details through one handler', () => {
+  assert.match(sheet, /function dismissDetailsOrPicker\(\) \{[\s\S]*if \(detailHit\) closeDetails\(\);[\s\S]*else onClose\(\);/);
+  assert.match(sheet, /useDialogFocus\(\{\s*visible,\s*onClose: dismissDetailsOrPicker,/);
+  assert.match(sheet, /onRequestClose=\{dismissDetailsOrPicker\}/);
+  assert.match(sheet, /<Pressable\s+onPress=\{dismissDetailsOrPicker\}\s+accessibilityElementsHidden/);
+  assert.match(sheet, /ref=\{closeRef\}\s+onPress=\{dismissDetailsOrPicker\}/);
+  assert.doesNotMatch(sheet, /onRequestClose=\{detailHit \? closeDetails : onClose\}/);
+  assert.doesNotMatch(sheet, /onPress=\{onClose\}/);
+  assert.match(changelog, /^## 0\.78\.0$/m);
+  assert.match(changelog, /backdrop and the header close control step back/);
+  assert.match(compliance, /backdrop taps and the header close control use the same step-back handler/);
+  assert.match(features, /backdrop or the header close control returns to the result list/);
   assert.match(changelog, /Android hardware back steps back from place details/);
   assert.match(compliance, /Android hardware back and the Apple TV menu button use the same step-back handler/);
   assert.match(features, /Android's hardware back button does the same/);
@@ -187,11 +195,11 @@ test('docs, release copy and OAuth facts match the details slice', () => {
   assert.match(features, /detail view inside the same sheet/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.77.0');
-  assert.equal(appJson.expo.version, '0.77.0');
+  assert.equal(pkg.version, '0.78.0');
+  assert.equal(appJson.expo.version, '0.78.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.77\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.78\.0<\/string>/);
   }
   assert.equal(
     createHash('sha256').update(metadataRaw).digest('hex'),
