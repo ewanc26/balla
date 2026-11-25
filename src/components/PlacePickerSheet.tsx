@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Clipboard from 'expo-clipboard';
 import {
   dialogAccessibilityProps,
   sheetAnimation,
@@ -27,6 +28,7 @@ import {
   type PlacesSearchState,
 } from '../lib/placesSearch';
 import {
+  atgeoUrn,
   placeDetailFields,
   placeResultDetail,
   placesHostLabel,
@@ -62,6 +64,8 @@ export function PlacePickerSheet({
   const [endpointChecked, setEndpointChecked] = useState(false);
   const [detailHit, setDetailHit] = useState<PlaceHit | null>(null);
   const [linkError, setLinkError] = useState<string | null>(null);
+  const [copyNotice, setCopyNotice] = useState<string | null>(null);
+  const [copyError, setCopyError] = useState<string | null>(null);
   const containerRef = useRef<any>(null);
   const closeRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
@@ -78,6 +82,8 @@ export function PlacePickerSheet({
     if (!visible) {
       setDetailHit(null);
       setLinkError(null);
+      setCopyNotice(null);
+      setCopyError(null);
       return;
     }
     let active = true;
@@ -98,6 +104,8 @@ export function PlacePickerSheet({
           setHits([]);
           setDetailHit(null);
           setLinkError(null);
+          setCopyNotice(null);
+          setCopyError(null);
         }
       } catch {
         if (!active) return;
@@ -106,6 +114,8 @@ export function PlacePickerSheet({
         setHits([]);
         setDetailHit(null);
         setLinkError(null);
+        setCopyNotice(null);
+        setCopyError(null);
         setPlacesEndpoint('');
         setEndpointLabel(placesHostLabel('', false));
         setEndpointChecked(true);
@@ -124,6 +134,8 @@ export function PlacePickerSheet({
     setHits([]);
     setDetailHit(null);
     setLinkError(null);
+    setCopyNotice(null);
+    setCopyError(null);
     try {
       const [allowed, endpoint] = await Promise.all([
         getPlacesEnabled(),
@@ -138,6 +150,8 @@ export function PlacePickerSheet({
         setHits([]);
         setDetailHit(null);
         setLinkError(null);
+        setCopyNotice(null);
+        setCopyError(null);
         return;
       }
       const result = await searchPlaces(q, endpoint, { enabled: allowed });
@@ -150,6 +164,8 @@ export function PlacePickerSheet({
       setState('unavailable');
       setDetailHit(null);
       setLinkError(null);
+      setCopyNotice(null);
+      setCopyError(null);
       setEndpointLabel(placesHostLabel('', false));
       setEndpointChecked(true);
     } finally {
@@ -160,15 +176,21 @@ export function PlacePickerSheet({
   function openDetails(hit: PlaceHit) {
     setDetailHit(hit);
     setLinkError(null);
+    setCopyNotice(null);
+    setCopyError(null);
   }
 
   function closeDetails() {
     setDetailHit(null);
     setLinkError(null);
+    setCopyNotice(null);
+    setCopyError(null);
   }
 
   async function openLink(url: string) {
     setLinkError(null);
+    setCopyNotice(null);
+    setCopyError(null);
     try {
       await openExternalUrl(url);
     } catch {
@@ -178,7 +200,26 @@ export function PlacePickerSheet({
     }
   }
 
+  async function copyPlaceId() {
+    setLinkError(null);
+    setCopyNotice(null);
+    setCopyError(null);
+    if (!detailPlaceId) {
+      setCopyError('No valid place ID is published for this result.');
+      return;
+    }
+    try {
+      await Clipboard.setStringAsync(detailPlaceId);
+      setCopyNotice('Place ID copied to the clipboard.');
+    } catch {
+      setCopyError(
+        'Could not copy the place ID. Check your device settings; Balla has not changed the ID.',
+      );
+    }
+  }
+
   const detailFields = detailHit ? placeDetailFields(detailHit) : [];
+  const detailPlaceId = detailHit ? atgeoUrn(detailHit.origin) : null;
   const detailRecordUrl = detailHit ? placeRecordUrl(placesEndpoint, detailHit.origin) : null;
   const detailMapUrl = detailHit ? openStreetMapSearchUrl(detailHit.name) : null;
 
@@ -257,7 +298,7 @@ export function PlacePickerSheet({
                 <Text style={{ color: p.secondary, fontSize: 13, marginTop: 10 }}>
                   These are the fields the provider published for this result. Balla
                   makes no request to open either link, sends no position and writes
-                  nothing.
+                  no place record.
                 </Text>
                 {detailFields.length ? (
                   <View style={styles.detailList}>
@@ -280,6 +321,38 @@ export function PlacePickerSheet({
                     No further place fields are published for this result.
                   </Text>
                 )}
+                {copyNotice ? (
+                  <Text style={{ color: p.secondary, fontSize: 13, marginTop: 10 }}>
+                    {copyNotice}
+                  </Text>
+                ) : null}
+                {copyError ? (
+                  <Text
+                    accessibilityRole="alert"
+                    style={{ color: p.danger, fontSize: 13, marginTop: 10 }}
+                  >
+                    {copyError}
+                  </Text>
+                ) : null}
+                {detailPlaceId ? (
+                  <Pressable
+                    onPress={() => void copyPlaceId()}
+                    accessibilityRole="button"
+                    accessibilityLabel="Copy the place ID shown above"
+                    style={({ pressed }) => [
+                      styles.copyButton,
+                      {
+                        borderColor: p.divider,
+                        backgroundColor: pressed ? p.bg : p.accentSoft,
+                      },
+                    ]}
+                  >
+                    <Ionicons name="copy-outline" size={18} color={p.accent} />
+                    <Text style={{ color: p.accent, fontSize: 14, fontWeight: '600' }}>
+                      Copy place ID
+                    </Text>
+                  </Pressable>
+                ) : null}
                 {linkError ? (
                   <Text
                     accessibilityRole="alert"
@@ -598,6 +671,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: CARD_RADIUS,
     borderWidth: 1,
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    gap: 8,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    borderRadius: CARD_RADIUS,
+    borderWidth: 1,
+    marginTop: 10,
   },
   detailList: { marginTop: 8 },
   detailRow: {
