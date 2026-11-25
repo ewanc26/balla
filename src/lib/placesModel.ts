@@ -139,6 +139,41 @@ export function placeResultDetail(hit: PlaceHit): string {
   return parts.join(' · ');
 }
 
+export type PlaceDetailField = { label: string; value: string };
+
+const PLACE_MATCH_LABELS: Record<PlaceMatch, string> = {
+  start: 'Start of name',
+  word: 'Word in name',
+  other_name: 'Other name',
+  approximate: 'Approximate match',
+};
+
+/**
+ * The detail sheet shows only structured fields the provider published. A
+ * missing or malformed field is absent rather than guessed; coordinates and
+ * check-in counts were discarded by parsePlacesSearch and never reach here.
+ */
+export function placeDetailFields(hit: PlaceHit): PlaceDetailField[] {
+  const fields: PlaceDetailField[] = [
+    { label: 'Type', value: hit.kind === 'area' ? 'Area' : 'Place' },
+  ];
+  if (hit.category) fields.push({ label: 'Category', value: hit.category });
+  if (hit.group) fields.push({ label: 'Group', value: hit.group });
+  if (hit.subtype) fields.push({ label: 'Subtype', value: hit.subtype });
+  if (hit.kind === 'area' && hit.cityState) {
+    fields.push({ label: 'Provider class', value: 'City' });
+  }
+  if (hit.country) fields.push({ label: 'Country', value: hit.country });
+  if (hit.matched && hit.matched !== hit.name) {
+    fields.push({ label: 'Matched name', value: hit.matched });
+  }
+  const matchLabel = hit.match ? PLACE_MATCH_LABELS[hit.match] : null;
+  if (matchLabel) fields.push({ label: 'Match', value: matchLabel });
+  const urn = atgeoUrn(hit.origin);
+  if (urn) fields.push({ label: 'Place ID', value: urn });
+  return fields;
+}
+
 export type PlaceSelection = { start: number; end: number };
 
 /** A place name is ordinary text: no URN, coordinate or check-in count travels. */
