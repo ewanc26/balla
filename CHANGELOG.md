@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.63.0
+
+- **Group conversations now show every participant (#193).** The conversation header has a visible Participants button for groups. It opens a light sheet listing the complete roster from `chat.bsky.convo.getConvoMembers`, not the "important members" subset on `ConvoView`. Each name comes only from real member fields: display name, then `@handle`, then DID; the viewer is "You", an owner is labelled Owner. No membership is invented from a DID prefix, and no presence or ranking state is shown. A failed roster read falls back to the subset already on the conversation and the sheet says plainly when the list is unavailable, without blocking reading or sending.
+- No new OAuth scope or dependency; the scope count remains 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.62.0
 
 - **Group messages now name the sender (#193).** A message view carries only a sender DID, so Balla resolves it against the loaded conversation members and the `relatedProfiles` already returned by `getMessages`; incoming bubbles and the reply banner show that real name or `@handle`, and own messages stay "You". Chat-list group rows use the group name initial, and join-request rows use the group owner, instead of showing an arbitrary `members[0]`. An unresolvable sender stays unnamed rather than being given an invented identity. The full membership roster remains in conversation settings; no new chat scope was added.

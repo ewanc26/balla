@@ -242,3 +242,60 @@ export function joinLinkLabel(code: string): string {
   if (!value) return '';
   return value;
 }
+
+/**
+ * A participant label names only what the member view actually contains. A
+ * missing display name falls back to the handle, then the DID; the viewer is
+ * "You". No name is invented from a DID prefix or the conversation title.
+ */
+export function participantLabel(member: any, viewerDid = ''): string {
+  if (!member) return '';
+  if (member.did && member.did === viewerDid) return 'You';
+  const name = String(member.displayName || '').trim();
+  if (name) return name;
+  const handle = String(member.handle || '').trim();
+  if (handle) return `@${handle}`;
+  return String(member.did || '').trim();
+}
+
+/** Owner role, or the handle when a display name already supplied the label. */
+export function participantSubtitle(member: any): string {
+  if (!member) return '';
+  const handle = String(member.handle || '').trim();
+  if (isOwner(member)) return 'Owner';
+  if (member.displayName && handle) return `@${handle}`;
+  return '';
+}
+
+/**
+ * Full group membership, de-duplicated by DID and ordered with owners first
+ * and the viewer next. The source is getConvoMembers; ConvoView.members is
+ * only an "important members" subset and is not a complete roster.
+ */
+export function orderedParticipants(members: any[] | undefined, viewerDid = ''): any[] {
+  const list = Array.isArray(members) ? members : [];
+  const seen = new Set<string>();
+  const unique = list.filter((member) => {
+    const did = String(member?.did || '').trim();
+    if (!did || seen.has(did)) return false;
+    seen.add(did);
+    return true;
+  });
+  return unique.sort((a, b) => {
+    const ownerDiff = Number(isOwner(b)) - Number(isOwner(a));
+    if (ownerDiff) return ownerDiff;
+    const viewerDiff =
+      Number(b?.did === viewerDid) - Number(a?.did === viewerDid);
+    if (viewerDiff) return viewerDiff;
+    return participantLabel(a, viewerDid).localeCompare(
+      participantLabel(b, viewerDid)
+    );
+  });
+}
+
+/** The count shown is the service count when present, otherwise the loaded roster. */
+export function participantCount(members: any[] | undefined, convo?: any): number {
+  const reported = convo?.kind?.memberCount;
+  if (typeof reported === 'number' && Number.isFinite(reported)) return reported;
+  return orderedParticipants(members).length;
+}

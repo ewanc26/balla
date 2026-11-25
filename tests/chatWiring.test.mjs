@@ -133,6 +133,10 @@ test('chat screens call the chat proxy, never log message content', () => {
   assert.match(convo, /buildReplyRef/);
   assert.match(convo, /groupReactions/);
   assert.match(convo, /MessageActionsSheet/);
+  assert.match(convo, /GroupParticipantsSheet/);
+  assert.match(convo, /getConvoMembers\(/);
+  assert.match(convo, /participantCount\(/);
+  assert.match(convo, /accessibilityLabel=\{`Group participants/);
   assert.match(convoSettings, /getConvoMembers\(/);
   assert.match(convoSettings, /editGroup\(/);
   assert.match(convoSettings, /removeMembers\(/);

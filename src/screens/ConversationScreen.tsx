@@ -36,10 +36,12 @@ import {
   buildReplyRef,
   groupReactions,
   messageActionable,
+  participantCount,
   replyPreview,
 } from '../lib/chatGroupModel';
 import { MessageActionsSheet } from '../components/MessageActionsSheet';
 import { ChatReportSheet } from '../components/ChatReportSheet';
+import { GroupParticipantsSheet } from '../components/GroupParticipantsSheet';
 
 const MESSAGE_PAGE_SIZE = 40;
 
@@ -61,6 +63,10 @@ export function ConversationScreen() {
   const route = useRoute<any>();
   const convoId = String(route.params?.convoId || '');
   const [convo, setConvo] = useState<any>(null);
+  // The complete roster comes from getConvoMembers. ConvoView.members is only
+  // an "important members" subset, so it cannot satisfy "all participants".
+  const [members, setMembers] = useState<any[]>([]);
+  const [showParticipants, setShowParticipants] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   // Profiles for the people who authored or reacted to the loaded messages.
   // getMessages returns these as relatedProfiles; without them a group
@@ -83,30 +89,46 @@ export function ConversationScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       headerRight: () => (
-        <Pressable
-          onPress={() => navigation.navigate('ConversationSettings', { convoId })}
-          accessibilityRole="button"
-          accessibilityLabel="Conversation settings"
-          style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.6 : 1 }]}
-        >
-          <Ionicons name="ellipsis-horizontal" size={22} color={p.chromeAction} />
-        </Pressable>
+        <View style={styles.headerActions}>
+          {isGroup(convo) ? (
+            <Pressable
+              onPress={() => setShowParticipants(true)}
+              accessibilityRole="button"
+              accessibilityLabel={`Group participants, ${participantCount(members, convo)} members`}
+              style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.6 : 1 }]}
+            >
+              <Ionicons name="people-outline" size={22} color={p.chromeAction} />
+            </Pressable>
+          ) : null}
+          <Pressable
+            onPress={() => navigation.navigate('ConversationSettings', { convoId })}
+            accessibilityRole="button"
+            accessibilityLabel="Conversation settings"
+            style={({ pressed }) => [styles.headerButton, { opacity: pressed ? 0.6 : 1 }]}
+          >
+            <Ionicons name="ellipsis-horizontal" size={22} color={p.chromeAction} />
+          </Pressable>
+        </View>
       ),
     });
-  }, [navigation, convoId, p.chromeAction]);
+  }, [navigation, convoId, convo, members, p.chromeAction]);
 
   const load = useCallback(async () => {
     setLoading(true);
     setError(null);
     const chat = getChatAgent();
     try {
-      const [convoRes, messageRes] = await Promise.all([
+      const [convoRes, messageRes, memberRes] = await Promise.all([
         readWithRetry(() => chat.chat.bsky.convo.getConvo({ convoId })),
         readWithRetry(() =>
           chat.chat.bsky.convo.getMessages({ convoId, limit: MESSAGE_PAGE_SIZE })
         ),
+        // A failed roster read must not break reading or sending messages.
+        // Fall back to the subset on ConvoView and say so in the sheet.
+        chat.chat.bsky.convo.getConvoMembers({ convoId, limit: 100 }).catch(() => null),
       ]);
       setConvo(convoRes.data.convo);
+      setMembers(memberRes?.data?.members || convoRes.data.convo?.members || []);
       setMessages(chronological(messageRes.data.messages || []));
       setRelatedProfiles(messageRes.data.relatedProfiles || []);
       setCursor(messageRes.data.cursor);
@@ -607,6 +629,12 @@ export function ConversationScreen() {
         </ScrollView>
       </View>
 
+      <GroupParticipantsSheet
+        visible={showParticipants}
+        members={members}
+        viewerDid={viewerDid}
+        onClose={() => setShowParticipants(false)}
+      />
       {actionsMessage ? (
         <MessageActionsSheet
           convoId={convoId}
@@ -694,6 +722,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 8,
   },
+  headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerButton: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   reactions: { flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 },
   reaction: {
