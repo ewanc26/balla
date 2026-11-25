@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.80.0
+
+- **A hung places provider now fails closed instead of spinning forever (#156, partial).** Both the composer's typed search and Advanced → Services' places check use one bounded, injectable deadline. On timeout the request is aborted, the picker shows fixed Balla copy saying the provider did not answer in time (while the typed name can still be used), and the Services check reports the same detail with a measured latency. No provider prose is read, logged or shown. No request shape, device position, place-pin record, dependency or OAuth scope changes; scope count stays 112.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.79.0
 
 - **A failed place map link-out now says so on the results view (#156, partial).** The inline map button and the detail view share one browser-open handler, so a browser-open failure uses the same fixed copy in Balla's words instead of being swallowed. The error appears beside the results as an alert, is cleared on a new search or dismissal, and the name can still be added as plain text. No request, position, place-pin record, dependency or OAuth scope changes; scope count stays 112.

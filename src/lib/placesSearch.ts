@@ -13,8 +13,9 @@ import {
   placesSearchUrl,
   type PlaceHit,
 } from './placesModel.ts';
+import { PLACES_TIMEOUT_DETAIL, withDeadline, type TimeoutDeps } from './requestTimeout.ts';
 
-export type PlacesSearchState = 'ready' | 'invalid' | 'unavailable' | 'off';
+export type PlacesSearchState = 'ready' | 'invalid' | 'unavailable' | 'off' | 'timeout';
 
 export type PlacesSearchResult = {
   state: PlacesSearchState;
@@ -22,7 +23,10 @@ export type PlacesSearchResult = {
   hits: PlaceHit[];
 };
 
-export type PlacesSearchDeps = { fetchImpl?: typeof fetch; enabled?: boolean };
+export type PlacesSearchDeps = {
+  fetchImpl?: typeof fetch;
+  enabled?: boolean;
+} & TimeoutDeps;
 
 export async function searchPlaces(
   query: string,
@@ -33,29 +37,38 @@ export async function searchPlaces(
   const url = placesSearchUrl(endpoint, query);
   if (!url) return { state: 'invalid', status: null, hits: [] };
 
-  let response: Response | null = null;
-  try {
-    response = await (deps.fetchImpl ?? fetch)(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: placesSearchBody(query),
-    });
-  } catch {
-    // No response: report unreachable without reading any provider text.
-  }
-  if (!response) return { state: 'unavailable', status: null, hits: [] };
-  if (!response.ok) {
-    return { state: 'unavailable', status: response.status, hits: [] };
-  }
-  try {
-    return {
-      state: 'ready',
-      status: response.status,
-      hits: parsePlacesSearch(await response.json()),
-    };
-  } catch {
-    return { state: 'unavailable', status: response.status, hits: [] };
-  }
+  // One bounded read: a provider that never answers cannot hold the picker in
+  // a permanent spinner. The signal cancels a real fetch on timeout; no
+  // provider text is read on any path.
+  const outcome = await withDeadline(async (signal) => {
+    let response: Response | null = null;
+    try {
+      response = await (deps.fetchImpl ?? fetch)(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: placesSearchBody(query),
+        signal,
+      });
+    } catch {
+      // No response: report unreachable without reading any provider text.
+    }
+    if (!response) return { state: 'unavailable' as const, status: null, hits: [] };
+    if (!response.ok) {
+      return { state: 'unavailable' as const, status: response.status, hits: [] };
+    }
+    try {
+      return {
+        state: 'ready' as const,
+        status: response.status,
+        hits: parsePlacesSearch(await response.json()),
+      };
+    } catch {
+      return { state: 'unavailable' as const, status: response.status, hits: [] };
+    }
+  }, deps);
+
+  if (outcome.state === 'timeout') return { state: 'timeout', status: null, hits: [] };
+  return outcome.value;
 }
 
 /** Fixed, provider-neutral copy so a failed service cannot write Balla's UI. */
@@ -65,6 +78,9 @@ export function placesSearchCopy(state: PlacesSearchState): string {
   }
   if (state === 'invalid') {
     return 'Enter an https provider without a path in Advanced → Services.';
+  }
+  if (state === 'timeout') {
+    return `${PLACES_TIMEOUT_DETAIL} You can still add the name you typed as plain text.`;
   }
   return 'Place search is unavailable. You can still add the name you typed as plain text.';
 }
