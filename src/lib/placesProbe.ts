@@ -12,8 +12,13 @@ import {
   placesSearchUrl,
 } from './placesModel.ts';
 import { serviceStatusDetail, type ServiceProbe } from './servicesProbe.ts';
+import {
+  PLACES_TIMEOUT_DETAIL,
+  withDeadline,
+  type TimeoutDeps,
+} from './requestTimeout.ts';
 
-export type PlacesProbeDeps = { fetchImpl?: typeof fetch };
+export type PlacesProbeDeps = { fetchImpl?: typeof fetch } & TimeoutDeps;
 
 export async function probePlaces(
   endpoint: string,
@@ -30,59 +35,73 @@ export async function probePlaces(
     };
   }
   const started = Date.now();
-  let response: Response | null = null;
-  try {
-    response = await (deps.fetchImpl ?? fetch)(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-      body: placesSearchBody(PLACES_SEARCH_CANARY),
-    });
-  } catch {
-    // No response: report unreachable without reading any provider text.
-  }
-  const latencyMs = Date.now() - started;
-  if (!response) {
+  const outcome = await withDeadline(async (signal) => {
+    let response: Response | null = null;
+    try {
+      response = await (deps.fetchImpl ?? fetch)(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: placesSearchBody(PLACES_SEARCH_CANARY),
+        signal,
+      });
+    } catch {
+      // No response: report unreachable without reading any provider text.
+    }
+    const latencyMs = Date.now() - started;
+    if (!response) {
+      return {
+        state: 'unavailable' as const,
+        status: null,
+        latencyMs,
+        endpoint,
+        detail: 'Could not reach this places provider.',
+      };
+    }
+    if (!response.ok) {
+      return {
+        state: 'unavailable' as const,
+        status: response.status,
+        latencyMs,
+        endpoint,
+        detail: serviceStatusDetail(response.status),
+      };
+    }
+    try {
+      const hits = parsePlacesSearch(await response.json());
+      return hits.length
+        ? {
+            state: 'ok' as const,
+            status: response.status,
+            latencyMs,
+            endpoint,
+            detail: `Typed search returned ${hits.length} structured place results. No position was sent.`,
+          }
+        : {
+            state: 'unavailable' as const,
+            status: response.status,
+            latencyMs,
+            endpoint,
+            detail: 'Response had no usable place results.',
+          };
+    } catch {
+      return {
+        state: 'unavailable' as const,
+        status: response.status,
+        latencyMs,
+        endpoint,
+        detail: 'Response was not JSON.',
+      };
+    }
+  }, deps);
+
+  if (outcome.state === 'timeout') {
     return {
       state: 'unavailable',
       status: null,
-      latencyMs,
+      latencyMs: Date.now() - started,
       endpoint,
-      detail: 'Could not reach this places provider.',
+      detail: PLACES_TIMEOUT_DETAIL,
     };
   }
-  if (!response.ok) {
-    return {
-      state: 'unavailable',
-      status: response.status,
-      latencyMs,
-      endpoint,
-      detail: serviceStatusDetail(response.status),
-    };
-  }
-  try {
-    const hits = parsePlacesSearch(await response.json());
-    return hits.length
-      ? {
-          state: 'ok',
-          status: response.status,
-          latencyMs,
-          endpoint,
-          detail: `Typed search returned ${hits.length} structured place results. No position was sent.`,
-        }
-      : {
-          state: 'unavailable',
-          status: response.status,
-          latencyMs,
-          endpoint,
-          detail: 'Response had no usable place results.',
-        };
-  } catch {
-    return {
-      state: 'unavailable',
-      status: response.status,
-      latencyMs,
-      endpoint,
-      detail: 'Response was not JSON.',
-    };
-  }
+  return outcome.value;
 }
