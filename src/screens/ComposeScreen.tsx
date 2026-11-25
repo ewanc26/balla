@@ -42,6 +42,8 @@ import {
   type DraftChoiceState,
 } from '../lib/serverDraftsModel.ts';
 import { ServerDraftsSheet } from '../components/ServerDraftsSheet';
+import { PlacePickerSheet } from '../components/PlacePickerSheet';
+import { insertPlaceName } from '../lib/placesModel.ts';
 import {
   buildCaptionTracks,
   buildVideoEmbed,
@@ -334,6 +336,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
   const [recoverDraft, setRecoverDraft] = useState<StoredDraft | null>(null);
   const [draftChecked, setDraftChecked] = useState(false);
   const [draftsOpen, setDraftsOpen] = useState(false);
+  const [placePickerOpen, setPlacePickerOpen] = useState(false);
   const [activeDraftId, setActiveDraftId] = useState<string | null>(null);
   const [savingDraft, setSavingDraft] = useState(false);
   const editorRef = useRef<any>(null);
@@ -816,6 +819,17 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
     const next = applyMention(text, activeMention, actor.handle);
     setText(next.text);
     setSelection({ start: next.cursor, end: next.cursor });
+    editorRef.current?.focus();
+  }
+
+  function choosePlace(name: string) {
+    if (sending) return;
+    const next = insertPlaceName(text, selection, name);
+    if (next.text === text) return;
+    setText(next.text);
+    setSelection({ start: next.cursor, end: next.cursor });
+    setPlacePickerOpen(false);
+    setNotice('Place name added as plain text. No check-in was written.');
     editorRef.current?.focus();
   }
 
@@ -1676,6 +1690,40 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
             ]}
           >
             <Pressable
+              onPress={() => setPlacePickerOpen(true)}
+              disabled={sending}
+              accessibilityRole="button"
+              accessibilityLabel="Add a place name to this post"
+              accessibilityHint="Opens typed place search. Only a name is inserted; no device position is sent and no check-in is written"
+              accessibilityState={{ disabled: sending }}
+              style={({ pressed }) => [
+                styles.optionsButton,
+                { opacity: sending ? 0.5 : pressed ? 0.7 : 1 },
+              ]}
+            >
+              <Ionicons name="location-outline" size={18} color={p.secondary} />
+              <Text
+                numberOfLines={1}
+                style={{
+                  color: p.secondary,
+                  fontSize: 13,
+                  fontWeight: '500',
+                  marginLeft: 6,
+                  flexShrink: 1,
+                }}
+              >
+                Add place name
+              </Text>
+            </Pressable>
+          </View>
+
+          <View
+            style={[
+              styles.optionsRow,
+              { borderTopColor: p.divider, borderBottomColor: p.divider },
+            ]}
+          >
+            <Pressable
               onPress={() => setOptionsOpen(true)}
               disabled={sending}
               accessibilityRole="button"
@@ -2188,6 +2236,12 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
         activeId={activeDraftId}
         onClose={() => setDraftsOpen(false)}
         onLoad={openServerDraft}
+      />
+
+      <PlacePickerSheet
+        visible={placePickerOpen}
+        onClose={() => setPlacePickerOpen(false)}
+        onPick={choosePlace}
       />
     </KeyboardAvoidingView>
   );
