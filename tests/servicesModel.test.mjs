@@ -6,10 +6,13 @@ import {
   SERVICE_SLOT_COPY,
   advertisedEndpoint,
   didWebUrl,
+  effectivePlaces,
   effectivePlcDirectory,
   effectiveResolver,
+  isDefaultPlaces,
   isDefaultPlcDirectory,
   isDefaultResolver,
+  isPlacesEnabled,
   normaliseServicesConfig,
 } from '../src/lib/servicesModel.ts';
 import { probeResolver } from '../src/lib/servicesProbe.ts';
@@ -22,30 +25,44 @@ test('service defaults are the single source of truth for runtime hosts', () => 
   assert.equal(DEFAULT_SERVICES.videoAudience, 'did:web:video.bsky.app');
   assert.equal(DEFAULT_SERVICES.plcDirectory, 'https://plc.directory');
   assert.equal(DEFAULT_SERVICES.places, 'https://places.eurosky.tech');
-  assert.deepEqual(DEFAULT_SERVICES_CONFIG, { handleResolver: null, plcDirectory: null, places: null });
+  assert.deepEqual(DEFAULT_SERVICES_CONFIG, {
+    handleResolver: null,
+    plcDirectory: null,
+    places: null,
+    placesEnabled: true,
+  });
 });
 
 test('only a non-default https host is persisted as an override', () => {
-  assert.deepEqual(normaliseServicesConfig(null), { handleResolver: null, plcDirectory: null, places: null });
+  assert.deepEqual(normaliseServicesConfig(null), {
+    handleResolver: null,
+    plcDirectory: null,
+    places: null,
+    placesEnabled: true,
+  });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'https://bsky.social' }), {
     handleResolver: null,
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'selfhosted.social' }), {
     handleResolver: 'https://selfhosted.social',
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'http://bad.example' }), {
     handleResolver: null,
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.deepEqual(normaliseServicesConfig({ handleResolver: 'https://bad.example/path' }), {
     handleResolver: null,
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.equal(effectiveResolver({ handleResolver: null }), 'https://bsky.social');
   assert.equal(effectiveResolver({ handleResolver: 'https://other.example' }), 'https://other.example');
@@ -58,27 +75,45 @@ test('only a non-default https PLC directory is persisted as an override', () =>
     handleResolver: null,
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.deepEqual(normaliseServicesConfig({ plcDirectory: 'plc.example' }), {
     handleResolver: null,
     plcDirectory: 'https://plc.example',
     places: null,
+    placesEnabled: true,
   });
   assert.deepEqual(normaliseServicesConfig({ plcDirectory: 'http://plc.example' }), {
     handleResolver: null,
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.deepEqual(normaliseServicesConfig({ plcDirectory: 'https://plc.example/path' }), {
     handleResolver: null,
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.equal(effectivePlcDirectory({ plcDirectory: null }), 'https://plc.directory');
   assert.equal(effectivePlcDirectory({ plcDirectory: 'https://plc.example' }), 'https://plc.example');
   assert.equal(isDefaultPlcDirectory({ plcDirectory: null }), true);
   assert.equal(isDefaultPlcDirectory({ plcDirectory: undefined }), true);
   assert.equal(isDefaultPlcDirectory({ plcDirectory: 'https://plc.example' }), false);
+});
+
+test('places search can be switched off without losing the configured host', () => {
+  const off = normaliseServicesConfig({ places: 'https://places.example', placesEnabled: false });
+  assert.equal(off.places, 'https://places.example');
+  assert.equal(off.placesEnabled, false);
+  assert.equal(effectivePlaces(off), 'https://places.example');
+  assert.equal(isDefaultPlaces(off), false);
+  assert.equal(isPlacesEnabled(off), false);
+
+  // Config written before this switch existed keeps the previous behaviour.
+  assert.equal(isPlacesEnabled({ placesEnabled: undefined }), true);
+  assert.equal(normaliseServicesConfig({ placesEnabled: true }).placesEnabled, true);
+  assert.match(SERVICE_SLOT_COPY.places.detail, /switched off/);
 });
 
 test('did:web maps to a hostname and optional path segments', () => {

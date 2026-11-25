@@ -18,12 +18,13 @@ import {
   isDefaultPlaces,
   isDefaultPlcDirectory,
   isDefaultResolver,
+  isPlacesEnabled,
 } from './servicesModel.ts';
 
 export const SERVICES_EXPORT_SCHEMA = 'balla.services.v1';
 
 export const SERVICES_EXPORT_NOTES = [
-  'The handle resolver is read before sign-in and takes effect on the next sign-in. The did:plc directory is used for public identity reads and pre-flight checks and takes effect on the next read. The places provider is used for typed search only; Balla never sends a device position. All three are token-free and reversible.',
+  'The handle resolver is read before sign-in and takes effect on the next sign-in. The did:plc directory is used for public identity reads and pre-flight checks and takes effect on the next read. The places provider is used for typed search only; Balla never sends a device position. It can be switched off, which stops every place request. All three are token-free and reversible.',
   'AppView, chat, video and labeler DIDs and audiences are written into this sign-in’s OAuth grant. They are facts here, not editable settings; changing one needs a new authorisation.',
   'The account PDS is discovered from the account’s DID document, not configured.',
   'This file contains no access token, refresh token, password or provider error text. It is a configuration record, not a credential or a backup.',
@@ -47,6 +48,7 @@ export type ServicesExport = {
     usingDefaultPlcDirectory: boolean;
     places: string;
     usingDefaultPlaces: boolean;
+    placesEnabled: boolean;
   };
   defaults: typeof DEFAULT_SERVICES;
   session: {
@@ -78,6 +80,7 @@ export function buildServicesExport(
       usingDefaultPlcDirectory: isDefaultPlcDirectory(config),
       places: effectivePlaces(config),
       usingDefaultPlaces: isDefaultPlaces(config),
+      placesEnabled: isPlacesEnabled(config),
     },
     defaults: { ...DEFAULT_SERVICES },
     session: {

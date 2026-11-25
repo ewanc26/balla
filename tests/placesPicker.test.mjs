@@ -110,6 +110,25 @@ test('search fails closed with fixed copy and no provider prose', async () => {
   assert.deepEqual(refused.hits, []);
 });
 
+test('switching places off makes no request and says so in the sheet', async () => {
+  let calls = 0;
+  const off = await searchPlaces('Berlin', 'https://places.eurosky.tech', {
+    enabled: false,
+    fetchImpl: async () => {
+      calls += 1;
+      throw new Error('must not fetch when places are off');
+    },
+  });
+  assert.deepEqual(off, { state: 'off', status: null, hits: [] });
+  assert.equal(calls, 0);
+  assert.match(placesSearchCopy(off.state), /Places search is off/);
+  assert.match(placesSearchCopy(off.state), /Turn it on in Advanced → Services/);
+  assert.doesNotMatch(placesSearchCopy(off.state), /must not fetch/i);
+  assert.match(sheet, /getPlacesEnabled/);
+  assert.match(sheet, /setState\('off'\)/);
+  assert.match(sheet, /disabled=\{searching \|\| !query\.trim\(\) \|\| !enabled\}/);
+});
+
 test('the composer exposes a visible, honest place-name control', () => {
   assert.match(composer, /PlacePickerSheet/);
   assert.match(composer, /onPick=\{choosePlace\}/);
@@ -124,7 +143,7 @@ test('the composer exposes a visible, honest place-name control', () => {
 });
 
 test('docs and release notes match the partial place picker', () => {
-  assert.match(changelog, /^## 0\.63\.0$/m);
+  assert.match(changelog, /^## 0\.64\.0$/m);
   assert.match(changelog, /typed place-name picker/);
   assert.match(changelog, /scope count remains 112/);
   assert.match(compliance, /The composer adds a visible typed place-name picker/);
@@ -132,10 +151,10 @@ test('docs and release notes match the partial place picker', () => {
   assert.match(features, /place-name picker/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.63.0');
-  assert.equal(appJson.expo.version, '0.63.0');
+  assert.equal(pkg.version, '0.64.0');
+  assert.equal(appJson.expo.version, '0.64.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.63\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.64\.0<\/string>/);
   }
 });

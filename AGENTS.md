@@ -243,9 +243,10 @@ records from the subject's repository; the palette is visible, opens and
 closes with buttons, and writes stay deferred until the lexicon settles.
 The composer has a visible typed place-name picker against the configured
 public places host: the person presses Search, only their words are sent, and a
-result is inserted as plain text. No device position is sent, no check-in
-record is written and no place chip is rendered while the pin lexicon is a
-draft (#156, partial).
+result is inserted as plain text. Advanced → Services can switch typed search
+off, which stops the composer and the Services check without changing the saved
+host. No device position is sent, no check-in record is written and no place
+chip is rendered while the pin lexicon is a draft (#156, partial).
 
 ## Working rules
 

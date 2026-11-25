@@ -63,7 +63,8 @@ test('grant-bound services are shown as facts, never as inert switches', () => {
   assert.match(screen, /DEFAULT_SERVICES\.videoAudience/);
   assert.match(screen, /DEFAULT_SERVICES\.labelerAudience/);
   assert.match(screen, /DID document/);
-  assert.doesNotMatch(screen, /SettingSwitch/);
+  assert.equal((screen.match(/<SettingSwitch\b/g) || []).length, 1);
+  assert.match(screen, /label="Places search"/);
   assert.doesNotMatch(screen, /onPress=\{\(\) => \{\}\}/);
 });
 

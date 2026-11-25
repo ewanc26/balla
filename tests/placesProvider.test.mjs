@@ -14,6 +14,7 @@ import {
   DEFAULT_SERVICES,
   effectivePlaces,
   isDefaultPlaces,
+  isPlacesEnabled,
   normaliseServicesConfig,
 } from '../src/lib/servicesModel.ts';
 
@@ -120,16 +121,28 @@ test('the places host is a reversible persisted config override', () => {
     handleResolver: null,
     plcDirectory: null,
     places: null,
+    placesEnabled: true,
   });
   assert.deepEqual(normaliseServicesConfig({ places: 'places.example' }), {
     handleResolver: null,
     plcDirectory: null,
     places: 'https://places.example',
+    placesEnabled: true,
+  });
+  assert.deepEqual(normaliseServicesConfig({ places: 'places.example', placesEnabled: false }), {
+    handleResolver: null,
+    plcDirectory: null,
+    places: 'https://places.example',
+    placesEnabled: false,
   });
   assert.equal(effectivePlaces({ handleResolver: null, plcDirectory: null, places: null }), DEFAULT_PLACES_ENDPOINT);
   assert.equal(isDefaultPlaces({ handleResolver: null, plcDirectory: null, places: undefined }), true);
+  assert.equal(isPlacesEnabled({ placesEnabled: undefined }), true);
+  assert.equal(isPlacesEnabled({ placesEnabled: false }), false);
   assert.match(config, /getPlacesEndpoint/);
   assert.match(config, /setPlacesEndpoint/);
+  assert.match(config, /getPlacesEnabled/);
+  assert.match(config, /setPlacesEnabled/);
 });
 
 test('the screen, export and release notes describe the partial feature', () => {
@@ -137,19 +150,24 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(screen, /probePlaces\(await getPlacesEndpoint\(\)\)/);
   assert.match(screen, /Balla sends only the words you type/);
   assert.match(screen, /check-in record is written/i);
+  assert.match(screen, /label="Places search"/);
+  assert.match(screen, /const allowed = await getPlacesEnabled\(\)/);
+  assert.match(screen, /Off — no request was made/);
   assert.match(exporter, /places: effectivePlaces\(config\)/);
   assert.match(exporter, /usingDefaultPlaces/);
-  assert.match(changelog, /^## 0\.63\.0$/m);
+  assert.match(exporter, /placesEnabled: isPlacesEnabled\(config\)/);
+  assert.match(changelog, /^## 0\.64\.0$/m);
+  assert.match(changelog, /switched off/);
   assert.match(changelog, /#156, partial/);
   assert.match(changelog, /scope count remains 112/);
-  assert.match(compliance, /Places provider/);
-  assert.match(features, /Places provider/);
+  assert.match(compliance, /switch the search off entirely/);
+  assert.match(features, /switch typed search off/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.63.0');
-  assert.equal(appJson.expo.version, '0.63.0');
+  assert.equal(pkg.version, '0.64.0');
+  assert.equal(appJson.expo.version, '0.64.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.63\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.64\.0<\/string>/);
   }
 });

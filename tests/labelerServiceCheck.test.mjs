@@ -50,7 +50,8 @@ test('Advanced → Services exposes the labeler check as a visible, read-only co
   assert.match(screen, /checkLabeler\(\)/);
   assert.match(screen, /labelerProbeText\(labelerProbe\)/);
   assert.match(screen, /does not change which labels Balla applies/);
-  assert.doesNotMatch(screen, /SettingSwitch/);
+  assert.equal((screen.match(/<SettingSwitch\b/g) || []).length, 1);
+  assert.match(screen, /label="Places search"/);
   assert.doesNotMatch(screen, /onPress=\{\(\) => \{\}\}/);
 });
 
@@ -60,9 +61,9 @@ test('the release documents the labeler check as partial #97 without new scope',
   const changelog = read('../CHANGELOG.md');
   const compliance = read('../docs/bluesky-compliance.md');
   const features = read('../site/features.html');
-  assert.equal(pkg.version, '0.63.0');
-  assert.equal(appJson.expo.version, '0.63.0');
-  assert.match(changelog, /^## 0\.63\.0$/m);
+  assert.equal(pkg.version, '0.64.0');
+  assert.equal(appJson.expo.version, '0.64.0');
+  assert.match(changelog, /^## 0\.64\.0$/m);
   assert.match(changelog, /#97, partial/);
   assert.match(changelog, /labeler/i);
   assert.match(changelog, /scope count remains 111/);
