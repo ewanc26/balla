@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.83.0
+
+- **Configuration restore now shows a preview before writing (#97, partial).** Advanced → Services still validates a pasted `balla.services.v1` record with the same strict parser, but Preview configuration now lists only the four changeable values that would change — handle resolver, did:plc directory, places host and places search — using each effective host already shown in this screen. Nothing is written until Apply previewed configuration is pressed. Editing the record clears the preview; a malformed record changes nothing behind fixed Balla copy. Session facts, grant-bound service values, notes and every other field stay out of the preview.
+- Scope count stays 112 and OAuth client metadata is byte-identical. No new dependency, provider claim, grant change or verified independent host.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.82.0
 
 - **An exported service configuration can now be restored (#97, partial).** Advanced → Services keeps the existing local export and adds a visible paste field with an Import configuration button. The importer accepts only a valid `balla.services.v1` record, applies the three changeable public hosts and the places switch in one write, and ignores session facts, grant-bound service facts and every other field. A malformed record changes nothing and reports one fixed Balla message; no provider prose is shown, logged or stored. Changing the did:plc directory also clears its cached DID documents, matching the Save and Use default paths.

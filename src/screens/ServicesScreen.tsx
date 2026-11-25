@@ -37,6 +37,7 @@ import {
   DEFAULT_SERVICES,
   SERVICE_SLOT_COPY,
   normaliseServicesConfig,
+  type ServicesConfig,
 } from '../lib/servicesModel.ts';
 import {
   buildServicesExport,
@@ -45,7 +46,9 @@ import {
 } from '../lib/servicesExportModel.ts';
 import {
   parseServicesImport,
+  previewServicesImport,
   SERVICES_IMPORT_INVALID_DETAIL,
+  type ServicesImportChange,
 } from '../lib/servicesImportModel.ts';
 import {
   exportServicesJson,
@@ -99,6 +102,12 @@ export function ServicesScreen() {
   const [exportMessage, setExportMessage] = useState<string | null>(null);
   const [importText, setImportText] = useState('');
   const [importMessage, setImportMessage] = useState<string | null>(null);
+  const [importing, setImporting] = useState(false);
+  const [importPreview, setImportPreview] = useState<{
+    config: ServicesConfig;
+    changes: ServicesImportChange[];
+  } | null>(null);
+  const [importPreviewSource, setImportPreviewSource] = useState('');
   const { summary } = useSessionSummary();
 
   const refresh = useCallback(async () => {
@@ -305,18 +314,58 @@ export function ServicesScreen() {
     }
   }
 
-  async function importConfiguration() {
-    if (busy) return;
-    setBusy(true);
+  function updateImportText(value: string) {
+    setImportText(value);
+    if (importPreview) {
+      setImportPreview(null);
+      setImportPreviewSource('');
+      setImportMessage('The record changed. Preview it again before applying.');
+    }
+  }
+
+  async function previewConfiguration() {
+    if (importing) return;
+    setImporting(true);
     setImportMessage(null);
+    setImportPreview(null);
+    setImportPreviewSource('');
     try {
       const parsed = parseServicesImport(importText);
       if (parsed.state === 'invalid') {
         setImportMessage(parsed.detail);
         return;
       }
-      await replaceServicesConfig(parsed.config);
+      const current = await getServicesConfig();
+      const preview = previewServicesImport(current, parsed.config);
+      setImportPreview(preview);
+      setImportPreviewSource(importText);
+      setImportMessage(
+        preview.changes.length
+          ? 'Preview ready. Review the changes below, then apply.'
+          : 'This record already matches the saved settings. No changes to apply.',
+      );
+    } catch {
+      setImportMessage('Could not preview the configuration on this device.');
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function importConfiguration() {
+    if (importing) return;
+    if (!importPreview || importText !== importPreviewSource) {
+      setImportPreview(null);
+      setImportPreviewSource('');
+      setImportMessage('The record changed. Preview it again before applying.');
+      return;
+    }
+    setImporting(true);
+    setImportMessage(null);
+    try {
+      await replaceServicesConfig(importPreview.config);
       setImportText('');
+      setImportPreview(null);
+      setImportPreviewSource('');
       setResolverProbe(null);
       setPlcProbe(null);
       setPlacesProbe(null);
@@ -324,7 +373,7 @@ export function ServicesScreen() {
     } catch {
       setImportMessage('Could not apply the configuration on this device.');
     } finally {
-      setBusy(false);
+      setImporting(false);
     }
   }
 
@@ -512,7 +561,7 @@ export function ServicesScreen() {
         {exportMessage ? <SettingValueRow label="Export" value={exportMessage} /> : null}
         <TextInput
           value={importText}
-          onChangeText={setImportText}
+          onChangeText={updateImportText}
           placeholder="Paste a Balla service configuration record"
           placeholderTextColor={p.secondary}
           multiline
@@ -528,17 +577,37 @@ export function ServicesScreen() {
           ]}
         />
         <SettingButton
-          label="Import configuration"
-          onPress={() => void importConfiguration()}
-          busy={busy}
+          label="Preview configuration"
+          onPress={() => void previewConfiguration()}
+          busy={importing}
           disabled={!importText.trim()}
+        />
+        {importPreview ? (
+          importPreview.changes.length ? (
+            importPreview.changes.map((change) => (
+              <SettingValueRow
+                key={change.label}
+                label={`${change.label}: ${change.from}`}
+                value={`→ ${change.to}`}
+              />
+            ))
+          ) : (
+            <SettingValueRow label="Preview" value="No changes from this record." />
+          )
+        ) : null}
+        <SettingButton
+          label="Apply previewed configuration"
+          onPress={() => void importConfiguration()}
+          busy={importing}
+          disabled={!importPreview || importText !== importPreviewSource}
         />
         {importMessage ? <SettingValueRow label="Import" value={importMessage} /> : null}
         <SettingNote>
-          The importer reads only the resolver, did:plc directory, places host
-          and places switch from a valid Balla record. Session facts,
-          grant-bound services and every other field are ignored. A malformed
-          record changes nothing and shows fixed Balla copy.
+          Preview reads only the resolver, did:plc directory, places host and
+          places switch from a valid Balla record. Nothing is written until you
+          apply that preview. Editing the record clears the preview; session
+          facts, grant-bound services and every other field are ignored, and a
+          malformed record changes nothing behind fixed Balla copy.
         </SettingNote>
       </SettingSection>
 
