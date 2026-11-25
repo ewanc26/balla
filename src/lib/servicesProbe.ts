@@ -5,7 +5,12 @@
  * never read, logged or displayed.
  */
 
-import { VIDEO_LIMITS_LXM, didWebDocumentUrl, plcDocumentUrl } from './serviceHosts.ts';
+import {
+  VIDEO_LIMITS_LXM,
+  didWebDocumentUrl,
+  normaliseHttpsOrigin,
+  plcDocumentUrl,
+} from './serviceHosts.ts';
 import {
   DEFAULT_SERVICES,
   advertisedEndpoint,
@@ -72,23 +77,22 @@ export function serviceStatusDetail(status: number): string {
 
 /** Public handle → DID through the configured XRPC resolver. */
 export async function probeResolver(endpoint: string, deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
-  if (!/^https:\/\/[a-z0-9.-]+$/i.test(endpoint)) {
-    return probe('invalid', null, null, endpoint, 'Enter an https host without a path.');
-  }
-  const url = `${endpoint}/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(RESOLVER_CANARY)}`;
+  const base = normaliseHttpsOrigin(endpoint);
+  if (!base) return probe('invalid', null, null, endpoint, 'Enter an https host without a path.');
+  const url = `${base}/xrpc/com.atproto.identity.resolveHandle?handle=${encodeURIComponent(RESOLVER_CANARY)}`;
   const read = await timed(url, deps);
-  if (read.timedOut) return timedOut(endpoint, read.latencyMs);
+  if (read.timedOut) return timedOut(base, read.latencyMs);
   const { response, latencyMs } = read;
-  if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not reach this resolver.');
-  if (!response.ok) return probe('unavailable', response.status, latencyMs, endpoint, serviceStatusDetail(response.status));
+  if (!response) return probe('unavailable', null, latencyMs, base, 'Could not reach this resolver.');
+  if (!response.ok) return probe('unavailable', response.status, latencyMs, base, serviceStatusDetail(response.status));
   try {
     const payload = await response.json() as Record<string, unknown>;
     const did = typeof payload.did === 'string' && DID_RE.test(payload.did) ? payload.did : null;
     return did
-      ? probe('ok', response.status, latencyMs, endpoint, `Resolved a public handle to ${did.slice(0, 24)}…`)
-      : probe('unavailable', response.status, latencyMs, endpoint, 'Response had no valid DID field.');
+      ? probe('ok', response.status, latencyMs, base, `Resolved a public handle to ${did.slice(0, 24)}…`)
+      : probe('unavailable', response.status, latencyMs, base, 'Response had no valid DID field.');
   } catch {
-    return probe('unavailable', response.status, latencyMs, endpoint, 'Response was not JSON.');
+    return probe('unavailable', response.status, latencyMs, base, 'Response was not JSON.');
   }
 }
 
@@ -98,7 +102,7 @@ export async function probeResolver(endpoint: string, deps: ServiceProbeDeps = {
  * text is never read, logged or displayed.
  */
 export async function probePlcDirectory(directory: string, deps: ServiceProbeDeps = {}): Promise<ServiceProbe> {
-  const base = /^https:\/\/[a-z0-9.-]+$/i.test(directory) ? directory : null;
+  const base = normaliseHttpsOrigin(directory);
   if (!base) return probe('invalid', null, null, directory, 'Enter an https host without a path.');
   const canary = DEFAULT_SERVICES.labelerDid;
   const url = plcDocumentUrl(canary, base);

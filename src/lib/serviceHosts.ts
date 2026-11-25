@@ -114,11 +114,38 @@ export const CHAT_DID_DOCUMENT_URL = requiredDidWebDocumentUrl(SERVICE_HOSTS.cha
 export const VIDEO_LIMITS_LXM = 'app.bsky.video.getUploadLimits';
 
 /**
+ * The one HTTPS-origin check for host-like settings. A bare host becomes an
+ * https URL; a path, query, fragment or embedded credential is rejected. An
+ * explicit port is part of the origin and is kept, so a self-hosted service on
+ * a non-default port is accepted by every read path, not just by the settings
+ * screen. No provider text is read or returned.
+ */
+export function normaliseHttpsOrigin(input: string): string | null {
+  if (typeof input !== 'string') return null;
+  const trimmed = input.trim().replace(/\/+$/, '');
+  if (!trimmed || /\s/.test(trimmed)) return null;
+  const withScheme = /^[a-z]+:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  try {
+    const url = new URL(withScheme);
+    if (url.protocol !== 'https:') return null;
+    if (url.username || url.password) return null;
+    if (url.pathname !== '' && url.pathname !== '/') return null;
+    if (url.search || url.hash) return null;
+    if (!/^[a-z0-9.-]+$/i.test(url.hostname)) return null;
+    return `https://${url.host}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * The public directory URL for a did:plc identifier. `directory` is the
- * configured override when present; it is validated as an https origin here so
- * a persisted value can never turn the path into an off-origin request.
+ * configured override when present; it passes through the same origin check
+ * as the settings screen, so a persisted value can never turn the path into
+ * an off-origin request or be silently ignored because it carried a port.
  */
 export function plcDocumentUrl(did: string, directory: string = SERVICE_HOSTS.plcDirectory): string | null {
-  if (!/^did:plc:[a-z0-9]+$/i.test(did) || !/^https:\/\/[a-z0-9.-]+$/i.test(directory)) return null;
-  return `${directory}/${did}`;
+  const base = normaliseHttpsOrigin(directory);
+  if (!base || !/^did:plc:[a-z0-9]+$/i.test(did)) return null;
+  return `${base}/${did}`;
 }

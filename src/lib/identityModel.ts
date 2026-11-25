@@ -5,7 +5,7 @@
  * where an account lives; a handle suffix never implies a Bluesky host.
  */
 
-import { SERVICE_HOSTS } from './serviceHosts.ts';
+import { SERVICE_HOSTS, normaliseHttpsOrigin } from './serviceHosts.ts';
 
 export const IDENTITY_CACHE_KEY = 'balla.identity.cache.v1';
 export const IDENTITY_STRATEGY_KEY = 'balla.identity.strategy.v1';
@@ -53,13 +53,14 @@ export function normaliseIdentityStrategy(value: unknown): IdentityStrategy {
 
 /**
  * The public directory URL for a did:plc identifier. `directory` is the
- * configured override when present; it is validated as an https origin so a
- * persisted value can never turn the document read into an off-origin request.
+ * configured override when present; it passes through the same origin check
+ * as the settings screen, so an explicit port is honoured and a bad value can
+ * never turn the document read into an off-origin request.
  */
 export function plcDirectoryUrl(did: string, directory: string = SERVICE_HOSTS.plcDirectory): string | null {
-  return isDid(did) && did.startsWith('did:plc:') && /^https:\/\/[a-z0-9.-]+$/i.test(directory)
-    ? `${directory}/${encodeURIComponent(did)}`
-    : null;
+  const base = normaliseHttpsOrigin(directory);
+  if (!base || !isDid(did) || !did.startsWith('did:plc:')) return null;
+  return `${base}/${encodeURIComponent(did)}`;
 }
 
 // Re-exported so existing identity callers keep one builder with the service
