@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.88.0
+
+- **The public host check can no longer hang forever (#97/#100, partial).** Advanced → Hosting, the PDS directory and migration pre-flight all share `probeHost`, which was the only public probe still using a raw unbounded `fetch`. A host that accepted a connection but never answered left the check spinner running indefinitely. It now uses the same bounded `withDeadline` clock as the resolver, directory, places and AppView checks, and passes the abort signal to `fetch` so a real request is cancelled instead of left running.
+- A timed-out host reports fixed Balla copy naming the address and asking the person to try again; HTTP status, structured facts and fail-closed classification are unchanged. Provider prose is never read, logged, stored or shown, and invalid input still makes no request.
+- No new scope, dependency, grant or endpoint change; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free public reads, not provider failover, a grant change or a verified independent PDS login.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.87.0
 
 - **Saved public read hosts now honour explicit HTTPS ports (#97/#100, partial).** Advanced → Services accepted an explicit port when saving the handle resolver, did:plc directory or places host, but the identity document builders and resolver checks silently rejected that same host. A saved port-bearing directory therefore changed the setting without changing identity resolution or account pre-flight. One shared `normaliseHttpsOrigin()` rule now owns host acceptance for settings, configuration import/export, identity document reads, pre-flight and the public checks, so a self-hosted service on a non-default port is used everywhere or rejected everywhere.
