@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.76.0
+
+- **Android hardware back steps back from place details before closing the picker (#156, partial).** The modal's `onRequestClose` now uses the same step-back handler as web Escape and the visible Back to results control. On Android and Apple TV, one back press returns from the detail view to the results; a second closes the picker. Focus behaviour, copy and every other surface are unchanged. No request, position, place-pin write, dependency or OAuth scope; scope count stays 112.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.75.0
 
 - **The validated place ID is now copyable (#156, partial).** The detail view's visible 44pt Copy place ID control writes only the already-validated ATGeo URN to the device clipboard. A result with no valid ID gets no button; success and clipboard-failure copy are fixed and in Balla's words. No provider prose is read or displayed.

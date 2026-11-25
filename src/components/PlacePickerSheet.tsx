@@ -231,7 +231,7 @@ export function PlacePickerSheet({
       visible
       animationType={sheetAnimation(reducedMotion)}
       accessibilityViewIsModal
-      onRequestClose={onClose}
+      onRequestClose={detailHit ? closeDetails : onClose}
     >
       <View style={styles.root}>
         <Pressable
