@@ -21,6 +21,10 @@ export const PLACES_SEARCH_CANARY = 'Berlin';
 export const PLACES_SEARCH_LIMIT = 10;
 const MAX_QUERY_LENGTH = 100;
 
+/** The four match kinds published by the typed-search endpoint. */
+export const PLACE_MATCH_KINDS = ['start', 'word', 'other_name', 'approximate'] as const;
+export type PlaceMatch = (typeof PLACE_MATCH_KINDS)[number];
+
 export type PlaceHit = {
   kind: 'place' | 'area';
   origin: string | null;
@@ -30,6 +34,8 @@ export type PlaceHit = {
   subtype: string | null;
   cityState: boolean;
   country: string | null;
+  match: PlaceMatch | null;
+  matched: string | null;
 };
 
 /** Only an https origin is accepted; a path would change the public contract. */
@@ -70,6 +76,13 @@ function urn(value: unknown): string | null {
     : null;
 }
 
+/** Only a published match kind is accepted; an unknown value stays null. */
+function matchKind(value: unknown): PlaceMatch | null {
+  return typeof value === 'string' && (PLACE_MATCH_KINDS as readonly string[]).includes(value)
+    ? (value as PlaceMatch)
+    : null;
+}
+
 /** Keep only structured display fields; drop coordinates and check-in counts. */
 export function parsePlacesSearch(payload: unknown): PlaceHit[] {
   if (!payload || typeof payload !== 'object') return [];
@@ -91,9 +104,37 @@ export function parsePlacesSearch(payload: unknown): PlaceHit[] {
       subtype: text(value.subtype),
       cityState: value.cityState === true,
       country: text(value.country),
+      match: matchKind(value.match),
+      matched: text(value.matched)?.slice(0, MAX_QUERY_LENGTH) ?? null,
     });
   }
   return hits;
+}
+
+/**
+ * One fixed, honest secondary line for a result. Area labels follow the
+ * provider's published city-state rule, so a city filed as a region is still
+ * called a city. A name found through another name says which one matched, so
+ * two similar results can be told apart. No rank, rating, distance or check-in
+ * count is shown.
+ */
+export function placeResultDetail(hit: PlaceHit): string {
+  const label =
+    hit.kind === 'area'
+      ? hit.cityState
+        ? 'City'
+        : hit.subtype ?? 'Area'
+      : hit.category ?? hit.group ?? 'Place';
+  const parts = [label];
+  if (hit.matched && hit.matched !== hit.name) {
+    parts.push(`Matched: ${hit.matched}`);
+  } else if (hit.match === 'approximate') {
+    parts.push('Approximate match');
+  } else if (hit.match === 'other_name' && !hit.matched) {
+    parts.push('Other name');
+  }
+  if (hit.country) parts.push(hit.country);
+  return parts.join(' · ');
 }
 
 export type PlaceSelection = { start: number; end: number };

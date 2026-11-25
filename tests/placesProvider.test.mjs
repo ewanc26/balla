@@ -6,6 +6,7 @@ import {
   PLACES_SEARCH_PATH,
   normalisePlacesEndpoint,
   parsePlacesSearch,
+  placeResultDetail,
   placesHostLabel,
   placesSearchBody,
   placesSearchUrl,
@@ -52,10 +53,14 @@ test('only structured display fields survive parsing', () => {
         subtype: 'region',
         cityState: true,
         country: 'DE',
+        match: 'start',
         lat: 52.506935,
         lng: 13.397483,
       },
-      { kind: 'place', name: 'Olympiastadion', category: 'Soccer Stadium', group: 'culture', checkins: { total: 9 } },
+      {
+        kind: 'place', name: 'Olympiastadion', category: 'Soccer Stadium', group: 'culture',
+        match: 'other_name', matched: 'Olympia Stadium', checkins: { total: 9 },
+      },
       { kind: 'other', name: 'Ignored' },
       { kind: 'place' },
     ],
@@ -70,6 +75,8 @@ test('only structured display fields survive parsing', () => {
       subtype: 'region',
       cityState: true,
       country: 'DE',
+      match: 'start',
+      matched: null,
     },
     {
       kind: 'place',
@@ -80,11 +87,47 @@ test('only structured display fields survive parsing', () => {
       subtype: null,
       cityState: false,
       country: null,
+      match: 'other_name',
+      matched: 'Olympia Stadium',
     },
   ]);
   assert.doesNotMatch(JSON.stringify(hits), /lat|lng|52\.506|checkins/i);
   assert.deepEqual(parsePlacesSearch(null), []);
   assert.deepEqual(parsePlacesSearch({ results: 'no' }), []);
+});
+
+test('result details use fixed labels from published fields only', () => {
+  const base = {
+    kind: 'area', origin: null, name: 'Berlin', category: null, group: null,
+    subtype: 'region', cityState: false, country: 'DE', match: null, matched: null,
+  };
+  // A city-state is labelled as a city, not by Overture's raw region subtype.
+  assert.equal(placeResultDetail({ ...base, cityState: true }), 'City · DE');
+  assert.equal(placeResultDetail(base), 'region · DE');
+  // A name found through another name says which one matched.
+  assert.equal(
+    placeResultDetail({ ...base, kind: 'place', category: 'Soccer Stadium', match: 'other_name', matched: 'Olympia Stadium' }),
+    'Soccer Stadium · Matched: Olympia Stadium · DE',
+  );
+  // A result whose own name matched adds no noise; an approximate one says so.
+  assert.equal(
+    placeResultDetail({ ...base, kind: 'place', name: 'Café', category: 'Café', match: 'start', matched: 'Café' }),
+    'Café · DE',
+  );
+  assert.equal(
+    placeResultDetail({ ...base, kind: 'place', group: 'culture', match: 'approximate' }),
+    'culture · Approximate match · DE',
+  );
+  assert.equal(
+    placeResultDetail({ ...base, match: 'other_name' }),
+    'region · Other name · DE',
+  );
+  // Unknown match kinds never echo provider text into the UI.
+  const unknown = parsePlacesSearch({ results: [{ kind: 'place', name: 'X', match: 'provider secret', matched: 42 }] });
+  assert.equal(unknown[0].match, null);
+  assert.equal(unknown[0].matched, null);
+  assert.equal(placeResultDetail(unknown[0]), 'Place');
+  assert.doesNotMatch(placeResultDetail(unknown[0]), /secret/i);
 });
 
 test('the reachability check is a real typed POST and fails closed', async () => {
@@ -170,18 +213,21 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(exporter, /places: effectivePlaces\(config\)/);
   assert.match(exporter, /usingDefaultPlaces/);
   assert.match(exporter, /placesEnabled: isPlacesEnabled\(config\)/);
-  assert.match(changelog, /^## 0\.69\.0$/m);
+  assert.match(changelog, /^## 0\.70\.0$/m);
   assert.match(changelog, /switched off/);
   assert.match(changelog, /#156, partial/);
-  assert.match(changelog, /scope count remains 112/);
-  assert.match(compliance, /switch the search off entirely/);
+  assert.match(changelog, /scope count stays 112/);
+  assert.match(changelog, /placeResultDetail/);
+  assert.match(compliance, /placeResultDetail/);
+  assert.match(compliance, /cityState/);
+  assert.match(features, /city-state/);
   assert.match(features, /switch typed search off/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.69.0');
-  assert.equal(appJson.expo.version, '0.69.0');
+  assert.equal(pkg.version, '0.70.0');
+  assert.equal(appJson.expo.version, '0.70.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.69\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.70\.0<\/string>/);
   }
 });

@@ -51,7 +51,7 @@ test('switching Places off clears stale results in the open sheet', () => {
 });
 
 test('docs and release notes match the map link-out slice', () => {
-  assert.match(changelog, /^## 0\.69\.0$/m);
+  assert.match(changelog, /^## 0\.70\.0$/m);
   assert.match(changelog, /map link-out/);
   assert.match(changelog, /scope count remains 112/);
   assert.match(compliance, /44pt map button/);
@@ -59,10 +59,10 @@ test('docs and release notes match the map link-out slice', () => {
   assert.match(features, /map button opening an OpenStreetMap search by name/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.69.0');
-  assert.equal(appJson.expo.version, '0.69.0');
+  assert.equal(pkg.version, '0.70.0');
+  assert.equal(appJson.expo.version, '0.70.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.69\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.70\.0<\/string>/);
   }
 });
