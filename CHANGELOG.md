@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.91.0
+
+- **Public PDS repository reads can no longer hang forever (#96/#97/#100, partial).** Events, Memories and the offline profile fallback used raw, unbounded `fetch` against the PDS advertised in a DID document. A PDS that accepted a connection but never completed it could leave an Events strip, an event card, the On this day card or a profile strip waiting indefinitely.
+- One `fetchPublicJsonObject()` helper now owns every token-free JSON object read: the deadline, the abort signal and the "keep only a structured object" rule live in one place, and DID documents use the same reader with their own Accept type. A timeout fails closed — no events, an empty memories walk, no offline profile — instead of becoming a retry loop. HTTP status still reaches `readWithRetry` unchanged, so retry classification is exactly as before; network and body failures keep their previous fixed, non-retryable errors. Provider prose is never read, logged, stored or shown, and an empty URL makes no request.
+- No new scope, dependency, grant or endpoint change; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free public reads, not provider failover, a grant change or a verified independent-PDS login.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.90.0
 
 - **Public handle resolution can no longer hang forever (#96/#97/#100, partial).** The in-app handle→DID fallback called the native-first resolver without a deadline. A handle's own well-known host or the configured XRPC resolver could accept a request and never complete it, leaving sign-in pre-flight, the offline profile fallback, the creator byline and any loading card waiting indefinitely.
