@@ -93,8 +93,8 @@ test('the release documents the correction with no new scope', () => {
   const appJson = JSON.parse(read('../app.json'));
   const changelog = read('../CHANGELOG.md');
   const features = read('../site/features.html');
-  assert.equal(pkg.version, '0.74.0');
-  assert.equal(appJson.expo.version, '0.74.0');
+  assert.equal(pkg.version, '0.75.0');
+  assert.equal(appJson.expo.version, '0.75.0');
   assert.match(changelog, /^## 0\.72\.0$/m);
   assert.match(changelog, /scope count stays 112/);
   assert.match(features, /Failure messages name no provider/);

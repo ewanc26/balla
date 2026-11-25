@@ -136,12 +136,32 @@ test('Escape steps back from details before closing the picker', () => {
   assert.match(features, /Escape or the Back to results control returns to the result list/);
 });
 
+test('the validated place ID is copyable with fixed feedback', () => {
+  assert.match(sheet, /import \* as Clipboard from 'expo-clipboard'/);
+  assert.match(sheet, /import \{[\s\S]*atgeoUrn,[\s\S]*placeDetailFields,/);
+  assert.match(sheet, /const \[copyNotice, setCopyNotice\] = useState<string \| null>\(null\)/);
+  assert.match(sheet, /const \[copyError, setCopyError\] = useState<string \| null>\(null\)/);
+  assert.match(sheet, /const detailPlaceId = detailHit \? atgeoUrn\(detailHit\.origin\) : null/);
+  assert.match(sheet, /if \(!detailPlaceId\) \{[\s\S]*No valid place ID is published for this result\./);
+  assert.match(sheet, /await Clipboard\.setStringAsync\(detailPlaceId\)/);
+  assert.match(sheet, /Place ID copied to the clipboard\./);
+  assert.match(sheet, /Could not copy the place ID\. Check your device settings; Balla has not changed the ID\./);
+  assert.match(sheet, /accessibilityLabel="Copy the place ID shown above"/);
+  assert.match(sheet, /styles\.copyButton/);
+  assert.match(sheet, /copyButton: \{[\s\S]*minHeight: 44/);
+  assert.doesNotMatch(sheet, /Clipboard\.setStringAsync\(detailHit\.origin\)/);
+  assert.doesNotMatch(sheet, /Clipboard\.setStringAsync\(detailFields/);
+  assert.match(changelog, /validated place ID is now copyable/);
+  assert.match(compliance, /Copy place ID control writes only the already-validated ATGeo URN/);
+  assert.match(features, /Copy place ID control copies only the validated ID already shown/);
+});
+
 test('details fail closed with fixed copy and no writes', () => {
   assert.match(sheet, /No further place fields are published for this result\./);
   assert.match(sheet, /No public gazetteer record is available for this result\./);
   assert.match(sheet, /No map search is available because this result has no name\./);
   assert.match(sheet, /Could not open your browser\. Check your device settings; Balla has not changed the link\./);
-  assert.match(sheet, /Balla[\s\S]*makes no request to open either link, sends no position and writes[\s\S]*nothing\./);
+  assert.match(sheet, /Balla[\s\S]*makes no request to open either link, sends no position and writes[\s\S]*no place record\./);
   assert.match(sheet, /accessibilityRole="alert"/);
   assert.match(sheet, /accessibilityLabel="Back to place results"/);
   assert.match(sheet, /minHeight: 44/);
@@ -150,7 +170,7 @@ test('details fail closed with fixed copy and no writes', () => {
 });
 
 test('docs, release copy and OAuth facts match the details slice', () => {
-  assert.match(changelog, /^## 0\.74\.0$/m);
+  assert.match(changelog, /^## 0\.75\.0$/m);
   assert.match(changelog, /inspectable detail view/);
   assert.match(changelog, /scope count stays 112/);
   assert.match(compliance, /detail view inside the same sheet/);
@@ -158,11 +178,11 @@ test('docs, release copy and OAuth facts match the details slice', () => {
   assert.match(features, /detail view inside the same sheet/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.74.0');
-  assert.equal(appJson.expo.version, '0.74.0');
+  assert.equal(pkg.version, '0.75.0');
+  assert.equal(appJson.expo.version, '0.75.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.74\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.75\.0<\/string>/);
   }
   assert.equal(
     createHash('sha256').update(metadataRaw).digest('hex'),

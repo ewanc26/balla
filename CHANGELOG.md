@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.75.0
+
+- **The validated place ID is now copyable (#156, partial).** The detail view's visible 44pt Copy place ID control writes only the already-validated ATGeo URN to the device clipboard. A result with no valid ID gets no button; success and clipboard-failure copy are fixed and in Balla's words. No provider prose is read or displayed.
+- No new request, position, place-pin write, dependency or OAuth scope; the clipboard package was already present. Scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.74.0
 
 - **Place details respect keyboard and back navigation (#156, partial).** Escape now steps back from a result's detail view to the search results before it closes the picker. The visible Back to results control does the same, and focus returns to the picker's close control rather than being lost. The shared dialog hook already keeps the latest handler, so no remount or extra focus jump was added.
