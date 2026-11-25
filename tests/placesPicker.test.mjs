@@ -145,7 +145,7 @@ test('the composer exposes a visible, honest place-name control', () => {
   assert.match(sheet, /Use typed name as plain text/);
   assert.match(sheet, /minHeight: 44/);
   // Result detail comes from one shared rule; same-name rows stay distinct.
-  assert.match(sheet, /import \{ placeResultDetail, placesHostLabel, type PlaceHit \}/);
+  assert.match(sheet, /placeDetailFields,\s*placeResultDetail,\s*placesHostLabel,\s*type PlaceHit,/);
   assert.match(sheet, /hits\.map\(\(hit, index\) =>/);
   assert.match(sheet, /key=\{`\$\{index\}:\$\{hit\.origin \?\? hit\.name\}`\}/);
   assert.match(sheet, /\{placeResultDetail\(hit\)\}/);
@@ -174,7 +174,7 @@ test('the picker uses one fail-closed host label without echoing provider prose'
     placesHostLabel('https://user@places.eurosky.tech', true),
     'Places host needs an https address',
   );
-  assert.match(sheet, /import \{ placeResultDetail, placesHostLabel, type PlaceHit \}/);
+  assert.match(sheet, /placeDetailFields,\s*placeResultDetail,\s*placesHostLabel,\s*type PlaceHit,/);
   assert.match(sheet, /setEndpointLabel\(placesHostLabel\(endpoint, value\)\)/);
   assert.match(sheet, /setEndpointLabel\(placesHostLabel\(endpoint, allowed\)\)/);
   assert.match(sheet, /setEndpointLabel\(placesHostLabel\('', false\)\)/);
@@ -193,10 +193,10 @@ test('docs and release notes match the partial place picker', () => {
   assert.match(features, /place-name picker/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.72.0');
-  assert.equal(appJson.expo.version, '0.72.0');
+  assert.equal(pkg.version, '0.73.0');
+  assert.equal(appJson.expo.version, '0.73.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.72\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.73\.0<\/string>/);
   }
 });

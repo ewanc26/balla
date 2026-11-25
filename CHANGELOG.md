@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.73.0
+
+- **Place results now have an inspectable detail view (#156, partial).** The info button on each result opens a detail view inside the same sheet, with only the structured fields the provider actually published: type, category, group, subtype, provider class, country, matched name, match kind and the validated ATGeo place ID. Absent fields are omitted; coordinates, check-in counts, rank, popularity and provider prose never reach it.
+- The detail view reuses the two verified link-outs: a public `org.atgeo.getPlace` record on the configured host and an OpenStreetMap name search that says it is not an exact match and sends no position. Both are visible 44pt buttons, a browser-open failure uses fixed Balla copy, and the typed name can still be added as plain text. No check-in record, place chip, granularity chooser, new request, new dependency or new OAuth scope; scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.72.0
 
 - **Provider-owned links now fail closed (#97, partial).** Account settings, privacy/security and account lifecycle read the signed-in session's real `resourceServer`. A `bsky.social` account keeps the existing canonical `bsky.app` controls; any other PDS leaves that link closed and shows a fixed message saying Balla cannot infer the provider's control-panel address. A failed browser open also uses the same session check, so no non-Bluesky account is told to visit `bsky.app`.
