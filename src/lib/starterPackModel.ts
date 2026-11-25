@@ -1,5 +1,6 @@
 import { countGraphemes } from 'unicode-segmenter/grapheme';
 import { REFERENCE_LIST } from './listModel.ts';
+import { BLUESKY_WEB } from './serviceHosts.ts';
 
 export const STARTER_PACK_NAME_MAX = 64;
 export const STARTER_PACK_DESCRIPTION_MAX = 300;
@@ -43,7 +44,7 @@ export function starterPackShareUrl(
   if (!parsed) return null;
   const name = creator?.handle || creator?.did;
   if (!name) return null;
-  return `https://bsky.app/start/${name}/${parsed.rkey}`;
+  return BLUESKY_WEB.starterPackShort(name, parsed.rkey);
 }
 
 export function isBlockedCreator(creator: any): boolean {

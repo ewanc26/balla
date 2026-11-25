@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { openExternalUrl } from '../lib/openLink';
+import { BLUESKY_WEB } from '../lib/serviceHosts.ts';
 import { Ionicons } from '@expo/vector-icons';
 import { useViewer } from '../lib/viewer';
 import {
@@ -23,7 +24,7 @@ import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 // deletion. Balla cannot perform account-level lifecycle operations: those are
 // PDS account controls, not AT Protocol record writes. The screen links out and
 // says exactly that instead of implying a local deletion did more than it did.
-const ACCOUNT_SETTINGS = 'https://bsky.app/settings/account';
+const ACCOUNT_SETTINGS = BLUESKY_WEB.accountSettings;
 
 type ConfirmKind = 'deactivate' | 'delete' | null;
 

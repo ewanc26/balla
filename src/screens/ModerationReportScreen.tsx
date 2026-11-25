@@ -8,6 +8,7 @@ import {
   View,
 } from 'react-native';
 import { openExternalUrl } from '../lib/openLink';
+import { BLUESKY_SOCIAL } from '../lib/serviceHosts.ts';
 import { Ionicons } from '@expo/vector-icons';
 import {
   describeInboxError,
@@ -34,8 +35,7 @@ import {
 } from '../components/ModerationInboxParts';
 import { usePalette } from '../theme';
 
-const COMMUNITY_GUIDELINES =
-  'https://bsky.social/about/support/community-guidelines';
+const COMMUNITY_GUIDELINES = BLUESKY_SOCIAL.communityGuidelines;
 
 export function ModerationReportScreen({
   route,

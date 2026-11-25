@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { openExternalUrl } from '../lib/openLink';
+import { BLUESKY_WEB } from '../lib/serviceHosts.ts';
 import { useNavigation } from '@react-navigation/native';
 import { agent } from '../lib/agent';
 import { describeFailure } from '../lib/reliability';
@@ -11,7 +12,7 @@ import {
   audienceLabel,
 } from '../lib/chatModel';
 
-const OFFICIAL_CHAT_SETTINGS = 'https://bsky.app/settings/chat';
+const OFFICIAL_CHAT_SETTINGS = BLUESKY_WEB.chatSettings;
 
 /**
  * Chat configuration is mostly provider-owned. This screen reports the real

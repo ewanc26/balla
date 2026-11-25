@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import { openExternalUrl } from '../lib/openLink';
+import { BLUESKY_WEB } from '../lib/serviceHosts.ts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { getChatAgent } from '../lib/agent';
@@ -121,7 +122,7 @@ export function ChatInviteLinkSheet({
                   Status: {enabled ? 'Active' : 'Disabled'}
                 </Text>
                 <Pressable
-                  onPress={() => void openExternalUrl(`https://bsky.app/chat/${link.code}`)}
+                  onPress={() => void openExternalUrl(BLUESKY_WEB.chatInvite(String(link.code)))}
                   accessibilityRole="link"
                   accessibilityLabel="Open the official join page for this invite"
                   style={({ pressed }) => [

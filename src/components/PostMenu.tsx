@@ -19,6 +19,7 @@ import * as Clipboard from 'expo-clipboard';
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 import { agent } from '../lib/agent';
+import { BLUESKY_WEB } from '../lib/serviceHosts.ts';
 import {
   dialogAccessibilityProps,
   dialogAnimation,
@@ -182,7 +183,7 @@ export function PostMenu({
     typeof post.uri === 'string' ? post.uri.split('/').pop() : undefined;
   const postUrl =
     postKey && (author.handle || author.did)
-      ? `https://bsky.app/profile/${author.handle || author.did}/post/${postKey}`
+      ? BLUESKY_WEB.post(author.handle || author.did, postKey)
       : post.uri || '';
 
   const title =

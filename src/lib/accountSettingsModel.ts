@@ -5,16 +5,16 @@
  * Password, email, 2FA and app-password controls belong to the identity
  * provider or PDS, so those rows are links and explanations, not fake toggles.
  */
+import { BLUESKY_WEB, BLUESKY_SOCIAL } from './serviceHosts.ts';
 
 export const BOT_LABEL = 'bot';
 export const LOGGED_OUT_PRIVACY_LABEL = '!no-unauthenticated';
 export const SELF_LABELS_TYPE = 'com.atproto.label.defs#selfLabels';
 export const SELF_LABEL_TYPE = 'com.atproto.label.defs#selfLabel';
 
-export const BLUESKY_ACCOUNT_SETTINGS = 'https://bsky.app/settings/account';
-export const BLUESKY_PRIVACY_SETTINGS =
-  'https://bsky.app/settings/privacy-and-security';
-export const BLUESKY_APP_PASSWORDS = 'https://bsky.app/settings/app-passwords';
+export const BLUESKY_ACCOUNT_SETTINGS = BLUESKY_WEB.accountSettings;
+export const BLUESKY_PRIVACY_SETTINGS = BLUESKY_WEB.privacySettings;
+export const BLUESKY_APP_PASSWORDS = BLUESKY_WEB.appPasswords;
 
 export type SessionSummary = {
   did: string;
@@ -145,7 +145,7 @@ export function validateBirthDate(input: string): BirthDateResult {
 export function isBlueskyService(service: string): boolean {
   try {
     const host = new URL(service).hostname.toLowerCase();
-    return host === 'bsky.social' || host.endsWith('.bsky.social');
+    return host === BLUESKY_SOCIAL.host || host.endsWith(`.${BLUESKY_SOCIAL.host}`);
   } catch {
     return false;
   }
