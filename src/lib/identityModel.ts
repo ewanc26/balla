@@ -62,22 +62,9 @@ export function plcDirectoryUrl(did: string, directory: string = SERVICE_HOSTS.p
     : null;
 }
 
-/**
- * did:web maps its identifier to a host and optional path. Percent-encoding is
- * decoded so `did:web:example.com:user` resolves to `/user/did.json`.
- */
-export function didWebDocumentUrl(did: string): string | null {
-  if (!isDid(did) || !did.startsWith('did:web:')) return null;
-  try {
-    const raw = did.slice('did:web:'.length).replace(/%3A/gi, ':');
-    const [host, ...path] = raw.split(':');
-    if (!host || !/^[a-z0-9.-]+$/i.test(host)) return null;
-    const suffix = path.length ? `/${path.map(encodeURIComponent).join('/')}` : '/.well-known';
-    return `https://${host}${suffix}/did.json`;
-  } catch {
-    return null;
-  }
-}
+// Re-exported so existing identity callers keep one builder with the service
+// facts, not a second copy of the did:web document rule.
+export { didWebDocumentUrl } from './serviceHosts.ts';
 
 /**
  * Resolution order for one DID. The cache is always consulted first; local

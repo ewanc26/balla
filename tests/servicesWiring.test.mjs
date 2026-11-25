@@ -45,7 +45,7 @@ test('the resolver override is persisted, reversible and takes effect without re
 test('connection checks are real public reads with no token or message text', () => {
   assert.match(probe, /com\.atproto\.identity\.resolveHandle/);
   assert.match(probe, /app\.bsky\.actor\.getProfile/);
-  assert.match(probe, /\.well-known\/did\.json/);
+  assert.match(probe, /didWebDocumentUrl/);
   assert.match(probe, /advertisedEndpoint\(/);
   assert.match(probe, /response\.ok/);
   assert.doesNotMatch(probe, /\.message\b/);

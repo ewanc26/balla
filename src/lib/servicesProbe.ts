@@ -5,7 +5,7 @@
  * never read, logged or displayed.
  */
 
-import { VIDEO_LIMITS_LXM, plcDocumentUrl } from './serviceHosts.ts';
+import { VIDEO_LIMITS_LXM, didWebDocumentUrl, plcDocumentUrl } from './serviceHosts.ts';
 import {
   DEFAULT_SERVICES,
   advertisedEndpoint,
@@ -69,12 +69,6 @@ export async function probeResolver(endpoint: string): Promise<ServiceProbe> {
   }
 }
 
-function didDocumentUrl(did: string): string | null {
-  const base = didWebUrl(did);
-  if (base) return `${base}/.well-known/did.json`;
-  return null;
-}
-
 /**
  * Public did:plc directory check against the configured host. Reads one known
  * public DID document and verifies its structured `id` field; provider error
@@ -102,7 +96,7 @@ export async function probePlcDirectory(directory: string, deps: ServiceProbeDep
 /** AppView DID document plus an optional public profile read for this account. */
 export async function probeAppView(actorDid?: string | null): Promise<ServiceProbe> {
   const endpoint = didWebUrl(DEFAULT_SERVICES.appviewDid);
-  const documentUrl = didDocumentUrl(DEFAULT_SERVICES.appviewDid);
+  const documentUrl = didWebDocumentUrl(DEFAULT_SERVICES.appviewDid);
   if (!endpoint || !documentUrl) return probe('invalid', null, null, null, 'Invalid AppView DID.');
   const { response, latencyMs } = await timed(documentUrl);
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not read the AppView DID document.');
@@ -152,7 +146,7 @@ export async function probeVideoEndpoint(deps: ServiceProbeDeps = {}): Promise<S
 /** Chat service DID document advertises a bsky_chat proxy endpoint. */
 export async function probeChat(): Promise<ServiceProbe> {
   const endpoint = didWebUrl(DEFAULT_SERVICES.chatDid);
-  const documentUrl = didDocumentUrl(DEFAULT_SERVICES.chatDid);
+  const documentUrl = didWebDocumentUrl(DEFAULT_SERVICES.chatDid);
   if (!endpoint || !documentUrl) return probe('invalid', null, null, null, 'Invalid chat service DID.');
   const { response, latencyMs } = await timed(documentUrl);
   if (!response) return probe('unavailable', null, latencyMs, endpoint, 'Could not read the chat DID document.');

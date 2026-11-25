@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.67.0
+
+- **DID documents now have one did:web document URL builder (#97, partial).** `didWebDocumentUrl` lives with the service host facts and derives both published AppView and chat document URLs from those hosts. Account pre-flight, the Services checks, the AppView health check and identity resolution all use that one builder instead of assembling `/.well-known/did.json` locally. A path-bearing `did:web` identifier now resolves to its own `/path/did.json`, as the identity module already did; no request, grant or setting changes.
+- A source scan prevents a second document-path literal from reappearing in app code, and the identity module re-exports the shared builder so existing callers keep one rule.
+- This remains partial #97: read-only public checks, not provider failover, a picker or a grant change. No new OAuth scope or dependency; scope count stays 112, and no provider prose is read, logged or stored. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.66.0
 
 - **Place results now have an honest map link-out (#156, partial).** Every result in the typed place-name picker has a visible 44pt map button that opens an OpenStreetMap name search in the browser. The button says it searches by name, is not an exact place match and sends no device position. One shared `openStreetMapSearchUrl` builder now serves both the picker and Events, so the link shape has one home.
