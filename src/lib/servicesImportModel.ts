@@ -13,6 +13,10 @@ import { normaliseHostUrl } from './hostingModel.ts';
 import { SERVICES_EXPORT_SCHEMA } from './servicesExportModel.ts';
 import {
   DEFAULT_SERVICES,
+  effectivePlaces,
+  effectivePlcDirectory,
+  effectiveResolver,
+  isPlacesEnabled,
   type ServicesConfig,
 } from './servicesModel.ts';
 
@@ -104,5 +108,60 @@ export function parseServicesImport(text: string): ServicesImportResult {
       places: places.value,
       placesEnabled: changeable.placesEnabled,
     },
+  };
+}
+
+export type ServicesImportChange = {
+  label: string;
+  from: string;
+  to: string;
+};
+
+export type ServicesImportPreview = {
+  config: ServicesConfig;
+  changes: ServicesImportChange[];
+};
+
+const PREVIEW_LABELS = {
+  handleResolver: 'Handle resolver',
+  plcDirectory: 'PLC directory',
+  places: 'Places provider',
+  placesEnabled: 'Places search',
+} as const;
+
+/**
+ * Compare two validated configurations using only effective, already-normalised
+ * values. This function never sees the exported record, so notes or hostile
+ * provider text cannot reach the preview.
+ */
+export function previewServicesImport(
+  current: ServicesConfig,
+  next: ServicesConfig,
+): ServicesImportPreview {
+  const candidate: ServicesImportChange[] = [
+    {
+      label: PREVIEW_LABELS.handleResolver,
+      from: effectiveResolver(current),
+      to: effectiveResolver(next),
+    },
+    {
+      label: PREVIEW_LABELS.plcDirectory,
+      from: effectivePlcDirectory(current),
+      to: effectivePlcDirectory(next),
+    },
+    {
+      label: PREVIEW_LABELS.places,
+      from: effectivePlaces(current),
+      to: effectivePlaces(next),
+    },
+    {
+      label: PREVIEW_LABELS.placesEnabled,
+      from: isPlacesEnabled(current) ? 'On' : 'Off',
+      to: isPlacesEnabled(next) ? 'On' : 'Off',
+    },
+  ];
+  return {
+    config: next,
+    changes: candidate.filter((change) => change.from !== change.to),
   };
 }

@@ -17,7 +17,8 @@ test('the Services screen exports a real configuration file or clipboard copy', 
   assert.match(screen, /exportServicesJson\(servicesExportName\(\), json\)/);
   assert.match(screen, /servicesExportAction\(\)/);
   assert.match(screen, /Configuration record/);
-  assert.match(screen, /Import configuration/);
+  assert.match(screen, /Preview configuration/);
+  assert.match(screen, /Apply previewed configuration/);
   assert.ok(!/onPress=\{\(\) => \{\}\}/.test(screen));
 });
 
@@ -57,11 +58,11 @@ test('defaults are declared in one host module and the rest derive from it', () 
 test('the release documents the partial #97 slice honestly', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.82.0');
-  assert.equal(appJson.expo.version, '0.82.0');
+  assert.equal(pkg.version, '0.83.0');
+  assert.equal(appJson.expo.version, '0.83.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.82\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.83\.0<\/string>/);
   }
   assert.match(changelog, /^## 0\.72\.0$/m);
   assert.match(changelog, /#97, partial/);
