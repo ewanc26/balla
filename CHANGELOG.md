@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.78.0
+
+- **Every place-details dismissal path steps back before closing the picker (#156, partial).** The backdrop and the header close control step back from the detail view to the search results before the picker can close. Escape, the visible Back to results control and Android hardware back already did so; all five now call one shared handler, so no path skips the results. Focus, copy, links and the validated-ID clipboard action are unchanged. No request, position, write, place-pin record, dependency or OAuth scope; scope count stays 112.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.77.0
 
 - **The Facebook-era concept map is now a shipped document (#149).** `docs/facebook-translation.md` records the current state of every AT Protocol / Bluesky → Facebook-era surface: the children that have landed are marked shipped with their issue numbers, and Places stays explicitly **partial (#156)** because the pin lexicon is still a draft. The map keeps the dark-pattern prohibitions, the reasons the mu "spare ideas" were not taken, and the note that Advanced infrastructure remains partial. The public features page and the compliance matrix link the same canonical map. No new request, write, provider switch, dependency or OAuth scope; scope count stays 112.

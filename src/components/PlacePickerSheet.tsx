@@ -69,11 +69,25 @@ export function PlacePickerSheet({
   const containerRef = useRef<any>(null);
   const closeRef = useRef<any>(null);
   const reducedMotion = useReducedMotion();
-  // Escape steps back from the detail view to the results before it closes
-  // the picker. The hook keeps the latest handler without refocusing.
+
+  function closeDetails() {
+    setDetailHit(null);
+    setLinkError(null);
+    setCopyNotice(null);
+    setCopyError(null);
+  }
+
+  function dismissDetailsOrPicker() {
+    if (detailHit) closeDetails();
+    else onClose();
+  }
+
+  // Escape, Android back, the backdrop and the header control all step back
+  // from the detail view to the results before they close the picker. The hook
+  // keeps the latest handler without refocusing.
   useDialogFocus({
     visible,
-    onClose: detailHit ? closeDetails : onClose,
+    onClose: dismissDetailsOrPicker,
     containerRef,
     initialFocusRef: closeRef,
   });
@@ -180,13 +194,6 @@ export function PlacePickerSheet({
     setCopyError(null);
   }
 
-  function closeDetails() {
-    setDetailHit(null);
-    setLinkError(null);
-    setCopyNotice(null);
-    setCopyError(null);
-  }
-
   async function openLink(url: string) {
     setLinkError(null);
     setCopyNotice(null);
@@ -231,11 +238,11 @@ export function PlacePickerSheet({
       visible
       animationType={sheetAnimation(reducedMotion)}
       accessibilityViewIsModal
-      onRequestClose={detailHit ? closeDetails : onClose}
+      onRequestClose={dismissDetailsOrPicker}
     >
       <View style={styles.root}>
         <Pressable
-          onPress={onClose}
+          onPress={dismissDetailsOrPicker}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
           style={styles.backdrop}
@@ -255,7 +262,7 @@ export function PlacePickerSheet({
             </Text>
             <Pressable
               ref={closeRef}
-              onPress={onClose}
+              onPress={dismissDetailsOrPicker}
               accessibilityRole="button"
               accessibilityLabel={detailHit ? 'Close place details' : 'Close place search'}
               style={({ pressed }) => [
