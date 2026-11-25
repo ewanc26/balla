@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.95.0
+
+- **The PDS-directory read now matches the documented deadline claim (#97/#100, partial).** The compliance matrix already said the OpenPDS directory and migration pre-flight were bounded, but `pdsDirectory.ts` still used raw unbounded `fetch`. A directory host that accepted a connection but never finished its body could leave either screen loading forever.
+- The read now uses the one `readBoundedPublic()` core, sharing its deadline, abort signal and body rule with the other token-free public reads. A timeout or transport/HTTP failure returns `unavailable`, a malformed or unusable body returns `invalid`, and a good response still replaces the in-memory snapshot. Provider prose is never read, logged or shown.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for a token-free public read, not a verified independent-PDS sign-in, provider failover or a grant change.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.94.0
 
 - **The pre-auth public reads are now bounded (#100/#97, partial).** Advanced → Hosting and the login check read a handle's well-known file, the public resolver, the DID document, `describeServer`, the protected-resource metadata and the authorization-server metadata with raw, unbounded `fetch`. A host that accepted a connection but never finished a body could leave the check spinning indefinitely.
