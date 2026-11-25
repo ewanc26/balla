@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.93.0
+
+- **The Advanced → Chat DID-document read is now bounded (#97/#99, partial).** The chat service screen fetched `did:web:api.bsky.chat`'s public DID document with a raw, unbounded `fetch`. A host that accepted the request but never answered could leave the availability line on "Checking…" indefinitely.
+- The read now goes through the shared bounded identity reader, so it uses the same deadline, abort signal and DID Accept type as every other public DID document. A timeout, HTTP error or malformed body fails closed to no advertisement claim; the real chat proxy probe still decides the visible state. Provider prose is never read, logged or shown.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for a token-free public read, not provider failover, a grant change or an alternative AppView.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.92.0
 
 - **The remaining token-free public reads are now bounded (#96/#97/#100, partial).** The direct PDS blob fallback and the user-initiated translation read still used raw, unbounded `fetch`. A PDS that accepted a connection but never finished the image bytes, or a translation service that never answered, could leave an image placeholder or the post/message menu waiting indefinitely.

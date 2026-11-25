@@ -9,17 +9,16 @@ import {
   SettingValueRow,
 } from '../components/SettingControls';
 import { checkChatService } from '../lib/chatService';
+import { readChatDidAdvertises } from '../lib/chatServiceRead.ts';
 import {
   CHAT_AUDIENCE,
   CHAT_SERVICE_DOCS_URL,
   CHAT_SERVICE_DID,
   CHAT_SERVICE_TYPE,
-  chatServiceAdvertised,
   chatServiceCopy,
   type ChatServiceState,
 } from '../lib/chatServiceModel';
 import { openExternalUrl } from '../lib/openLink';
-import { CHAT_DID_DOCUMENT_URL } from '../lib/serviceHosts.ts';
 import { usePalette } from '../theme';
 
 const STATUS_LABELS: Record<ChatServiceState, string> = {
@@ -32,16 +31,6 @@ const STATUS_LABELS: Record<ChatServiceState, string> = {
   limited: 'Rate limited',
   unknown: 'Unknown',
 };
-
-async function readChatDidAdvertises(): Promise<boolean | null> {
-  try {
-    const response = await fetch(CHAT_DID_DOCUMENT_URL);
-    if (!response.ok) return null;
-    return chatServiceAdvertised(await response.json());
-  } catch {
-    return null;
-  }
-}
 
 /** Advanced → Chat: a real proxy probe plus honest service facts. */
 export function ChatServiceScreen() {

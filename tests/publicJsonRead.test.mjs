@@ -158,19 +158,19 @@ test('every public JSON read now uses the one bounded helper', () => {
   }
 });
 
-test('v0.92.0 copy and version parity match the bounded public reads', () => {
+test('v0.93.0 copy and version parity match the bounded public reads', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.92.0');
-  assert.equal(appJson.expo.version, '0.92.0');
+  assert.equal(pkg.version, '0.93.0');
+  assert.equal(appJson.expo.version, '0.93.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.92\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.93\.0<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
   const section = changelog.slice(
-    changelog.indexOf('## 0.92.0'),
+    changelog.indexOf('## 0.93.0'),
     changelog.indexOf('## 0.90.0'),
   );
   assert.match(section, /Public PDS repository reads can no longer hang forever/);
