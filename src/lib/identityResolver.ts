@@ -1,4 +1,5 @@
 import { agent } from './agent';
+import { resolveHandleWithDeadline } from './boundedHandleResolution.ts';
 import { fetchIdentityDocument } from './identityDocumentRead.ts';
 import { createNativeFirstHandleResolver } from './nativeHandleResolver';
 import { getPlcDirectoryEndpoint } from './servicesConfig.ts';
@@ -133,7 +134,7 @@ export async function resolveHandleToDid(input: string): Promise<string | null> 
   }
 
   try {
-    const did = await readWithRetry(() => publicHandleResolver.resolve(handle));
+    const did = await readWithRetry(() => resolveHandleWithDeadline(publicHandleResolver, handle));
     if (isDid(did)) {
       await rememberHandle(handle, did);
       markSource('network');

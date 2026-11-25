@@ -12,7 +12,8 @@ const features = read('../site/features.html');
 
 test('the public handle fallback uses the native-first configured resolver', () => {
   assert.match(resolver, /createNativeFirstHandleResolver/);
-  assert.match(resolver, /publicHandleResolver\.resolve\(handle\)/);
+  assert.match(resolver, /resolveHandleWithDeadline\(publicHandleResolver, handle\)/);
+  assert.match(resolver, /boundedHandleResolution\.ts/);
   assert.match(resolver, /DEFAULT_SERVICES\.handleResolver/);
   // The implicit Bluesky XRPC call is gone: a configured resolver must apply on
   // this path too, especially when the AppView is unreachable.
@@ -25,6 +26,8 @@ test('the native-first resolver reads the persisted endpoint on every resolve', 
   assert.match(native, /getHandleResolverEndpoint\(service\)/);
   assert.match(native, /wellKnownUrl\(handle\)/);
   assert.match(native, /redirect: 'error'/);
+  assert.match(native, /signal: options\?\.signal/);
+  assert.match(native, /resolver\.resolve\(handle, options\)/);
   assert.doesNotMatch(native, /authorization/i);
 });
 
@@ -36,11 +39,11 @@ test('the identity strategy copy no longer hardcodes a directory host', () => {
 test('release notes and public docs describe the change honestly', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.89.0');
-  assert.equal(appJson.expo.version, '0.89.0');
+  assert.equal(pkg.version, '0.90.0');
+  assert.equal(appJson.expo.version, '0.90.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.89\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.90\.0<\/string>/);
   }
   assert.match(changelog, /^## 0\.72\.0$/m);
   assert.match(changelog, /#97, partial/);

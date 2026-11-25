@@ -72,8 +72,8 @@ test('labeler reachability is a real public check, separate from AppView listing
 test('release notes and version describe the live video quota check', () => {
   const pkg = JSON.parse(read('../package.json'));
   const changelog = read('../CHANGELOG.md');
-  assert.equal(pkg.version, '0.89.0');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.89.0');
+  assert.equal(pkg.version, '0.90.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.90.0');
   assert.match(changelog, /## 0\.36\.0/);
   assert.match(changelog, /getUploadLimits/);
   assert.match(changelog, /grant-bound/);
@@ -150,7 +150,7 @@ test('identity resolution stores a bounded on-device cache and honours strategy'
   assert.match(app, /invalidateIdentity\(did\)/);
   assert.match(identityResolver, /resolveDidDocument/);
   assert.match(identityResolver, /resolveHandleToDid/);
-  assert.match(identityResolver, /publicHandleResolver\.resolve\(handle\)/);
+  assert.match(identityResolver, /resolveHandleWithDeadline\(publicHandleResolver, handle\)/);
   assert.doesNotMatch(identityResolver, /agent\.com\.atproto\.identity\.resolveHandle/);
 });
 
