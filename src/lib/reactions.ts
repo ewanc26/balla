@@ -8,6 +8,7 @@
  */
 
 import { agent } from './agent';
+import { fetchPublicJsonObject } from './publicJsonRead.ts';
 import { resolveDidDocument } from './identityResolver';
 import { atprotoPdsEndpoint } from './tealModel';
 import { readWithRetry } from './reliability';
@@ -41,23 +42,21 @@ async function publicListPage(
   });
   if (cursor) params.set('cursor', cursor);
 
-  const response = await fetch(
-    `${endpoint}/xrpc/com.atproto.repo.listRecords?${params.toString()}`,
-    { headers: { Accept: 'application/json' } }
-  );
-  if (response.status === 400 || response.status === 404) {
-    return { records: [], missing: true };
+  let value: Record<string, unknown>;
+  try {
+    const body = await fetchPublicJsonObject(
+      `${endpoint}/xrpc/com.atproto.repo.listRecords?${params.toString()}`
+    );
+    // A timeout is an unavailable source: no reaction strip, no retry loop.
+    if (!body) return { records: [], missing: true };
+    value = body;
+  } catch (err) {
+    const status = (err as { status?: number }).status;
+    if (status === 400 || status === 404) {
+      return { records: [], missing: true };
+    }
+    throw err;
   }
-  if (!response.ok) {
-    const error = new Error(`Repository read failed with ${response.status}`);
-    (error as Error & { status?: number }).status = response.status;
-    throw error;
-  }
-  const body = await response.json();
-  if (!body || typeof body !== 'object') {
-    throw new Error('Repository read returned an invalid body');
-  }
-  const value = body as Record<string, unknown>;
   const records = Array.isArray(value.records)
     ? value.records.flatMap((entry: unknown) => {
         if (!entry || typeof entry !== 'object') return [];

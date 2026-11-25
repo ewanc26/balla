@@ -3,10 +3,17 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.91.1
+
+- **The last raw public PDS JSON reads are now bounded too (#96/#97/#100, partial).** `teal.ts` and `reactions.ts` still fetched play and reaction records with raw, unbounded `fetch` against the PDS in a DID document. A PDS that accepted a connection but never completed it could leave a profile's play strip or a post's reaction chips waiting indefinitely. Both now use `fetchPublicJsonObject()`, so one helper owns the deadline, abort signal and structured-object rule for every public PDS JSON object read.
+- A missing collection still ends a teal walk or an reactions page cleanly, a timeout fails closed to an empty strip or chip set, and each reader keeps its previous retry classification: reactions still forwards structured HTTP status to `readWithRetry`, while teal keeps its fixed non-retryable error. Provider prose is never read, logged, stored or shown.
+- **Correction:** the 0.91.0 line saying the helper owned "every token-free JSON object read" was too broad — these two readers were not covered then. This release completes that claim. No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free public reads, not provider failover, a grant change or a verified independent-PDS login.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.91.0
 
 - **Public PDS repository reads can no longer hang forever (#96/#97/#100, partial).** Events, Memories and the offline profile fallback used raw, unbounded `fetch` against the PDS advertised in a DID document. A PDS that accepted a connection but never completed it could leave an Events strip, an event card, the On this day card or a profile strip waiting indefinitely.
-- One `fetchPublicJsonObject()` helper now owns every token-free JSON object read: the deadline, the abort signal and the "keep only a structured object" rule live in one place, and DID documents use the same reader with their own Accept type. A timeout fails closed — no events, an empty memories walk, no offline profile — instead of becoming a retry loop. HTTP status still reaches `readWithRetry` unchanged, so retry classification is exactly as before; network and body failures keep their previous fixed, non-retryable errors. Provider prose is never read, logged, stored or shown, and an empty URL makes no request.
+- One `fetchPublicJsonObject()` helper now owns the Events, Memories, offline-profile and DID-document JSON reads: the deadline, the abort signal and the "keep only a structured object" rule live in one place, and DID documents use the same reader with their own Accept type. A timeout fails closed — no events, an empty memories walk, no offline profile — instead of becoming a retry loop. HTTP status still reaches `readWithRetry` unchanged, so retry classification is exactly as before; network and body failures keep their previous fixed, non-retryable errors. Provider prose is never read, logged, stored or shown, and an empty URL makes no request.
 - No new scope, dependency, grant or endpoint change; scope count stays 112 and `oauth-client-metadata.json` is byte-identical. This is reliability for token-free public reads, not provider failover, a grant change or a verified independent-PDS login.
 - Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
 

@@ -5,6 +5,7 @@
  * OAuth scope: these are unauthenticated, public repository reads.
  */
 import { readWithRetry } from './reliability';
+import { fetchPublicJsonObject } from './publicJsonRead.ts';
 import { resolveDidDocument } from './identityResolver';
 import {
   TEAL_COLLECTIONS,
@@ -52,18 +53,29 @@ async function listCollection(
     });
     if (cursor) params.set('cursor', cursor);
 
-    const response = await fetch(`${endpoint}/xrpc/com.atproto.repo.listRecords?${params}`);
-    // A missing collection is the normal case for most profiles.
-    if (response.status === 400 || response.status === 404) break;
-    if (!response.ok) throw new Error(`teal.fm read failed (${response.status})`);
+    let body: Record<string, unknown>;
+    try {
+      const result = await fetchPublicJsonObject(
+        `${endpoint}/xrpc/com.atproto.repo.listRecords?${params}`
+      );
+      // A timeout is an unavailable source: stop this collection's walk.
+      if (!result) break;
+      body = result;
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      // A missing collection is the normal case for most profiles.
+      if (status === 400 || status === 404) break;
+      // Keep teal's previous non-retryable classification: the old read threw
+      // a plain error, with no structured status for the retry classifier.
+      throw new Error('teal.fm read failed.');
+    }
 
-    const body = (await response.json()) as {
-      records?: Array<{ uri?: unknown; value?: unknown }>;
-      cursor?: unknown;
-    };
-    for (const record of body.records || []) {
-      if (record && typeof record.uri === 'string') {
-        records.push({ uri: record.uri, value: record.value });
+    for (const entry of Array.isArray(body.records) ? body.records : []) {
+      if (entry && typeof entry === 'object') {
+        const record = entry as { uri?: unknown; value?: unknown };
+        if (typeof record.uri === 'string') {
+          records.push({ uri: record.uri, value: record.value });
+        }
       }
     }
 
