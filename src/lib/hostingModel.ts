@@ -6,6 +6,7 @@
  */
 
 import { normaliseHandle } from './identityModel.ts';
+import { normaliseHttpsOrigin } from './serviceHosts.ts';
 import { atprotoPdsEndpoint } from './tealModel.ts';
 
 export const WELL_KNOWN_SUFFIX = '/.well-known/atproto-did';
@@ -69,24 +70,12 @@ export function classifyHandleInput(input: string): HandleInput {
 /**
  * Accept a bare host or an https URL and return a canonical base URL. Paths,
  * queries, fragments and embedded credentials are rejected: they are not a
- * service origin, and accepting them would make a host check misleading.
+ * service origin, and accepting them would make a host check misleading. The
+ * rule lives with the service host facts so settings, identity reads, public
+ * probes and imports cannot drift into different validators.
  */
 export function normaliseHostUrl(input: string): string | null {
-  if (typeof input !== 'string') return null;
-  const trimmed = input.trim().replace(/\/+$/, '');
-  if (!trimmed || /\s/.test(trimmed)) return null;
-  const withScheme = /^[a-z]+:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-  try {
-    const url = new URL(withScheme);
-    if (url.protocol !== 'https:') return null;
-    if (url.username || url.password) return null;
-    if (url.pathname !== '' && url.pathname !== '/') return null;
-    if (url.search || url.hash) return null;
-    if (!/^[a-z0-9.-]+$/i.test(url.hostname)) return null;
-    return `https://${url.host}`;
-  } catch {
-    return null;
-  }
+  return normaliseHttpsOrigin(input);
 }
 
 /** Structured fields only; provider message text is deliberately ignored. */
