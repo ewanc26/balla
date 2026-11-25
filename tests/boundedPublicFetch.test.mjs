@@ -166,18 +166,18 @@ test('JSON objects, translation arrays and blob bytes share the one fetch core',
   assert.doesNotMatch(core, /\.message\b/);
 });
 
-test('v0.92.0 records the bounded read and keeps version and metadata parity', () => {
+test('v0.93.0 records the bounded read and keeps version and metadata parity', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.92.0');
-  assert.equal(appJson.expo.version, '0.92.0');
+  assert.equal(pkg.version, '0.93.0');
+  assert.equal(appJson.expo.version, '0.93.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.92\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.93\.0<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
-  const section = changelog.slice(changelog.indexOf('## 0.92.0'), changelog.indexOf('## 0.91.1'));
+  const section = changelog.slice(changelog.indexOf('## 0.93.0'), changelog.indexOf('## 0.91.1'));
   assert.match(section, /remaining token-free public reads are now bounded/);
   assert.match(section, /readBoundedPublic\(\)/);
   assert.match(section, /#96\/#97\/#100, partial/);
