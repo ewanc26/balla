@@ -139,12 +139,12 @@ test('the places default is the one configured provider host', () => {
 test('version and release notes match this slice', () => {
   const pkg = JSON.parse(read('package.json'));
   const appJson = JSON.parse(read('app.json'));
-  assert.equal(pkg.version, '0.71.0');
-  assert.equal(appJson.expo.version, '0.71.0');
-  assert.match(read('CHANGELOG.md'), /^## 0\.71\.0$/m);
+  assert.equal(pkg.version, '0.72.0');
+  assert.equal(appJson.expo.version, '0.72.0');
+  assert.match(read('CHANGELOG.md'), /^## 0\.72\.0$/m);
 
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.71\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.72\.0<\/string>/);
   }
 });

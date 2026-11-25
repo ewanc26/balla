@@ -33,6 +33,12 @@ const OLD_FAILURE_STRINGS = [
   ['../src/screens/FeedGeneratorScreen.tsx', 'Bluesky says this generator'],
   ['../src/screens/ContentFiltersScreen.tsx', 'Bluesky moderation is already subscribed'],
   ['../src/screens/FeedsScreen.tsx', 'Bluesky returned no popular feeds'],
+  ['../src/screens/AccountSettingsScreen.tsx', 'Visit bsky.app/settings/account in a browser.'],
+  ['../src/screens/PrivacySecurityScreen.tsx', 'Visit bsky.app/settings/privacy-and-security in a browser.'],
+  ['../src/screens/PrivacySecurityScreen.tsx', 'Visit bsky.app/settings/app-passwords in a browser.'],
+  ['../src/screens/AccountLifecycleScreen.tsx', 'Visit bsky.app/settings/account in a browser.'],
+  ['../src/screens/AccountLifecycleScreen.tsx', 'Opens Bluesky’s account settings'],
+  ['../src/screens/AccountLifecycleScreen.tsx', 'then opens the official control'],
 ];
 
 const NEW_FAILURE_STRINGS = [
@@ -46,6 +52,10 @@ const NEW_FAILURE_STRINGS = [
   ['../src/lib/externalLink.ts', 'The service could not build a preview'],
   ['../src/lib/postTextLimit.ts', 'bytes over the 3,000-byte text cap'],
   ['../src/screens/FeedsScreen.tsx', 'The service returned no popular feeds'],
+  ['../src/screens/AccountSettingsScreen.tsx', 'providerControlPanelUrl(service, BLUESKY_ACCOUNT_SETTINGS)'],
+  ['../src/screens/PrivacySecurityScreen.tsx', 'providerControlPanelUrl(service, BLUESKY_PRIVACY_SETTINGS)'],
+  ['../src/screens/PrivacySecurityScreen.tsx', 'providerControlPanelUrl(service, BLUESKY_APP_PASSWORDS)'],
+  ['../src/screens/AccountLifecycleScreen.tsx', 'providerControlPanelUrl(service, ACCOUNT_SETTINGS)'],
 ];
 
 test('technical failure copy never blames a named provider', () => {
@@ -65,15 +75,28 @@ test('factual provider references that say where data lives are kept', () => {
   assert.match(read('../src/screens/AccountSettingsScreen.tsx'), /real Bluesky personal-details preference/);
 });
 
+test('no account screen opens a canonical Bluesky panel without the session check', () => {
+  const gatedScreens = [
+    '../src/screens/AccountSettingsScreen.tsx',
+    '../src/screens/PrivacySecurityScreen.tsx',
+    '../src/screens/AccountLifecycleScreen.tsx',
+  ];
+  for (const path of gatedScreens) {
+    assert.doesNotMatch(read(path), /openExternalUrl\(BLUESKY_/, `${path} opens a canonical link directly`);
+    assert.match(read(path), /useSessionSummary\(\)/, `${path} does not read the signed-in session`);
+    assert.match(read(path), /providerOwnedPanelText\(/, `${path} has no provider-owned fallback`);
+  }
+});
+
 test('the release documents the correction with no new scope', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
   const changelog = read('../CHANGELOG.md');
   const features = read('../site/features.html');
-  assert.equal(pkg.version, '0.71.0');
-  assert.equal(appJson.expo.version, '0.71.0');
-  assert.match(changelog, /^## 0\.71\.0$/m);
-  assert.match(changelog, /scope count remains 111/);
+  assert.equal(pkg.version, '0.72.0');
+  assert.equal(appJson.expo.version, '0.72.0');
+  assert.match(changelog, /^## 0\.72\.0$/m);
+  assert.match(changelog, /scope count stays 112/);
   assert.match(features, /Failure messages name no provider/);
   const metadata = JSON.parse(read('../oauth-client-metadata.json'));
   assert.equal(metadata.scope.split(/\s+/).filter(Boolean).length, 112);

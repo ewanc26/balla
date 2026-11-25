@@ -57,12 +57,12 @@ test('release notes and versions match the consolidation slice', () => {
   const compliance = read('docs/bluesky-compliance.md');
   const pkg = JSON.parse(read('package.json'));
   const appJson = JSON.parse(read('app.json'));
-  assert.match(changelog, /^## 0\.71\.0$/m);
+  assert.match(changelog, /^## 0\.72\.0$/m);
   assert.match(changelog, /one did:web document URL builder/);
   assert.match(changelog, /scope count stays 112/);
   assert.match(compliance, /one shared `did:web` document URL builder/);
-  assert.equal(pkg.version, '0.71.0');
-  assert.equal(appJson.expo.version, '0.71.0');
+  assert.equal(pkg.version, '0.72.0');
+  assert.equal(appJson.expo.version, '0.72.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
-  if (existsSync(plist)) assert.match(readFileSync(plist, 'utf8'), /<string>0\.71\.0<\/string>/);
+  if (existsSync(plist)) assert.match(readFileSync(plist, 'utf8'), /<string>0\.72\.0<\/string>/);
 });

@@ -7,7 +7,10 @@ import {
   BLUESKY_APP_PASSWORDS,
   BLUESKY_PRIVACY_SETTINGS,
   LOGGED_OUT_PRIVACY_LABEL,
+  controlPanelFailureText,
+  providerControlPanelUrl,
   providerLinkDetail,
+  providerOwnedPanelText,
 } from '../lib/accountSettingsModel';
 import {
   SettingLinkRow,
@@ -29,14 +32,24 @@ export function PrivacySecurityScreen({ navigation }: { navigation: any }) {
   }, [navigation]);
 
   function openPrivacySettings() {
-    void openExternalUrl(BLUESKY_PRIVACY_SETTINGS).catch(() => {
-      setLinkError('Could not open privacy settings. Visit bsky.app/settings/privacy-and-security in a browser.');
+    const url = providerControlPanelUrl(service, BLUESKY_PRIVACY_SETTINGS);
+    if (!url) {
+      setLinkError(providerOwnedPanelText('privacy and security'));
+      return;
+    }
+    void openExternalUrl(url).catch(() => {
+      setLinkError(controlPanelFailureText(service, 'privacy settings', url));
     });
   }
 
   function openAppPasswords() {
-    void openExternalUrl(BLUESKY_APP_PASSWORDS).catch(() => {
-      setLinkError('Could not open app passwords. Visit bsky.app/settings/app-passwords in a browser.');
+    const url = providerControlPanelUrl(service, BLUESKY_APP_PASSWORDS);
+    if (!url) {
+      setLinkError(providerOwnedPanelText('app passwords'));
+      return;
+    }
+    void openExternalUrl(url).catch(() => {
+      setLinkError(controlPanelFailureText(service, 'app passwords', url));
     });
   }
 

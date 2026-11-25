@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.72.0
+
+- **Provider-owned links now fail closed (#97, partial).** Account settings, privacy/security and account lifecycle read the signed-in session's real `resourceServer`. A `bsky.social` account keeps the existing canonical `bsky.app` controls; any other PDS leaves that link closed and shows a fixed message saying Balla cannot infer the provider's control-panel address. A failed browser open also uses the same session check, so no non-Bluesky account is told to visit `bsky.app`.
+- The lifecycle confirmation now describes the account control generically instead of claiming Bluesky's panel for every provider. No URL, request, setting, grant or OAuth scope changes; scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.71.0
 
 - **A result's real place identity is inspectable (#156, partial).** A second 44pt button on each result opens the public `org.atgeo.getPlace` gazetteer record for that result's validated `origin` URN in the browser, on the configured places host. The URL is built in one fail-closed function from the same validated host and URN the search uses; Balla makes no request itself, reads no provider prose and sends no device position. A result without a valid URN, or a saved host that is not an https origin, gets no button.

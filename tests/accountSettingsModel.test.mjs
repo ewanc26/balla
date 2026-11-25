@@ -7,10 +7,13 @@ import {
   BOT_LABEL,
   LOGGED_OUT_PRIVACY_LABEL,
   SELF_LABELS_TYPE,
+  controlPanelFailureText,
   isBlueskyService,
   profileHasSelfLabel,
   profileViewWithSelfLabel,
+  providerControlPanelUrl,
   providerLinkDetail,
+  providerOwnedPanelText,
   readBirthDate,
   readSessionSummary,
   validateBirthDate,
@@ -120,4 +123,35 @@ test('provider links are only described as authoritative for bsky.social', () =>
   assert.match(BLUESKY_ACCOUNT_SETTINGS, /bsky\.app\/settings\/account/);
   assert.match(BLUESKY_PRIVACY_SETTINGS, /privacy-and-security/);
   assert.match(BLUESKY_APP_PASSWORDS, /app-passwords/);
+});
+
+test('provider-owned panels stay closed unless the session proves bsky.social', () => {
+  assert.equal(
+    providerControlPanelUrl('https://bsky.social', BLUESKY_ACCOUNT_SETTINGS),
+    BLUESKY_ACCOUNT_SETTINGS
+  );
+  assert.equal(providerControlPanelUrl('https://alice.bsky.social', BLUESKY_ACCOUNT_SETTINGS), BLUESKY_ACCOUNT_SETTINGS);
+  assert.equal(providerControlPanelUrl('https://pds.example.com', BLUESKY_ACCOUNT_SETTINGS), null);
+  assert.equal(providerControlPanelUrl('https://api.eurosky.network', BLUESKY_ACCOUNT_SETTINGS), null);
+  assert.equal(providerControlPanelUrl('', BLUESKY_ACCOUNT_SETTINGS), null);
+
+  const blueskyFailure = controlPanelFailureText(
+    'https://bsky.social',
+    'account settings',
+    BLUESKY_ACCOUNT_SETTINGS
+  );
+  assert.equal(blueskyFailure, 'Could not open account settings. Visit bsky.app/settings/account in a browser.');
+
+  const otherFailure = controlPanelFailureText(
+    'https://pds.example.com',
+    'account settings',
+    BLUESKY_ACCOUNT_SETTINGS
+  );
+  assert.doesNotMatch(otherFailure, /bsky/);
+  assert.match(otherFailure, /provider’s control panel/);
+  assert.match(otherFailure, /cannot infer its address/);
+
+  assert.match(providerOwnedPanelText('account settings'), /another provider/);
+  assert.match(providerOwnedPanelText('account settings'), /cannot infer its address/);
+  assert.doesNotMatch(providerOwnedPanelText('account settings'), /bsky/);
 });

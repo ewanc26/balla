@@ -13,7 +13,10 @@ import { useProfileSelfLabel } from '../lib/profileSelfLabel';
 import {
   BLUESKY_ACCOUNT_SETTINGS,
   BOT_LABEL,
+  controlPanelFailureText,
+  providerControlPanelUrl,
   providerLinkDetail,
+  providerOwnedPanelText,
   readBirthDate,
   validateBirthDate,
 } from '../lib/accountSettingsModel';
@@ -64,8 +67,13 @@ export function AccountSettingsScreen({ navigation }: { navigation: any }) {
   const handle = profile?.handle ? `@${profile.handle}` : 'Not loaded';
 
   function openProviderSettings() {
-    void openExternalUrl(BLUESKY_ACCOUNT_SETTINGS).catch(() => {
-      setLoadError('Could not open account settings. Visit bsky.app/settings/account in a browser.');
+    const url = providerControlPanelUrl(service, BLUESKY_ACCOUNT_SETTINGS);
+    if (!url) {
+      setLoadError(providerOwnedPanelText('account settings'));
+      return;
+    }
+    void openExternalUrl(url).catch(() => {
+      setLoadError(controlPanelFailureText(service, 'account settings', url));
     });
   }
 
