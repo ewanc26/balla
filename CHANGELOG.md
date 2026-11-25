@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.62.0
+
+- **The composer now has a typed place-name picker (#156, partial).** A visible "Add place name" control opens a light sheet where the person types a name and presses Search. The configured public places provider is queried with only `q` and `limit`: no device position, no nearby lookup. A result inserts its name as plain text at the cursor; the typed name can also be used directly as text.
+- **Still no check-in record or place chip.** The `social.eurosky.place.pin` NSID is an unsettled draft, so Balla writes no repository record, stores no coordinate and renders no chip. Failure copy is fixed in Balla's words, and an unreachable or invalid provider leaves the typed name usable. No granularity chooser, per-media binding or map dependency.
+- No new OAuth scope or dependency; the scope count remains 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.61.0
 
 - **A configurable places provider is available for typed search (#156, partial).** Advanced → Services now has a places host, defaulting to `places.eurosky.tech`, that is persisted, reversible and covered by the configuration export. A visible test runs one public typed search and reports status, latency and the count of structured results from this device.

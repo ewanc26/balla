@@ -82,3 +82,35 @@ export function parsePlacesSearch(payload: unknown): PlaceHit[] {
   }
   return hits;
 }
+
+export type PlaceSelection = { start: number; end: number };
+
+/** A place name is ordinary text: no URN, coordinate or check-in count travels. */
+export function normalisePlaceName(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
+  const name = value.replace(/\s+/g, ' ').trim().slice(0, MAX_QUERY_LENGTH);
+  return name || null;
+}
+
+/** Insert a picked name at the cursor, keeping surrounding punctuation intact. */
+export function insertPlaceName(
+  value: string,
+  selection: PlaceSelection,
+  name: unknown
+): { text: string; cursor: number } {
+  const cleaned = normalisePlaceName(name);
+  if (!cleaned) return { text: value, cursor: selection.end };
+  const start = Math.max(0, Math.min(selection.start, value.length));
+  const end = Math.max(start, Math.min(selection.end, value.length));
+  const before = value.slice(0, start);
+  const after = value.slice(end);
+  // Keep a picked name legible whether it lands after punctuation or mid-word.
+  // A name inserted at the end leaves one space so the person can keep typing;
+  // the caret stays after the name itself, before that trailing space.
+  const leading = before && !/\s$/.test(before) ? ' ' : '';
+  const trailing = !after || !/^[\s.,;:!?)\]}]/.test(after) ? ' ' : '';
+  return {
+    text: `${before}${leading}${cleaned}${trailing}${after}`,
+    cursor: before.length + leading.length + cleaned.length,
+  };
+}
