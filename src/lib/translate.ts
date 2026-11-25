@@ -1,7 +1,12 @@
 // Balla has no on-device translation module, so translation uses Google's
 // public translate endpoint, the same fallback the official web client links
 // out to. It is user-initiated from the post menu and never runs in the
-// background. The menu copy says the post text is sent to Google.
+// background. The menu copy says the post text is sent to Google. The request
+// shares the bounded public fetch core, so a hung service cannot leave the
+// menu waiting forever.
+
+import { readBoundedPublic } from './boundedPublicFetch.ts';
+import type { TimeoutDeps } from './requestTimeout.ts';
 
 const TRANSLATE_ENDPOINT = 'https://translate.googleapis.com/translate_a/single';
 
@@ -26,16 +31,29 @@ export function parseGoogleTranslation(payload: any): TranslationResult {
   };
 }
 
+export type TranslateDeps = { fetchImpl?: typeof fetch } & TimeoutDeps;
+
 export async function translateText(
   text: string,
-  targetLanguage = 'en'
+  targetLanguage = 'en',
+  deps: TranslateDeps = {}
 ): Promise<TranslationResult> {
   const url =
     `${TRANSLATE_ENDPOINT}?client=gtx&sl=auto&tl=${encodeURIComponent(targetLanguage)}` +
     `&dt=t&q=${encodeURIComponent(text)}`;
-  const response = await fetch(url, { headers: { Accept: 'application/json' } });
-  if (!response.ok) {
-    throw new Error(`Translation request failed (${response.status})`);
+  const result = await readBoundedPublic<unknown>(url, {
+    ...deps,
+    parse: async (response) => response.json(),
+  });
+  // Fixed Balla-authored copy only: provider prose is never read or shown.
+  if (result.state === 'timeout') {
+    throw new Error('Translation did not finish in time.');
   }
-  return parseGoogleTranslation(await response.json());
+  if (result.state === 'status') {
+    throw new Error(`Translation request failed (${result.status})`);
+  }
+  if (result.state !== 'value') {
+    throw new Error('Could not reach the translation service.');
+  }
+  return parseGoogleTranslation(result.value);
 }
