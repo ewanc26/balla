@@ -6,6 +6,7 @@ import {
   PLACES_SEARCH_PATH,
   normalisePlacesEndpoint,
   parsePlacesSearch,
+  placesHostLabel,
   placesSearchBody,
   placesSearchUrl,
 } from '../src/lib/placesModel.ts';
@@ -152,11 +153,24 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(screen, /check-in record is written/i);
   assert.match(screen, /label="Places search"/);
   assert.match(screen, /const allowed = await getPlacesEnabled\(\)/);
-  assert.match(screen, /Off — no request was made/);
+  assert.match(screen, /import \{ placesHostLabel \} from '..\/lib\/placesModel\.ts'/);
+  assert.match(screen, /value=\{placesHostLabel\(placesEndpoint, placesEnabled\)\}/);
+  assert.equal(
+    placesHostLabel('https://places.eurosky.tech', true),
+    'Places host: https://places.eurosky.tech',
+  );
+  assert.equal(
+    placesHostLabel('places.eurosky.tech', false),
+    'Configured places host (off): https://places.eurosky.tech',
+  );
+  assert.equal(
+    placesHostLabel('https://places.eurosky.tech/path', true),
+    'Places host needs an https address',
+  );
   assert.match(exporter, /places: effectivePlaces\(config\)/);
   assert.match(exporter, /usingDefaultPlaces/);
   assert.match(exporter, /placesEnabled: isPlacesEnabled\(config\)/);
-  assert.match(changelog, /^## 0\.68\.0$/m);
+  assert.match(changelog, /^## 0\.69\.0$/m);
   assert.match(changelog, /switched off/);
   assert.match(changelog, /#156, partial/);
   assert.match(changelog, /scope count remains 112/);
@@ -164,10 +178,10 @@ test('the screen, export and release notes describe the partial feature', () => 
   assert.match(features, /switch typed search off/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.68.0');
-  assert.equal(appJson.expo.version, '0.68.0');
+  assert.equal(pkg.version, '0.69.0');
+  assert.equal(appJson.expo.version, '0.69.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.68\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.69\.0<\/string>/);
   }
 });

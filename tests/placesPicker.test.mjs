@@ -5,6 +5,7 @@ import {
   insertPlaceName,
   normalisePlaceName,
   normalisePlacesEndpoint,
+  placesHostLabel,
 } from '../src/lib/placesModel.ts';
 import {
   placesSearchCopy,
@@ -143,22 +144,38 @@ test('the composer exposes a visible, honest place-name control', () => {
   assert.match(sheet, /minHeight: 44/);
 });
 
-test('the picker shows the validated places host without echoing provider prose', () => {
+test('the picker uses one fail-closed host label without echoing provider prose', () => {
   assert.equal(normalisePlacesEndpoint('https://places.eurosky.tech'), 'https://places.eurosky.tech');
   assert.equal(normalisePlacesEndpoint('https://places.eurosky.tech/path'), null);
   assert.equal(normalisePlacesEndpoint('https://user@places.eurosky.tech'), null);
-  assert.match(sheet, /import \{ normalisePlacesEndpoint, type PlaceHit \}/);
-  assert.match(sheet, /setEndpointLabel\(normalisePlacesEndpoint\(endpoint\)\)/);
-  assert.match(sheet, /setEndpointChecked\(true\)/);
-  assert.match(sheet, /endpointChecked \? \(/);
-  assert.match(sheet, /enabled \? 'Places host' : 'Configured places host \(off\)'\}\: \$\{endpointLabel\}/);
-  assert.match(sheet, /Places host needs an https address/);
-  assert.match(sheet, /Change it in Advanced → Services\./);
+  assert.equal(
+    placesHostLabel('https://places.eurosky.tech', true),
+    'Places host: https://places.eurosky.tech',
+  );
+  assert.equal(
+    placesHostLabel('https://places.eurosky.tech', false),
+    'Configured places host (off): https://places.eurosky.tech',
+  );
+  assert.equal(
+    placesHostLabel('https://places.eurosky.tech/path', true),
+    'Places host needs an https address',
+  );
+  assert.equal(
+    placesHostLabel('https://user@places.eurosky.tech', true),
+    'Places host needs an https address',
+  );
+  assert.match(sheet, /import \{ placesHostLabel, type PlaceHit \}/);
+  assert.match(sheet, /setEndpointLabel\(placesHostLabel\(endpoint, value\)\)/);
+  assert.match(sheet, /setEndpointLabel\(placesHostLabel\(endpoint, allowed\)\)/);
+  assert.match(sheet, /setEndpointLabel\(placesHostLabel\('', false\)\)/);
+  assert.match(sheet, /endpointChecked && endpointLabel/);
+  assert.match(sheet, /\$\{endpointLabel\}\. Change it in Advanced → Services\./);
+  assert.doesNotMatch(sheet, /normalisePlacesEndpoint/);
   assert.doesNotMatch(sheet, /\{endpoint\}/);
 });
 
 test('docs and release notes match the partial place picker', () => {
-  assert.match(changelog, /^## 0\.68\.0$/m);
+  assert.match(changelog, /^## 0\.69\.0$/m);
   assert.match(changelog, /typed place-name picker/);
   assert.match(changelog, /scope count remains 112/);
   assert.match(compliance, /The composer adds a visible typed place-name picker/);
@@ -166,10 +183,10 @@ test('docs and release notes match the partial place picker', () => {
   assert.match(features, /place-name picker/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.68.0');
-  assert.equal(appJson.expo.version, '0.68.0');
+  assert.equal(pkg.version, '0.69.0');
+  assert.equal(appJson.expo.version, '0.69.0');
   const plistPath = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plistPath)) {
-    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.68\.0<\/string>/);
+    assert.match(readFileSync(plistPath, 'utf8'), /<string>0\.69\.0<\/string>/);
   }
 });

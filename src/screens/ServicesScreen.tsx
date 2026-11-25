@@ -31,6 +31,7 @@ import {
   subscribeServicesConfig,
 } from '../lib/servicesConfig';
 import { probePlaces } from '../lib/placesProbe.ts';
+import { placesHostLabel } from '../lib/placesModel.ts';
 import {
   DEFAULT_SERVICES,
   SERVICE_SLOT_COPY,
@@ -382,7 +383,7 @@ export function ServicesScreen() {
         />
         <SettingValueRow
           label={SERVICE_SLOT_COPY.places.label}
-          value={placesEnabled ? placesEndpoint : 'Off — no place request is made'}
+          value={placesHostLabel(placesEndpoint, placesEnabled)}
         />
         <TextInput
           value={placesInput}

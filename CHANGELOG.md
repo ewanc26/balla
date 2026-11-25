@@ -3,6 +3,11 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.69.0
+
+- **One fail-closed places-host label (#156, partial).** The composer sheet and Advanced → Services now derive the displayed host from the same helper. A valid https origin appears with the same wording on both surfaces; an invalid saved value is described as invalid and never echoed, and an off state says the host is configured but unused. The sheet refreshes the label when it opens, after Search and when a configuration read fails.
+- No request, provider prose, position, check-in record, chip, new scope or dependency is involved; scope count stays 112. Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check.
+
 ## 0.68.0
 
 - **The place picker now names its configured host (#156, partial).** When the sheet opens, it reads the saved places endpoint and shows only the validated https origin, for example `https://places.eurosky.tech`, with a visible pointer to Advanced → Services. An invalid saved host is named as invalid, never rendered as raw text; when Places is off, the label says the host is configured but unused. The same sanitised label refreshes when Search runs.

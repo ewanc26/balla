@@ -25,7 +25,7 @@ import {
   searchPlaces,
   type PlacesSearchState,
 } from '../lib/placesSearch';
-import { normalisePlacesEndpoint, type PlaceHit } from '../lib/placesModel';
+import { placesHostLabel, type PlaceHit } from '../lib/placesModel';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 
 /**
@@ -68,8 +68,8 @@ export function PlacePickerSheet({
         ]);
         if (!active) return;
         setEnabled(value);
-        // Show only a validated https origin, never the raw persisted value.
-        setEndpointLabel(normalisePlacesEndpoint(endpoint));
+        // One shared, fail-closed label: never echo the raw persisted value.
+        setEndpointLabel(placesHostLabel(endpoint, value));
         setEndpointChecked(true);
         if (!value) {
           setState('off');
@@ -80,6 +80,7 @@ export function PlacePickerSheet({
         setEnabled(false);
         setState('off');
         setHits([]);
+        setEndpointLabel(placesHostLabel('', false));
         setEndpointChecked(true);
       }
     })();
@@ -95,16 +96,18 @@ export function PlacePickerSheet({
     setState(null);
     setHits([]);
     try {
-      const allowed = await getPlacesEnabled();
+      const [allowed, endpoint] = await Promise.all([
+        getPlacesEnabled(),
+        getPlacesEndpoint(),
+      ]);
       setEnabled(allowed);
+      setEndpointLabel(placesHostLabel(endpoint, allowed));
+      setEndpointChecked(true);
       if (!allowed) {
         setState('off');
         setHits([]);
         return;
       }
-      const endpoint = await getPlacesEndpoint();
-      setEndpointLabel(normalisePlacesEndpoint(endpoint));
-      setEndpointChecked(true);
       const result = await searchPlaces(q, endpoint, { enabled: allowed });
       setState(result.state);
       setHits(result.hits);
@@ -112,6 +115,8 @@ export function PlacePickerSheet({
       // Configuration read failed: fail closed with the fixed failure copy.
       setEnabled(false);
       setState('unavailable');
+      setEndpointLabel(placesHostLabel('', false));
+      setEndpointChecked(true);
     } finally {
       setSearching(false);
     }
@@ -167,11 +172,9 @@ export function PlacePickerSheet({
             and is not an exact place match. Balla writes
             no check-in record while the place-pin lexicon is a draft.
           </Text>
-          {endpointChecked ? (
+          {endpointChecked && endpointLabel ? (
             <Text style={{ color: p.secondary, fontSize: 12, marginTop: 6 }}>
-              {endpointLabel
-                ? `${enabled ? 'Places host' : 'Configured places host (off)'}: ${endpointLabel}. Change it in Advanced → Services.`
-                : 'Places host needs an https address. Change it in Advanced → Services.'}
+              {`${endpointLabel}. Change it in Advanced → Services.`}
             </Text>
           ) : null}
           <View style={styles.searchRow}>
