@@ -155,11 +155,11 @@ test('every pre-auth read uses the one bounded core and reads no provider prose'
 test('v0.95.0 records the bounded pre-flight reads with parity and unchanged metadata', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.97.5');
-  assert.equal(appJson.expo.version, '0.97.5');
+  assert.equal(pkg.version, '0.97.6');
+  assert.equal(appJson.expo.version, '0.97.6');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.5<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.6<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');

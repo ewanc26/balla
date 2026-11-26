@@ -618,9 +618,9 @@ function SavedFeedRow({
           size={46}
         />
         <View style={{ flex: 1, minWidth: 0 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6 }}>
             <Text
-              style={{ color: palette.text, fontSize: 15, fontWeight: '700' }}
+              style={{ color: palette.text, fontSize: 15, fontWeight: '700', flexShrink: 1 }}
               numberOfLines={1}
             >
               {name}
@@ -1118,6 +1118,7 @@ const styles = StyleSheet.create({
   feedControls: {
     borderTopWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
     paddingHorizontal: 5,
     paddingVertical: 3,
