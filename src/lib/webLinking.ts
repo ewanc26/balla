@@ -8,6 +8,8 @@
  * without inventing a second encoding here.
  */
 
+import { SERVICE_HOSTS } from './serviceHosts.ts';
+
 export const WEB_BASE_PATH = '/app';
 
 export const WEB_PREFIXES: string[] = [
@@ -16,12 +18,37 @@ export const WEB_PREFIXES: string[] = [
 ];
 
 /**
+ * Never written to the address, and ignored if a link carries it. The library
+ * types serialisers as returning a string, but it omits an undefined one.
+ */
+const memoryOnly = () => undefined as unknown as string;
+
+/** A label that sits beside an identifier comes from the app, never a link. */
+const appOnly = (name: string) => ({
+  parse: { [name]: memoryOnly },
+  stringify: { [name]: memoryOnly },
+});
+
+/** The grant names one moderation service, so a link may not name another. */
+const MODERATION_ADDRESS = {
+  parse: {
+    moderationService: (value: string) =>
+      value === SERVICE_HOSTS.labelerDid ? value : '',
+  },
+};
+
+/**
  * Every Stack and tab screen has an explicit path so no screen silently stays
  * at /app. Identifier params live in the path; descriptive params (titles,
  * quote objects, purposes) fall through to the query string as React
  * Navigation already does.
  */
 export const WEB_LINKING_CONFIG = {
+  // On the web React Navigation parses location.pathname and ignores
+  // `prefixes`, so the base has to be declared here too.
+  path: WEB_BASE_PATH,
+  // A deep-linked screen sits on top of Home, so it always has a back button.
+  initialRouteName: 'Tabs',
   screens: {
     Tabs: {
       screens: {
@@ -42,7 +69,8 @@ export const WEB_LINKING_CONFIG = {
     DefaultInteractionSettings: 'settings/interaction-defaults',
     BlockedAccounts: 'settings/blocked-accounts',
     UserProfile: 'profile/:actor',
-    Compose: 'compose',
+    // A quote is a whole post view, which a single URL segment cannot carry.
+    Compose: { path: 'compose', ...appOnly('quote') },
     Settings: 'settings',
     Advanced: 'settings/advanced',
     Backend: 'settings/advanced/backend',
@@ -63,7 +91,8 @@ export const WEB_LINKING_CONFIG = {
     LanguageSettings: 'settings/languages',
     FeedPreferences: 'settings/following',
     ThreadPreferences: 'settings/threads',
-    Info: 'info/:topic',
+    // The topic supplies the title; a link must not be able to word a header.
+    Info: { path: 'info/:topic', ...appOnly('title') },
     PeopleList: 'people/:mode/:actor',
     EngagementList: 'engagement/:mode/:uri',
     ContentFilters: 'content-filters',
@@ -77,8 +106,8 @@ export const WEB_LINKING_CONFIG = {
     ActivityNotifications: 'notification-settings/activity',
     EditProfile: 'edit-profile',
     ModerationInbox: 'moderation',
-    ModerationReport: 'moderation/report',
-    ModerationNotice: 'moderation/notice',
+    ModerationReport: { path: 'moderation/report', ...MODERATION_ADDRESS },
+    ModerationNotice: { path: 'moderation/notice', ...MODERATION_ADDRESS },
     ReportReceipts: 'report-receipts',
     FeedGenerator: 'feed/:feed',
     Feeds: 'feeds',
@@ -90,10 +119,11 @@ export const WEB_LINKING_CONFIG = {
     NewsBundle: 'news/:topic/:region',
     StarterPack: 'starter-pack/:uri',
     StarterPackEdit: 'starter-pack-edit/:uri',
-    Lists: 'lists',
+    Lists: { path: 'lists', ...appOnly('handle') },
     ListDetail: 'list/:uri',
-    ListEdit: 'list/:uri/edit',
-    ListMembers: 'list/:uri/members',
+    // Optional: a new list has no URI yet.
+    ListEdit: 'list/:uri?/edit',
+    ListMembers: { path: 'list/:uri/members', ...appOnly('name') },
     Chat: 'messages',
     Conversation: 'messages/:convoId',
     ChatSettings: 'messages/settings',

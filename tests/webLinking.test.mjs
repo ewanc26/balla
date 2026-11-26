@@ -30,13 +30,16 @@ test('prefixes keep the /app base for both production and local web', () => {
   assert.equal(webLinking.config, WEB_LINKING_CONFIG);
 });
 
+// A screen is either a bare path or a path with param serialisers.
+const pathOf = (value) => (typeof value === 'string' ? value : value?.path);
+
 test('every stack screen has a web path, so none stays silently at /app', () => {
   const paths = WEB_LINKING_CONFIG.screens;
   assert.ok(stackScreens.length >= 20, `expected the full stack, found ${stackScreens.length} screens`);
   for (const name of stackScreens.filter((name) => name !== 'Tabs')) {
     assert.ok(Object.hasOwn(paths, name), `${name} is missing from the linking config`);
-    assert.equal(typeof paths[name], 'string', `${name} has a path`);
-    assert.ok(paths[name].length > 0, `${name} is not an empty path`);
+    assert.equal(typeof pathOf(paths[name]), 'string', `${name} has a path`);
+    assert.ok(pathOf(paths[name]).length > 0, `${name} is not an empty path`);
   }
   assert.equal(typeof paths.Tabs, 'object', 'Tabs holds the nested tab paths');
 });
@@ -52,7 +55,7 @@ test('every tab screen has a web path under Tabs', () => {
 
 test('no two screens claim the same path', () => {
   const paths = [
-    ...Object.values(WEB_LINKING_CONFIG.screens).filter((value) => typeof value === 'string'),
+    ...Object.values(WEB_LINKING_CONFIG.screens).map(pathOf).filter((value) => value !== undefined),
     ...Object.values(WEB_LINKING_CONFIG.screens.Tabs.screens),
   ];
   assert.equal(new Set(paths).size, paths.length);

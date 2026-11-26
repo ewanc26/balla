@@ -98,11 +98,11 @@ test('one shared deadline now covers the in-app public handle fallback', () => {
 test('public copy and version parity match the bounded handle-resolution slice', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.95.0');
-  assert.equal(appJson.expo.version, '0.95.0');
+  assert.equal(pkg.version, '0.96.0');
+  assert.equal(appJson.expo.version, '0.96.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.95\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.96\.0<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');
