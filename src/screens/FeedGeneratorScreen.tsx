@@ -136,7 +136,13 @@ export function FeedGeneratorScreen({
               accessibilityRole="button"
               accessibilityLabel="Report this feed"
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, padding: 8 })}
+              style={({ pressed }) => ({
+                minWidth: 44,
+                minHeight: 44,
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: pressed ? 0.6 : 1,
+              })}
             >
               <Ionicons name="flag-outline" size={22} color={p.text} />
             </Pressable>
@@ -329,7 +335,7 @@ export function FeedGeneratorScreen({
           }
           accessibilityRole="button"
           accessibilityLabel={`View users who like ${generator.displayName}`}
-          style={{ marginTop: 10 }}
+          style={{ minHeight: 44, justifyContent: 'center' }}
         >
           <Text style={{ color: p.secondary, fontSize: 13, textDecorationLine: 'underline' }}>
             Liked by {likeState.count} {likeState.count === 1 ? 'user' : 'users'}

@@ -363,8 +363,11 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           accessibilityRole="button"
           accessibilityLabel="Open your saved drafts"
           style={({ pressed }) => ({
+            minWidth: 44,
+            minHeight: 44,
+            alignItems: 'center',
+            justifyContent: 'center',
             paddingHorizontal: 10,
-            paddingVertical: 8,
             opacity: pressed ? 0.6 : 1,
           })}
         >

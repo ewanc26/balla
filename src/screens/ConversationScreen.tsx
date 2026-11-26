@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   bubbleFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  messageAction: { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center', marginHorizontal: -6 },
+  messageAction: { minWidth: 44, minHeight: 44, alignItems: 'center', justifyContent: 'center', marginHorizontal: -10, marginVertical: -8 },
   replyBanner: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -345,15 +345,18 @@ const styles = StyleSheet.create({
   },
   switch: {
     ...touchTargetStyle,
+    // Wider than tall, so the knob has somewhere to travel and it reads as a
+    // switch rather than a round button.
+    width: 64,
     borderRadius: 22,
-    padding: 3,
+    padding: 8,
     marginLeft: 10,
     justifyContent: 'center',
   },
   knob: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
   },
   choiceHeading: {
     paddingHorizontal: 14,

@@ -875,7 +875,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                     }
                     accessibilityRole="button"
                     accessibilityLabel={`View users who like this labeler`}
-                    style={{ marginTop: 8 }}
+                    style={{ minHeight: 44, justifyContent: 'center' }}
                   >
                     <Text
                       style={{
@@ -1252,7 +1252,8 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
             marginBottom: 8,
           }}
         >
-          <View style={{ flexDirection: 'row' }}>
+          {/* Wraps rather than scrolls: every tab stays visible on a phone. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {visibleProfileTabs({
               isSelf,
               isLabeler,

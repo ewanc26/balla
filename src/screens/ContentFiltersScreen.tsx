@@ -31,6 +31,7 @@ import {
 import { BSKY_LABELER_DID } from '../lib/moderation';
 import { useModeration } from '../lib/moderationContext';
 import { Avatar } from '../components/Avatar';
+import { SettingSwitch } from '../components/SettingControls';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 
 type Visibility = 'ignore' | 'warn' | 'hide';
@@ -346,38 +347,13 @@ export function ContentFiltersScreen({
       ) : null}
 
       <Section title="Adult content">
-        <View style={styles.settingRow}>
-          <View style={{ flex: 1, minWidth: 0 }}>
-            <Text style={{ color: p.text, fontSize: 15, fontWeight: '700' }}>
-              Show adult content
-            </Text>
-            <Text style={{ color: p.secondary, fontSize: 12, lineHeight: 17, marginTop: 2 }}>
-              Adult labels stay hidden until this is on. Balla asks you to confirm you are
-              over 18 first.
-            </Text>
-          </View>
-          <Pressable
-            onPress={() => requestAdult(!adultEnabled)}
-            accessibilityRole="switch"
-            accessibilityLabel="Show adult content"
-            accessibilityState={{ checked: adultEnabled, busy: saving === 'adult' }}
-            hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-            style={({ pressed }) => [
-              styles.toggle,
-              {
-                backgroundColor: adultEnabled ? p.accent : p.soft,
-                opacity: pressed || saving === 'adult' ? 0.6 : 1,
-              },
-            ]}
-          >
-            <View
-              style={[
-                styles.knob,
-                { backgroundColor: p.card, alignSelf: adultEnabled ? 'flex-end' : 'flex-start' },
-              ]}
-            />
-          </Pressable>
-        </View>
+        <SettingSwitch
+          label="Show adult content"
+          detail="Adult labels stay hidden until this is on. Balla asks you to confirm you are over 18 first."
+          value={adultEnabled}
+          busy={saving === 'adult'}
+          onChange={requestAdult}
+        />
       </Section>
 
       <Section title="Subscribed labelers" sectionRef={labelersRef}>
@@ -857,24 +833,6 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth,
     marginHorizontal: 8,
     overflow: 'hidden',
-  },
-  settingRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
-    padding: 14,
-  },
-  toggle: {
-    width: 52,
-    height: 32,
-    borderRadius: 16,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  knob: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
   },
   labelerRow: {
     flexDirection: 'row',

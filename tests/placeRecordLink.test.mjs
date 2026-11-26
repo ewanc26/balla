@@ -82,10 +82,10 @@ test('docs and release notes match the record link-out slice', () => {
   assert.match(features, /public gazetteer record in your browser/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.96.0');
-  assert.equal(appJson.expo.version, '0.96.0');
+  assert.equal(pkg.version, '0.97.0');
+  assert.equal(appJson.expo.version, '0.97.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.96\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.0<\/string>/);
   }
 });

@@ -716,6 +716,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   filter: {
+    minWidth: 44,
     minHeight: 44,
     paddingHorizontal: 10,
     borderWidth: 1,
