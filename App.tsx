@@ -117,6 +117,7 @@ import {
 import {
   MOCK_MODE,
   MOCK_OTHER_ACTOR,
+  MOCK_STARTER_PACK_URI,
   MOCK_THREAD_URI,
   MOCK_EDIT_URI,
   MOCK_CONVO_ID,
@@ -305,6 +306,8 @@ export default function App() {
       navigationRef.navigate('Conversation', { convoId: MOCK_CONVO_ID });
     } else if (screen === 'ConversationSettings' || screen === 'JoinRequests') {
       navigationRef.navigate(screen, { convoId: MOCK_GROUP_CONVO_ID });
+    } else if (screen === 'StarterPack' || screen === 'StarterPackEdit') {
+      navigationRef.navigate(screen, { uri: MOCK_STARTER_PACK_URI });
     } else if (screen === 'Hashtag') {
       navigationRef.navigate('Hashtag', { tag: 'tea' });
     } else if (screen === 'Topic') {

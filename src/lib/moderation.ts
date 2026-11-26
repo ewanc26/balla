@@ -1,5 +1,6 @@
 import { agent } from './agent';
 import { recordReportReceipt } from './reportReceipts';
+import { SERVICE_HOSTS } from './serviceHosts.ts';
 import {
   buildProfileLinkReportSubject,
   REPORT_REASONS,
@@ -15,7 +16,7 @@ export { REPORT_REASONS, type ReportReason } from './reportModel';
 
 // Bluesky's moderation service. Reports must be sent to the labeler through
 // the atproto-proxy header, not to the AppView.
-export const BSKY_LABELER_DID = 'did:plc:ar7c4by46qjdydhdevvrndac';
+export const BSKY_LABELER_DID: string = SERVICE_HOSTS.labelerDid;
 export const BSKY_LABELER_PROXY = `${BSKY_LABELER_DID}#atproto_labeler`;
 
 type ActorHiddenListener = (did: string) => void;

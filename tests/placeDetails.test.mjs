@@ -195,11 +195,11 @@ test('docs, release copy and OAuth facts match the details slice', () => {
   assert.match(features, /detail view inside the same sheet/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.97.3');
-  assert.equal(appJson.expo.version, '0.97.3');
+  assert.equal(pkg.version, '0.97.4');
+  assert.equal(appJson.expo.version, '0.97.4');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.3<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.4<\/string>/);
   }
   assert.equal(
     createHash('sha256').update(metadataRaw).digest('hex'),

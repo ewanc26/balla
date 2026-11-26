@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.4
+
+- **The preview's `?screen=` links work again.** Since web addresses arrived in 0.5.0, the navigator rewrote the address before the mock preview read the query, so every `?screen=` link stayed on Home. The query is now read once at load, and the two starter pack screens are given a fixture to open. This affects preview builds only.
+- The default moderation service ID is written in one place; the moderation and preview modules now read it from the service host facts.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. Every `?screen=` value was opened on a mock-data web export in Chrome.
+
 ## 0.97.3
 
 - **Warning tints and sheet backdrops follow the theme.** The translucent fills behind error, danger, warning and success text used fixed light-theme colours in every theme; they are now derived from the palette. Sheets and dialogs dim the page with the palette's overlay, which is darker in dark themes (65% rather than 45 to 50%) and 45% in light ones.
