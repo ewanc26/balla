@@ -31,15 +31,22 @@ Needs Xcode, CocoaPods, JDK 17, the Android SDK and `fdroidserver`.
    It publishes nothing.
 4. Review and commit `site/altstore.json` and `site/fdroid/repo/`.
 5. Merge, tag, and attach `balla-X.Y.Z.apk`, `Balla-X.Y.Z.ipa` and `SHA256SUMS`
-   to the GitHub release **before** the site deploys, so no listing points at a
-   missing file.
+   to the GitHub release.
+6. Redeploy the site so it picks the files up.
 
 The listings record the exact size and hash of those files. Do not rebuild a
 version after its listings are written; release a new patch instead.
 
 ## Hosting
 
-The site serves `/altstore.json` and the repository index and images.
-`vercel.json` redirects `/fdroid/repo/balla-X.Y.Z.apk` to the GitHub release
-asset of the same name, so binaries never enter git history. An index lists
-only the APKs present in `~/.balla-release/fdroid/repo`, so keep that directory.
+The site serves `/altstore.json` and the whole repository. The F-Droid client
+refuses redirects, so `scripts/build-site.mjs` downloads each indexed APK from
+its GitHub release, checks its size and SHA-256, and serves it beside the index.
+Binaries never enter git history.
+
+If a listed release is not published when the site builds, both listings are
+left out and the build says so. The first deploy after merging therefore happens
+before the release exists: publish the release, then redeploy.
+
+An index lists only the APKs present in `~/.balla-release/fdroid/repo`, so keep
+that directory.

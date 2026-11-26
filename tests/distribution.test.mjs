@@ -1,9 +1,15 @@
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import {
+  existsSync, mkdirSync, mkdtempSync, readdirSync, readFileSync, writeFileSync,
+} from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import test from 'node:test';
 import {
-  altstoreSource, apkName, buildNumber, privacyPermissions, releaseNotes,
+  altstoreSource, buildNumber, privacyPermissions, releaseNotes,
 } from '../scripts/distribution.mjs';
+import { addReleaseFiles } from '../scripts/fetch-releases.mjs';
 
 const read = (file) => readFileSync(new URL(`../${file}`, import.meta.url), 'utf8');
 const app = JSON.parse(read('app.json')).expo;
@@ -66,15 +72,56 @@ test('release notes are the one changelog section, in plain text', () => {
   assert.throws(() => releaseNotes(log, '2.0.0'));
 });
 
-test('the site sends repository APK requests to the matching GitHub release', () => {
+const BYTES = Buffer.from('apk');
+const DIGEST = createHash('sha256').update(BYTES).digest('hex');
+const indexFor = (sha256, size = BYTES.length) => ({
+  packages: { 'click.croft.balla': { versions: { a: { file: { name: '/balla-0.98.0.apk', sha256, size } } } } },
+});
+function siteWith(index) {
+  const dir = mkdtempSync(join(tmpdir(), 'balla-site-'));
+  mkdirSync(join(dir, 'fdroid/repo'), { recursive: true });
+  writeFileSync(join(dir, 'fdroid/repo/index-v2.json'), JSON.stringify(index));
+  writeFileSync(join(dir, 'altstore.json'), '{}');
+  return dir;
+}
+const answer = (status, body = BYTES) => async () => new Response(status === 200 ? body : null, { status });
+
+test('the site serves the released APK itself, checked against the index', async () => {
+  const dir = siteWith(indexFor(DIGEST));
+  const asked = [];
+  assert.equal(await addReleaseFiles(dir, async (url) => (asked.push(url), answer(200)())), true);
+  assert.deepEqual(asked, [
+    'https://github.com/ewanc26/balla/releases/download/v0.98.0/balla-0.98.0.apk',
+  ]);
+  assert.equal(readFileSync(join(dir, 'fdroid/repo/balla-0.98.0.apk'), 'utf8'), 'apk');
+});
+
+test('a download that differs from the index stops the build', async () => {
+  await assert.rejects(addReleaseFiles(siteWith(indexFor('0'.repeat(64))), answer(200)));
+  await assert.rejects(addReleaseFiles(siteWith(indexFor(DIGEST, 99)), answer(200)));
+  await assert.rejects(addReleaseFiles(siteWith(indexFor(DIGEST)), answer(500)));
+});
+
+test('an unpublished release leaves both listings out rather than dangling', async () => {
+  const dir = siteWith(indexFor(DIGEST));
+  assert.equal(await addReleaseFiles(dir, answer(404)), false);
+  assert.ok(!existsSync(join(dir, 'fdroid')));
+  assert.ok(!existsSync(join(dir, 'altstore.json')));
+});
+
+test('the host does not redirect repository files, which F-Droid refuses', () => {
   const vercel = JSON.parse(read('vercel.json'));
-  const rule = vercel.redirects.find((item) => item.source.startsWith('/fdroid/repo/'));
-  assert.equal(rule.source, '/fdroid/repo/balla-:version(\\d+\\.\\d+\\.\\d+).apk');
-  assert.equal(
-    rule.destination.replaceAll(':version', '0.98.0'),
-    `https://github.com/ewanc26/balla/releases/download/v0.98.0/${apkName('0.98.0')}`,
-  );
-  assert.equal(rule.permanent, false);
+  assert.ok(!vercel.redirects.some((item) => item.source.startsWith('/fdroid/')));
+});
+
+test('every image the repository index names is committed', () => {
+  const root = new URL('../site/fdroid/repo', import.meta.url);
+  if (!existsSync(root)) return;
+  const index = JSON.parse(read('site/fdroid/repo/index-v2.json'));
+  const named = [index.repo.icon, ...Object.values(index.packages).map((pkg) => pkg.metadata.icon)]
+    .flatMap((icon) => Object.values(icon ?? {}));
+  assert.ok(named.length >= 2);
+  for (const { name } of named) assert.ok(existsSync(new URL(`../site/fdroid/repo${name}`, import.meta.url)), name);
 });
 
 test('packaging keeps keys and binaries out of the repository', () => {
