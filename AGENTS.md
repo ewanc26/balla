@@ -257,6 +257,8 @@ chip is rendered while the pin lexicon is a draft (#156, partial).
 - Use project scripts for validation; keep changes scoped.
 - Version with SemVer, `major.minor.patch`: fixes and other small changes take a
   patch release, new features a minor one.
+- Phone releases are built by `scripts/package-release.mjs`; follow
+  `docs/distribution.md`. Never commit an APK, IPA or signing key.
 - Bump the app version in `package.json`, `app.json` and `ios/Balla/Info.plist`
   for each release, record it in `CHANGELOG.md`, and tag `main` as `vX.Y.Z`
   with a matching GitHub release after the merge.

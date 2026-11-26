@@ -1,0 +1,13 @@
+# Balla's own F-Droid repository. Copied into the private working directory by
+# scripts/package-release.mjs; passwords come from the environment only.
+repo_url: https://balla.croft.click/fdroid/repo
+repo_name: Balla
+repo_description: >-
+  Official builds of Balla, a chronological Bluesky client. This is Balla's own
+  repository, not the F-Droid catalogue.
+repo_keyalias: balla-repo
+keystore: ../fdroid-repo.p12
+keystorepass: {env: BALLA_REPO_PASSWORD}
+keypass: {env: BALLA_REPO_PASSWORD}
+keydname: CN=Balla F-Droid repository
+archive_older: 0

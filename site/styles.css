@@ -546,3 +546,8 @@ h2 { font-size: clamp(2rem, 3.8vw, 3.3rem); line-height: 1.06; letter-spacing: -
   .wall-preview { transform: none; }
   *, *::before, *::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; }
 }
+
+/* Long addresses and certificate fingerprints wrap on a phone. */
+.legal code {
+  overflow-wrap: anywhere;
+}

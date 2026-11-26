@@ -2,7 +2,7 @@
   "expo": {
     "name": "Balla",
     "slug": "balla",
-    "version": "0.97.8",
+    "version": "0.98.0",
     "scheme": [
       "balla",
       "click.croft.balla"
@@ -17,10 +17,18 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "click.croft.balla"
+      "bundleIdentifier": "click.croft.balla",
+      "buildNumber": "98000"
     },
     "android": {
       "package": "click.croft.balla",
+      "versionCode": 98000,
+      "blockedPermissions": [
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.SYSTEM_ALERT_WINDOW",
+        "android.permission.WRITE_EXTERNAL_STORAGE"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0866FF"
@@ -42,7 +50,8 @@
         "expo-image-picker",
         {
           "photosPermission": "Balla needs access to your photos so you can add photos to posts or choose a profile picture or banner.",
-          "cameraPermission": "Balla needs access to your camera so you can take a photo for a post."
+          "cameraPermission": "Balla needs access to your camera so you can take a photo for a post.",
+          "microphonePermission": false
         }
       ],
       "expo-video",
