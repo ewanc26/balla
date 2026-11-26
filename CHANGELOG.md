@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.1
+
+- **Switches look like switches.** The 44pt target had been applied to the track itself, so the switches drew as circles or near-circles. One shared switch now draws a 52 by 30 track inside a separate 44pt target. Settings, notification and chat notification screens use it (replacing the platform switch on the chat screen), as does “Require my approval” on a group invite link, which was a chip with a tick.
+- **Correction:** 0.97.0 made the per-category notification switches worse. It raised the notification track from 52 by 32 to 52 by 44, which drew a near-circle, and its 64 by 44 shared settings track was still too round, so its line saying that switch now looks like one did not hold.
+- The off state is a solid grey track with the knob at the left, readable in light and dark.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. Every switch was measured on a mock-data web export in Chrome in light and dark, using a temporary preview stub for the notification preferences screen. iOS and Android were not run.
+
 ## 0.97.0
 
 - **Bottom tab labels are readable again.** In the phone-width web client every label under the bottom bar was clipped to part of its height. The height model left out React Navigation's own item padding and 28pt icon slot, so the bar now pads 4pt below instead of 10pt and grows from that measured budget at large font scales. The default height is still 64pt.
