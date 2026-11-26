@@ -106,12 +106,12 @@ import { installWebAccessibility } from './src/lib/accessibility';
 import { webLinking } from './src/lib/webLinking';
 import { PREVIEW_WARNING, usePalette, useResolvedScheme } from './src/theme';
 import {
-  COMPACT_TAB_LABEL_MAX_WIDTH,
   HEADER_SEARCH_MIN_WIDTH,
   READING_COLUMN_MAX_WIDTH,
   navigationLayout,
   tabBarHeight,
   tabLabelScale,
+  usesCompactTabLabels,
   TAB_BAR_PADDING_BOTTOM,
   TAB_BAR_PADDING_TOP,
 } from './src/lib/layout';
@@ -141,7 +141,10 @@ function Tabs() {
   const showBottomTabs = navigationLayout(width).bottomTabs;
   // Five equal slots leave too little room for the full word on a phone, and
   // React Navigation truncates a single-line tab label rather than wrapping it.
-  const compactLabels = width < COMPACT_TAB_LABEL_MAX_WIDTH;
+  const compactLabels = usesCompactTabLabels(
+    width,
+    tabLabelScale(Platform.OS, fontScale),
+  );
   const initialTab = (MOCK_MODE ? mockInitialTab() : 'Home') as TabName;
 
   return (
@@ -180,7 +183,18 @@ function Tabs() {
           };
           const pair = map[route.name] || ['ellipse', 'ellipse-outline'];
           const name = focused ? pair[0] : pair[1];
-          return <Ionicons name={name as any} size={24} color={color} />;
+          // The label names the tab; without this a screen reader also reads
+          // the icon font's private-use character.
+          return (
+            <Ionicons
+              name={name as any}
+              size={24}
+              color={color}
+              aria-hidden
+              accessibilityElementsHidden
+              importantForAccessibility="no"
+            />
+          );
         },
       })}
     >

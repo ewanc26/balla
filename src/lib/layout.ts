@@ -59,6 +59,14 @@ export function tabLabelScale(platform: string, fontScale: number): number {
   return platform === 'ios' ? 1 : fontScale;
 }
 
+/**
+ * Whether the Notifications tab says “Alerts”. Larger labels leave each tab as
+ * little room as a narrower screen does.
+ */
+export function usesCompactTabLabels(width: number, labelScale: number): boolean {
+  return width / Math.max(1, labelScale) < COMPACT_TAB_LABEL_MAX_WIDTH;
+}
+
 export type NavigationLayout = {
   leftRail: boolean;
   rightRail: boolean;
