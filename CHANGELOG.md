@@ -3,6 +3,10 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## Unreleased
+
+- **The first-link question works from the keyboard.** “How should links open?” now takes focus when it appears, keeps Tab inside, closes on Escape and returns focus to the link, and announces itself as a dialog. Its Cancel button is a 44pt target. A test checks every dialog for the same handling.
+
 ## 0.97.8
 
 - **Four missing icons are drawn.** Terms and Copyright in Settings, Account pre-flight in Advanced and the composer's video Captions button named icons the icon font does not have, so each showed a “?” placeholder. A test now checks every icon name against the font.

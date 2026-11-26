@@ -1,4 +1,5 @@
 import test from 'node:test';
+import { readdirSync, readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 import {
   FOCUSABLE_SELECTOR,
@@ -76,4 +77,19 @@ test('every tap target shares the one 44pt minimum', () => {
 
 test('labels are allowed to shrink and wrap rather than clip', () => {
   assert.equal(scalableTextStyle.flexShrink, 1);
+});
+
+test('every dialog manages focus and names itself', () => {
+  const root = new URL('../src/', import.meta.url);
+  const dialogs = readdirSync(root, { recursive: true })
+    .filter((file) => file.endsWith('.tsx'))
+    .map((file) => [file, readFileSync(new URL(file, root), 'utf8')])
+    .filter(([, source]) => /<Modal\b/.test(source));
+  assert.ok(dialogs.length >= 20, `found ${dialogs.length}`);
+  for (const [file, source] of dialogs) {
+    const count = source.match(/<Modal\b/g).length;
+    assert.equal(source.match(/useDialogFocus\(/g)?.length, count, `${file} focus`);
+    assert.equal(source.match(/dialogAccessibilityProps\(/g)?.length, count, `${file} name`);
+    assert.equal(source.match(/onRequestClose/g)?.length, count, `${file} dismissal`);
+  }
 });

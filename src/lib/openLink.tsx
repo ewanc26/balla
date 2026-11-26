@@ -10,6 +10,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { Linking, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
@@ -17,8 +18,12 @@ import * as WebBrowser from 'expo-web-browser';
 import { usePreferences } from './preferences';
 import { needsBrowserConsent, shouldUseInAppBrowser } from './openLinkModel';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
-import { useReducedMotion } from './accessibility';
-import { dialogAnimation } from './accessibilityModel';
+import { useDialogFocus, useReducedMotion } from './accessibility';
+import {
+  dialogAccessibilityProps,
+  dialogAnimation,
+  touchTargetStyle,
+} from './accessibilityModel';
 
 type OpenLinkFn = (url: string) => Promise<void>;
 
@@ -74,6 +79,16 @@ export function OpenLinkProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo(() => openLink, [openLink]);
 
+  const dialogRef = useRef<any>(null);
+  const firstChoiceRef = useRef<any>(null);
+  const dismiss = () => setPendingUrl(null);
+  useDialogFocus({
+    visible: pendingUrl !== null,
+    onClose: dismiss,
+    containerRef: dialogRef,
+    initialFocusRef: firstChoiceRef,
+  });
+
   useEffect(() => {
     registeredOpener = openLink;
     return () => {
@@ -88,16 +103,22 @@ export function OpenLinkProvider({ children }: { children: React.ReactNode }) {
         visible={pendingUrl !== null}
         transparent
         animationType={dialogAnimation(reducedMotion)}
-        onRequestClose={() => setPendingUrl(null)}
+        accessibilityViewIsModal
+        onRequestClose={dismiss}
       >
         <View style={[styles.backdrop, { backgroundColor: p.overlay }]}>
+          {/* A pointer shortcut only: Cancel is the labelled way out. */}
           <Pressable
             style={StyleSheet.absoluteFill}
-            accessibilityRole="button"
-            accessibilityLabel="Dismiss browser choice"
-            onPress={() => setPendingUrl(null)}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+            focusable={false}
+            tabIndex={-1}
+            onPress={dismiss}
           />
           <View
+            ref={dialogRef}
+            {...dialogAccessibilityProps('How should links open?')}
             accessibilityViewIsModal
             style={[
               styles.card,
@@ -111,6 +132,7 @@ export function OpenLinkProvider({ children }: { children: React.ReactNode }) {
               Choose once. You can change this any time in Settings → Content and media.
             </Text>
             <Pressable
+              ref={firstChoiceRef}
               accessibilityRole="button"
               onPress={() => decide(true)}
               style={({ pressed }) => [
@@ -137,8 +159,8 @@ export function OpenLinkProvider({ children }: { children: React.ReactNode }) {
             <Pressable
               accessibilityRole="button"
               accessibilityLabel="Cancel browser choice"
-              onPress={() => setPendingUrl(null)}
-              style={{ alignSelf: 'center', padding: 12 }}
+              onPress={dismiss}
+              style={{ ...touchTargetStyle, alignSelf: 'center', justifyContent: 'center', paddingHorizontal: 12 }}
             >
               <Text style={{ color: p.secondary, fontSize: 14 }}>Cancel</Text>
             </Pressable>
