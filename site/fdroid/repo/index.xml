@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<fdroid>
+	<repo icon="icon.png" name="Balla" pubkey="308204ec308202d4a003020102020900947bccb731c83c13300d06092a864886f70d01010b050030233121301f0603550403131842616c6c6120462d44726f6964207265706f7369746f72793020170d3236313132363139313834385a180f32303536313131383139313834385a30233121301f0603550403131842616c6c6120462d44726f6964207265706f7369746f727930820222300d06092a864886f70d01010105000382020f003082020a0282020100c609c8ab033e81ad6a07778be9abf2ae62f69fa9e608cc9ee2252ca4caf8efb0bba52d4602d7f297fb70511374f0710e8923a933ba5a6ba4336271274950c870b6904409a8b772ca6be5b1b1ca103c9541eb2ebed30c239f11fd0e150a72e7c80cd52facb1a1c3b87534a3e9c8ac7ae0b768f84109da0cb38ee18de209675591d92496d44c2f8d86375c24805a538e403e8eea872a557657827aa787bb4cc6d360f25656b2efcddbec6d706a59e90a07947b178e665828b8f741f8659d05142c74ff6954c3e34a5c42c65045f06a352f2a77c216d4392fc9b0026e187745dd8838f4a6062cf5a984b2c62e131051da040df4f9db200d96351308ca75c47706ea981894519c6c9b2c71cef84d086aa553e14a8962d1f517fd29b50e8c0c24926106938bc9794829bd8b786e57a249b0b8a781325d450cb5feceefde33a5766a3ecbff0a27fa55338c71a4441009d707fdc196f44cb625b0ae3666225644e031577fc1dc621af7b55c763d04f27ea46fc23e6ddf1e663b9e9c1230588c2b3c37dc6f480aef218a724599dc890f0bed26a34224445d87f1811b287474382d4095c3e2f55c681863b55f205efe81d27ad27fb79def531580c52afd401f8b502028dfc2c47357ca97f16710982aee6f8caefa1c351cd93c4c223c65dd709644f99ccdf61bcb796a931ebb662d84fe1b7bb94a5a86601c98f6f95d5627f88570ac2f770203010001a321301f301d0603551d0e0416041475612d0ff5204de409230a9ea8b6ba12da3e6a7a300d06092a864886f70d01010b0500038202010032789b56ee454edfd892022e52479d4eb4268827e078ceaaffc4aa98a027ab499dea1b14619934a64f69593df5fd582d095dd19c0eaff5252d5f6e89378618174db2f8cb432f1f88f19eb9e9ab96d7c0bfaf6f24a1427ef5eafb8990c874478396bbf46fe8af2981df6b09185518a6982f21e31a70ceb3811f46d433abed1181e07d20e58878839fe12d064222b6ac977518bfa8fb640ce63493850b01b3a16841042228647573f9cbdf974f61f3bde51b652794463851349b819414afd1c5d3dfe952f3df5b303d52c2fed4eb76082083e9d1ddd911e648df5c911eba4af1c144f952ac81da63a9c797b3295d3867b5828f45a4244e02725d7008094bea5345b2e301ec89189d648aaf3962e839811aaca13251259050b6267dca55ded5377564b3719fb7fd1167ee13c0be5bb02ede8d10358268c3af0fcddc37777f99891bd1fec712b855f655d5c1080271926ae9d3f8e0a1b9b3965745a144c3c51cf54e3120b5568a762cf36806a1a8079066f051b579539c0299fd11d085d2e970e7271bebef14c2a8c46100054342d459628bd9d6ef8e003aa5e61a28dff576984b1960c4f7125b68bd09f1b6e32325c3db143f5a1f0639908b911735e12a4b9cd3030e9df5b10b393362546b5d867533d6602425cad524e7de0c6673898ab7cafade98944c2d3c9c96f49e738c8a086798c49f301ad0ddaaad95098ada46dc6298cd" timestamp="1795721514" url="https://balla.croft.click/fdroid/repo" version="20002">
+		<description>Official builds of Balla, a chronological Bluesky client. This is Balla's own repository, not the F-Droid catalogue.</description>
+	</repo>
+	<application id="click.croft.balla">
+		<id>click.croft.balla</id>
+		<added>2026-11-26</added>
+		<lastupdated>2026-11-26</lastupdated>
+		<name>Balla</name>
+		<summary>A chronological, Facebook-inspired Bluesky client</summary>
+		<desc>Balla shows the people you follow on Bluesky, newest first, as cards. No
+ranking, suggested posts or ads.
+
+Balla is independent software. It is not an official Bluesky client and is not
+affiliated with Meta or Bluesky Social PBC.</desc>
+		<license>AGPL-3.0-only</license>
+		<categories>Internet</categories>
+		<category>Internet</category>
+		<web>https://balla.croft.click</web>
+		<source>https://github.com/ewanc26/balla</source>
+		<tracker>https://github.com/ewanc26/balla/issues</tracker>
+		<changelog>https://github.com/ewanc26/balla/blob/main/CHANGELOG.md</changelog>
+		<author>Ewan Croft</author>
+		<marketversion></marketversion>
+		<marketvercode>98000</marketvercode>
+		<package>
+			<version>0.98.0</version>
+			<versioncode>98000</versioncode>
+			<apkname>balla-0.98.0.apk</apkname>
+			<hash type="sha256">2c50074ea17c1124872b4bb544dd5fdc2e5b5f4e187e89d268e5a0fd940ef634</hash>
+			<size>49132973</size>
+			<sdkver>24</sdkver>
+			<targetSdkVersion>36</targetSdkVersion>
+			<added>2026-11-26</added>
+			<sig>740126de4dcc65a9ea21fb977d725a18</sig>
+			<permissions>ACCESS_NETWORK_STATE,CAMERA,INTERNET,VIBRATE,WAKE_LOCK,click.croft.balla.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION</permissions>
+			<nativecode>arm64-v8a,armeabi-v7a</nativecode>
+		</package>
+	</application>
+</fdroid>

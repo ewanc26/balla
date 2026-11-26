@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   altstoreSource, apkName, buildNumber, privacyPermissions, releaseNotes,
@@ -81,7 +81,7 @@ test('packaging keeps keys and binaries out of the repository', () => {
   const script = read('scripts/package-release.mjs');
   assert.match(script, /startsWith\('EXPO_PUBLIC_'\)/);
   assert.match(script, /find-generic-password/);
-  assert.match(script, /filter: \(path\) => !path\.endsWith\('\.apk'\)/);
+  assert.match(script, /!path\.endsWith\('\.apk'\) && path !== join\(fdroid, 'repo', 'status'\)/);
   assert.match(read('distribution/fdroid/config.yml'), /keystorepass: \{env: BALLA_REPO_PASSWORD\}/);
 });
 
@@ -103,4 +103,14 @@ test('a committed AltStore listing matches the app it names', { skip: !existsSyn
     'NSCameraUsageDescription',
     'NSPhotoLibraryUsageDescription',
   ]);
+});
+
+test('published repository files carry no local paths or run logs', () => {
+  const root = new URL('../site/fdroid/repo/', import.meta.url);
+  if (!existsSync(root)) return;
+  const files = readdirSync(root, { recursive: true });
+  assert.ok(!files.some((file) => file.startsWith('status') || file.endsWith('.apk')), files.join());
+  for (const file of files.filter((name) => /\.(json|xml|html)$/.test(name))) {
+    assert.doesNotMatch(readFileSync(new URL(file, root), 'utf8'), /\/Users\/|\/home\//, file);
+  }
 });

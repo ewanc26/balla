@@ -1,0 +1,107 @@
+{
+  "repo": {
+    "name": {
+      "en-US": "Balla"
+    },
+    "description": {
+      "en-US": "Official builds of Balla, a chronological Bluesky client. This is Balla's own repository, not the F-Droid catalogue."
+    },
+    "icon": {
+      "en-US": {
+        "name": "/icons/icon.png",
+        "sha256": "251eac50de5c09e5d85293bcb3cf24c0a0d9c40541fe95dc5fa467539f42b063",
+        "size": 6343
+      }
+    },
+    "address": "https://balla.croft.click/fdroid/repo",
+    "timestamp": 1795721514000,
+    "categories": {
+      "Internet": {
+        "name": {
+          "en-US": "Internet"
+        }
+      }
+    }
+  },
+  "packages": {
+    "click.croft.balla": {
+      "metadata": {
+        "added": 1795721209000,
+        "categories": [
+          "Internet"
+        ],
+        "changelog": "https://github.com/ewanc26/balla/blob/main/CHANGELOG.md",
+        "issueTracker": "https://github.com/ewanc26/balla/issues",
+        "lastUpdated": 1795721209000,
+        "license": "AGPL-3.0-only",
+        "sourceCode": "https://github.com/ewanc26/balla",
+        "webSite": "https://balla.croft.click",
+        "authorName": "Ewan Croft",
+        "name": {
+          "en-US": "Balla"
+        },
+        "summary": {
+          "en-US": "A chronological, Facebook-inspired Bluesky client"
+        },
+        "description": {
+          "en-US": "Balla shows the people you follow on Bluesky, newest first, as cards. No\nranking, suggested posts or ads.\n\nBalla is independent software. It is not an official Bluesky client and is not\naffiliated with Meta or Bluesky Social PBC."
+        },
+        "icon": {
+          "en-US": {
+            "name": "/click.croft.balla/en-US/icon_JR6sUN5cCeXYUpO8s88kwKDZxAVB_pXcX6RnU59CsGM=.png",
+            "sha256": "251eac50de5c09e5d85293bcb3cf24c0a0d9c40541fe95dc5fa467539f42b063",
+            "size": 6343
+          }
+        },
+        "preferredSigner": "c5ce1288b0b408c4767ae73bee5ff324db0770f339253cccbb622bc03ba705e6"
+      },
+      "versions": {
+        "2c50074ea17c1124872b4bb544dd5fdc2e5b5f4e187e89d268e5a0fd940ef634": {
+          "added": 1795721209000,
+          "file": {
+            "name": "/balla-0.98.0.apk",
+            "sha256": "2c50074ea17c1124872b4bb544dd5fdc2e5b5f4e187e89d268e5a0fd940ef634",
+            "size": 49132973
+          },
+          "manifest": {
+            "nativecode": [
+              "arm64-v8a",
+              "armeabi-v7a"
+            ],
+            "versionName": "0.98.0",
+            "versionCode": 98000,
+            "usesSdk": {
+              "minSdkVersion": 24,
+              "targetSdkVersion": 36
+            },
+            "signer": {
+              "sha256": [
+                "c5ce1288b0b408c4767ae73bee5ff324db0770f339253cccbb622bc03ba705e6"
+              ]
+            },
+            "usesPermission": [
+              {
+                "name": "android.permission.INTERNET"
+              },
+              {
+                "name": "android.permission.VIBRATE"
+              },
+              {
+                "name": "android.permission.CAMERA"
+              },
+              {
+                "name": "android.permission.ACCESS_NETWORK_STATE"
+              },
+              {
+                "name": "android.permission.WAKE_LOCK"
+              },
+              {
+                "name": "click.croft.balla.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+              }
+            ]
+          }
+        }
+      }
+    }
+  }
+}

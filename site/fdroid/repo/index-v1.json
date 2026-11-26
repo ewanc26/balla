@@ -1,0 +1,87 @@
+{
+  "repo": {
+    "timestamp": 1795721514000,
+    "version": 20002,
+    "name": "Balla",
+    "icon": "icon.png",
+    "address": "https://balla.croft.click/fdroid/repo",
+    "description": "Official builds of Balla, a chronological Bluesky client. This is Balla's own repository, not the F-Droid catalogue."
+  },
+  "requests": {
+    "install": [],
+    "uninstall": []
+  },
+  "apps": [
+    {
+      "authorName": "Ewan Croft",
+      "categories": [
+        "Internet"
+      ],
+      "changelog": "https://github.com/ewanc26/balla/blob/main/CHANGELOG.md",
+      "suggestedVersionCode": "98000",
+      "description": "Balla shows the people you follow on Bluesky, newest first, as cards. No\nranking, suggested posts or ads.\n\nBalla is independent software. It is not an official Bluesky client and is not\naffiliated with Meta or Bluesky Social PBC.",
+      "issueTracker": "https://github.com/ewanc26/balla/issues",
+      "license": "AGPL-3.0-only",
+      "name": "Balla",
+      "sourceCode": "https://github.com/ewanc26/balla",
+      "summary": "A chronological, Facebook-inspired Bluesky client",
+      "webSite": "https://balla.croft.click",
+      "added": 1795721209000,
+      "packageName": "click.croft.balla",
+      "lastUpdated": 1795721209000,
+      "localized": {
+        "en-US": {
+          "icon": "icon_JR6sUN5cCeXYUpO8s88kwKDZxAVB_pXcX6RnU59CsGM=.png"
+        }
+      }
+    }
+  ],
+  "packages": {
+    "click.croft.balla": [
+      {
+        "added": 1795721209000,
+        "apkName": "balla-0.98.0.apk",
+        "hash": "2c50074ea17c1124872b4bb544dd5fdc2e5b5f4e187e89d268e5a0fd940ef634",
+        "hashType": "sha256",
+        "minSdkVersion": 24,
+        "nativecode": [
+          "arm64-v8a",
+          "armeabi-v7a"
+        ],
+        "packageName": "click.croft.balla",
+        "sig": "740126de4dcc65a9ea21fb977d725a18",
+        "signer": "c5ce1288b0b408c4767ae73bee5ff324db0770f339253cccbb622bc03ba705e6",
+        "size": 49132973,
+        "targetSdkVersion": 36,
+        "uses-permission": [
+          [
+            "android.permission.INTERNET",
+            null
+          ],
+          [
+            "android.permission.VIBRATE",
+            null
+          ],
+          [
+            "android.permission.CAMERA",
+            null
+          ],
+          [
+            "android.permission.ACCESS_NETWORK_STATE",
+            null
+          ],
+          [
+            "android.permission.WAKE_LOCK",
+            null
+          ],
+          [
+            "click.croft.balla.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION",
+            null
+          ]
+        ],
+        "versionCode": 98000,
+        "versionName": "0.98.0"
+      }
+    ]
+  }
+}

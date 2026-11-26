@@ -1,0 +1,37 @@
+{
+  "name": "Balla",
+  "subtitle": "Your people, in order.",
+  "website": "https://balla.croft.click",
+  "iconURL": "https://balla.croft.click/icon.png",
+  "tintColor": "#0866FF",
+  "apps": [
+    {
+      "name": "Balla",
+      "bundleIdentifier": "click.croft.balla",
+      "developerName": "Ewan Croft",
+      "subtitle": "A chronological Bluesky client",
+      "localizedDescription": "The people you follow on Bluesky, newest first, as cards. No ranking, suggested posts or ads. Balla is independent software, not an official Bluesky client, and is not affiliated with Meta or Bluesky Social PBC.",
+      "iconURL": "https://balla.croft.click/icon.png",
+      "tintColor": "#0866FF",
+      "category": "social",
+      "appPermissions": {
+        "entitlements": [],
+        "privacy": {
+          "NSCameraUsageDescription": "Balla needs access to your camera so you can take a photo for a post.",
+          "NSPhotoLibraryUsageDescription": "Balla needs access to your photos so you can add photos to posts or choose a profile picture or banner."
+        }
+      },
+      "versions": [
+        {
+          "version": "0.98.0",
+          "buildVersion": "98000",
+          "date": "2026-11-26",
+          "localizedDescription": "- Balla can be installed on phones. iOS builds are offered through an AltStore Classic source, and Android builds through Balla's own F-Droid repository, which is not the F-Droid catalogue. A new Install page gives the addresses and signing fingerprints. The iOS package is unsigned and AltStore signs it with the installer's Apple ID.\n- Fewer permissions. The Android app no longer asks for the microphone, shared storage or drawing over other apps, and the iOS package no longer declares microphone or local-network use.\n- Build numbers now rise with every release on both platforms.\n- The first-link question works from the keyboard. “How should links open?” now takes focus when it appears, keeps Tab inside, closes on Escape and returns focus to the link, and announces itself as a dialog. Its Cancel button is a 44pt target. A test checks every dialog for the same handling.\n- No new scope, runtime dependency, grant or endpoint; scope count stays 112 and oauth-client-metadata.json is byte-identical.",
+          "downloadURL": "https://github.com/ewanc26/balla/releases/download/v0.98.0/Balla-0.98.0.ipa",
+          "size": 14455365,
+          "minOSVersion": "16.4"
+        }
+      ]
+    }
+  ]
+}
