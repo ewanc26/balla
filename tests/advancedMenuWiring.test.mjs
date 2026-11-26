@@ -72,8 +72,8 @@ test('labeler reachability is a real public check, separate from AppView listing
 test('release notes and version describe the live video quota check', () => {
   const pkg = JSON.parse(read('../package.json'));
   const changelog = read('../CHANGELOG.md');
-  assert.equal(pkg.version, '0.97.8');
-  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.97.8');
+  assert.equal(pkg.version, '0.98.0');
+  assert.equal(JSON.parse(read('../app.json')).expo.version, '0.98.0');
   assert.match(changelog, /## 0\.36\.0/);
   assert.match(changelog, /getUploadLimits/);
   assert.match(changelog, /grant-bound/);

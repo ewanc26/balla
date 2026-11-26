@@ -3,9 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
-## Unreleased
+## 0.98.0
 
+- **Balla can be installed on phones.** iOS builds are offered through an AltStore Classic source, and Android builds through Balla's own F-Droid repository, which is not the F-Droid catalogue. A new Install page gives the addresses and signing fingerprints. The iOS package is unsigned and AltStore signs it with the installer's Apple ID.
+- **Fewer permissions.** The Android app no longer asks for the microphone, shared storage or drawing over other apps, and the iOS package no longer declares microphone or local-network use.
+- Build numbers now rise with every release on both platforms.
 - **The first-link question works from the keyboard.** “How should links open?” now takes focus when it appears, keeps Tab inside, closes on Escape and returns focus to the link, and announces itself as a dialog. Its Cancel button is a 44pt target. A test checks every dialog for the same handling.
+- No new scope, runtime dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
 
 ## 0.97.8
 

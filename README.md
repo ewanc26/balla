@@ -30,6 +30,12 @@ and refuses the rest. It is an ordinary AT Protocol client talking to Bluesky
 like any other; what it changes is what you see, and how honestly it is
 labelled.
 
+## Install on a phone
+
+See <https://balla.croft.click/install> for the AltStore Classic source and
+Balla's own F-Droid repository, and `docs/distribution.md` for how releases are
+built.
+
 ## Why the name?
 
 Balla is Gàidhlig for **wall**. Facebook's defining surface was the Wall — the

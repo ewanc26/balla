@@ -8,6 +8,11 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/fdroid/repo/balla-:version(\\d+\\.\\d+\\.\\d+).apk",
+      "destination": "https://github.com/ewanc26/balla/releases/download/v:version/balla-:version.apk",
+      "permanent": false
+    },
+    {
       "source": "/oauth-callback",
       "destination": "/app",
       "permanent": true
@@ -20,6 +25,13 @@
     }
   ],
   "headers": [
+    {
+      "source": "/altstore.json",
+      "headers": [
+        { "key": "Content-Type", "value": "application/json; charset=utf-8" },
+        { "key": "Cache-Control", "value": "public, max-age=300, must-revalidate" }
+      ]
+    },
     {
       "source": "/oauth-client-metadata.json",
       "headers": [

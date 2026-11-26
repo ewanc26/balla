@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Install Balla on iOS and Android</title>
+    <meta name="description" content="How to install Balla on iOS with AltStore Classic and on Android from Balla’s own F-Droid repository." />
+    <meta name="theme-color" content="#0866FF" />
+    <meta property="og:title" content="Install Balla" />
+    <meta property="og:description" content="How to install Balla on iOS with AltStore Classic and on Android from Balla’s own F-Droid repository." />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://balla.croft.click/install" />
+    <meta property="og:site_name" content="Balla" />
+    <meta property="og:image" content="https://balla.croft.click/icon.png" />
+    <link rel="icon" href="/mark.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <a class="brand" href="/" aria-label="Balla home">
+        <img src="/mark.svg" width="30" height="30" alt="" />
+        <span>balla</span>
+      </a>
+      <input class="nav-toggle-input" type="checkbox" id="nav-toggle" aria-label="Toggle main navigation" />
+      <label class="nav-toggle" for="nav-toggle">Menu</label>
+      <nav aria-label="Main">
+        <a href="/">Home</a>
+        <a href="/features">Features</a>
+        <a href="/privacy">Privacy</a>
+        <a href="/terms">Terms</a>
+        <a href="https://github.com/ewanc26/balla">GitHub <span aria-hidden="true">↗</span></a>
+      </nav>
+    </header>
+    <main id="main" class="legal wrap">
+      <p class="section-kicker">Install</p>
+      <h1>Balla on your phone.<br /><em>Straight from the project.</em></h1>
+      <p class="legal-meta">Balla is in development. Neither route goes through the App Store or Google Play.</p>
+
+      <h2>iOS, with AltStore Classic</h2>
+      <ol>
+        <li>Set up <a href="https://altstore.io">AltStore Classic</a>, which needs its AltServer app on a computer.</li>
+        <li>In AltStore, open Sources, choose to add one and enter <code>https://balla.croft.click/altstore.json</code></li>
+        <li>Install Balla from that source. AltStore signs it with your own Apple ID.</li>
+      </ol>
+      <p>With a free Apple ID the app stops opening after seven days unless AltStore refreshes it, and Apple limits how many sideloaded apps you can keep.</p>
+
+      <h2>Android, from Balla’s F-Droid repository</h2>
+      <p>This is Balla’s own repository, not the F-Droid catalogue. The file is built and signed by the project.</p>
+      <ol>
+        <li>Install <a href="https://f-droid.org">F-Droid</a>.</li>
+        <li>In F-Droid’s repository settings, add <code>https://balla.croft.click/fdroid/repo?fingerprint=D08709E100F8DD301ABD2A1B653BF48ADE76C918F457BDA463EDE63BBC76E612</code></li>
+        <li>Refresh, search for Balla and install it.</li>
+      </ol>
+
+      <h2>Checking what you installed</h2>
+      <p>Repository signing certificate, SHA-256:</p>
+      <p><code>D0:87:09:E1:00:F8:DD:30:1A:BD:2A:1B:65:3B:F4:8A:DE:76:C9:18:F4:57:BD:A4:63:ED:E6:3B:BC:76:E6:12</code></p>
+      <p>Android app signing certificate, SHA-256:</p>
+      <p><code>C5:CE:12:88:B0:B4:08:C4:76:7A:E7:3B:EE:5F:F3:24:DB:07:70:F3:39:25:3C:CC:BB:62:2B:C0:3B:A7:05:E6</code></p>
+      <p>Each <a href="https://github.com/ewanc26/balla/releases">GitHub release</a> with app files includes <code>SHA256SUMS</code> for them.</p>
+    </main>
+    <footer class="site-footer wrap">
+      <div class="footer-brand"><img src="/mark.svg" width="24" height="24" alt="" /> balla</div>
+      <p>Independent AT Protocol software. Not affiliated with Bluesky or Meta. Facebook-era styling is a design reference, not a claim.</p>
+      <p class="footer-byline">Balla by <a href="https://ewancroft.uk">Ewan Croft</a> · <a href="https://bsky.app/profile/ewancroft.uk">@ewancroft.uk</a></p>
+      <p class="footer-support">Balla is reader-supported. <a href="https://ewancroft.uk/support">Support Balla</a></p>
+      <p class="footer-licence">AGPL-3.0 · Copyright © 2026 Ewan Croft</p>
+      <div class="footer-links"><a href="/">Home</a><a href="/features">Features</a><a href="/install">Install</a><a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/guidelines">Guidelines</a><a href="/copyright">Copyright</a><a href="https://github.com/ewanc26/balla/issues">Report an issue ↗</a><a href="https://github.com/ewanc26/balla/security/advisories/new">Private security report ↗</a></div>
+    </footer>
+  </body>
+</html>

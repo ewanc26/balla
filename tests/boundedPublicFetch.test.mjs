@@ -169,11 +169,11 @@ test('JSON objects, translation arrays and blob bytes share the one fetch core',
 test('v0.95.0 records the bounded read and keeps version and metadata parity', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.97.8');
-  assert.equal(appJson.expo.version, '0.97.8');
+  assert.equal(pkg.version, '0.98.0');
+  assert.equal(appJson.expo.version, '0.98.0');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.8<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.98\.0<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');

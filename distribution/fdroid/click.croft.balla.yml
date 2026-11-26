@@ -1,0 +1,16 @@
+Categories:
+  - Internet
+License: AGPL-3.0-only
+AuthorName: Ewan Croft
+WebSite: https://balla.croft.click
+SourceCode: https://github.com/ewanc26/balla
+IssueTracker: https://github.com/ewanc26/balla/issues
+Changelog: https://github.com/ewanc26/balla/blob/main/CHANGELOG.md
+Name: Balla
+Summary: A chronological, Facebook-inspired Bluesky client
+Description: |-
+  Balla shows the people you follow on Bluesky, newest first, as cards. No
+  ranking, suggested posts or ads.
+
+  Balla is independent software. It is not an official Bluesky client and is not
+  affiliated with Meta or Bluesky Social PBC.
