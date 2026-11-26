@@ -59,7 +59,10 @@ export function AppHeader({
               foreground={markForeground}
               square={retroChrome}
             />
-            <Text style={[styles.wordmark, { color: brandColour }]}>balla</Text>
+            {/* A logotype sized to the mark beside it, like the mark itself. */}
+            <Text allowFontScaling={false} style={[styles.wordmark, { color: brandColour }]}>
+              balla
+            </Text>
           </Pressable>
 
           {showSearch ? (

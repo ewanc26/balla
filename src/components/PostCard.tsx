@@ -5,6 +5,7 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { openExternalUrl } from '../lib/openLink';
@@ -17,6 +18,7 @@ import { formatDate, timeAgo } from '../lib/time';
 import { CARD_RADIUS, cardShadow, useFontScale, usePalette } from '../theme';
 import { usePreferences } from '../lib/preferences';
 import { touchTargetStyle } from '../lib/accessibilityModel';
+import { actionRowWraps } from '../lib/layout';
 import { Avatar } from './Avatar';
 import { RemoteImage } from './RemoteImage';
 import { ImageViewer } from './ImageViewer';
@@ -90,6 +92,7 @@ export function PostCard({
   highlight,
 }: PostCardProps) {
   const p = usePalette();
+  const wraps = actionRowWraps(useWindowDimensions().fontScale);
   const font = useFontScale();
   const { preferences } = usePreferences();
   const navigation = useNavigation<any>();
@@ -670,7 +673,7 @@ export function PostCard({
           }}
         />
 
-        <View style={styles.actions}>
+        <View style={[styles.actions, wraps && styles.actionsWrap]}>
           <ActionButton
             icon={liked ? 'thumbs-up' : 'thumbs-up-outline'}
             color={liked ? p.accent : p.secondary}
@@ -1286,6 +1289,7 @@ function ActionButton({
   onPress: () => void;
 }) {
   const p = usePalette();
+  const { fontScale } = useWindowDimensions();
   return (
     <Pressable
       onPress={onPress}
@@ -1298,6 +1302,7 @@ function ActionButton({
       hitSlop={{ top: 4, bottom: 4, left: 2, right: 2 }}
       style={({ pressed }) => [
         styles.action,
+        actionRowWraps(fontScale) ? styles.actionWrapping : styles.actionShared,
         { backgroundColor: pressed ? p.bg : 'transparent' },
       ]}
     >
@@ -1369,6 +1374,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
+  actionsWrap: { flexWrap: 'wrap' },
   actionError: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1400,7 +1406,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   action: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -1409,6 +1414,10 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     paddingHorizontal: 2,
   },
+  // One line shares the width evenly. A wrapped row sizes each button by its
+  // label; it must not also set `flex`, which native layout reads as no basis.
+  actionShared: { flex: 1 },
+  actionWrapping: { flexGrow: 1, paddingHorizontal: 10 },
   saveButton: {
     width: 44,
     height: 44,

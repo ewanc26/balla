@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.5
+
+- **Large text no longer breaks the layout.** Found by running the app on an iOS simulator at an accessibility text size. Avatar initials, the header wordmark and the decorative banner letter stay the size of their frames; post action buttons wrap onto a second line instead of cutting “Repost” and “Comment” short; the composer prompt grows; the profile's follower count and the Notifications title move to their own line.
+- **No filter or action hides behind a sideways swipe.** Notification filters, search result tabs, the message list actions, conversation actions and live-status durations wrap instead of scrolling. The two content strips on profiles still scroll.
+- **The iOS tab bar no longer grows for labels that stay one size.** iOS does not scale tab labels (it offers its large content viewer), so the bar keeps its default height there and still grows on Android and the web.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. A mock-data build was run on an iOS 26.5 simulator at the default and one accessibility text size, and the web export was audited in Chrome. Search tabs, conversation actions and live-status durations were not opened at large text on iOS. Android was not run.
+
 ## 0.97.4
 
 - **The preview's `?screen=` links work again.** Since web addresses arrived in 0.5.0, the navigator rewrote the address before the mock preview read the query, so every `?screen=` link stayed on Home. The query is now read once at load, and the two starter pack screens are given a fixture to open. This affects preview builds only.

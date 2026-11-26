@@ -41,6 +41,24 @@ export function tabBarHeight(fontScale: number): number {
   return Math.max(TAB_BAR_BASE_HEIGHT, needed);
 }
 
+/**
+ * Past this text scale a row of labelled buttons no longer fits a phone on one
+ * line, so it wraps and each button keeps its whole label.
+ */
+export const WRAPPING_TEXT_SCALE = 1.3;
+
+export function actionRowWraps(fontScale: number): boolean {
+  return fontScale > WRAPPING_TEXT_SCALE;
+}
+
+/**
+ * The text scale the tab labels follow. iOS keeps tab labels at one size and
+ * offers its large content viewer instead, so the bar must not grow there.
+ */
+export function tabLabelScale(platform: string, fontScale: number): number {
+  return platform === 'ios' ? 1 : fontScale;
+}
+
 export type NavigationLayout = {
   leftRail: boolean;
   rightRail: boolean;

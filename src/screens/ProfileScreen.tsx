@@ -563,6 +563,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
               >
                 <Text
+                  allowFontScaling={false}
                   style={{
                     color: 'rgba(255, 255, 255, 0.2)',
                     fontSize: 128,
@@ -747,7 +748,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
               />
             ) : null}
 
-            <View style={{ flexDirection: 'row', gap: 18, marginTop: 10 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', columnGap: 18, marginTop: 10 }}>
               <Stat
                 count={statCounts.posts}
                 value={profile.postsCount || 0}

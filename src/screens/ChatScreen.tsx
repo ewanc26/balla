@@ -23,6 +23,7 @@ import {
   type ChatServiceState,
 } from '../lib/chatServiceModel';
 import { Avatar } from '../components/Avatar';
+import { WrapRow } from '../components/WrapRow';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import {
   CHAT_PAGE_SIZE,
@@ -261,11 +262,7 @@ export function ChatScreen() {
             </Pressable>
           </View>
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={{ marginTop: 10 }}
-          >
+          <WrapRow style={{ marginTop: 10 }}>
             <Pressable
               onPress={() => navigation.navigate('CreateGroup')}
               accessibilityRole="button"
@@ -303,7 +300,7 @@ export function ChatScreen() {
               <Ionicons name="checkmark-done-outline" size={17} color={p.accent} />
               <Text style={{ color: p.accent, fontWeight: '600', marginLeft: 6 }}>Mark all read</Text>
             </Pressable>
-          </ScrollView>
+          </WrapRow>
 
           <View style={{ flexDirection: 'row', marginTop: 8 }}>
             <Pressable

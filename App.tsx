@@ -111,6 +111,7 @@ import {
   READING_COLUMN_MAX_WIDTH,
   navigationLayout,
   tabBarHeight,
+  tabLabelScale,
   TAB_BAR_PADDING_BOTTOM,
   TAB_BAR_PADDING_TOP,
 } from './src/lib/layout';
@@ -156,7 +157,7 @@ function Tabs() {
               borderTopColor: p.chromeBorder,
               borderTopWidth: StyleSheet.hairlineWidth,
               // Font-scale aware so a scaled-up tab label is never clipped (#190).
-              height: tabBarHeight(fontScale) + insets.bottom,
+              height: tabBarHeight(tabLabelScale(Platform.OS, fontScale)) + insets.bottom,
               paddingTop: TAB_BAR_PADDING_TOP,
               paddingBottom: insets.bottom + TAB_BAR_PADDING_BOTTOM,
             }
