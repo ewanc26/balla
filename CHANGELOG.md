@@ -7,7 +7,8 @@ Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
 - **Warning tints and sheet backdrops follow the theme.** The translucent fills behind error, danger, warning and success text used fixed light-theme colours in every theme; they are now derived from the palette. Sheets and dialogs dim the page with the palette's overlay, which is darker in dark themes (65% rather than 45 to 50%) and 45% in light ones.
 - Controls drawn over photos and video keep their fixed dark scrim.
-- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- **Expo packages follow the SDK's current versions:** `expo` 58.0.26 to 58.1.0, `expo-dev-client` 58.0.21 to 58.0.22 and `expo-file-system` 58.0.14 to 58.0.15, with their transitive updates. React and React Native are unchanged. A native build needs its pods installed again.
+- No new scope, direct dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
 - Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. Text contrast and one dark-theme dialog were checked on a mock-data web export in Chrome. iOS and Android were not run.
 
 ## 0.97.2
