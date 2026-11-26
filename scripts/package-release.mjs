@@ -133,6 +133,12 @@ try {
     join(fdroid, `metadata/${BUNDLE_ID}.yml`),
   );
   cpSync(apk, join(fdroid, 'repo', apkName(version)));
+  // The repository's own icon, and the app's, which fdroid cannot take from
+  // an adaptive launcher icon.
+  cpSync(join(tree, 'assets/icon.png'), join(fdroid, 'icon.png'));
+  const art = join(fdroid, 'repo', BUNDLE_ID, 'en-US');
+  mkdirSync(art, { recursive: true });
+  cpSync(join(tree, 'assets/icon.png'), join(art, 'icon.png'));
   run('fdroid', ['update', '--pretty'], {
     cwd: fdroid,
     env: { ...env, BALLA_REPO_PASSWORD: secret('balla-fdroid-repo') },
@@ -142,7 +148,8 @@ try {
   rmSync(published, { recursive: true, force: true });
   cpSync(join(fdroid, 'repo'), published, {
     recursive: true,
-    filter: (path) => !path.endsWith('.apk'),
+    // `status` is fdroid's run log and records local paths.
+    filter: (path) => !path.endsWith('.apk') && path !== join(fdroid, 'repo', 'status'),
   });
 
   const sums = [apk, ipa].map((file) => `${sha256(file)}  ${file.slice(out.length + 1)}`);

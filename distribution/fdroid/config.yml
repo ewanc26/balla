@@ -5,6 +5,7 @@ repo_name: Balla
 repo_description: >-
   Official builds of Balla, a chronological Bluesky client. This is Balla's own
   repository, not the F-Droid catalogue.
+repo_icon: icon.png
 repo_keyalias: balla-repo
 keystore: ../fdroid-repo.p12
 keystorepass: {env: BALLA_REPO_PASSWORD}

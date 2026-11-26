@@ -1,0 +1,24 @@
+{
+  "repo": {
+    "icon": {
+      "en-US": {
+        "sha256": "251eac50de5c09e5d85293bcb3cf24c0a0d9c40541fe95dc5fa467539f42b063",
+        "size": 6343
+      }
+    },
+    "timestamp": 1795721514000
+  },
+  "packages": {
+    "click.croft.balla": {
+      "metadata": {
+        "icon": {
+          "en-US": {
+            "name": "/click.croft.balla/en-US/icon_JR6sUN5cCeXYUpO8s88kwKDZxAVB_pXcX6RnU59CsGM=.png",
+            "sha256": "251eac50de5c09e5d85293bcb3cf24c0a0d9c40541fe95dc5fa467539f42b063",
+            "size": 6343
+          }
+        }
+      }
+    }
+  }
+}
