@@ -8,11 +8,6 @@
   "trailingSlash": false,
   "redirects": [
     {
-      "source": "/fdroid/repo/balla-:version(\\d+\\.\\d+\\.\\d+).apk",
-      "destination": "https://github.com/ewanc26/balla/releases/download/v:version/balla-:version.apk",
-      "permanent": false
-    },
-    {
       "source": "/oauth-callback",
       "destination": "/app",
       "permanent": true

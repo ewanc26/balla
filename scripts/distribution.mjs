@@ -36,6 +36,22 @@ export function releaseNotes(changelog, version) {
     .trim();
 }
 
+/** The APKs a repository index lists, with the facts a download must match. */
+export function repositoryApks(index) {
+  return Object.values(index.packages ?? {}).flatMap((pkg) =>
+    Object.values(pkg.versions).map(({ file }) => {
+      const match = /^\/balla-(\d+\.\d+\.\d+)\.apk$/.exec(file.name);
+      if (!match) throw new Error(`unexpected repository file ${file.name}`);
+      return {
+        name: apkName(match[1]),
+        url: assetUrl(match[1], apkName(match[1])),
+        sha256: file.sha256,
+        size: file.size,
+      };
+    }),
+  );
+}
+
 /** Every privacy usage description the built app declares. */
 export function privacyPermissions(plist) {
   return Object.fromEntries(

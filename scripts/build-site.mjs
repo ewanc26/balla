@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
 import { copyFileSync, cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { addReleaseFiles } from './fetch-releases.mjs';
 
 const root = process.cwd();
 const siteDir = join(root, 'site');
@@ -59,6 +60,8 @@ if (existsSync(iconPath)) {
 } else {
   throw new Error('assets/icon.png is missing; run scripts/gen-icons.py first');
 }
+
+await addReleaseFiles(outDir);
 
 console.log(`Static site built in ${outDir}`);
 console.log(`Web client: https://balla.croft.click/app`);
