@@ -182,7 +182,7 @@ export function AccountsScreen({ navigation }: { navigation: any }) {
                     {busyDid === entry.did ? (
                       <ActivityIndicator size="small" color="#FFFFFF" />
                     ) : (
-                      <Text style={{ color: '#FFFFFF', fontSize: 14, fontWeight: '700' }}>
+                      <Text style={{ color: p.onDanger, fontSize: 14, fontWeight: '700' }}>
                         Remove account
                       </Text>
                     )}

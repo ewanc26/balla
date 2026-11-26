@@ -185,9 +185,9 @@ export function ChatReportSheet({ target, onClose }: { target: Target; onClose: 
                         ]}
                       >
                         {busy ? (
-                          <ActivityIndicator size="small" color={p.onAccent} />
+                          <ActivityIndicator size="small" color={p.onDanger} />
                         ) : (
-                          <Text style={{ color: p.onAccent, fontWeight: '700' }}>Block</Text>
+                          <Text style={{ color: p.onDanger, fontWeight: '700' }}>Block</Text>
                         )}
                       </Pressable>
                     </View>

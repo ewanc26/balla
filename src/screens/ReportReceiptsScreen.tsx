@@ -139,7 +139,7 @@ export function ReportReceiptsScreen({ navigation }: { navigation: any }) {
                   },
                 ]}
               >
-                <Text style={{ color: p.onAccent, fontWeight: '700' }}>Clear</Text>
+                <Text style={{ color: p.onDanger, fontWeight: '700' }}>Clear</Text>
               </Pressable>
             </View>
           ) : (

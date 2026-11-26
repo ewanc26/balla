@@ -402,10 +402,10 @@ export function StarterPackScreen({
                       ]}
                     >
                       {deleting ? (
-                        <ActivityIndicator size="small" color={p.onAccent} />
+                        <ActivityIndicator size="small" color={p.onDanger} />
                       ) : (
                         <Text
-                          style={{ color: p.onAccent, fontSize: 14, fontWeight: '700' }}
+                          style={{ color: p.onDanger, fontSize: 14, fontWeight: '700' }}
                         >
                           Delete
                         </Text>

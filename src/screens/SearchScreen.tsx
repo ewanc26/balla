@@ -1056,7 +1056,7 @@ function RecentSearches({
                 { backgroundColor: p.danger, opacity: pressed ? 0.7 : 1 },
               ]}
             >
-              <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Clear</Text>
+              <Text style={{ color: p.onDanger, fontWeight: '700' }}>Clear</Text>
             </Pressable>
           </View>
         </View>

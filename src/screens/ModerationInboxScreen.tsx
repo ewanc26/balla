@@ -642,7 +642,7 @@ function AccountStatusCard({
             standing?.tone === 'danger'
               ? p.danger
               : standing?.tone === 'warning'
-                ? '#B26A00'
+                ? p.warning
                 : p.green
           }
         />

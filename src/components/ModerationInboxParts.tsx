@@ -173,7 +173,7 @@ export function StatusPill({
     tone === 'good'
       ? p.green
       : tone === 'warning'
-        ? '#B26A00'
+        ? p.warning
         : tone === 'danger'
           ? p.danger
           : tone === 'pending'

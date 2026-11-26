@@ -215,7 +215,7 @@ export function EventSheet({
               >
                 <Text
                   style={{
-                    color: status === 'Cancelled' ? '#FFFFFF' : p.secondary,
+                    color: status === 'Cancelled' ? p.onDanger : p.secondary,
                     fontSize: 11,
                     fontWeight: '700',
                   }}

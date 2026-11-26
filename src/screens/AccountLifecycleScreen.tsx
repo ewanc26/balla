@@ -245,9 +245,9 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
                 ]}
               >
                 {opening ? (
-                  <ActivityIndicator size="small" color={isDelete ? '#FFFFFF' : p.onAccent} />
+                  <ActivityIndicator size="small" color={isDelete ? p.onDanger : p.onAccent} />
                 ) : (
-                  <Text style={{ color: isDelete ? '#FFFFFF' : p.onAccent, fontWeight: '700' }}>
+                  <Text style={{ color: isDelete ? p.onDanger : p.onAccent, fontWeight: '700' }}>
                     Open account settings
                   </Text>
                 )}

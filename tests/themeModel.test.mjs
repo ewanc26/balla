@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readdirSync, readFileSync } from 'node:fs';
 import {
   ACCENT_COLOURS,
   DEFAULT_THEME_CHOICE,
@@ -162,6 +163,59 @@ test('every era and accent pair stays readable in both dark themes', () => {
           );
         }
       }
+    }
+  }
+});
+
+test('accent, status and secondary text read on cards and on the page behind them', () => {
+  for (const [scheme, darkTheme] of [['light', 'dim'], ['dark', 'dim'], ['dark', 'dark']]) {
+    for (const era of FACEBOOK_ERAS) {
+      for (const colour of ACCENT_COLOURS) {
+        const p = buildPalette(scheme, { accent: colour.id, era: era.id, darkTheme });
+        const pairs = [
+          ...['secondary', 'accent', 'danger', 'green', 'warning'].flatMap((name) =>
+            ['card', 'bg'].map((surface) => [`${name} on ${surface}`, p[name], p[surface]]),
+          ),
+          ['secondary on soft', p.secondary, p.soft],
+          ['label on accent', p.onAccent, p.accent],
+          ['label on danger', p.onDanger, p.danger],
+          ['label on green', p.onGreen, p.green],
+        ];
+        for (const [label, foreground, background] of pairs) {
+          const ratio = contrastRatio(foreground, background);
+          assert.ok(
+            ratio >= 4.5,
+            `${scheme}/${darkTheme}/${era.id}/${colour.id} ${label}: ${ratio.toFixed(2)}`,
+          );
+        }
+      }
+    }
+  }
+});
+
+test('a colour that already reads is published unchanged', () => {
+  const p = buildPalette('light', { accent: 'purple', era: 'newfacebook' });
+  assert.equal(p.accent, '#6A1B9A');
+  assert.equal(p.text, '#050505');
+});
+
+test('screens do not hardcode the status colours or a white label on danger', () => {
+  const root = new URL('../src/', import.meta.url);
+  const files = readdirSync(root, { recursive: true }).filter(
+    (file) => file.endsWith('.tsx'),
+  );
+  assert.ok(files.length > 100);
+  for (const file of files) {
+    const source = readFileSync(new URL(file, root), 'utf8');
+    assert.doesNotMatch(source, /'#(E41E3F|B26A00|31A24C)'/i, file);
+    assert.doesNotMatch(
+      source,
+      /backgroundColor: p\.danger,(?:(?!<\/Pressable>)[\s\S])*?(color: '#fff(fff)?'|p\.onAccent)/i,
+      file,
+    );
+    // A button with a danger variant needs the danger ink for it.
+    if (/variant === 'danger' \? p\.danger/.test(source)) {
+      assert.match(source, /variant === 'danger' \? p\.onDanger/, file);
     }
   }
 });
