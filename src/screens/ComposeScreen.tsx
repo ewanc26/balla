@@ -1578,7 +1578,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
           {video ? (
             <View style={styles.gallery}>
               <MediaButton
-                icon="closed-caption-outline"
+                icon="chatbox-ellipses-outline"
                 label="Captions"
                 accessibilityLabel="Add a WebVTT caption file to this video"
                 onPress={() => void pickCaption()}

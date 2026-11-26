@@ -133,10 +133,10 @@ test('docs and version parity match the timeout slice', () => {
   assert.match(features, /bounded deadline/);
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.97.7');
-  assert.equal(appJson.expo.version, '0.97.7');
+  assert.equal(pkg.version, '0.97.8');
+  assert.equal(appJson.expo.version, '0.97.8');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.7<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.8<\/string>/);
   }
 });

@@ -100,7 +100,7 @@ export function AdvancedScreen({ navigation }: { navigation: any }) {
 
       <Section title="Account">
         <Row
-          icon="person-check-outline"
+          icon="person-circle-outline"
           label="Account pre-flight"
           detail="Resolve a handle or DID and check its PDS before sign-in"
           onPress={() => navigation.navigate('AccountPreflight')}
