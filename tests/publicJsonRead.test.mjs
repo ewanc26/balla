@@ -161,11 +161,11 @@ test('every public JSON read now uses the one bounded helper', () => {
 test('v0.95.0 copy and version parity match the bounded public reads', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.97.6');
-  assert.equal(appJson.expo.version, '0.97.6');
+  assert.equal(pkg.version, '0.97.7');
+  assert.equal(appJson.expo.version, '0.97.7');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.6<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.7<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');

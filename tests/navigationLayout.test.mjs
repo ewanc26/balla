@@ -12,6 +12,7 @@ import {
   actionRowWraps,
   tabBarHeight,
   tabLabelScale,
+  usesCompactTabLabels,
   TAB_BAR_PADDING_BOTTOM,
   TAB_BAR_PADDING_TOP,
 } from '../src/lib/layout.ts';
@@ -211,4 +212,19 @@ test('settings rows, moderation tabs and saved feeds wrap rather than clip', () 
   assert.doesNotMatch(block(inbox, 'tabs'), /\n    height:/);
   assert.doesNotMatch(block(inbox, 'tab'), /flex: 1,/);
   assert.match(block(read('screens/FeedsScreen.tsx'), 'feedControls'), /flexWrap: 'wrap'/);
+});
+
+test('the Notifications tab shortens when large labels crowd it', () => {
+  assert.equal(usesCompactTabLabels(411, 1), false);
+  assert.equal(usesCompactTabLabels(375, 1), true);
+  assert.equal(usesCompactTabLabels(411, 2), true);
+  // Smaller text never shortens a label that fits at the default size.
+  assert.equal(usesCompactTabLabels(411, 0.85), false);
+});
+
+test('a tab icon is hidden from screen readers', () => {
+  const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
+  const icon = app.slice(app.indexOf('tabBarIcon:'), app.indexOf('<Tab.Screen name="Home"'));
+  assert.match(icon, /importantForAccessibility="no"/);
+  assert.match(icon, /accessibilityElementsHidden/);
 });

@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.7
+
+- **Android screen readers hear the tab's name, not an icon character.** Each bottom tab was labelled with the icon font's private-use character followed by its name. The icons are now hidden from accessibility.
+- **The Notifications tab reads in full at large text sizes.** It shortens to “Alerts” when larger labels leave too little room, as it already did on narrow screens, instead of being cut to “Notific…”.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. A mock-data build was run on an Android 14 emulator at the default and 2x text size; the labels were read from the accessibility tree, not heard through TalkBack. Dark mode, the settings switches, the tab bar and wrapped controls were also checked there.
+
 ## 0.97.6
 
 - **Three more settings layouts hold at large text sizes.** A long label in an account fact row, such as “Display name”, no longer runs into its value; the value moves to its own line when it needs to. The moderation inbox's “Your account” tab wraps instead of being cut off, and a saved feed's “Pinned” marker and buttons wrap inside their card.
