@@ -143,12 +143,14 @@ export function SettingValueRow({ label, value }: { label: string; value: string
   const p = usePalette();
   return (
     <View style={styles.valueRow}>
-      <Text style={{ color: p.text, fontSize: 14, fontWeight: '600', minWidth: 128 }}>
+      <Text
+        style={{ color: p.text, fontSize: 14, fontWeight: '600', minWidth: 128, marginRight: 8 }}
+      >
         {label}
       </Text>
       <Text
         selectable
-        style={{ color: p.secondary, fontSize: 12, lineHeight: 18, flex: 1, minWidth: 0 }}
+        style={[styles.value, { color: p.secondary }]}
       >
         {value || 'Not available'}
       </Text>
@@ -299,7 +301,17 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
+  // Beside the label while 140pt remains; otherwise on its own line.
+  value: {
+    fontSize: 12,
+    lineHeight: 18,
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: 0,
+    minWidth: 140,
+  },
   valueRow: {
+    flexWrap: 'wrap',
     flexDirection: 'row',
     alignItems: 'flex-start',
     minHeight: 48,

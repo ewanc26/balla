@@ -201,3 +201,14 @@ test('no choice or action sits behind a sideways swipe', () => {
   // These two page through content, not controls.
   assert.deepEqual(strips, ['components/MusicActivityStrip.tsx', 'components/ProfileEventsStrip.tsx']);
 });
+
+test('settings rows, moderation tabs and saved feeds wrap rather than clip', () => {
+  const read = (file) => readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8');
+  const block = (source, name) => source.match(new RegExp(`\\n  ${name}: \\{[^}]*\\}`))[0];
+  assert.match(block(read('components/SettingControls.tsx'), 'valueRow'), /flexWrap: 'wrap'/);
+  const inbox = read('screens/ModerationInboxScreen.tsx');
+  assert.match(block(inbox, 'tabs'), /flexWrap: 'wrap'/);
+  assert.doesNotMatch(block(inbox, 'tabs'), /\n    height:/);
+  assert.doesNotMatch(block(inbox, 'tab'), /flex: 1,/);
+  assert.match(block(read('screens/FeedsScreen.tsx'), 'feedControls'), /flexWrap: 'wrap'/);
+});

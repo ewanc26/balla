@@ -682,12 +682,15 @@ function AccountStatusCard({
 
 const styles = StyleSheet.create({
   tabs: {
-    height: 52,
+    minHeight: 52,
     flexDirection: 'row',
+    flexWrap: 'wrap',
     borderBottomWidth: StyleSheet.hairlineWidth,
   },
   tab: {
-    flex: 1,
+    // Grows from its label's width, so a tab that no longer fits wraps.
+    flexGrow: 1,
+    paddingHorizontal: 8,
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 3,

@@ -3,6 +3,12 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.6
+
+- **Three more settings layouts hold at large text sizes.** A long label in an account fact row, such as “Display name”, no longer runs into its value; the value moves to its own line when it needs to. The moderation inbox's “Your account” tab wraps instead of being cut off, and a saved feed's “Pinned” marker and buttons wrap inside their card.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. Fifteen settings screens were opened on an iOS 26.5 simulator at one accessibility text size, and the web export was audited in Chrome. Android was not run.
+
 ## 0.97.5
 
 - **Large text no longer breaks the layout.** Found by running the app on an iOS simulator at an accessibility text size. Avatar initials, the header wordmark and the decorative banner letter stay the size of their frames; post action buttons wrap onto a second line instead of cutting “Repost” and “Comment” short; the composer prompt grows; the profile's follower count and the Notifications title move to their own line.
