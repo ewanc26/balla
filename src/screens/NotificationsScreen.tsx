@@ -4,7 +4,6 @@ import {
   FlatList,
   Pressable,
   RefreshControl,
-  ScrollView,
   StyleSheet,
   Text,
   View,
@@ -23,6 +22,7 @@ import {
 } from '../lib/notificationModel';
 import { timeAgo } from '../lib/time';
 import { Avatar } from '../components/Avatar';
+import { WrapRow } from '../components/WrapRow';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 type Filter = 'all' | 'following' | 'replies' | 'follows' | 'alerts';
@@ -221,8 +221,10 @@ export function NotificationsScreen() {
             paddingTop: 14,
           }}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ flex: 1 }}>
+          {/* Wraps so large text moves the button down, not the title apart. */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center' }}>
+            {/* No shrink: a title that no longer fits takes its own line. */}
+            <View style={{ flexGrow: 1, maxWidth: '100%' }}>
               <Text style={{ color: p.text, fontSize: 20, fontWeight: '700' }}>
                 Notifications
               </Text>
@@ -274,11 +276,7 @@ export function NotificationsScreen() {
             </View>
           ) : null}
 
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ paddingTop: 6 }}
-          >
+          <WrapRow style={{ paddingTop: 6 }}>
             {FILTERS.map((item) => {
               const selected = filter === item.value;
               return (
@@ -307,7 +305,7 @@ export function NotificationsScreen() {
                 </Pressable>
               );
             })}
-          </ScrollView>
+          </WrapRow>
         </View>
       </View>
     );

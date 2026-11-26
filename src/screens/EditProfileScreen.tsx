@@ -677,7 +677,10 @@ export function EditProfileScreen({ navigation }: { navigation: any }) {
                 importantForAccessibility="no-hide-descendants"
                 style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
               >
-                <Text style={{ color: 'rgba(255,255,255,0.22)', fontSize: 96, fontWeight: '800' }}>
+                <Text
+                  allowFontScaling={false}
+                  style={{ color: 'rgba(255,255,255,0.22)', fontSize: 96, fontWeight: '800' }}
+                >
                   b
                 </Text>
               </View>

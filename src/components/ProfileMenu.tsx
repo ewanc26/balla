@@ -22,6 +22,7 @@ import {
   useDialogFocus,
   useReducedMotion,
 } from '../lib/accessibility';
+import { WrapRow } from './WrapRow';
 import { CARD_RADIUS, usePalette, webInputReset } from '../theme';
 import {
   blockActor,
@@ -635,7 +636,7 @@ export function ProfileMenu({
         <Text style={{ color: p.secondary, fontSize: 13, fontWeight: '600' }}>
           Duration: {displayDuration(liveDuration)}
         </Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <WrapRow>
           {DURATION_MINUTES.map((minutes) => (
             <Pressable
               key={minutes}
@@ -662,7 +663,7 @@ export function ProfileMenu({
               </Text>
             </Pressable>
           ))}
-        </ScrollView>
+        </WrapRow>
         {error ? <ErrorNote message={error} /> : null}
         <View style={styles.footerRow}>
           <SheetButton

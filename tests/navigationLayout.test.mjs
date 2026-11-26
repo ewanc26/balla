@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import {
   COMPACT_TAB_LABEL_MAX_WIDTH,
   DESKTOP_MIN_WIDTH,
@@ -9,7 +9,9 @@ import {
   RIGHT_RAIL_MIN_WIDTH,
   navigationLayout,
   replyIndent,
+  actionRowWraps,
   tabBarHeight,
+  tabLabelScale,
   TAB_BAR_PADDING_BOTTOM,
   TAB_BAR_PADDING_TOP,
 } from '../src/lib/layout.ts';
@@ -143,7 +145,10 @@ test('the web header back control is a labelled 44pt button, and Tabs is named b
 test('the tab bar consumes the font-scale-aware height', () => {
   const app = readFileSync(new URL('../App.tsx', import.meta.url), 'utf8');
   assert.match(app, /const \{ width, fontScale \} = useWindowDimensions\(\);/);
-  assert.match(app, /height: tabBarHeight\(fontScale\) \+ insets\.bottom,/);
+  assert.match(
+    app,
+    /height: tabBarHeight\(tabLabelScale\(Platform\.OS, fontScale\)\) \+ insets\.bottom,/,
+  );
 });
 
 test('reply indentation keeps a readable text column on phones', () => {
@@ -157,4 +162,42 @@ test('reply indentation keeps a readable text column on phones', () => {
   );
   assert.equal(replyIndent(999).maxDepth, replyIndent(320).maxDepth);
   assert.equal(replyIndent(DESKTOP_MIN_WIDTH).maxDepth, desktop.maxDepth);
+});
+
+test('the tab bar only grows where the tab labels do', () => {
+  // The installed library pins iOS tab labels to one size.
+  assert.match(
+    library('BottomTabItem.tsx'),
+    /allowFontScaling = SUPPORTS_LARGE_CONTENT_VIEWER \? false : undefined,/,
+  );
+  assert.equal(tabLabelScale('ios', 3), 1);
+  assert.equal(tabLabelScale('android', 3), 3);
+  assert.equal(tabLabelScale('web', 2), 2);
+});
+
+test('post actions wrap at large text instead of truncating their labels', () => {
+  assert.equal(actionRowWraps(1), false);
+  assert.equal(actionRowWraps(1.15), false);
+  assert.equal(actionRowWraps(1.6), true);
+  const card = readFileSync(new URL('../src/components/PostCard.tsx', import.meta.url), 'utf8');
+  assert.match(card, /\[styles\.actions, wraps && styles\.actionsWrap\]/);
+  assert.match(card, /actionRowWraps\(fontScale\) \? styles\.actionWrapping : styles\.actionShared/);
+  assert.doesNotMatch(card.match(/\n  action: \{[^}]*\}/)[0], /flex:/);
+});
+
+test('picture stand-ins and the logotype stay the size of their frame', () => {
+  for (const file of ['Avatar', 'AppHeader']) {
+    const source = readFileSync(new URL(`../src/components/${file}.tsx`, import.meta.url), 'utf8');
+    assert.match(source, /allowFontScaling=\{false\}/, file);
+  }
+});
+
+test('no choice or action sits behind a sideways swipe', () => {
+  const root = new URL('../src/', import.meta.url);
+  const strips = readdirSync(root, { recursive: true })
+    .filter((file) => file.endsWith('.tsx'))
+    .filter((file) => /<ScrollView\s+horizontal\b/.test(readFileSync(new URL(file, root), 'utf8')))
+    .sort();
+  // These two page through content, not controls.
+  assert.deepEqual(strips, ['components/MusicActivityStrip.tsx', 'components/ProfileEventsStrip.tsx']);
 });

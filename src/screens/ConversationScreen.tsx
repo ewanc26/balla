@@ -5,7 +5,6 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -16,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { agent, getChatAgent } from '../lib/agent';
 import { describeFailure, readWithRetry } from '../lib/reliability';
 import { timeAgo } from '../lib/time';
+import { WrapRow } from '../components/WrapRow';
 import { CARD_RADIUS, usePalette } from '../theme';
 import {
   CHAT_PAGE_SIZE,
@@ -595,7 +595,7 @@ export function ConversationScreen() {
             )}
           </Pressable>
         </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+        <WrapRow>
           <Pressable
             onPress={() => void toggleMute()}
             disabled={busy || !convo}
@@ -625,7 +625,7 @@ export function ConversationScreen() {
           >
             <Text style={{ color: p.danger, fontSize: 13 }}>Leave conversation</Text>
           </Pressable>
-        </ScrollView>
+        </WrapRow>
       </View>
 
       <GroupParticipantsSheet

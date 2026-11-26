@@ -30,7 +30,11 @@ export function Avatar({ avatar, displayName, size = 40 }: Props) {
         justifyContent: 'center',
       }}
     >
-      <Text style={{ color: p.onAccent, fontWeight: '700', fontSize: Math.round(size * 0.45) }}>
+      {/* A picture stand-in sized to its circle, so it must not scale past it. */}
+      <Text
+        allowFontScaling={false}
+        style={{ color: p.onAccent, fontWeight: '700', fontSize: Math.round(size * 0.45) }}
+      >
         {initial}
       </Text>
     </View>

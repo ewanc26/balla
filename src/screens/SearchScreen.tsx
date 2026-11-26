@@ -36,6 +36,7 @@ import {
   type SearchFilters,
   type SearchTab,
 } from '../lib/searchModel';
+import { WrapRow } from '../components/WrapRow';
 import { CARD_RADIUS, cardShadow, usePalette, webInputReset } from '../theme';
 import { MOCK_MODE } from '../lib/mock';
 
@@ -731,11 +732,7 @@ export function SearchScreen({ route }: { route?: any }) {
 
         {submitted ? (
           <>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.tabs}
-            >
+            <WrapRow style={styles.tabs}>
               {(scopeAuthor
                 ? SEARCH_TABS.filter(
                     (item) => item.id === 'top' || item.id === 'latest'
@@ -749,7 +746,7 @@ export function SearchScreen({ route }: { route?: any }) {
                   onPress={() => chooseTab(item.id)}
                 />
               ))}
-            </ScrollView>
+            </WrapRow>
             <View
               style={[
                 styles.summary,
