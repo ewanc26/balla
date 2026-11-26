@@ -3,6 +3,14 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.96.0
+
+- **Web addresses open the screen they name.** On the web, every shared, bookmarked or reloaded address under `/app` opened Home, the address bar dropped `/app`, and reloading after moving around left the web client altogether. React Navigation reads `location.pathname` there and ignores `prefixes`, so the linking config now declares the `/app` base itself. A deep-linked screen also sits on top of Home, so it has a back button.
+- **Correction:** the 0.5.0 line saying threads, profiles, lists, feeds and settings had shareable URLs under `/app` did not hold. The earlier tests checked the config's shape and never ran React Navigation's parser; new tests drive its real parser and serialiser.
+- Reading addresses back exposed three cases that are handled with it: a new list reloads as a new list rather than as a list called `undefined`; a quote is kept out of the address, so reloading the composer shows no broken quote card (the quote has to be chosen again); and an information page takes its header from its topic, not from the link. A link also cannot supply a list's name or a profile's handle as a label, and moderation report and notice links accept only the moderation service the sign-in grant names.
+- Native navigation is unchanged. No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. A mock-data web export was also driven in Chrome: every configured path kept its address, and reload and back/forward behaved. No signed-in production session was tested.
+
 ## 0.95.0
 
 - **The PDS-directory read now matches the documented deadline claim (#97/#100, partial).** The compliance matrix already said the OpenPDS directory and migration pre-flight were bounded, but `pdsDirectory.ts` still used raw unbounded `fetch`. A directory host that accepted a connection but never finished its body could leave either screen loading forever.

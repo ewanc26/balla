@@ -37,7 +37,7 @@ export function ListMembersScreen({
   const p = usePalette();
   const uri = typeof route.params?.uri === 'string' ? route.params.uri : '';
   const listName =
-    typeof route.params?.name === 'string' ? route.params.name : 'list';
+    typeof route.params?.name === 'string' ? route.params.name : 'This list';
   const purpose = listPurposeMeta(route.params?.purpose);
   const [members, setMembers] = useState<any[]>([]);
   const [results, setResults] = useState<any[]>([]);
