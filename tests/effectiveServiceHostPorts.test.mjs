@@ -187,11 +187,11 @@ test('one origin validator is shared by settings, identity reads and checks', ()
 test('release documents the port fix honestly without changing the grant', () => {
   const pkg = JSON.parse(read('../package.json'));
   const appJson = JSON.parse(read('../app.json'));
-  assert.equal(pkg.version, '0.97.0');
-  assert.equal(appJson.expo.version, '0.97.0');
+  assert.equal(pkg.version, '0.97.1');
+  assert.equal(appJson.expo.version, '0.97.1');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
   if (existsSync(plist)) {
-    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.0<\/string>/);
+    assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.1<\/string>/);
   }
 
   const changelog = read('../CHANGELOG.md');

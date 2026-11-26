@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { agent } from '../lib/agent';
+import { Toggle } from '../components/Toggle';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 type Category = {
@@ -300,28 +301,7 @@ function SwitchRow({
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44 }}>
       <Text style={{ color: p.text, fontSize: 14, flex: 1 }}>{label}</Text>
-      <Pressable
-        onPress={() => onValueChange(!value)}
-        disabled={disabled}
-        accessibilityRole="switch"
-        accessibilityLabel={label}
-        accessibilityState={{ checked: value, disabled: !!disabled }}
-        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-        style={({ pressed }) => [
-          styles.toggle,
-          {
-            backgroundColor: value ? p.accent : p.soft,
-            opacity: pressed || disabled ? 0.6 : 1,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.knob,
-            { backgroundColor: p.card, alignSelf: value ? 'flex-end' : 'flex-start' },
-          ]}
-        />
-      </Pressable>
+      <Toggle label={label} value={value} onChange={onValueChange} disabled={disabled} />
     </View>
   );
 }
@@ -360,17 +340,5 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  toggle: {
-    width: 52,
-    height: 44,
-    borderRadius: 22,
-    padding: 2,
-    justifyContent: 'center',
-  },
-  knob: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
   },
 });

@@ -3,6 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { Ionicons } from '@expo/vector-icons';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 import { touchTargetStyle } from '../lib/accessibility';
+import { Toggle } from './Toggle';
 
 /** Shared, labelled 44pt controls for the preference editors. */
 
@@ -74,29 +75,7 @@ export function SettingSwitch({
           </Text>
         ) : null}
       </View>
-      <Pressable
-        onPress={() => onChange(!value)}
-        disabled={busy}
-        accessibilityRole="switch"
-        accessibilityLabel={label}
-        accessibilityState={{ checked: value, busy }}
-        aria-checked={value}
-        hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
-        style={({ pressed }) => [
-          styles.switch,
-          {
-            backgroundColor: value ? p.accent : p.soft,
-            opacity: pressed || busy ? 0.6 : 1,
-          },
-        ]}
-      >
-        <View
-          style={[
-            styles.knob,
-            { backgroundColor: p.card, alignSelf: value ? 'flex-end' : 'flex-start' },
-          ]}
-        />
-      </Pressable>
+      <Toggle label={label} value={value} onChange={onChange} busy={busy} />
     </View>
   );
 }
@@ -342,21 +321,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 16,
-  },
-  switch: {
-    ...touchTargetStyle,
-    // Wider than tall, so the knob has somewhere to travel and it reads as a
-    // switch rather than a round button.
-    width: 64,
-    borderRadius: 22,
-    padding: 8,
-    marginLeft: 10,
-    justifyContent: 'center',
-  },
-  knob: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
   },
   choiceHeading: {
     paddingHorizontal: 14,

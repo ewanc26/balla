@@ -4,7 +4,6 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
@@ -15,6 +14,7 @@ import {
   NOTIFICATION_INCLUDES,
   notificationIncludeLabel,
 } from '../lib/chatGroupModel';
+import { Toggle } from '../components/Toggle';
 import { CARD_RADIUS, cardShadow, usePalette } from '../theme';
 
 type Preference = { include: string; push: boolean };
@@ -234,13 +234,10 @@ function PreferenceCard({
           {notificationIncludeLabel(value.include)} · push notifications{' '}
           {value.push ? 'on' : 'off'}
         </Text>
-        <Switch
+        <Toggle
+          label={`${title} push notifications`}
           value={value.push}
-          onValueChange={(next) => onChange({ push: next })}
-          accessibilityLabel={`${title} push notifications`}
-          trackColor={{ true: p.accent, false: p.divider }}
-          thumbColor={p.card}
-          style={{ minWidth: 44, minHeight: 44 }}
+          onChange={(next) => onChange({ push: next })}
         />
       </View>
       <Pressable

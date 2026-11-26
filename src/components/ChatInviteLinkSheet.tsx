@@ -22,6 +22,7 @@ import {
 import { describeFailure } from '../lib/reliability';
 import { JOIN_RULES, joinLinkEnabled, joinRuleLabel } from '../lib/chatGroupModel';
 import { CARD_RADIUS, usePalette } from '../theme';
+import { Toggle } from './Toggle';
 
 /** Owner controls for a group's join link. The code is the shareable part. */
 export function ChatInviteLinkSheet({
@@ -157,20 +158,14 @@ export function ChatInviteLinkSheet({
               </Pressable>
             ))}
 
-            <Pressable
-              onPress={() => setApproval((value) => !value)}
-              accessibilityRole="checkbox"
-              accessibilityLabel="Require owner approval before someone joins"
-              accessibilityState={{ checked: approval }}
-              style={({ pressed }) => [
-                styles.choice,
-                { borderColor: approval ? p.accent : p.divider, opacity: pressed ? 0.7 : 1 },
-              ]}
-            >
-              <Text style={{ color: approval ? p.accent : p.text, fontWeight: '600' }}>
-                {approval ? '✓ ' : ''}Require my approval
-              </Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 4 }}>
+              <Text style={{ color: p.text, fontWeight: '600', flex: 1 }}>Require my approval</Text>
+              <Toggle
+                label="Require owner approval before someone joins"
+                value={approval}
+                onChange={setApproval}
+              />
+            </View>
 
             {error ? (
               <Text accessibilityRole="alert" style={{ color: p.danger, fontSize: 13, marginTop: 10 }}>
