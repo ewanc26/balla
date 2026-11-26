@@ -3,6 +3,13 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.8
+
+- **Four missing icons are drawn.** Terms and Copyright in Settings, Account pre-flight in Advanced and the composer's video Captions button named icons the icon font does not have, so each showed a “?” placeholder. A test now checks every icon name against the font.
+- The tab bar description in the project documents now matches the current iOS, Android and web behaviour.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. The Settings and Advanced icons were viewed on a mock-data web export in Chrome; the Captions button was not, as it needs an attached video.
+
 ## 0.97.7
 
 - **Android screen readers hear the tab's name, not an icon character.** Each bottom tab was labelled with the icon font's private-use character followed by its name. The icons are now hidden from accessibility.

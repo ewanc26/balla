@@ -318,7 +318,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           onPress={() => openUrl(ISSUES)}
         />
         <Row
-          icon="terms-outline"
+          icon="document-text-outline"
           label="Terms"
           onPress={() => openInfo('terms', 'Terms')}
         />
@@ -328,7 +328,7 @@ export function SettingsScreen({ navigation }: { navigation: any }) {
           onPress={() => openInfo('guidelines', 'Community guidelines')}
         />
         <Row
-          icon="copyright-outline"
+          icon="ribbon-outline"
           label="Copyright"
           onPress={() => openInfo('copyright', 'Copyright')}
         />
