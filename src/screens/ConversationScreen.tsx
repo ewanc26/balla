@@ -477,7 +477,6 @@ export function ConversationScreen() {
                     style={{
                       color: mine ? p.onAccent : p.secondary,
                       fontSize: 11,
-                      opacity: 0.8,
                     }}
                   >
                     {timeAgo(item?.sentAt)}

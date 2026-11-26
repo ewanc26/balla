@@ -3,6 +3,16 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.2
+
+- **Status colours and links meet 4.5:1 contrast on cards and the page behind them.** In the default dim theme, Delete and Sign out text read at about 3.1:1 on cards, and the default light theme's green counts at 3.3:1. Accent, danger, green and secondary colours are published unchanged where they already pass, and otherwise shifted to the nearest shade that does.
+- **Visible changes.** The largest is dark-theme danger in News Feed, Timeline and New Facebook, which goes from `#F02849` to `#F56D83` in dim (`#F3536D` in dark); solid red buttons there now carry dark ink. In light themes the New Facebook green goes from `#31A24C` to `#267E3B`, the default blue from `#0866FF` to `#0862F5`, and Thefacebook's darker canvas takes the default blue to `#0758DB`.
+- **Labels on solid red buttons pick their own ink.** Several used the accent's label colour or a fixed white.
+- **No faded message times,** and the decorative letter on a profile with no banner is hidden from screen readers.
+- Not covered: accent, danger and green text on the deeper “soft” chip surface still falls below 4.5:1 in some theme pairs, as low as 4.1:1 in light themes and 3.3:1 in dark ones. The translucent red tints behind some warnings still use fixed values.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. Theme pairs are checked by test; text on screen was measured in the default theme, light and dim, on a mock-data web export in Chrome. iOS and Android were not run.
+
 ## 0.97.1
 
 - **Switches look like switches.** The 44pt target had been applied to the track itself, so the switches drew as circles or near-circles. One shared switch now draws a 52 by 30 track inside a separate 44pt target. Settings, notification and chat notification screens use it (replacing the platform switch on the chat screen), as does “Require my approval” on a group invite link, which was a chip with a tick.

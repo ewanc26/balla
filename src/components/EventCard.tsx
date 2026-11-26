@@ -100,7 +100,7 @@ export function EventCard({
               <Text
                 numberOfLines={1}
                 style={{
-                  color: status === 'Cancelled' ? '#FFFFFF' : p.accent,
+                  color: status === 'Cancelled' ? p.onDanger : p.accent,
                   fontSize: 10,
                   fontWeight: '700',
                 }}

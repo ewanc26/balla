@@ -408,9 +408,9 @@ export function MessageActionsSheet({
                         ]}
                       >
                         {busy === 'delete' ? (
-                          <ActivityIndicator size="small" color={p.onAccent} />
+                          <ActivityIndicator size="small" color={p.onDanger} />
                         ) : (
-                          <Text style={{ color: p.onAccent, fontWeight: '700' }}>Delete</Text>
+                          <Text style={{ color: p.onDanger, fontWeight: '700' }}>Delete</Text>
                         )}
                       </Pressable>
                     </View>

@@ -66,10 +66,14 @@ the New Facebook era it also colours the wordmark and mark; the retro eras use
 period chrome for the header brand instead. Era chrome remains period-specific.
 
 Each accent has a light and dark variant plus a matching soft background. The
-palette computes `onAccent` from the greater of white or dark ink contrast, so a
-light dark-mode accent does not receive an unreadable white label. The automated
-suite checks accent-on-card, accent-on-soft, button-label, body, secondary and
-chrome contrast for all **9 accents × 4 eras × 2 schemes = 72 combinations**.
+hex values above are the published starting points. Where an accent, danger,
+green, warning or secondary colour would read below 4.5:1 on a card or the page
+behind it, the palette uses the nearest darker (light theme) or lighter (dark
+theme) shade that passes; the default light blue is one such case. Labels on
+solid accent, danger and green fills use whichever of white or dark ink reads
+better. The automated suite checks these, body text and chrome contrast for all
+**9 accents × 4 eras** in light and both dark themes. Accent, danger and green
+text on the soft chip surface is not covered.
 
 ## Implementation
 

@@ -77,7 +77,7 @@ export function SignOutControl() {
             {signingOut ? (
               <ActivityIndicator size="small" color="#FFFFFF" />
             ) : (
-              <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '700' }}>
+              <Text style={{ color: p.onDanger, fontSize: 15, fontWeight: '700' }}>
                 Sign out
               </Text>
             )}

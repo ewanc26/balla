@@ -383,7 +383,7 @@ export function NotificationsScreen() {
                   },
                 ]}
               >
-                <Ionicons name={badge.icon} size={11} color={badge.green ? '#FFFFFF' : p.onAccent} />
+                <Ionicons name={badge.icon} size={11} color={badge.green ? p.onGreen : p.onAccent} />
               </View>
             </View>
             <View style={{ flex: 1, marginLeft: 12, minWidth: 0 }}>

@@ -556,7 +556,12 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                 resizeMode="cover"
               />
             ) : (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <View
+                aria-hidden
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+              >
                 <Text
                   style={{
                     color: 'rgba(255, 255, 255, 0.2)',
@@ -600,7 +605,7 @@ export function ProfileScreen({ route, navigation }: { route?: any; navigation: 
                       { backgroundColor: p.danger, borderColor: p.card },
                     ]}
                   >
-                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>
+                    <Text style={{ color: p.onDanger, fontSize: 11, fontWeight: '800' }}>
                       LIVE
                     </Text>
                   </View>

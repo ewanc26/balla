@@ -621,7 +621,7 @@ export function ListDetailScreen({
                 {busy === 'block' ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Block list</Text>
+                  <Text style={{ color: p.onDanger, fontWeight: '700' }}>Block list</Text>
                 )}
               </Pressable>
             </View>
@@ -672,7 +672,7 @@ export function ListDetailScreen({
                 {busy === 'delete' ? (
                   <ActivityIndicator size="small" color="#FFFFFF" />
                 ) : (
-                  <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>Delete</Text>
+                  <Text style={{ color: p.onDanger, fontWeight: '700' }}>Delete</Text>
                 )}
               </Pressable>
             </View>

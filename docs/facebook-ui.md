@@ -81,8 +81,10 @@ product, not a claim that every account looks identical.
 
 Balla's own mark is the wall drawn in `site/mark.svg`, `scripts/gen-icons.py`
 and `src/components/BrandMark.tsx` — not a Facebook asset. The same `#0866FF`
-brand blue is used by the site, the icons, the app configuration and the
-default accent. The other eight accents are user choices, not a second brand.
+brand blue is used by the site, the icons and the app configuration, and is the
+default accent's starting value; the app darkens it slightly in light themes so
+text in it reads at 4.5:1. The other eight accents are user choices, not a
+second brand.
 
 The desktop rails appear at 1000px and the right rail at 1300px. The centre
 column is capped at 680px at every width so line length stays readable on

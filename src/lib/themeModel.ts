@@ -97,6 +97,10 @@ export type Palette = EraBase & {
   accent: string;
   accentSoft: string;
   onAccent: string;
+  /** The label colour on a solid danger or green fill. */
+  onDanger: string;
+  onGreen: string;
+  warning: string;
   accentId: AccentId;
   era: FacebookEraId;
   darkTheme: DarkThemeId;
@@ -458,6 +462,21 @@ function liftHex(hex: string, amount: number): string {
   );
 }
 
+/** Mix a six-digit hex colour towards black. */
+function shadeHex(hex: string, amount: number): string {
+  return (
+    '#' +
+    [1, 3, 5]
+      .map((offset) =>
+        Math.round(parseInt(hex.slice(offset, offset + 2), 16) * (1 - amount))
+          .toString(16)
+          .padStart(2, '0')
+      )
+      .join('')
+      .toUpperCase()
+  );
+}
+
 /** Dim lifts only structural surfaces; text and accent-soft tokens stay published. */
 function liftEraBase(base: EraBase): EraBase {
   return {
@@ -471,6 +490,42 @@ function liftEraBase(base: EraBase): EraBase {
   };
 }
 
+/** The contrast floor for text at ordinary sizes (WCAG 2.1 AA). */
+export const TEXT_CONTRAST = 4.5;
+
+/** Whichever of white and dark ink reads better on a solid fill. */
+function inkOn(fill: string): string {
+  const darkInk = '#111827';
+  return contrastRatio('#FFFFFF', fill) >= contrastRatio(darkInk, fill)
+    ? '#FFFFFF'
+    : darkInk;
+}
+
+/**
+ * The published colour where it already reads on every surface it is written
+ * on; otherwise the nearest shade that does, darkened on light themes and
+ * lightened on dark ones.
+ */
+function readableOn(
+  colour: string,
+  surfaces: string[],
+  scheme: ColorScheme
+): string {
+  let result = colour;
+  for (
+    let step = 1;
+    step <= 50 &&
+    surfaces.some((surface) => contrastRatio(result, surface) < TEXT_CONTRAST);
+    step += 1
+  ) {
+    result =
+      scheme === 'dark'
+        ? liftHex(colour, step / 50)
+        : shadeHex(colour, step / 50);
+  }
+  return result;
+}
+
 export function buildPalette(
   scheme: ColorScheme,
   choice: ThemeChoice
@@ -481,18 +536,30 @@ export function buildPalette(
   const dim = scheme === 'dark' && theme.darkTheme === 'dim';
   const base = dim ? liftEraBase(era.dark) : era[scheme];
   const darkAccent = dim ? liftHex(accent.dark, DIM_ACCENT_LIFT) : accent.dark;
-  const accentColor = scheme === 'dark' ? darkAccent : accent.light;
-  const darkInk = '#111827';
-  const onAccent =
-    contrastRatio('#FFFFFF', accentColor) >=
-    contrastRatio(darkInk, accentColor)
-      ? '#FFFFFF'
-      : darkInk;
+  const accentSoft = scheme === 'dark' ? accent.softDark : accent.softLight;
+  const surfaces = [base.card, base.bg];
+  const accentColor = readableOn(
+    scheme === 'dark' ? darkAccent : accent.light,
+    [...surfaces, accentSoft],
+    scheme
+  );
+  const danger = readableOn(base.danger, surfaces, scheme);
+  const green = readableOn(base.green, surfaces, scheme);
   return {
     ...base,
+    secondary: readableOn(base.secondary, [...surfaces, base.soft], scheme),
+    danger,
+    green,
+    warning: readableOn(
+      scheme === 'dark' ? '#FFB74D' : '#B26A00',
+      surfaces,
+      scheme
+    ),
     accent: accentColor,
-    accentSoft: scheme === 'dark' ? accent.softDark : accent.softLight,
-    onAccent,
+    accentSoft,
+    onAccent: inkOn(accentColor),
+    onDanger: inkOn(danger),
+    onGreen: inkOn(green),
     accentId: accent.id,
     era: era.id,
     darkTheme: scheme === 'dark' ? theme.darkTheme : DEFAULT_THEME_CHOICE.darkTheme,

@@ -544,7 +544,7 @@ export function NewsBundleScreen({
                   {removing ? (
                     <ActivityIndicator size="small" color="#FFFFFF" />
                   ) : (
-                    <Text style={{ color: '#FFFFFF', fontWeight: '700' }}>
+                    <Text style={{ color: p.onDanger, fontWeight: '700' }}>
                       Remove list
                     </Text>
                   )}

@@ -671,7 +671,12 @@ export function EditProfileScreen({ navigation }: { navigation: any }) {
                 resizeMode="cover"
               />
             ) : (
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <View
+                aria-hidden
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+                style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+              >
                 <Text style={{ color: 'rgba(255,255,255,0.22)', fontSize: 96, fontWeight: '800' }}>
                   b
                 </Text>
@@ -824,7 +829,7 @@ export function EditProfileScreen({ navigation }: { navigation: any }) {
               ]}
             />
             {pronounsCount > MAX_PRONOUNS ? (
-              <Text style={styles.limitError}>
+              <Text style={[styles.limitError, { color: p.danger }]}>
                 Pronouns can be up to {MAX_PRONOUNS} characters.
               </Text>
             ) : null}
@@ -1066,7 +1071,7 @@ function Field({
         ]}
       />
       {over ? (
-        <Text style={styles.limitError}>
+        <Text style={[styles.limitError, { color: p.danger }]}>
           {label} can be up to {max} characters.
         </Text>
       ) : null}
@@ -1228,7 +1233,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   limitError: {
-    color: '#E41E3F',
     fontSize: 12,
     lineHeight: 17,
     marginTop: 4,
