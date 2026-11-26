@@ -969,7 +969,7 @@ export function PostMenu({
           onPress={close}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -1047,7 +1047,7 @@ function MenuRow({
       <View
         style={[
           styles.rowIcon,
-          { backgroundColor: danger ? 'rgba(228, 30, 63, 0.1)' : p.accentSoft },
+          { backgroundColor: danger ? p.dangerSoft : p.accentSoft },
         ]}
       >
         <Ionicons name={icon} size={20} color={danger ? p.danger : p.accent} />
@@ -1140,7 +1140,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   sheet: {
     borderRadius: 16,

@@ -101,6 +101,11 @@ export type Palette = EraBase & {
   onDanger: string;
   onGreen: string;
   warning: string;
+  /** Translucent fills and edges behind status text, from the same colours. */
+  dangerSoft: string;
+  dangerBorder: string;
+  greenSoft: string;
+  warningSoft: string;
   accentId: AccentId;
   era: FacebookEraId;
   darkTheme: DarkThemeId;
@@ -501,6 +506,13 @@ function inkOn(fill: string): string {
     : darkInk;
 }
 
+function withAlpha(hex: string, alpha: number): string {
+  const [r, g, b] = [1, 3, 5].map((offset) =>
+    parseInt(hex.slice(offset, offset + 2), 16)
+  );
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
+
 /**
  * The published colour where it already reads on every surface it is written
  * on; otherwise the nearest shade that does, darkened on light themes and
@@ -545,16 +557,21 @@ export function buildPalette(
   );
   const danger = readableOn(base.danger, surfaces, scheme);
   const green = readableOn(base.green, surfaces, scheme);
+  const warning = readableOn(
+    scheme === 'dark' ? '#FFB74D' : '#B26A00',
+    surfaces,
+    scheme
+  );
   return {
     ...base,
     secondary: readableOn(base.secondary, [...surfaces, base.soft], scheme),
     danger,
     green,
-    warning: readableOn(
-      scheme === 'dark' ? '#FFB74D' : '#B26A00',
-      surfaces,
-      scheme
-    ),
+    warning,
+    dangerSoft: withAlpha(danger, 0.1),
+    dangerBorder: withAlpha(danger, 0.28),
+    greenSoft: withAlpha(green, 0.12),
+    warningSoft: withAlpha(warning, 0.12),
     accent: accentColor,
     accentSoft,
     onAccent: inkOn(accentColor),

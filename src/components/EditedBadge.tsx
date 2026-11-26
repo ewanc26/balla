@@ -66,7 +66,7 @@ export function EditedBadge({ record }: { record: any }) {
         onRequestClose={() => setOpen(false)}
         accessibilityViewIsModal
       >
-        <View style={styles.overlay}>
+        <View style={[styles.overlay, { backgroundColor: p.overlay }]}>
           <Pressable
             onPress={() => setOpen(false)}
             accessibilityElementsHidden
@@ -192,7 +192,6 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   backdrop: {
     position: 'absolute',

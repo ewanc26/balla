@@ -114,7 +114,7 @@ export function SubscribeProfileSheet({
           onPress={onClose}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -256,7 +256,7 @@ export function SubscribeProfileSheet({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)' },
+  backdrop: { position: 'absolute', inset: 0 },
   sheet: {
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,

@@ -90,7 +90,7 @@ export function OpenLinkProvider({ children }: { children: React.ReactNode }) {
         animationType={dialogAnimation(reducedMotion)}
         onRequestClose={() => setPendingUrl(null)}
       >
-        <View style={styles.backdrop}>
+        <View style={[styles.backdrop, { backgroundColor: p.overlay }]}>
           <Pressable
             style={StyleSheet.absoluteFill}
             accessibilityRole="button"
@@ -159,7 +159,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   card: {
     width: '100%',

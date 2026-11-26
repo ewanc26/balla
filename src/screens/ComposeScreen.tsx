@@ -2033,7 +2033,7 @@ export function ComposeScreen({ route, navigation }: { route: any; navigation: a
               accessibilityRole="alert"
               style={[
                 styles.error,
-                { borderColor: 'rgba(228, 30, 63, 0.3)' },
+                { backgroundColor: p.dangerSoft, borderColor: p.dangerBorder },
               ]}
             >
               <Ionicons
@@ -2290,7 +2290,7 @@ function DraftRecoverySheet({
           onPress={onDiscard}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -2694,7 +2694,7 @@ function AltTextSheet({
           onPress={onClose}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -2982,7 +2982,7 @@ function PostOptionsSheet({
           onPress={onClose}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -3502,7 +3502,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     borderWidth: 1,
     borderRadius: CARD_RADIUS,
-    backgroundColor: 'rgba(228, 30, 63, 0.08)',
     padding: 10,
     marginTop: 10,
   },
@@ -3532,7 +3531,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   sheet: {
     width: '100%',
