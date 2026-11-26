@@ -184,7 +184,7 @@ export function AccountLifecycleScreen({ navigation }: { navigation: any }) {
             onPress={() => setConfirm(null)}
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
-            style={styles.backdrop}
+            style={[styles.backdrop, { backgroundColor: p.overlay }]}
           />
           <View
             ref={dialogRef}
@@ -305,7 +305,7 @@ function ActionRow({
       <View
         style={[
           styles.iconBubble,
-          { backgroundColor: danger ? 'rgba(228, 30, 63, 0.1)' : p.accentSoft },
+          { backgroundColor: danger ? p.dangerSoft : p.accentSoft },
         ]}
       >
         <Ionicons name={icon} size={20} color={danger ? p.danger : p.accent} />
@@ -358,7 +358,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   dialog: {
     width: '100%',

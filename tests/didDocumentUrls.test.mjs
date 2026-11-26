@@ -61,8 +61,8 @@ test('release notes and versions match the consolidation slice', () => {
   assert.match(changelog, /one did:web document URL builder/);
   assert.match(changelog, /scope count stays 112/);
   assert.match(compliance, /one shared `did:web` document URL builder/);
-  assert.equal(pkg.version, '0.97.2');
-  assert.equal(appJson.expo.version, '0.97.2');
+  assert.equal(pkg.version, '0.97.3');
+  assert.equal(appJson.expo.version, '0.97.3');
   const plist = new URL('../ios/Balla/Info.plist', import.meta.url);
-  if (existsSync(plist)) assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.2<\/string>/);
+  if (existsSync(plist)) assert.match(readFileSync(plist, 'utf8'), /<string>0\.97\.3<\/string>/);
 });

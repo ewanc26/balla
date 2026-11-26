@@ -83,7 +83,7 @@ export function InboxError({
         styles.errorCard,
         {
           backgroundColor: p.card,
-          borderColor: 'rgba(228, 30, 63, 0.28)',
+          borderColor: p.dangerBorder,
         },
       ]}
     >
@@ -181,11 +181,11 @@ export function StatusPill({
             : p.secondary;
   const background =
     tone === 'good'
-      ? 'rgba(49, 162, 76, 0.12)'
+      ? p.greenSoft
       : tone === 'warning'
-        ? 'rgba(178, 106, 0, 0.12)'
+        ? p.warningSoft
         : tone === 'danger'
-          ? 'rgba(228, 30, 63, 0.1)'
+          ? p.dangerSoft
           : tone === 'pending'
             ? p.accentSoft
             : p.bg;
@@ -533,7 +533,7 @@ export function AppealModal({
           onPress={busy ? undefined : onClose}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -768,7 +768,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
   sheet: {
     width: '100%',

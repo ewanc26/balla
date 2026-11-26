@@ -91,7 +91,7 @@ export function ChatMemberPickerSheet({
           onPress={onClose}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -243,7 +243,7 @@ export function ChatMemberPickerSheet({
 
 const styles = StyleSheet.create({
   root: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' },
+  backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
   sheet: {
     width: '100%',
     maxWidth: 640,

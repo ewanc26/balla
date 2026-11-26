@@ -219,3 +219,23 @@ test('screens do not hardcode the status colours or a white label on danger', ()
     }
   }
 });
+
+test('status tints and sheet backdrops come from the palette', () => {
+  const root = new URL('../src/', import.meta.url);
+  for (const file of readdirSync(root, { recursive: true }).filter((f) => f.endsWith('.tsx'))) {
+    const source = readFileSync(new URL(file, root), 'utf8');
+    assert.doesNotMatch(source, /rgba\((228, ?30, ?63|49, ?162, ?76|178, ?106, ?0),/, file);
+    // Controls drawn over a photo keep a fixed scrim; sheets follow the theme.
+    for (const match of source.matchAll(/\n  (backdrop|overlay): \{[^}]*\}/g)) {
+      if (file.endsWith('ImageViewer.tsx')) continue;
+      assert.doesNotMatch(match[0], /rgba\(/, `${file} ${match[1]}`);
+    }
+  }
+});
+
+test('tints are derived from the colour they sit behind', () => {
+  const p = buildPalette('dark', { era: 'newfacebook', darkTheme: 'dark' });
+  const channels = [1, 3, 5].map((i) => parseInt(p.danger.slice(i, i + 2), 16)).join(', ');
+  assert.equal(p.dangerSoft, `rgba(${channels}, 0.1)`);
+  assert.equal(p.dangerBorder, `rgba(${channels}, 0.28)`);
+});

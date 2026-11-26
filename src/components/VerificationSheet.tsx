@@ -67,7 +67,7 @@ export function VerificationSheet({
           onPress={onClose}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -190,7 +190,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   sheet: {
     borderTopLeftRadius: 18,

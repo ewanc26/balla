@@ -91,7 +91,7 @@ export function SearchFiltersModal({
           onPress={onClose}
           accessibilityElementsHidden
           importantForAccessibility="no-hide-descendants"
-          style={styles.backdrop}
+          style={[styles.backdrop, { backgroundColor: p.overlay }]}
         />
         <View
           ref={containerRef}
@@ -473,7 +473,6 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
     left: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   sheet: {
     maxHeight: '92%',

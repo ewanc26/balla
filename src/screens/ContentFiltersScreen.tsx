@@ -766,7 +766,7 @@ export function ContentFiltersScreen({
             onPress={() => setConfirmAdult(false)}
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
-            style={styles.backdrop}
+            style={[styles.backdrop, { backgroundColor: p.overlay }]}
           />
           <View
             ref={adultDialogRef}
@@ -883,7 +883,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.45)',
   },
   dialog: {
     width: '100%',

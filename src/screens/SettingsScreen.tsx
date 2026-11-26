@@ -421,7 +421,7 @@ function Row({
   const p = usePalette();
   const content = (
     <>
-      <View style={[styles.iconBubble, { backgroundColor: danger ? 'rgba(228, 30, 63, 0.1)' : p.accentSoft }]}>
+      <View style={[styles.iconBubble, { backgroundColor: danger ? p.dangerSoft : p.accentSoft }]}>
         <Ionicons name={icon} size={19} color={danger ? p.danger : p.accent} />
       </View>
       <View style={{ flex: 1, minWidth: 0 }}>
