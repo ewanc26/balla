@@ -7,6 +7,7 @@ import {
   STATUS_RKEY,
   expiresAtFor,
 } from './liveStatusModel';
+import { SERVICE_HOSTS } from './serviceHosts.ts';
 
 declare const process: { env: Record<string, string | undefined> };
 
@@ -387,6 +388,8 @@ export const MOCK_THREAD_URI = posts[1].uri;
 export const MOCK_EDIT_URI = editablePost.uri;
 export const MOCK_OTHER_ACTOR = mum.did;
 export const MOCK_CONVO_ID = '3lmockconvo0000000000000000';
+export const MOCK_STARTER_PACK_URI =
+  'at://did:plc:mockviewer/app.bsky.graph.starterpack/neighbours';
 export const MOCK_GROUP_CONVO_ID = '3lmockgroupconvo0000000000000';
 
 function profileFor(actor: string | undefined) {
@@ -569,7 +572,7 @@ export function installMockAgent() {
       adultContentEnabled: false,
       labels: {},
       labelers: [
-        { did: 'did:plc:ar7c4by46qjdydhdevvrndac', labels: {} },
+        { did: SERVICE_HOSTS.labelerDid, labels: {} },
       ],
       mutedWords: [],
       hiddenPosts: [],
@@ -739,7 +742,7 @@ export function installMockAgent() {
     subject,
   }));
   const mockPack = {
-    uri: 'at://did:plc:mockviewer/app.bsky.graph.starterpack/neighbours',
+    uri: MOCK_STARTER_PACK_URI,
     cid: 'bafy-mock-pack',
     record: mockStarterPackRecord,
     creator: viewerProfile,
@@ -1433,10 +1436,12 @@ export function mockInitialScreen(): string {
     : 'Tabs';
 }
 
+// Read once, at load: web linking rewrites the address as soon as the
+// navigator mounts, before the requested screen is opened.
+const OPENING_QUERY: string =
+  Platform.OS === 'web' ? (globalThis as any).location?.search || '' : '';
+
 function queryParam(name: string): string | null {
-  if (Platform.OS !== 'web') return null;
-  const search = (globalThis as any).location?.search as string | undefined;
-  if (!search) return null;
-  const match = new RegExp('[?&]' + name + '=([^&]*)').exec(search);
+  const match = new RegExp('[?&]' + name + '=([^&]*)').exec(OPENING_QUERY);
   return match ? decodeURIComponent(match[1]) : null;
 }

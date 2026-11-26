@@ -2,7 +2,7 @@
   "expo": {
     "name": "Balla",
     "slug": "balla",
-    "version": "0.97.3",
+    "version": "0.97.4",
     "scheme": [
       "balla",
       "click.croft.balla"
