@@ -15,20 +15,30 @@ export const COMPACT_TAB_LABEL_MAX_WIDTH = 400;
 /** The bottom bar's height at the default font scale, excluding the safe-area inset. */
 export const TAB_BAR_BASE_HEIGHT = 64;
 
+/** The bar's own padding; the safe-area inset is added below it. */
+export const TAB_BAR_PADDING_TOP = 6;
+export const TAB_BAR_PADDING_BOTTOM = 4;
+
+// Fixed by React Navigation's bottom tab item: 5pt padding on each side, a
+// 28pt icon slot, and Balla's 2pt gap above the label.
+const TAB_ITEM_CHROME = 10 + 28 + 2;
+
 /**
  * The bottom bar's height at the current system font scale, excluding the
- * device's bottom safe-area inset. The bar's paddings are fixed (6pt above,
- * 10pt below), so the default bar leaves 48pt of content box; the 24pt icon
- * and its 2pt label gap leave a 22pt budget for the label, whose 10pt line
- * height is about 12pt per unit of font scale. Above that budget a
- * fixed-height bar clips the label's lower half instead of wrapping it
- * (#190), so the bar grows by the deficit plus a 2pt cushion for font-metric
- * jitter, and never shrinks below the default look.
+ * device's bottom safe-area inset. The label gets what the paddings, the item's
+ * own padding and the icon slot leave over; its 10pt line is about 12pt per
+ * unit of font scale. With less than that the label is clipped instead of
+ * wrapping (#190), so the bar grows by the deficit plus a 2pt cushion for
+ * font-metric jitter, and never shrinks below the default look.
  */
 export function tabBarHeight(fontScale: number): number {
-  const scaledLabelLine = Math.ceil(12 * fontScale);
-  const deficit = 26 + scaledLabelLine + 2 - (TAB_BAR_BASE_HEIGHT - 16);
-  return TAB_BAR_BASE_HEIGHT + Math.max(0, deficit);
+  const needed =
+    TAB_BAR_PADDING_TOP +
+    TAB_BAR_PADDING_BOTTOM +
+    TAB_ITEM_CHROME +
+    Math.ceil(12 * fontScale) +
+    2;
+  return Math.max(TAB_BAR_BASE_HEIGHT, needed);
 }
 
 export type NavigationLayout = {

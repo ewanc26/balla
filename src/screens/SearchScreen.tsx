@@ -1159,7 +1159,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   searchBox: {
-    height: 44,
+    // 44pt for the input inside the border.
+    height: 46,
     borderRadius: 22,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
@@ -1169,6 +1170,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
+    alignSelf: 'stretch',
     minWidth: 0,
     fontSize: 15,
     paddingHorizontal: 8,

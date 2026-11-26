@@ -787,8 +787,8 @@ export function EditProfileScreen({ navigation }: { navigation: any }) {
                     accessibilityState={{ selected }}
                     accessibilityLabel={`Use ${suggestion} pronouns`}
                     style={({ pressed }) => ({
-                      minHeight: 38,
-                      borderRadius: 19,
+                      minHeight: 44,
+                      borderRadius: 22,
                       paddingHorizontal: 13,
                       justifyContent: 'center',
                       borderWidth: 1,

@@ -3,6 +3,16 @@
 Versions follow the app version in `package.json`, `app.json` and the native
 Info.plist. Each release is tagged `vX.Y.Z` on `main`.
 
+## 0.97.0
+
+- **Bottom tab labels are readable again.** In the phone-width web client every label under the bottom bar was clipped to part of its height. The height model left out React Navigation's own item padding and 28pt icon slot, so the bar now pads 4pt below instead of 10pt and grows from that measured budget at large font scales. The default height is still 64pt.
+- **Correction:** the 0.60.5 line saying a scaled-up tab label stays whole (#190) did not hold, because its test checked the same incomplete arithmetic as the code.
+- **Controls under 44pt are enlarged.** The web header's back control was a 30px square announced as “Tabs, back”; it is now a 44pt button labelled “Back”, and on iOS the back title can now name the tab it returns to rather than “Tabs” (not run on a device). Also enlarged: message actions, the composer's Drafts button, the feed report button, both “who liked this” links, pronoun suggestions, Add interest, the adult-content and notification switches, the narrow “All” filters in Notifications and the moderation inbox, and the search field.
+- **The shared settings switch now looks like one.** It drew a 44pt circle with the knob barely moving; it is now a wider pill.
+- **The signed-in profile's tab row wraps** instead of running off a 360px screen.
+- No new scope, dependency, grant or endpoint; scope count stays 112 and `oauth-client-metadata.json` is byte-identical.
+- Full gate: deterministic tests, typecheck, Expo deps, icons, audit, site build and diff check. Sizes were measured on a mock-data web export in Chrome, except the notification preference switches, which the preview does not render and which are a style change only. iOS and Android were not run.
+
 ## 0.96.0
 
 - **Web addresses open the screen they name.** On the web, every shared, bookmarked or reloaded address under `/app` opened Home, the address bar dropped `/app`, and reloading after moving around left the web client altogether. React Navigation reads `location.pathname` there and ignores `prefixes`, so the linking config now declares the `/app` base itself. A deep-linked screen also sits on top of Home, so it has a back button.

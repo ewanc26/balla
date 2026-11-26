@@ -363,8 +363,8 @@ const styles = StyleSheet.create({
   },
   toggle: {
     width: 52,
-    height: 32,
-    borderRadius: 16,
+    height: 44,
+    borderRadius: 22,
     padding: 2,
     justifyContent: 'center',
   },

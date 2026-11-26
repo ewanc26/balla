@@ -11,12 +11,14 @@ import {
   DarkTheme,
   DefaultTheme,
   createNavigationContainerRef,
+  getFocusedRouteNameFromRoute,
 } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
+import { HeaderBack } from './src/components/HeaderBack';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { FeedScreen } from './src/screens/FeedScreen';
 import { SearchScreen } from './src/screens/SearchScreen';
@@ -109,6 +111,8 @@ import {
   READING_COLUMN_MAX_WIDTH,
   navigationLayout,
   tabBarHeight,
+  TAB_BAR_PADDING_BOTTOM,
+  TAB_BAR_PADDING_TOP,
 } from './src/lib/layout';
 import {
   MOCK_MODE,
@@ -152,8 +156,8 @@ function Tabs() {
               borderTopWidth: StyleSheet.hairlineWidth,
               // Font-scale aware so a scaled-up tab label is never clipped (#190).
               height: tabBarHeight(fontScale) + insets.bottom,
-              paddingTop: 6,
-              paddingBottom: insets.bottom + 10,
+              paddingTop: TAB_BAR_PADDING_TOP,
+              paddingBottom: insets.bottom + TAB_BAR_PADDING_BOTTOM,
             }
           : { display: 'none' },
         tabBarLabelStyle: {
@@ -401,7 +405,7 @@ export default function App() {
                       ) : null}
                       <View style={{ flex: 1, maxWidth: READING_COLUMN_MAX_WIDTH }}>
                         <Stack.Navigator
-                          screenOptions={{
+                          screenOptions={({ navigation }) => ({
                             headerStyle: { backgroundColor: p.chrome },
                             headerTintColor: p.chromeAction,
                             headerTitleStyle: {
@@ -412,12 +416,23 @@ export default function App() {
                             headerTitleAlign: 'center',
                             headerShadowVisible: false,
                             contentStyle: { backgroundColor: p.bg },
-                          }}
+                            ...(Platform.OS === 'web'
+                              ? {
+                                  headerLeft: ({ canGoBack }) =>
+                                    canGoBack ? <HeaderBack onPress={navigation.goBack} /> : null,
+                                }
+                              : null),
+                          })}
                         >
                           <Stack.Screen
                             name="Tabs"
                             component={Tabs}
-                            options={{ headerShown: false }}
+                            // A native back button names the previous title, so
+                            // this one follows the tab the person was on.
+                            options={({ route }) => ({
+                              headerShown: false,
+                              title: getFocusedRouteNameFromRoute(route) ?? initialTab,
+                            })}
                           />
                           <Stack.Screen name="Thread" component={ThreadScreen} />
                           <Stack.Screen name="Memories" component={MemoriesScreen} />

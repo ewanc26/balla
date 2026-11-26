@@ -110,9 +110,9 @@ export function InterestsSettingsScreen({ navigation }: { navigation: any }) {
             accessibilityRole="button"
             accessibilityLabel="Add interest"
             style={({ pressed }) => ({
-              minHeight: 40,
+              minHeight: 44,
               paddingHorizontal: 14,
-              borderRadius: 20,
+              borderRadius: 22,
               backgroundColor: draft.trim() && tags.length < 30 ? p.accent : p.divider,
               opacity: pressed ? 0.8 : 1,
               alignItems: 'center',
