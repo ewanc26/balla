@@ -74,7 +74,7 @@ export const DEFAULT_PREFERENCES: AppPreferences = {
   colourMode: 'system',
   darkTheme: 'dim',
   fontScale: 'default',
-  primaryLanguage: 'en',
+  primaryLanguage: 'en-GB',
   contentLanguages: [],
   showMusicActivity: true,
   showRecentActivity: true,
@@ -149,7 +149,7 @@ function parseStored(value: string | null): AppPreferences {
       colourMode: theme.colourMode,
       darkTheme: theme.darkTheme,
       fontScale: theme.fontScale,
-      primaryLanguage: normaliseLanguages([parsed?.primaryLanguage])[0] || 'en',
+      primaryLanguage: normaliseLanguages([parsed?.primaryLanguage])[0] || 'en-GB',
       contentLanguages: normaliseLanguages(parsed?.contentLanguages || []),
       showMusicActivity:
         typeof parsed?.showMusicActivity === 'boolean'
@@ -246,7 +246,7 @@ export function PreferencesProvider({ children }: { children: React.ReactNode })
     [update]
   );
   const setPrimaryLanguage = useCallback(
-    (value: string) => update({ primaryLanguage: normaliseLanguages([value])[0] || 'en' }),
+    (value: string) => update({ primaryLanguage: normaliseLanguages([value])[0] || 'en-GB' }),
     [update]
   );
   const setContentLanguages = useCallback(
